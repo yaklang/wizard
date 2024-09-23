@@ -1,0 +1,28 @@
+.palm-nodes-drop-down-popover {
+  padding-top: 5px;
+  :global {
+    .ant-popover-inner-content {
+      padding: 4px;
+    }
+    .ant-menu {
+      padding: 0;
+      .ant-menu-item {
+        height: 30px;
+        line-height: 32px;
+        padding: 0px 12px;
+        color: #31343f;
+        font-size: 12px;
+        margin: 0 4px;
+        border-radius: 4px;
+
+        &:hover {
+        //   color: #40a9ff;
+          background-color: #e6f7ff;
+        }
+      }
+    }
+    .ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected{
+        background-color:transparent;
+      }
+  }
+}

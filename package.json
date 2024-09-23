@@ -1,0 +1,132 @@
+{
+  "name": "palm-kit-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "/",
+  "main": "public/electron.js",
+  "dependencies": {
+    "@ant-design/compatible": "^1.0.0",
+    "@ant-design/icons": "latest",
+    "@ant-design/pro-layout": "^6.19.7",
+    "@antv/data-set": "^0.11.6",
+    "@antv/g6": "^3.4.7",
+    "@antv/l7": "^2.2.18",
+    "@antv/l7-maps": "^2.2.18",
+    "@babel/core": "^7.12.13",
+    "@babel/helper-builder-react-jsx": "^7.12.13",
+    "@babel/helper-builder-react-jsx-experimental": "^7.12.11",
+    "@babel/helper-define-map": "^7.12.13",
+    "@babel/helper-regex": "^7.10.5",
+    "@pansy/react-watermark": "^2.1.1",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@types/axios": "^0.14.0",
+    "@types/codemirror": "^0.0.88",
+    "@types/jest": "24.0.19",
+    "@types/markdown-it": "^10.0.1",
+    "@types/node": "12.11.1",
+    "@types/react": "16.9.35",
+    "@types/react-calendar-heatmap": "^1.6.2",
+    "@types/react-copy-to-clipboard": "^4.3.0",
+    "@types/react-dom": "16.9.2",
+    "@types/react-highlight-words": "^0.16.1",
+    "@types/react-router-dom": "^5.1.0",
+    "@types/react-text-marquee": "^1.0.0",
+    "ahooks": "^3.4.1",
+    "antd": "^4.10.3",
+    "axios": "^0.19.0",
+    "babel-plugin-import": "^1.13.0",
+    "bizcharts": "^4.0.14",
+    "classnames": "^2.3.2",
+    "codemirror": "^5.52.2",
+    "crypto-ts": "^1.0.2",
+    "customize-cra": "^0.9.1",
+    "echarts": "^5.4.2",
+    "env-cmd": "^10.1.0",
+    "file-saver": "^2.0.5",
+    "foreman": "^3.0.1",
+    "github-markdown-css": "^4.0.0",
+    "html2pdf.js": "^0.10.1",
+    "http-proxy-middleware": "^0.20.0",
+    "markdown-it": "^10.0.0",
+    "moment": "^2.24.0",
+    "queue-typescript": "^1.0.1",
+    "rc-resize-observer": "^1.4.0",
+    "react": "^16.13.1",
+    "react-app-rewired": "^2.1.5",
+    "react-codemirror2": "^7.1.0",
+    "react-copy-to-clipboard": "^5.0.2",
+    "react-dom": "^16.10.2",
+    "react-double-marquee": "^1.0.5",
+    "react-highlight-words": "^0.17.0",
+    "react-json-view": "^1.19.1",
+    "react-markdown": "^8.0.3",
+    "react-markdown-editor-lite": "^1.0.2",
+    "react-resize-detector": "^7.1.1",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "3.2.0",
+    "react-text-marquee": "^1.0.1",
+    "react-window": "^1.8.10",
+    "react-wordcloud": "^1.2.2",
+    "rehype-raw": "^6.1.1",
+    "remark-gfm": "^3.0.1",
+    "sass": "^1.62.1",
+    "source-map-explorer": "^2.5.0",
+    "typescript": "3.8.3",
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5",
+    "xlsx-style": "^0.8.13",
+    "xterm-for-react": "^1.0.4"
+  },
+  "scripts": {
+    "build": "react-app-rewired build",
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "build-siem": "env-cmd -f siem.env react-app-rewired build",
+    "build-awd": "env-cmd -f awdfe.env react-app-rewired build",
+    "build-redteam": "env-cmd -f redteam.env react-app-rewired build",
+    "build-falcon": "env-cmd -f falcon.env react-app-rewired build",
+    "build-pki": "env-cmd -f pki-system.env react-app-rewired build",
+    "test": "react-app-rewired test --env=jsdom",
+    "eject": "react-scripts eject",
+    "start": "react-app-rewired start",
+    "start-siem": "env-cmd -f siem.env react-app-rewired start",
+    "start-awd": "env-cmd -f awdfe.env react-app-rewired start",
+    "start-redteam": "env-cmd -f redteam.env react-app-rewired start",
+    "start-falcon": "env-cmd -f falcon.env react-app-rewired start",
+    "start-pki": "env-cmd -f pki-system.env react-app-rewired start",
+    "pack": "build --dir",
+    "npm-dist": "npm run build && build"
+  },
+  "build": {
+    "appId": "com.palm-siem",
+    "compression": "normal",
+    "extraResources": [
+      "palm-server/**/*"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    }
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/react-window": "^1.8.8",
+    "@types/uuid": "^9.0.0"
+  }
+}

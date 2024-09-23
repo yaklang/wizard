@@ -1,0 +1,73 @@
+.install-nodes-page {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  .welcome-card {
+    background: linear-gradient(
+      to bottom,
+      rgb(215, 223, 229),
+      rgb(230, 244, 254)
+    );
+    padding: 20px 60px;
+    border-radius: 4px;
+    .title {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+    .content {
+      display: flex;
+      justify-content: space-between;
+      .close {
+        color: #666666;
+        cursor: pointer;
+        position: relative;
+        top: 6px;
+        &:hover {
+          color: red;
+        }
+      }
+      span {
+        color: #666666;
+      }
+      .info {
+        .icon {
+          color: rgb(238, 135, 10);
+          font-size: 22px;
+          position: relative;
+          top: 2px;
+        }
+      }
+    }
+  }
+  .form-box {
+    flex: 1;
+    overflow: auto;
+    margin-top: 10px;
+    border: 1px solid rgb(197, 197, 197);
+    border-radius: 20px;
+    .install-nodes-form {
+      margin-top: 40px;
+      .opt-box {
+        text-align: center;
+      }
+      .root-run {
+        .root-run-header {
+          width: 66%;
+          margin: 12px auto;
+          display: flex;
+          justify-content: space-between;
+        }
+        .root-run-code{
+            width: 66%;
+            margin: 0px auto;
+            padding: 10px 0;
+            background-color: rgb(243, 245, 248);
+            font-size: 15px;
+            font-weight: 500;
+          }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+/* .simple-button-list-space{
+  opacity: 0;
+} */
+.simple-button-list-space .opt-hover:hover {
+  color: #1890ff;
+}
+.simple-button-list-space .del-hover:hover {
+  color: #ff4d4f;
+}
+/* .ant-card-hoverable:hover .simple-button-list-space{
+  opacity: 1;
+} */

@@ -1,0 +1,33 @@
+.saas-risk-viewer{
+    display: flex;
+    flex-direction: column;
+}    
+.saas-risk-viewer .ant-table-wrapper{
+    flex: 1;
+    overflow: auto;
+}
+.saas-risk-viewer .filter-box{
+    display: flex;
+    margin-bottom: 16px;
+}
+.saas-risk-viewer .serach-box{
+    flex: 1;
+    margin-right: 12px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.saas-risk-viewer .serach-box .filter-item .title{
+    margin-right: 6px;
+    width: 28px;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 500;
+    text-align-last: justify;
+}
+.saas-risk-viewer .filter-box .opt-box{
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+}

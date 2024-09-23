@@ -1,0 +1,25 @@
+.virtual-table .ant-table-container:before,
+.virtual-table .ant-table-container:after {
+  display: none;
+}
+
+.virtual-table-cell {
+  box-sizing: border-box;
+  padding: 16px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #FFF;
+  white-space: nowrap;
+  word-wrap: normal;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.add-plugins-modal .ant-table-cell:not(.ant-table-selection-column) {
+  left: 50px;
+}
+
+.add-plugins-modal .ant-table-selection-column {
+  display: block;
+  width: 50px;
+}
+
