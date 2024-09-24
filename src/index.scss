@@ -1,0 +1,90 @@
+html,
+body {
+    background-color: #f7f7f7;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+}
+
+body,
+div,
+ul,
+li,
+span {
+    box-sizing: border-box;
+}
+
+#root {
+    height: 100%;
+}
+
+.management-scroll,
+div,
+ul {
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb:active {
+        background: #787878;
+        border-radius: 10px;
+    }
+}
+
+ul,
+li {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.text-overflow-3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box; //作为弹性伸缩盒子模型显示。
+    -webkit-box-orient: vertical; //设置伸缩盒子的子元素排列方式--从上到下垂直排列
+    -webkit-line-clamp: 3; //显示的行
+}
+
+// Table内容顶部对齐
+.table-vertical-top-row {
+    vertical-align: top;
+}
+
+// 隐藏表格自己的滚动条
+.ant-table-sticky-scroll {
+    display: none !important;
+}
+
+.text-clip {
+    word-break: break-all;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+
+.ant-form{
+    .ant-form-item{
+        margin-bottom: 16px;
+        .ant-form-item-control-input{
+            min-height: 0px;
+        }
+    }
+}
