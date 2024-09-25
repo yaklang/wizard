@@ -21,6 +21,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <App />
       </ConfigProvider>
     </HashRouter>
-    ,
   </React.StrictMode>
 );
