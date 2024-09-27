@@ -1,3 +1,9 @@
+@font-face {
+  font-family: 'YouSheBiaoTiHei';
+  src: url('../pubilc/fonts/YouSheBiaoTiHei.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 html,
 body {
@@ -87,5 +93,11 @@ li {
         .ant-form-item-control-input{
             min-height: 0px;
         }
+    }
+}
+
+.ant-layout-sider{
+    .ant-layout-sider-children{
+        background-color: #F0F1F3;
     }
 }

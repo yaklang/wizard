@@ -14,13 +14,18 @@ const useLoginStore = create<LoginStore>()((set) => ({
   token: localStorage.getItem("token") || "",
   login: async (param: any) => {
     // const { data } = await loginAsync(param);
-    const data: any = null;
+    const data: any = {
+      token: "aaa",
+      userInfo: {
+        name: 111,
+      },
+    };
     if (data) {
       localStorage.setItem("userInfo", JSON.stringify(data));
       localStorage.setItem("token", data.access_token);
     }
 
-    set({ userInfo: { ...data }, token: data.access_token });
+    set({ userInfo: { ...data }, token: data.token });
   },
   outLogin: async () => {
     // await outLoginAsync();
