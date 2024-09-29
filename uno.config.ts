@@ -8,7 +8,7 @@ import {
   presetWebFonts,
   transformerDirectives,
   transformerVariantGroup,
-} from "unocss";
+} from 'unocss';
 
 export default defineConfig({
   presets: [
@@ -17,8 +17,9 @@ export default defineConfig({
     presetIcons(),
     presetTypography(),
     presetWebFonts({
+      provider: 'none',
       fonts: {
-        YouSheBiaoTiHei: "YouSheBiaoTiHei",
+        YouSheBiaoTiHei: 'YouSheBiaoTiHei',
       },
     }),
   ],

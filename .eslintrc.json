@@ -4,7 +4,7 @@
     "project": [
       "./tsconfig.json",
       "./tsconfig.node.json",
-      // "./uno.config.ts"
+      "./uno.config.ts",
     ]
   },
   "settings": {
@@ -34,7 +34,6 @@
   },
   "globals": {},
   "rules": {
-    // "prettier/prettier": "error"
     "prettier/prettier": "error",
     "react/jsx-filename-extension": [1, { "extensions": [".tsx"] }],
     "react/react-in-jsx-scope": "off", // For React 17+

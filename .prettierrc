@@ -1,1 +1,4 @@
-"eslint-config-alloy/.prettierrc.js"
+{
+    "extends": "eslint-config-alloy/.prettierrc.js",
+    "tabWidth": 4
+}
