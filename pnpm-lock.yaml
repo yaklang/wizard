@@ -44,6 +44,9 @@ importers:
       react-router-dom:
         specifier: ^6.22.2
         version: 6.22.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      ts-pattern:
+        specifier: ^5.4.0
+        version: 5.4.0
       zustand:
         specifier: ^4.5.2
         version: 4.5.2(@types/react@18.2.64)(react@18.2.0)
@@ -3044,6 +3047,9 @@ packages:
     engines: {node: '>=16'}
     peerDependencies:
       typescript: '>=4.2.0'
+
+  ts-pattern@5.4.0:
+    resolution: {integrity: sha512-hgfOMfjlrARCnYtGD/xEAkFHDXuSyuqjzFSltyQCbN689uNvoQL20TVN2XFcLMjfNuwSsQGU+xtH6MrjIwhwUg==}
 
   tsconfig-paths@3.15.0:
     resolution: {integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==}
@@ -6774,6 +6780,8 @@ snapshots:
   ts-api-utils@1.2.1(typescript@5.4.2):
     dependencies:
       typescript: 5.4.2
+
+  ts-pattern@5.4.0: {}
 
   tsconfig-paths@3.15.0:
     dependencies:
