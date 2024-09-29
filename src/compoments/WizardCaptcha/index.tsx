@@ -18,7 +18,7 @@ const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
  * @param onGenerateCaptcha 获取生成验证码回调函数引用
  * @returns
  */
-const Captcha: FC<CaptchaProps> = memo(
+const WizardCaptcha: FC<CaptchaProps> = memo(
     ({ onChange, value, onGenerateCaptcha }) => {
         const canvasRef = useRef<HTMLCanvasElement | null>(null);
         const captchaTextRef = useRef<string>("");
@@ -110,4 +110,4 @@ const Captcha: FC<CaptchaProps> = memo(
     },
 );
 
-export default Captcha;
+export default WizardCaptcha;

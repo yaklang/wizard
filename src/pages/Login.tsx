@@ -1,20 +1,21 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, Card, Form, Input, message } from "antd";
-import { useSafeState } from "ahooks";
-import useLoginStore from "@/App/store/loginStore";
-import permissionsSliceFn from "@/App/store/powerStore";
-import { LoginIcon } from "@/assets/menu";
-import { Captcha } from "@/compoments";
-import login_logo from "@/assets/compoments/login_logo.png";
-import login_background from "@/assets/login/login_background.png";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button, Card, Form, Input, message } from 'antd';
+import { useSafeState } from 'ahooks';
+import useLoginStore from '@/App/store/loginStore';
+import permissionsSliceFn from '@/App/store/powerStore';
+import { LoginIcon } from '@/assets/menu';
+import { WizardCaptcha } from '@/compoments';
+import login_logo from '@/assets/compoments/login_logo.png';
+import login_background from '@/assets/login/login_background.png';
 interface FieldType {
-    user: string;
+    username: string;
     password: string;
     verificationCode: string;
 }
 
 const { Item } = Form;
+const { Password } = Input;
 
 const Login = () => {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ const Login = () => {
     useEffect(() => {
         // 登录限制，如果有token，并且token未过期，就不能打开login页
         if (token) {
-            navigate("/projectManagem ent");
+            navigate('/projectManagem ent');
         }
     }, []);
 
@@ -48,13 +49,13 @@ const Login = () => {
             if (captcha === toLowerCaseVerificationCode) {
                 await login(values);
                 await updatePower();
-                navigate("/");
-                message.success("登陆成功");
+                navigate('/');
+                message.success('登陆成功');
             } else {
-                form.setFieldValue("verificationCode", undefined);
+                form.setFieldValue('verificationCode', undefined);
                 setCaptcha(undefined);
                 generateCaptchaFn && generateCaptchaFn();
-                message.error("验证码错误");
+                message.error('验证码错误');
             }
         } catch (err) {
             console.error(err);
@@ -81,8 +82,8 @@ const Login = () => {
                 <Card
                     className="flex flex-col gap-6 w-102 pt-[16px]  m-auto rounded-5"
                     style={{
-                        boxShadow: "0px 0px 32px 0px rgba(0,0,0,0.05)",
-                        transform: "translate(-88px, -44px)",
+                        boxShadow: '0px 0px 32px 0px rgba(0,0,0,0.05)',
+                        transform: 'translate(-88px, -44px)',
                     }}
                 >
                     <div className="text-[20px] mb-6 font-bold relative flex content-center left-38/100">
@@ -91,11 +92,11 @@ const Login = () => {
                     </div>
                     <Form form={form} onFinish={onFinish}>
                         <Item<FieldType>
-                            name="user"
+                            name="username"
                             rules={[
                                 {
                                     required: true,
-                                    message: "请输入用户名字",
+                                    message: '请输入用户名字',
                                 },
                             ]}
                         >
@@ -109,7 +110,7 @@ const Login = () => {
                             rules={[
                                 {
                                     required: true,
-                                    message: "请输入密码",
+                                    message: '请输入密码',
                                 },
                             ]}
                             extra={
@@ -121,7 +122,7 @@ const Login = () => {
                                 </Button>
                             }
                         >
-                            <Input
+                            <Password
                                 placeholder="请输入密码"
                                 className="h-[52px] rounded-[12px] bg-[#F8F8F8]"
                             />
@@ -132,7 +133,7 @@ const Login = () => {
                                 rules={[
                                     {
                                         required: true,
-                                        message: "请输入验证码",
+                                        message: '请输入验证码',
                                     },
                                 ]}
                             >
@@ -143,7 +144,7 @@ const Login = () => {
                                 />
                             </Item>
                             <div className="absolute right-3 top-2.5">
-                                <Captcha
+                                <WizardCaptcha
                                     onChange={(e) => {
                                         setCaptcha(e);
                                     }}
@@ -158,8 +159,8 @@ const Login = () => {
                                 className="w-full h-[52px] rounded-[89px] text-5 font-medium mb-4"
                                 style={{
                                     background:
-                                        "linear-gradient(90deg, #68A6FA 0%, #4A94F8 100%)",
-                                    fontFamily: "PingFang HK",
+                                        'linear-gradient(90deg, #68A6FA 0%, #4A94F8 100%)',
+                                    fontFamily: 'PingFang HK',
                                 }}
                                 htmlType="submit"
                             >
