@@ -1,10 +1,10 @@
-import { RouteObjectRootMy } from "@/App/routers/routers";
-import { ReactNode } from "react";
+import { RouteObjectRootMy } from '@/App/routers/routers';
+import { ReactNode } from 'react';
 
 // 计算表格总宽度
-export function getColumnsWidth(columns: any) {
+export function getColumnsWidth(columns: any[]) {
     if (!Array.isArray(columns)) {
-        throw TypeError("columns 类型错误，期望为一个 array");
+        throw TypeError('columns 类型错误，期望为一个 array');
     }
     if (!columns?.length) {
         return;
@@ -32,13 +32,13 @@ export const formatSelectOptions = (
     try {
         return dataSource.map((item) => ({
             label:
-                typeof fields.label === "function"
+                typeof fields.label === 'function'
                     ? fields.label(item)
-                    : item[fields.label ?? "text"],
+                    : item[fields.label ?? 'text'],
             value:
-                typeof fields.value === "function"
+                typeof fields.value === 'function'
                     ? fields.value(item)
-                    : item[fields.value ?? "value"],
+                    : item[fields.value ?? 'value'],
         }));
     } catch (e) {
         console.error(e);
@@ -55,7 +55,7 @@ export const isEmpty = (n: any): boolean => {
     if (n === undefined || n === null) {
         return true;
     } else if (isString(n)) {
-        return n.trim() === "";
+        return n.trim() === '';
     } else if (isArray(n)) {
         return !n.length;
     } else if (isObject(n)) {
@@ -71,7 +71,7 @@ export const isEmpty = (n: any): boolean => {
  */
 export const isNumber = (n: any, strict = true) => {
     const isStrictNumber =
-        Object.prototype.toString.call(n) === "[object Number]" &&
+        Object.prototype.toString.call(n) === '[object Number]' &&
         !Number.isNaN(n) &&
         Number.isFinite(n);
     if (strict) {
@@ -86,7 +86,7 @@ export const isNumber = (n: any, strict = true) => {
  * @param {Boolean} strict 默认为true,即严格模式:只能是Number类型， false则判断String类型是否也满足是整数的情况
  */
 export const isInteger = (n: any, strict = true) => {
-    const isStrictNumber = isNumber(n) && n.toString().indexOf(".") === -1;
+    const isStrictNumber = isNumber(n) && n.toString().indexOf('.') === -1;
     if (strict) {
         return isStrictNumber;
     }
@@ -94,11 +94,11 @@ export const isInteger = (n: any, strict = true) => {
 };
 
 export const isString = (n: any) => {
-    return Object.prototype.toString.call(n) === "[object String]";
+    return Object.prototype.toString.call(n) === '[object String]';
 };
 
 export const isObject = (n: any) => {
-    return Object.prototype.toString.call(n) === "[object Object]";
+    return Object.prototype.toString.call(n) === '[object Object]';
 };
 
 export const isArray = (n: any) => {
@@ -106,7 +106,7 @@ export const isArray = (n: any) => {
 };
 
 export const isFunction = (n: any) => {
-    return Object.prototype.toString.call(n) === "[object Function]";
+    return Object.prototype.toString.call(n) === '[object Function]';
 };
 
 export const isPromise = (n: any) => {
@@ -115,9 +115,9 @@ export const isPromise = (n: any) => {
 
 // 文件保存
 export function saveFile(file: Blob, fileName: string) {
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = window.URL.createObjectURL(file);
-    link.download = fileName ?? "未命名文件";
+    link.download = fileName ?? '未命名文件';
     link.click();
 }
 
@@ -144,17 +144,17 @@ export const traverseTree = (tree: any[], callback: (arg0: any) => void) => {
 export const isExceedHeightAndWidth = ({
     container,
     content,
-    type = "height",
+    type = 'height',
 }: {
     container: HTMLDivElement | null;
     content: HTMLDivElement | null;
-    type?: "height" | "width";
+    type?: 'height' | 'width';
 }): boolean | undefined => {
     if (!container || !content) return;
 
     let result = false;
 
-    if (type === "width") {
+    if (type === 'width') {
         if (container.scrollWidth > container.clientWidth) {
             result = true;
         }
@@ -166,6 +166,53 @@ export const isExceedHeightAndWidth = ({
     }
 
     return result;
+};
+
+// 对比两个对象是否相同
+const deepEqual = (
+    pre: Record<any, any> = {},
+    cur: Record<any, any> = {},
+): boolean => {
+    // 如果是同一个引用，直接相等
+    if (pre === cur) return true;
+
+    // 检查类型是否相同
+    if (typeof pre !== typeof cur) return false;
+
+    // 特殊情况处理：null、NaN
+    if (pre === null || cur === null) return pre === cur;
+    if (typeof pre !== 'object') return pre === cur; // 处理原始类型
+
+    // 处理 NaN 的比较，NaN !== NaN
+    if (Number.isNaN(pre) && Number.isNaN(cur)) return true;
+
+    // 对象类型：数组、普通对象
+    if (Array.isArray(pre)) {
+        // 如果是数组，长度不同则不相等
+        if (!Array.isArray(cur) || pre.length !== cur.length) return false;
+
+        // 递归比较数组的每个元素
+        for (let i = 0; i < pre.length; i++) {
+            if (!deepEqual(pre[i], cur[i])) return false;
+        }
+        return true;
+    }
+
+    // 普通对象：获取键并递归比较键和值
+    const keys1 = Object.keys(pre);
+    const keys2 = Object.keys(cur);
+
+    // 键的数量不一样，直接返回 false
+    if (keys1.length !== keys2.length) return false;
+
+    // 递归比较每个键的值
+    for (let key of keys1) {
+        if (!cur.hasOwnProperty(key) || !deepEqual(pre[key], cur[key])) {
+            return false;
+        }
+    }
+
+    return true;
 };
 
 // tree 打平获取所有id
@@ -200,9 +247,9 @@ const processMenu = (
 
         const result: ResultItem = {
             key: `/${path}`, // 根路径
-            label: !collapsed ? (name ?? "") : "",
+            label: !collapsed ? (name ?? '') : '',
             icon,
-            keypath: key ?? "",
+            keypath: key ?? '',
             onClick: ({ key }) => {
                 navigate(key);
             },
@@ -212,9 +259,9 @@ const processMenu = (
             // 递归处理子菜单
             result.children = children.map((child) => ({
                 key: `/${path}/${child.path}`, // 子路径
-                label: child.name ?? "",
+                label: child.name ?? '',
                 icon: child.icon,
-                keypath: child.key ?? "",
+                keypath: child.key ?? '',
                 onClick: ({ key }) => {
                     navigate(key);
                 },
@@ -229,9 +276,9 @@ const processMenu = (
 
 // 生成路径层级数组的函数
 const getPathArray = (fullPath: string): string[] => {
-    const segments = fullPath.split("/").filter(Boolean); // 过滤掉空字符串
+    const segments = fullPath.split('/').filter(Boolean); // 过滤掉空字符串
     return segments.reduce<string[]>((acc, _, index) => {
-        const path = "/" + segments.slice(0, index + 1).join("/");
+        const path = '/' + segments.slice(0, index + 1).join('/');
         acc.push(path);
         return acc;
     }, []);
@@ -239,7 +286,7 @@ const getPathArray = (fullPath: string): string[] => {
 
 const findFullPath = (
     menu: RouteObjectRootMy,
-    parentPath: string = "",
+    parentPath: string = '',
 ): string[] => {
     const currentPath = `${parentPath}/${menu.path}`; // 拼接父路径和当前路径
 
@@ -255,4 +302,10 @@ const findFullPath = (
     return [currentPath];
 };
 
-export { createFlatTreeWithId, processMenu, getPathArray, findFullPath };
+export {
+    createFlatTreeWithId,
+    processMenu,
+    getPathArray,
+    findFullPath,
+    deepEqual,
+};
