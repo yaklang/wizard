@@ -1,8 +1,10 @@
-import { ReactNode } from "react";
+import { Dispatch, ReactNode } from 'react';
 
-import { TableProps, SwitchProps, RadioGroupProps } from "antd";
+import { TableProps, SwitchProps, RadioGroupProps } from 'antd';
+import { TWizardExportProps } from '../WizardExport/types';
+import { initialValue } from './data';
 
-type CreateNewTableProps = Omit<TableProps, "bordered" | "pagination">;
+type CreateNewTableProps = Omit<TableProps, 'bordered' | 'pagination'>;
 
 interface TWizardTableHeader extends SwitchProps {
     trigger: ReactNode;
@@ -10,19 +12,13 @@ interface TWizardTableHeader extends SwitchProps {
 
 interface TWizardTableProps extends CreateNewTableProps {
     tableHeader?: {
+        // table 头部按选框按钮
+        filterRadio?: Pick<RadioGroupProps, 'options' | 'value' | 'onChange'>;
+        // table 头部高级筛选开关
         ProFilterSwitch?: TWizardTableHeader;
-        /**
-         * @param dowloadRequest 请求地址
-         * @param loading 请求状态
-         * @param fileName 下载文件名
-         */
-        dowloadFile?: {
-            dowloadRequest: () => Promise<any>;
-            loading?: boolean;
-            fileName?: string;
-        };
-
-        filterRadio?: Pick<RadioGroupProps, "options">;
+        // table 头部导出文件按钮
+        dowloadFile?: TWizardExportProps;
+        filterDispatch?: Dispatch<typeof initialValue>;
     };
 }
 

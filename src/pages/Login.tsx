@@ -5,7 +5,7 @@ import { useSafeState } from "ahooks";
 import useLoginStore from "@/App/store/loginStore";
 import permissionsSliceFn from "@/App/store/powerStore";
 import { LoginIcon } from "@/assets/menu";
-import { Captcha } from "@/compoments";
+import { WizardCaptcha } from "@/compoments";
 import login_logo from "@/assets/compoments/login_logo.png";
 import login_background from "@/assets/login/login_background.png";
 interface FieldType {
@@ -143,7 +143,7 @@ const Login = () => {
                                 />
                             </Item>
                             <div className="absolute right-3 top-2.5">
-                                <Captcha
+                                <WizardCaptcha
                                     onChange={(e) => {
                                         setCaptcha(e);
                                     }}
