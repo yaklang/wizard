@@ -1,25 +1,50 @@
 import { Dispatch, ReactNode } from 'react';
 
-import { TableProps, SwitchProps, RadioGroupProps } from 'antd';
-import { TWizardExportProps } from '../WizardExport/types';
+import { ButtonProps, TableProps, SwitchProps, RadioGroupProps } from 'antd';
 import { initialValue } from './data';
 
-type CreateNewTableProps = Omit<TableProps, 'bordered' | 'pagination'>;
+type CreateTableProps<T> = Omit<
+    TableProps<T>,
+    'bordered' | 'pagination' | 'dataSource'
+>;
 
 interface TWizardTableHeader extends SwitchProps {
     trigger: ReactNode;
 }
 
-interface TWizardTableProps extends CreateNewTableProps {
-    tableHeader?: {
-        // table 头部按选框按钮
-        filterRadio?: Pick<RadioGroupProps, 'options' | 'value' | 'onChange'>;
-        // table 头部高级筛选开关
-        ProFilterSwitch?: TWizardTableHeader;
-        // table 头部导出文件按钮
-        dowloadFile?: TWizardExportProps;
-        filterDispatch?: Dispatch<typeof initialValue>;
-    };
+type RequestParams<T = unknown> = T & {
+    limit: number;
+    page: number;
+};
+
+// table请求
+type RequestFunction<T = unknown> = (
+    params?: RequestParams<T>,
+    filter?: Record<string, any>,
+) => Promise<any>;
+
+// 导出按钮组件props
+interface TWizardExportProps extends ButtonProps {
+    dowload_request: () => Promise<any>;
 }
 
-export type { TWizardTableProps };
+interface TWizardTableProps<T> extends CreateTableProps<T> {
+    tableHeader?: {
+        filterRadio?: Pick<
+            RadioGroupProps,
+            'options' | 'onChange' | 'defaultValue'
+        >;
+        ProFilterSwitch?: TWizardTableHeader;
+        dowloadFile?: TWizardExportProps;
+        filterDispatch?: Dispatch<Partial<typeof initialValue>>;
+        filterState?: Partial<typeof initialValue>;
+    };
+    request: RequestFunction;
+}
+
+export type {
+    TWizardTableProps,
+    TWizardExportProps,
+    CreateTableProps,
+    RequestFunction,
+};

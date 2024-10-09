@@ -1,10 +1,9 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 
 import { ExportsIcon } from '@/assets/compoments';
-
-import type { TWizardExportProps } from './types';
+import { TWizardExportProps } from '../WizardTable/types';
 
 /**
  *

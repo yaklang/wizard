@@ -3,8 +3,7 @@ import { Switch, TableProps } from 'antd';
 
 import { WizardTable } from '@/compoments';
 import { useRequest } from 'ahooks';
-import { roleList } from '@/apis/account';
-import { DetailDrawer } from './DetailDrawer';
+import { roleList, getMockList } from '@/apis/account';
 
 interface DataType {
     key: string;
@@ -13,74 +12,62 @@ interface DataType {
     address: string;
 }
 
-const data: DataType[] = [
-    {
-        key: '1',
-        name: 'John Brown',
-        money: '￥300,000.00',
-        address: 'New York No. 1 Lake Park',
-    },
-    {
-        key: '2',
-        name: 'Jim Green',
-        money: '￥1,256,000.00',
-        address: 'London No. 1 Lake Park',
-    },
-    {
-        key: '3',
-        name: 'Joe Black',
-        money: '￥120,000.00',
-        address: 'Sydney No. 1 Lake Park',
-    },
-];
-
 const options = [
     {
-        label: 'apple',
+        label: '端口资产',
         value: 1,
     },
     {
-        label: 'solid',
+        label: '并列',
         value: 2,
+    },
+    {
+        label: '漏洞与风险',
+        value: 3,
     },
 ];
 
 const ProjectManagement: FC = () => {
     const columns: TableProps<DataType>['columns'] = [
         {
-            title: 'Name',
-            dataIndex: 'name',
-            render: (text) => <a>{text}</a>,
+            title: '端口',
+            dataIndex: 'script_type',
         },
         {
             title: 'Cash Assets',
-            className: 'column-money',
-            dataIndex: 'money',
-            align: 'right',
+            dataIndex: 'task_group',
         },
         {
             title: 'Address',
-            dataIndex: 'address',
+            dataIndex: 'interval_seconds',
         },
     ];
 
     const { runAsync, loading } = useRequest(roleList, { manual: true });
 
     return (
-        <WizardTable
-            columns={columns}
-            dataSource={data}
-            tableHeader={{
-                filterRadio: { options, value: 1 },
-                ProFilterSwitch: {
-                    trigger: <Switch />,
-                },
-                dowloadFile: {
-                    dowload_request: runAsync,
-                    loading,
-                },
-            }}
-        />
+        <>
+            <div className="mb-10">这个一个头部</div>
+            <WizardTable
+                key={'id'}
+                columns={columns}
+                tableHeader={{
+                    filterRadio: { options, defaultValue: 1 },
+                    ProFilterSwitch: {
+                        trigger: <Switch />,
+                    },
+                    dowloadFile: {
+                        dowload_request: runAsync,
+                        loading,
+                    },
+                }}
+                request={async (params, filter) => {
+                    const data = await getMockList({ ...params });
+                    return data;
+                    // console.log(data, 'data');
+                }}
+            />
+        </>
     );
 };
 

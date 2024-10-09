@@ -1,17 +1,17 @@
-import type { MenuProps } from "antd";
-import { Layout, Menu } from "antd";
-import { useEffect, useMemo } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useSafeState } from "ahooks";
+import type { MenuProps } from 'antd';
+import { Layout, Menu } from 'antd';
+import { useEffect, useMemo } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useSafeState } from 'ahooks';
 
-import routers from "./routers/routers";
-import { usePermissionsSlice } from "@/hooks";
+import routers from './routers/routers';
+import { usePermissionsSlice } from '@/hooks';
 
-import login_logo from "@/assets/compoments/login_logo.png";
-import header_text from "@/assets/login/header_text.png";
-import { SiderClose, SiderOpen } from "@/assets/compoments";
-import { UserCard } from "./UserCard";
-import { findFullPath, processMenu } from "@/utils";
+import login_logo from '@/assets/compoments/login_logo.png';
+import header_text from '@/assets/login/header_text.png';
+import { SiderClose, SiderOpen } from '@/assets/compoments';
+import { UserCard } from './UserCard';
+import { findFullPath, processMenu } from '@/utils';
 
 const { Header, Content, Sider } = Layout;
 
@@ -24,15 +24,15 @@ const AppLayout = () => {
 
     // 路由重定向
     useEffect(() => {
-        if (locations.pathname === "/") {
+        if (locations.pathname === '/') {
             const routesChildrenList = routers[0]?.children?.[0] ?? {};
-            const getRoutesPath = findFullPath(routesChildrenList).join("");
+            const getRoutesPath = findFullPath(routesChildrenList).join('');
             navigate(getRoutesPath);
         }
     }, [locations.pathname]);
 
     // 路由列表转换菜单
-    const items: MenuProps["items"] = useMemo(() => {
+    const items: MenuProps['items'] = useMemo(() => {
         const routesList = routers[0]?.children ?? [];
 
         const routerList = processMenu(routesList, collapsed, navigate);
@@ -50,7 +50,7 @@ const AppLayout = () => {
     return (
         <Layout hasSider className="h-full text-[14px]">
             <Sider
-                className="overflow-auto h-full fixed left-0 top-0 bottom-0 "
+                className="overflow-auto h-full left-0 top-0 bottom-0 "
                 width={collapsed ? 80 : 222} // 显式设置宽度
                 collapsible
                 collapsed={collapsed}
@@ -58,8 +58,8 @@ const AppLayout = () => {
                 theme="light"
             >
                 <div
-                    className={`flex justify-between items-center pl-3 pt-4 pr-2 pb-[10px] ${collapsed ? "flex-col h-[100px]" : "flex-row gap-4 h-[70px]"}`}
-                    style={{ borderBottom: "1px solid #E9EBED" }}
+                    className={`flex justify-between items-center pl-3 pt-4 pr-2 pb-[10px] ${collapsed ? 'flex-col h-[100px]' : 'flex-row gap-4 h-[70px]'}`}
+                    style={{ borderBottom: '1px solid #E9EBED' }}
                 >
                     <div className="flex items-center">
                         <img src={login_logo} className="w-10 h-10" />
@@ -84,9 +84,9 @@ const AppLayout = () => {
                     className="bg-[#F0F1F3]"
                     style={{
                         height: !collapsed
-                            ? "calc(100vh - 178px)"
-                            : "calc(100vh - 180px)",
-                        overflow: "auto",
+                            ? 'calc(100vh - 178px)'
+                            : 'calc(100vh - 180px)',
+                        overflow: 'auto',
                     }}
                     items={items}
                 />
@@ -110,7 +110,7 @@ const AppLayout = () => {
                     </span>
                 </Header>
                 {permissionsSlice.length > 0 && (
-                    <Content className="m-4 management-scroll overflow-y-auto">
+                    <Content id="wizard-scroll" className="m-4 overflow-y-auto">
                         <Outlet />
                     </Content>
                 )}
