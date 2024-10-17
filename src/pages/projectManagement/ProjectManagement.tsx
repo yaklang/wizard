@@ -1,13 +1,13 @@
 import { type FC } from 'react';
-import { Radio, Form, Input } from 'antd';
+import { Button, Radio } from 'antd';
 
 import { WizardTable } from '@/compoments';
 import { useRequest, useSafeState } from 'ahooks';
 import { roleList, getMockList } from '@/apis/account';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
+import { DetailDrawer } from './DetailDrawer';
 
 const { Group } = Radio;
-const { Item } = Form;
 
 interface DataType {
     key: string;
@@ -72,6 +72,11 @@ const ProjectManagement: FC = () => {
             dataIndex: 'id',
             fixed: 'right',
             width: 80,
+            // render: (value) => (
+            //     <Button type="link" onClick={() => console.log(value)}>
+            //         点击
+            //     </Button>
+            // ),
         },
     ];
 
@@ -98,22 +103,7 @@ const ProjectManagement: FC = () => {
                     />
                 ),
                 ProFilterSwitch: {
-                    trigger: (
-                        <div>
-                            <Item name="aaa" label="测试">
-                                <Input />
-                            </Item>
-                            <Item name={['bbb', 'ccc']} label="测试2">
-                                <Input />
-                            </Item>
-                            <Item name={['list', 0]} label="测试3">
-                                <Input />
-                            </Item>
-                            <Item name={['list', 1]} label="测试4">
-                                <Input />
-                            </Item>
-                        </div>
-                    ),
+                    trigger: <DetailDrawer />,
                 },
                 dowloadFile: {
                     dowload_request: runAsync,

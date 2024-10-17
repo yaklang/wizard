@@ -17,7 +17,6 @@ const initialValue = {
 
 // 计算可视区域高度
 const createCalcTableHeight = (wizardScrollHeight: number) => {
-    console.log(111);
     const wizardScrollDom = document.querySelector('#wizard-scroll');
     const wizardScrollRect = wizardScrollDom?.getBoundingClientRect() ?? {
         top: 0,

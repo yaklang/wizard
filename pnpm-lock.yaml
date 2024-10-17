@@ -15,8 +15,8 @@ importers:
         specifier: ^2.7.19
         version: 2.7.19(antd@5.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(rc-field-form@2.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       ahooks:
-        specifier: ^3.8.1
-        version: 3.8.1(react@18.3.1)
+        specifier: 3.8.0
+        version: 3.8.0(react@18.3.1)
       antd:
         specifier: ^5.21.2
         version: 5.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1026,8 +1026,8 @@ packages:
   add-dom-event-listener@1.1.0:
     resolution: {integrity: sha512-WCxx1ixHT0GQU9hb0KI/mhgRQhnU+U3GvwY6ZvVjYq8rsihIGoaIOUbY0yMPBxLH5MDtr0kz3fisWGNcbWW7Jw==}
 
-  ahooks@3.8.1:
-    resolution: {integrity: sha512-JoP9+/RWO7MnI/uSKdvQ8WB10Y3oo1PjLv+4Sv4Vpm19Z86VUMdXh+RhWvMGxZZs06sq2p0xVtFk8Oh5ZObsoA==}
+  ahooks@3.8.0:
+    resolution: {integrity: sha512-M01m+mxLRNNeJ/PCT3Fom26UyreTj6oMqJBetUrJnK4VNI5j6eMA543Xxo53OBXn6XibA2FXKcCCgrT6YCTtKQ==}
     engines: {node: '>=8.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -2039,9 +2039,8 @@ packages:
     resolution: {integrity: sha512-2yTgeWTWzMWkHu6Jp9NKgePDaYHbntiwvYuuJLbbN9vl7DC9DvXKOB2BC3ZZ92D3cvV/aflH0osDfwpHepQ53w==}
     hasBin: true
 
-  js-cookie@3.0.5:
-    resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
-    engines: {node: '>=14'}
+  js-cookie@2.2.1:
+    resolution: {integrity: sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -4332,12 +4331,12 @@ snapshots:
     dependencies:
       object-assign: 4.1.1
 
-  ahooks@3.8.1(react@18.3.1):
+  ahooks@3.8.0(react@18.3.1):
     dependencies:
       '@babel/runtime': 7.25.7
       dayjs: 1.11.13
       intersection-observer: 0.12.2
-      js-cookie: 3.0.5
+      js-cookie: 2.2.1
       lodash: 4.17.21
       react: 18.3.1
       react-fast-compare: 3.2.2
@@ -5553,7 +5552,7 @@ snapshots:
 
   jiti@1.21.6: {}
 
-  js-cookie@3.0.5: {}
+  js-cookie@2.2.1: {}
 
   js-tokens@4.0.0: {}
 

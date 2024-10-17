@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
-import { useSafeState, useUpdateEffect } from 'ahooks';
+import {
+    useDebounceFn,
+    useRequest,
+    useSafeState,
+    useUpdateEffect,
+} from 'ahooks';
 
 import useListenWidth from '@/hooks/useListenHeight';
 
@@ -29,23 +34,64 @@ const reducer = <T extends TRecudeInitiakValue>(state: T, payload: T): T => ({
 const WizardTable = <T extends AnyObject = AnyObject>(
     props: TWizardTableProps<T>,
 ) => {
+    const [state, dispatch] = useReducer(reducer, initialValue);
+    const { dataSource, params, filter } = state;
+
+    const { runAsync } = useRequest(
+        async (request) => {
+            const { pagemeta, data } = await request(params, filter);
+            // 分页时追加数据，筛选或初始化时直接替换数据
+            dispatch({
+                dataSource:
+                    pagemeta.page > 1
+                        ? (state.dataSource ?? []).concat(data ?? [])
+                        : (data ?? []),
+                pagemeta,
+            });
+        },
+        {
+            debounceWait: 500,
+            manual: true,
+            onSuccess: () => {
+                console.log(1);
+                dispatch({ loading: false });
+            },
+        },
+    );
+
+    // 接口请求执行体
+    const requestTable = useCallback(
+        async (request: RequestFunction) => {
+            if (
+                !request ||
+                (deepEqual(preFilter.current, filter) &&
+                    params?.page === lastPage.current)
+            )
+                return; // 检查是否已经发起过相同请求
+
+            lastPage.current = params!.page; // 更新 lastPage
+            preFilter.current = filter;
+
+            dispatch({ loading: true });
+            runAsync(request);
+        },
+        [params, filter],
+    );
+
     const { tableHeader, request, page } = props;
     const [wizardScrollHeight, wizardScrollWidth] =
         useListenWidth('wizard-scroll');
-    console.log(wizardScrollWidth, 'wizardScrollWidth');
+
     // 表格容器的 state, 用来保存计算得到的可滚动高度和表格高度
     const [height, setHeight] = useSafeState({
         tableHeight: 0,
         tableContainerHeight: 0,
         scrollHeight: 0,
     });
-    // 表格容器的 ref，用来控制滚动
-    const tableRef = useRef<HTMLDivElement>(null);
-
     const [scrollLeft, setScrollLeft] = useSafeState(0);
 
-    const [state, dispatch] = useReducer(reducer, initialValue);
-    const { dataSource, params, filter } = state;
+    // 表格容器的 ref，用来控制滚动
+    const tableRef = useRef<HTMLDivElement>(null);
 
     const lastPage = useRef(0); // 跟踪上次的 page，防止重复请求
     const preFilter = useRef(undefined); // 跟踪上次的 filter, 触发请求
@@ -113,38 +159,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             }
         }, 300);
     };
-
-    // 接口请求执行体
-    const requestTable = useCallback(
-        async (request: RequestFunction) => {
-            if (
-                !request ||
-                (deepEqual(preFilter.current, filter) &&
-                    params?.page === lastPage.current)
-            )
-                return; // 检查是否已经发起过相同请求
-
-            lastPage.current = params!.page; // 更新 lastPage
-            preFilter.current = filter;
-
-            dispatch({ loading: true });
-
-            try {
-                const { pagemeta, data } = await request(params, filter);
-                // 分页时追加数据，筛选或初始化时直接替换数据
-                dispatch({
-                    dataSource:
-                        pagemeta.page > 1
-                            ? (state.dataSource ?? []).concat(data ?? [])
-                            : (data ?? []),
-                    pagemeta,
-                });
-            } finally {
-                dispatch({ loading: false });
-            }
-        },
-        [params, filter],
-    );
 
     // 初始请求
     useEffect(() => {
@@ -252,59 +266,63 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     }, [state.loading, scrollLeft]);
 
     return (
-        <Spin spinning={state.loading && dataSource!.length === 0}>
-            <div className="flex w-full overflow-hidden justify-end">
-                {/* 表格部分 */}
-                <div
-                    id="table-container"
-                    ref={tableRef}
-                    className={`transition-all duration-500 w-full pt-4 pl-4 bg-[#fff] h-[${height.tableContainerHeight}px] relative`}
-                    style={{
-                        width: `${state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'}`,
+        <div className="flex w-full overflow-hidden justify-end">
+            {/* 表格部分 */}
+            <div
+                id="table-container"
+                ref={tableRef}
+                className={`transition-all duration-500 w-full pt-4 pl-4 bg-[#fff] h-[${height.tableContainerHeight}px] relative`}
+                style={{
+                    width: `${state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'}`,
+                }}
+            >
+                <WizardTableFilter
+                    props={{
+                        ...tableHeader,
+                        filterDispatch: dispatch,
+                        filterState: state,
                     }}
-                >
-                    <WizardTableFilter
-                        props={{
-                            ...tableHeader,
-                            filterDispatch: dispatch,
-                            filterState: state,
-                        }}
-                    />
+                />
 
-                    <Table
-                        {...props}
-                        dataSource={dataSource}
-                        columns={extendTableProps(
-                            dispatch,
-                            state,
-                            props.columns,
-                        )}
-                        bordered
-                        pagination={false}
-                        scroll={{
-                            x: 'max-content',
-                            y: height.tableHeight,
-                        }}
-                        onScroll={tableOnScrollFn}
-                        summary={() => bottomLoading}
-                    />
-                </div>
-                {/* 右侧抽屉 */}
-                <div
-                    className="transition-all duration-500 ease-in-out bg-gray-200 overflow-hidden"
-                    style={{
-                        width: state.proSwitchStatus ? '300px' : '0px',
+                <Table
+                    {...props}
+                    dataSource={dataSource}
+                    columns={extendTableProps(dispatch, state, props.columns)}
+                    bordered
+                    pagination={false}
+                    scroll={{
+                        x: 'max-content',
+                        y: height.tableHeight,
                     }}
-                >
-                    <WizardProFilterDrawer
-                        status={state}
-                        filterDispatch={dispatch}
-                        tableHeight={height.tableHeight}
-                        trigger={tableHeader?.ProFilterSwitch?.trigger}
-                    />
-                </div>
+                    onScroll={tableOnScrollFn}
+                    summary={() => bottomLoading}
+                    loading={state.loading && dataSource!.length === 0}
+                    onRow={(record) => {
+                        return {
+                            onClick: (event) => {
+                                console.log(event.target, 'event');
+                            }, // 点击行
+                            onDoubleClick: (event) => {},
+                            onContextMenu: (event) => {},
+                        };
+                    }}
+                />
             </div>
-        </Spin>
+            {/* 右侧抽屉 */}
+            <div
+                className="transition-all duration-500 ease-in-out bg-gray-200 overflow-hidden"
+                style={{
+                    width: state.proSwitchStatus ? '300px' : '0px',
+                }}
+            >
+                <WizardProFilterDrawer
+                    status={state}
+                    filterDispatch={dispatch}
+                    tableHeight={height.tableHeight}
+                    trigger={tableHeader?.ProFilterSwitch?.trigger}
+                />
+            </div>
+        </div>
     );
 };
 

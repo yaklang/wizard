@@ -48,7 +48,9 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
                 <div className="h-full pt-4 bg-white min-w-[300px]">
                     <div
                         className="h-11 p-4 flex items-center justify-between"
-                        style={{ borderBottom: '1px solid #EAECF3' }}
+                        style={{
+                            borderBottom: '1px solid #EAECF3',
+                        }}
                     >
                         <div>高级筛选</div>
                         <Switch
