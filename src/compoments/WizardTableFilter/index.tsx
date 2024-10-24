@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Switch } from 'antd';
+import { Input, Switch } from 'antd';
 
 import type { TWizardTableProps } from '../WizardTable/types';
 import WizardExport from '../WizardExportButton';
@@ -9,16 +9,19 @@ const WizardTableFilter: FC<{
     props: TWizardTableProps<AnyObject>['tableHeader'];
 }> = ({ props }) => {
     // 获取列表单选状态
-    const filterRadio = props?.filterRadio;
+    const tableHeaderGroup = props?.tableHeaderGroup;
 
     // 导出excel按钮props
-    const exprotExcel = props?.dowloadFile;
+    const exprotExcel = props?.options?.dowloadFile;
 
     // 获取高级筛选弹窗打开状态
-    const proFilterSwitch = props?.ProFilterSwitch;
+    const proFilterSwitch = props?.options?.ProFilterSwitch;
+
+    const tableoptionsSearch = props?.options?.optionsSearch;
 
     // 更改筛选事件
     const filterDispatch = props?.filterDispatch;
+
     // 筛选数据
     const filterState = props?.filterState;
 
@@ -32,7 +35,9 @@ const WizardTableFilter: FC<{
 
     return (
         <div className="w-full pb-3 flex justify-between table-header-filter pr-3 gap-2">
-            <>{filterRadio}</>
+            <div className="flex items-center font-bold text-xl">
+                {tableHeaderGroup}
+            </div>
 
             <div className="flex gap-2 items-center">
                 {exprotExcel && (
@@ -41,6 +46,26 @@ const WizardTableFilter: FC<{
                         loading={exprotExcel.loading}
                     />
                 )}
+
+                {tableoptionsSearch &&
+                    typeof tableoptionsSearch.key === 'string' && (
+                        <Input.Search
+                            onSearch={(e) => {
+                                filterDispatch &&
+                                    filterDispatch({
+                                        filter: {
+                                            ...filterState?.filter,
+                                            [tableoptionsSearch.key]: e,
+                                        },
+                                    });
+                            }}
+                            placeholder={
+                                tableoptionsSearch.placeholder ?? '请输入'
+                            }
+                        />
+                    )}
+
+                {props?.options?.trigger}
 
                 {proFilterSwitch?.trigger && !filterState?.proSwitchStatus && (
                     <div>

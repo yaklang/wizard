@@ -11,7 +11,8 @@ import login_logo from '@/assets/compoments/login_logo.png';
 import header_text from '@/assets/login/header_text.png';
 import { SiderClose, SiderOpen } from '@/assets/compoments';
 import { UserCard } from './UserCard';
-import { findFullPath, processMenu } from '@/utils';
+import { findFullPath, findPathNodes, processMenu } from '@/utils';
+import { LeftOutlined } from '@ant-design/icons';
 
 const { Header, Content, Sider } = Layout;
 
@@ -19,6 +20,9 @@ const AppLayout = () => {
     const locations = useLocation();
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useSafeState(false);
+    const [headerTitle, setHeaderTitle] = useSafeState<
+        Array<Record<'name' | 'path', string>> | undefined
+    >([]);
 
     const { permissionsSlice } = usePermissionsSlice();
 
@@ -26,16 +30,23 @@ const AppLayout = () => {
     useEffect(() => {
         if (locations.pathname === '/') {
             const routesChildrenList = routers[0]?.children?.[0] ?? {};
-            const getRoutesPath = findFullPath(routesChildrenList).join('');
+            const getRoutesPath = findFullPath(routesChildrenList)?.[0];
             navigate(getRoutesPath);
         }
     }, [locations.pathname]);
 
-    // 路由列表转换菜单
     const items: MenuProps['items'] = useMemo(() => {
         const routesList = routers[0]?.children ?? [];
 
+        // 路由列表转换菜单
         const routerList = processMenu(routesList, collapsed, navigate);
+
+        // 获取 layout Header 面包屑
+        const resultPathNodes = findPathNodes(locations.pathname, routesList);
+        const resultRouteList = resultPathNodes ? resultPathNodes.slice(1) : [];
+        setHeaderTitle(resultRouteList);
+
+        // setHeaderTitle(routers);
         // const filterRouterList = routerList?.filter((item) =>
         //   permissionsSlice?.find((prop) => item.keypath === prop)
         // );
@@ -46,6 +57,18 @@ const AppLayout = () => {
         // return filterRouterList;
         return routerList;
     }, [routers, collapsed, permissionsSlice, locations.pathname]);
+
+    // 超过二级路由点击时，获取2级路由作为key
+    const menuSelectedKeys = useMemo(() => {
+        const pathNameList = locations.pathname
+            .split('/')
+            .filter((it) => it !== '');
+        const resultSelectedKey =
+            pathNameList.length > 2
+                ? `/${pathNameList.slice(0, 2).join('/')}`
+                : `/${pathNameList.join('/')}`;
+        return resultSelectedKey;
+    }, [locations.pathname]);
 
     return (
         <Layout hasSider className="h-full text-[14px]">
@@ -80,7 +103,15 @@ const AppLayout = () => {
                 <Menu
                     theme="light"
                     mode="inline"
-                    selectedKeys={[locations.pathname]}
+                    selectedKeys={[menuSelectedKeys]}
+                    defaultOpenKeys={[
+                        `/${
+                            findPathNodes(
+                                locations.pathname,
+                                routers[0]?.children ?? [],
+                            )?.[0]?.path ?? ''
+                        }`,
+                    ]}
                     className="bg-[#F0F1F3]"
                     style={{
                         height: !collapsed
@@ -101,16 +132,41 @@ const AppLayout = () => {
             </Sider>
 
             <Layout className="h-full">
-                <Header className="bg-white flex items-center px-4 h-[70px]">
-                    <span className="text-5 font-semibold color-[#31343F] font-mono">
-                        任务列表
-                    </span>
+                <Header
+                    className="bg-white flex items-center px-4 h-[70px]"
+                    style={{ borderBottom: '1px solid #EAECF3' }}
+                >
+                    {headerTitle?.map((item, index) => {
+                        return index !== headerTitle.length - 1 && item ? (
+                            <span
+                                key={item.path}
+                                className="text-5 font-semibold color-[#b4bbcA] font-mono cursor-pointer"
+                                onClick={() => navigate(`/${item.path}`)}
+                            >
+                                <LeftOutlined className="color-[#31343F] mr-2 text-5" />
+                                {item.name}
+                            </span>
+                        ) : (
+                            <span
+                                className="text-5 font-semibold color-[#31343F] font-mono cursor-default"
+                                key={item.path}
+                            >
+                                {headerTitle.length > 1 && (
+                                    <span className="mx-1">/</span>
+                                )}
+                                <span>{item.name}</span>
+                            </span>
+                        );
+                    })}
                     <span className="ml-2 text-[14px] font-normal color-[#B4BBCA] font-mono">
                         分布式调度yaklang引擎，执行分布式脚本，获得结果
                     </span>
                 </Header>
                 {permissionsSlice.length > 0 && (
-                    <Content id="wizard-scroll" className="m-4 overflow-y-auto">
+                    <Content
+                        id="wizard-scroll"
+                        className="overflow-y-auto bg-[#FFF]"
+                    >
                         <Outlet />
                     </Content>
                 )}

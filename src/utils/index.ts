@@ -234,6 +234,7 @@ type ResultItem = {
     keypath: string;
     onClick?: ({ key }: { key: string }) => void;
     children?: ResultItem[];
+    hidden: boolean;
 };
 
 // routelist 节点key转换
@@ -250,6 +251,7 @@ const processMenu = (
             label: !collapsed ? (name ?? '') : '',
             icon,
             keypath: key ?? '',
+            hidden: false,
             onClick: ({ key }) => {
                 navigate(key);
             },
@@ -257,20 +259,22 @@ const processMenu = (
 
         if (children) {
             // 递归处理子菜单
-            result.children = children.map((child) => ({
-                key: `/${path}/${child.path}`, // 子路径
-                label: child.name ?? '',
-                icon: child.icon,
-                keypath: child.key ?? '',
-                onClick: ({ key }) => {
-                    navigate(key);
-                },
-            }));
+            result.children = children
+                .map((child: RouteObjectRootMy) => ({
+                    key: `/${path}/${child.path}`, // 子路径
+                    label: child.name ?? '', // 确保 child 的类型和 name 的可选性
+                    icon: null,
+                    keypath: child.key ?? '',
+                    onClick: ({ key }: { key: string }) => {
+                        navigate(key);
+                    },
+                    hidden: child?.hidden ?? false,
+                }))
+                .filter((it) => !it.hidden);
         }
 
         // 将结果推入累积数组
-        const routesList = [...acc, result];
-        return routesList;
+        return [...acc, result];
     }, []);
 };
 
@@ -287,19 +291,62 @@ const getPathArray = (fullPath: string): string[] => {
 const findFullPath = (
     menu: RouteObjectRootMy,
     parentPath: string = '',
+    depth: number = 1, // 控制递归深度
 ): string[] => {
-    const currentPath = `${parentPath}/${menu.path}`; // 拼接父路径和当前路径
+    const currentPath = `${parentPath}/${menu.path}`; // 拼接路径
 
-    if (menu.children) {
-        // 如果有子菜单，递归处理每个子菜单项
+    if (menu.children && depth < 2) {
+        // 限制递归到第二层
         return menu.children.reduce<string[]>((acc, child) => {
-            const childPaths = findFullPath(child, currentPath); // 递归处理子菜单项
-            return acc.concat(childPaths); // 将子菜单路径添加到结果数组中
+            const childPaths = findFullPath(child, currentPath, depth + 1); // 递归处理子菜单项，增加深度
+            return acc.concat(childPaths);
         }, []);
     }
 
-    // 如果没有子菜单，返回当前路径
     return [currentPath];
+};
+
+// 根据路径筛选并生成相应的节点信息
+const findPathNodes = (
+    targetPath: string,
+    routes: RouteObjectRootMy[],
+    parentPath: string = '',
+): { name: string; path: string }[] | null => {
+    targetPath = targetPath.replace(/^\/+|\/+$/g, '');
+
+    for (const route of routes) {
+        // 拼接当前路径
+        const currentPath = [parentPath, route.path]
+            .filter(Boolean)
+            .join('/')
+            .replace(/^\/+|\/+$/g, '');
+
+        // 正则处理动态参数匹配，例如 `detail/:id` 匹配 `detail/206`
+        const pathRegex = new RegExp(
+            `^${currentPath.replace(/:\w+/g, '[^/]+')}$`,
+        );
+        if (pathRegex.test(targetPath)) {
+            // 找到目标路径时，返回当前路径的所有祖先节点和目标节点
+            return [{ name: route.name ?? '', path: currentPath }];
+        }
+
+        if (route.children) {
+            const childResult = findPathNodes(
+                targetPath,
+                route.children,
+                currentPath,
+            );
+            if (childResult) {
+                // 找到子节点路径，将当前节点添加到结果前
+                return [
+                    { name: route.name ?? '', path: currentPath },
+                    ...childResult,
+                ];
+            }
+        }
+    }
+
+    return null;
 };
 
 export {
@@ -308,4 +355,5 @@ export {
     getPathArray,
     findFullPath,
     deepEqual,
+    findPathNodes,
 };

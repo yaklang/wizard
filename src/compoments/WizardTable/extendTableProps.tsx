@@ -1,4 +1,4 @@
-import React, { Dispatch, Key, useEffect, useRef } from 'react';
+import React, { Dispatch, useEffect } from 'react';
 import { match, P } from 'ts-pattern';
 
 import Tooltip from '../WizardTooltip';
@@ -8,11 +8,10 @@ import {
     WizardColumnsType,
 } from './types';
 import { Checkbox, Input, Popover, Radio } from 'antd';
-import { useSafeState, useUpdate, useUpdateEffect } from 'ahooks';
+import { useSafeState, useUpdateEffect } from 'ahooks';
 import { TableHeaderFilter, TableHeaderSearch } from '@/assets/compoments';
 import { ColumnType } from 'antd/es/table';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { GetRowKey } from 'antd/es/table/interface';
 
 const CheckboxGroup = Checkbox.Group;
 
@@ -20,31 +19,17 @@ type Text = string | undefined | null;
 
 // 判断两个对象中相同的 key 的值是否不同
 const areValuesDifferent = (
-    a: Record<string, any>,
-    b: Record<string, any>,
+    firstObject: Record<string, any>,
+    secondObject: Record<string, any>,
 ): boolean => {
-    const commonKeys = Object.keys(a).filter((key) => key in b); // 找到两个对象的共同key
+    const allKeys = new Set([
+        ...Object.keys(firstObject),
+        ...Object.keys(secondObject),
+    ]);
 
-    return commonKeys.some((key) => a[key] !== b[key]); // 如果有任何值不同，返回 true
-};
-
-const getSearchResultDefault = (
-    columns: Array<Record<string, any>>,
-): Record<string, any> => {
-    return columns
-        .map((it) =>
-            typeof it.wizardColumnsType === 'string'
-                ? (it.key ?? it.dataIndex)
-                : undefined,
-        )
-        .filter((key): key is string => key !== undefined) // 过滤掉 undefined
-        .reduce(
-            (acc, key) => {
-                acc[key] = undefined; // 默认值设置为 undefined
-                return acc;
-            },
-            {} as Record<string, any>,
-        );
+    return Array.from(allKeys).some(
+        (key) => firstObject[key] !== secondObject[key],
+    );
 };
 
 // 对table组件的columns进行自定义扩展
@@ -57,7 +42,6 @@ const extendTableProps = (
     const [search, setSearch] = useSafeState<Record<string, any>>({});
     const [open, setOpen] = useSafeState<Record<string, boolean>>();
     const [selectedRowKeys, setSelectedRowKeys] = useSafeState<React.Key[]>([]);
-    const selectKeyRef = useRef<string>('');
 
     useEffect(() => {
         // 获取存在 wizardColumnsType 存在的字段
@@ -69,19 +53,22 @@ const extendTableProps = (
                         : undefined,
                 )
                 .filter((key): key is string => key !== undefined) ?? []; // 过滤掉 undefined
-
-        // 将获取的 wizardColumnsTypes 默认值设置为undefined
-        const searchResult = columns ? getSearchResultDefault(columns) : {};
+        // 将获取的 valueKeys 默认值设置为 undefined 或来自 state.filter 的值
+        const searchResult = valueKeys.reduce(
+            (acc, key) => {
+                acc[key] = key in state.filter ? state.filter[key] : undefined; // 优先取 state.filter 中的值
+                return acc;
+            },
+            {} as Record<string, any>,
+        );
 
         dispatch({
-            filter: {
-                ...state.filter,
-                ...searchResult,
-            },
+            getExternal: searchResult,
         });
         setSearch(searchResult);
 
-        const resultOpen = valueKeys.reduce<Record<string, boolean>>(
+        // 筛选框打开状态
+        const resultOpen = valueKeys?.reduce<Record<string, boolean>>(
             (acc, key) => {
                 acc[key] = false;
                 return acc;
@@ -94,34 +81,27 @@ const extendTableProps = (
     // table header 关闭监听事件
     useUpdateEffect(() => {
         // 获取 table header 值是否为相同
-        const different = areValuesDifferent(state.filter, search);
+        const different =
+            state?.getExternal && areValuesDifferent(state.getExternal, search);
         // 获取 table header 是否为全部关闭状态
         const resultPopoverStatus =
             open && Object.values(open).some((value) => value === true)
                 ? false
                 : true;
+
         resultPopoverStatus &&
             different &&
             dispatch({
                 params: {
                     page: 1,
                     limit: state.params!.limit,
+                    total: state.pagemeta!.total,
+                    total_page: state.pagemeta!.total_page,
                 },
                 filter: { ...state.filter, ...search },
+                getExternal: { ...state.getExternal, ...search },
             });
     }, [open]);
-
-    useUpdateEffect(() => {
-        const searchResult = columns ? getSearchResultDefault(columns) : {};
-
-        setSearch(searchResult);
-        dispatch({
-            filter: {
-                ...state.filter,
-                ...searchResult,
-            },
-        });
-    }, [state?.getExternal]);
 
     // 处理单个复选框的变化
     const handleCheckboxChange = (record: any, e: CheckboxChangeEvent) => {
@@ -145,22 +125,25 @@ const extendTableProps = (
         setSelectedRowKeys(newSelectedRowKeys);
     };
 
+    // 更新筛选条件
+    const updataRequestFilter = () => {
+        dispatch({
+            params: {
+                page: 1,
+                limit: state.params!.limit,
+                total: state.pagemeta!.total,
+                total_page: state.pagemeta!.total_page,
+            },
+            filter: { ...state.filter, ...search },
+            getExternal: { ...search },
+        });
+    };
     const newColumns = columns?.map((column) => {
         // tablehead 筛选类型
         const { columnsHeaderFilterType, rowSelection, title } = column;
         const { wizardColumnsOptions } = column;
 
         const selectKeys = column?.dataIndex;
-
-        const updataRequestFilter = () => {
-            dispatch({
-                params: {
-                    page: 1,
-                    limit: state.params!.limit,
-                },
-                filter: { ...state.filter, ...search },
-            });
-        };
 
         // table 勾选组件渲染
         const rowSelectionFn = (
@@ -209,14 +192,22 @@ const extendTableProps = (
         ) => {
             return match(text)
                 .with(P.nullish, '', () => (
-                    <div className="flex ">
+                    <div className="flex-auto">
                         {rowSelectionFn(handleCheckboxChange, 'alone', record)}
-                        <div>-</div>
+                        {column.render ? (
+                            (column.render(
+                                text,
+                                record,
+                                index,
+                            ) as React.ReactNode)
+                        ) : (
+                            <div>-</div>
+                        )}
                     </div>
                 )) // 如果 text 是 undefined, null 或者 ''
                 .otherwise((text) =>
                     column.render ? (
-                        <div className="flex ">
+                        <div className="flex-auto">
                             {rowSelectionFn(
                                 handleCheckboxChange,
                                 'alone',
@@ -232,7 +223,7 @@ const extendTableProps = (
                         </div>
                     ) : (
                         <Tooltip enable={text.length > 36} title={text}>
-                            <div className="flex ">
+                            <div className="flex-auto">
                                 {rowSelectionFn(
                                     handleCheckboxChange,
                                     'alone',
@@ -246,31 +237,48 @@ const extendTableProps = (
         };
 
         // 重置
-        const headReset = (selectKeys: string) => {
+        const headReset = async (selectKeys: string) => {
             setSearch((value) => ({
                 ...value,
                 [selectKeys]: undefined,
             }));
-            state.filter?.[selectKeys] !== undefined &&
+            if (state.filter?.[selectKeys] !== undefined) {
                 dispatch({
+                    params: {
+                        page: 1,
+                        limit: state.params!.limit,
+                        total: state.pagemeta!.total,
+                        total_page: state.pagemeta!.total_page,
+                    },
                     filter: {
                         ...state.filter,
                         [selectKeys]: undefined,
                     },
+                    getExternal: {
+                        ...state.getExternal,
+                        [selectKeys]: undefined,
+                    },
                 });
+            } else {
+                return;
+            }
         };
 
         // 确定搜索事件
         const haedSubmit = () => {
             // 获取 table header 值是否为相同
-            const different = areValuesDifferent(state.filter, search);
+            const different =
+                state?.getExternal &&
+                areValuesDifferent(state.getExternal, search);
             different && updataRequestFilter();
         };
 
         // 输入框搜索事件
         const handlePressEnter = () => {
             // 获取 table header 值是否为相同
-            const different = areValuesDifferent(state.filter, search);
+            const different =
+                state?.getExternal &&
+                areValuesDifferent(state.getExternal, search);
             different && updataRequestFilter();
         };
 
@@ -287,7 +295,7 @@ const extendTableProps = (
         const getColumnSearchProps = (
             wizardTableType?: WizardColumnsType,
         ): ColumnType<Record<string, any>> => ({
-            filterDropdown: <></>,
+            filterDropdown: wizardTableType ? <></> : null,
 
             filterIcon: (filtered: boolean) => {
                 return (
@@ -297,11 +305,10 @@ const extendTableProps = (
                         title={null}
                         trigger="click"
                         open={open?.[selectKeys]}
-                        onOpenChange={() => {
-                            selectKeyRef.current = selectKeys;
+                        onOpenChange={(isVisible) => {
                             setOpen((value) => ({
                                 ...value,
-                                [selectKeys]: !value?.[selectKeys],
+                                [selectKeys]: isVisible,
                             }));
                         }}
                         overlayInnerStyle={{
@@ -317,15 +324,15 @@ const extendTableProps = (
                                             <Input
                                                 placeholder={`请输入`}
                                                 value={search[selectKeys]}
-                                                onChange={(e) =>
+                                                onChange={(e) => {
                                                     setSearch((val) => {
                                                         return {
                                                             ...val,
                                                             [selectKeys]:
                                                                 e.target.value,
                                                         };
-                                                    })
-                                                }
+                                                    });
+                                                }}
                                                 onPressEnter={handlePressEnter}
                                                 style={{
                                                     marginBottom: 8,
@@ -374,6 +381,7 @@ const extendTableProps = (
                                                 onChange={(e) => {
                                                     const value =
                                                         e.target.value;
+
                                                     setSearch(
                                                         (searchValue) => ({
                                                             ...searchValue,
@@ -431,7 +439,6 @@ const extendTableProps = (
             ...getColumnSearchProps(columnsHeaderFilterType),
         };
     });
-
     return newColumns ?? [];
 };
 

@@ -1,28 +1,29 @@
-// import { loginAsync, outLoginAsync } from "@/apis/login/login";
-// import type { LoginRequest } from "@/apis/login/types";
-import { login } from '@/apis/account';
+import { postLogin } from '@/apis/login';
+import { PostRequestAuth } from '@/apis/login/types';
 import { create } from 'zustand';
 
 interface LoginStore {
-    userInfo: any;
+    userInfo: Partial<PostRequestAuth['user_info']>;
     token: string;
     login: (param: any) => Promise<void>;
     outLogin: () => Promise<void>;
 }
 
 const useLoginStore = create<LoginStore>()((set) => ({
-    userInfo: JSON.parse(String(localStorage.getItem('userInfo'))) || {},
+    userInfo: JSON?.parse(String(localStorage?.getItem('userInfo'))) || {},
     token: localStorage.getItem('token') || '',
     login: async (param) => {
-        await login(param).then((res: any) => {
-            if (res?.token) {
-                // localStorage.setItem('userInfo', JSON.stringify(data));
-                localStorage.setItem('token', res?.token);
+        await postLogin(param).then((res) => {
+            const { data } = res;
+            const { token, user_info } = data;
+            if (token) {
+                localStorage.setItem('userInfo', JSON.stringify(user_info));
+                localStorage.setItem('token', token);
             }
 
             set({
-                // userInfo: { ...data },
-                token: res?.token,
+                userInfo: { ...user_info },
+                token: token,
             });
         });
     },

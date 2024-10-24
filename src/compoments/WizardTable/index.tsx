@@ -42,18 +42,21 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         async (requests) => {
             dispatch({ loading: true });
             try {
-                const { pagemeta, data } = !state.loading
-                    ? await requests(params, filter)
-                    : (manualReq.current = true);
-                // 分页时追加数据，筛选或初始化时直接替换数据
+                if (!state.loading) {
+                    const data = await requests(params, filter);
+                    const { list, pagemeta } = data;
+                    dispatch({
+                        dataSource:
+                            pagemeta?.page > 1
+                                ? (state.dataSource ?? []).concat(list ?? [])
+                                : (list ?? []),
+                        pagemeta,
+                    });
+                } else {
+                    manualReq.current = true;
+                }
 
-                dispatch({
-                    dataSource:
-                        pagemeta?.page > 1
-                            ? (state.dataSource ?? []).concat(data ?? [])
-                            : (data ?? []),
-                    pagemeta,
-                });
+                // 分页时追加数据，筛选或初始化时直接替换数据
             } finally {
                 if (manualReq.current) {
                     manualReq.current = false;
@@ -84,21 +87,19 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
             lastPage.current = params!.page; // 更新 lastPage
             preFilter.current = filter;
+
             await runAsync(request);
         },
-        [params, filter, state.getExternal],
+        [params, filter],
     );
 
-    const [wizardScrollHeight, wizardScrollWidth] =
-        useListenWidth('wizard-scroll');
+    const [wizardScrollHeight] = useListenWidth('wizard-scroll');
 
     // 表格容器的 state, 用来保存计算得到的可滚动高度和表格高度
     const [height, setHeight] = useSafeState({
         tableHeight: 0,
         tableContainerHeight: 0,
-        scrollHeight: 0,
     });
-    const [scrollLeft, setScrollLeft] = useSafeState(0);
 
     // 表格容器的 ref，用来控制滚动
     const tableRef = useRef<HTMLDivElement>(null);
@@ -116,25 +117,34 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 数据源更新后执行
     useEffect(() => {
-        if (dataSource && dataSource.length > 0 && tableRef.current) {
+        const pagemeta = state.pagemeta;
+        const pagemetaStatus =
+            (pagemeta?.page ?? 0) * (pagemeta?.limit ?? 0) >=
+            (pagemeta?.total ?? 1);
+        if (
+            dataSource &&
+            dataSource.length > 0 &&
+            tableRef.current &&
+            !pagemetaStatus
+        ) {
             // 获取表格 DOM 节点
             const tableElement = tableRef.current.querySelector(
                 '.ant-table-body > table',
             );
-            if (tableElement) {
+            if (tableElement && !state.loading) {
                 const scrollHeight = tableElement.scrollHeight;
                 scrollHeight < height.tableHeight &&
-                    !state.loading &&
                     dispatch({
                         params: {
                             limit: params!.limit,
-                            page: params!.page + 1,
+                            page: state.pagemeta!.page + 1,
+                            total: pagemeta!.total,
+                            total_page: pagemeta!.total_page,
                         },
                     });
-                height.scrollHeight = scrollHeight;
             }
         }
-    }, [dataSource]);
+    }, [dataSource, height.tableHeight]);
 
     // 当筛选项变化时，重置分页、滚动条回到顶部，并请求新数据
     useUpdateEffect(() => {
@@ -143,16 +153,13 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 表格滚动函数
     const tableOnScrollFn = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
-        const { scrollTop, scrollHeight, clientHeight, scrollLeft } =
-            e.currentTarget;
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
         const { params, pagemeta } = state;
         const hasMore = params!.limit * params!.page >= pagemeta!.total;
 
         const scrollBottomBoolean =
             scrollTop + clientHeight >= scrollHeight - 100;
-
-        setScrollLeft(scrollLeft);
 
         if (
             scrollBottomBoolean &&
@@ -165,6 +172,8 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 params: {
                     limit: params!.limit,
                     page: (pagemeta?.page ?? 0) + 1,
+                    total: pagemeta!.total,
+                    total_page: pagemeta!.total_page,
                 },
             });
         }
@@ -192,7 +201,12 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     page.refresh = async () => {
         handClearFilter();
         dispatch({
-            params: { page: 1, limit: state.params!.limit },
+            params: {
+                page: 1,
+                limit: state.params!.limit,
+                total: state.pagemeta!.total,
+                total_page: state.pagemeta!.total_page,
+            },
         });
     };
 
@@ -200,9 +214,14 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     page.onLoad = async (arg) => {
         await handClearFilter();
         dispatch({
-            params: { page: 1, limit: state.params!.limit },
-            filter: { ...arg },
-            getExternal: { ...arg },
+            params: {
+                page: 1,
+                limit: state.params!.limit,
+                total: state.pagemeta!.total,
+                total_page: state.pagemeta!.total_page,
+            },
+            filter: { ...filter, ...arg },
+            // externalParameters: {...arg}
         });
     };
 
@@ -215,7 +234,12 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     page.clear = () => {
         handClearFilter();
         dispatch({
-            params: { page: 1, limit: state.params!.limit },
+            params: {
+                page: 1,
+                limit: state.params!.limit,
+                total: state.pagemeta!.total,
+                total_page: state.pagemeta!.total_page,
+            },
             filter: {},
         });
     };
@@ -228,7 +252,8 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             (pagemeta?.page ?? 0) * (pagemeta?.limit ?? 0) >=
             (pagemeta?.total ?? 1);
 
-        const width = wizardScrollWidth - 32;
+        const width =
+            (tableRef.current?.getBoundingClientRect().width ?? 0) - 108;
 
         return (
             <>
@@ -243,6 +268,18 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                             }
                         >
                             <div className="min-h-[24px]">
+                                {pagemetaStatus &&
+                                    dataSource!.length !== 0 &&
+                                    !state.loading && (
+                                        <div
+                                            className={`color-[#777] whitespace-nowrap sticky left-0 text-center`}
+                                            style={{
+                                                width: width + 'px',
+                                            }}
+                                        >
+                                            已获取完毕所有数据
+                                        </div>
+                                    )}
                                 {status && (
                                     <div
                                         className={`color-[#777] whitespace-nowrap sticky left-0 text-center`}
@@ -257,25 +294,13 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                                         加载中...
                                     </div>
                                 )}
-                                {pagemetaStatus &&
-                                    dataSource!.length !== 0 &&
-                                    !state.loading && (
-                                        <div
-                                            className={`color-[#777] whitespace-nowrap sticky left-0 text-center`}
-                                            style={{
-                                                width: width + 'px',
-                                            }}
-                                        >
-                                            已获取完毕所有数据
-                                        </div>
-                                    )}
                             </div>
                         </Table.Summary.Cell>
                     </Table.Summary.Row>
                 </Table.Summary>
             </>
         );
-    }, [state.loading, scrollLeft]);
+    }, [state.loading]);
 
     return (
         <div className="flex w-full overflow-hidden justify-end">
@@ -283,9 +308,11 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             <div
                 id="table-container"
                 ref={tableRef}
-                className={`transition-all duration-500 w-full pt-4 pl-4 bg-[#fff] h-[${height.tableContainerHeight}px] relative`}
+                className={`transition-all duration-500 w-full p-4 bg-[#fff] h-[${height.tableContainerHeight}px] relative`}
                 style={{
-                    width: `${state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'}`,
+                    width: `${
+                        state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'
+                    }`,
                 }}
             >
                 <WizardTableFilter
@@ -308,7 +335,9 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     bordered
                     pagination={false}
                     scroll={{
-                        x: 'max-content',
+                        x:
+                            (tableRef.current?.getBoundingClientRect().width ??
+                                0) - 72,
                         y: height.tableHeight - 12,
                     }}
                     onScroll={tableOnScrollFn}
@@ -327,7 +356,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     status={state}
                     filterDispatch={dispatch}
                     tableHeight={height.tableHeight}
-                    trigger={tableHeader?.ProFilterSwitch?.trigger}
+                    trigger={tableHeader?.options?.ProFilterSwitch?.trigger}
                 />
             </div>
         </div>

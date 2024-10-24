@@ -12,7 +12,7 @@ type WizardColumnsType = 'input' | 'radio' | 'checkbox';
 
 // 定义 wizardColumnsOptions 的类型
 interface WizardColumnRadioOptions {
-    label: string;
+    label: string | number;
     value: string | number;
 }
 
@@ -30,7 +30,7 @@ type ExtendedColumnType<T> = ColumnType<T> & {
           }
         | {
               columnsHeaderFilterType?: 'checkbox'; // 组合框，必需 wizardColumnsOptions
-              wizardColumnsOptions: Array<string | number>;
+              wizardColumnsOptions: WizardColumnRadioOptions[];
           }
     );
 
@@ -49,23 +49,42 @@ interface TWizardTableHeader extends SwitchProps {
 
 // table请求
 type RequestFunction = (
-    params?: {
+    params: {
         limit: number;
         page: number;
+        total: number;
+        total_page: number;
     },
     filter?: Record<string, any>,
-) => Promise<any>;
+) => Promise<{
+    list: any[];
+    pagemeta: {
+        limit: number;
+        page: number;
+        total: number;
+        total_page: number;
+    };
+}>;
 
 // 导出按钮组件props
 interface TWizardExportProps extends ButtonProps {
     dowload_request: () => Promise<any>;
 }
 
+type TableHeaderOptions = {
+    ProFilterSwitch: TWizardTableHeader;
+    dowloadFile: TWizardExportProps;
+    optionsSearch: {
+        key: string;
+        placeholder?: string;
+    };
+    trigger: ReactNode;
+};
+
 interface TWizardTableProps<T = AnyObject> extends CreateTableProps<T> {
     tableHeader?: {
-        filterRadio?: ReactNode;
-        ProFilterSwitch?: TWizardTableHeader;
-        dowloadFile?: TWizardExportProps;
+        tableHeaderGroup?: ReactNode;
+        options?: Partial<TableHeaderOptions>;
         filterDispatch?: Dispatch<TRecudeInitiakValue>;
         filterState?: TRecudeInitiakValue;
     };

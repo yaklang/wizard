@@ -6,10 +6,9 @@ import useLoginStore from '@/App/store/loginStore';
 // 请求头标识
 // export const REQUEST_SOURCE = 'management';
 
-const successCode = 200;
-const noAuthCode = 401;
-// const accountDisabled = 20003
-const roleLoseEfficacy = 20001;
+const successCode = 200; // 成功
+const noAuthCode = 401; // 登陆过期
+const roleLoseEfficacy = 20001; // 权限实效  目前可以暂时不用
 
 const axios = Axios.create({
     headers: {
@@ -41,10 +40,10 @@ axios.interceptors.response.use(
     (response: AxiosResponse) => {
         const { data } = response;
         const store = useLoginStore.getState();
-        return response.data;
         if (data?.code !== successCode) {
             switch (data?.code) {
                 case noAuthCode:
+                    message.destroy();
                     message.error('登录已过期');
                     store.outLogin();
                     throw console.error('登录已过期');
@@ -63,9 +62,8 @@ axios.interceptors.response.use(
                     }
                     throw console.error('登录已过期');
                 default:
-                    message.error(
-                        data?.message ?? '请求错误,请检查网络后重试sss',
-                    );
+                    message.destroy();
+                    message.error(data?.message ?? '请求错误,请检查网络后重试');
                     throw console.error(
                         data?.message ?? '请求错误,请检查网络后重试',
                     );
@@ -79,9 +77,11 @@ axios.interceptors.response.use(
         if (!response) {
             return Promise.reject(error);
         }
+        message.destroy();
         message.error('请求错误,请检查网络后重试');
 
         return Promise.reject(response.data);
     },
 );
+
 export default axios;

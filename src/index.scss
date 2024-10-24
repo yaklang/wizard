@@ -60,14 +60,6 @@ li {
     margin: 0;
 }
 
-.text-overflow-3 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box; //作为弹性伸缩盒子模型显示。
-    -webkit-box-orient: vertical; //设置伸缩盒子的子元素排列方式--从上到下垂直排列
-    -webkit-line-clamp: 3; //显示的行
-}
-
 // Table内容顶部对齐
 .table-vertical-top-row {
     vertical-align: top;
@@ -83,13 +75,30 @@ li {
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+}
+
+.text-clip2 {
+    word-break: break-all;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
 }
 
+.text-overflow-3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box; //作为弹性伸缩盒子模型显示。
+    -webkit-box-orient: vertical; //设置伸缩盒子的子元素排列方式--从上到下垂直排列
+    -webkit-line-clamp: 3; //显示的行
+}
+
 .ant-form{
     .ant-form-item{
-        // margin-bottom: 16px;
+        margin-bottom: 16px;
         .ant-form-item-control-input{
             min-height: 0px;
         }
@@ -100,4 +109,12 @@ li {
     .ant-layout-sider-children{
         background-color: #F0F1F3;
     }
+}
+
+.ant-modal-close {
+    top: 6px;
+}
+
+.ant-collapse-header{
+    padding: 0px !important;
 }

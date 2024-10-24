@@ -26,10 +26,10 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
             filterDispatch &&
                 filterDispatch({
                     filter: { ...state?.filter, ...fieldsValue },
-                    params: {
-                        limit: state!.params!.limit,
-                        page: 1,
-                    },
+                    // params: {
+                    //     limit: state!.params!.limit,
+                    //     page: 1,
+                    // },
                     pagemeta: {
                         limit: state!.pagemeta!.limit,
                         total: state!.pagemeta!.total,

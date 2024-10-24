@@ -2,6 +2,8 @@ const initialValue = {
     params: {
         limit: 10,
         page: 1,
+        total: 1,
+        total_page: 1,
     },
     filter: {},
     dataSource: [],
@@ -39,16 +41,15 @@ const createCalcTableHeight = (wizardScrollHeight: number) => {
         document.querySelector('.table-header-filter')?.getBoundingClientRect()
             ?.height ?? 0;
 
-    const antTableHeaderHeight =
-        document.querySelector('.ant-table-header')?.getBoundingClientRect()
-            ?.height ?? 0;
-
+    // const antTableHeaderHeight =
+    //     document.querySelector('.ant-table-header')?.getBoundingClientRect()
+    //         ?.height ?? 0;
     const calcWizardTableHeight =
         wizardScrollHeight -
         heightAboveChild -
         tableHeaderFilterHeight -
-        antTableHeaderHeight -
-        36;
+        // antTableHeaderHeight -
+        72;
     const calcWizardTableContainerHeight =
         wizardScrollHeight - heightAboveChild;
     return { calcWizardTableHeight, calcWizardTableContainerHeight };

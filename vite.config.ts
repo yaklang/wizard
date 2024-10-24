@@ -21,9 +21,9 @@ export default defineConfig({
         // port: 8082,
         proxy: {
             '/api': {
-                target: 'http://legion-4g.yaklang.com:8080/',
+                // target: 'http://legion-4g.yaklang.com:8080/',
                 // 高鹏本地
-                // target: 'http://192.168.3.3:8082/',
+                target: 'http://192.168.3.3:8082/',
                 changeOrigin: true,
             },
         },
@@ -36,13 +36,13 @@ export default defineConfig({
 
 // rewrite: (path) => path,
 // .replace(/^\/api/, ''),
-// bypass(req, res, options) {
+// bypass: (req, res, options) => {
 //     const proxyUrl =
 //         new URL(
 //             options?.rewrite(req.url) || '',
 //             options.target as string,
 //         ).href || '';
-//     console.log(proxyUrl);
+//     console.log(proxyUrl, 'xxx');
 //     req.headers['x-req-proxyUrl'] = proxyUrl;
 //     res.setHeader('x-res-proxyUrl', proxyUrl);
 // },

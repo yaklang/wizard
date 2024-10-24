@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Input, message } from 'antd';
-import { useSafeState } from 'ahooks';
+import { Button, Card, Form, Input, message, Spin } from 'antd';
+import { useRequest } from 'ahooks';
 import useLoginStore from '@/App/store/loginStore';
 import permissionsSliceFn from '@/App/store/powerStore';
 import { LoginIcon } from '@/assets/menu';
-import { WizardCaptcha } from '@/compoments';
 import login_logo from '@/assets/compoments/login_logo.png';
 import login_background from '@/assets/login/login_background.png';
+import { getCaptcha, postVerifyCaptcha } from '@/apis/login';
 interface FieldType {
     username: string;
     password: string;
@@ -21,19 +21,47 @@ const Login = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
 
-    const [captcha, setCaptcha] = useSafeState<string | undefined>();
-    const [generateCaptchaFn, setGenerateCaptchaFn] =
-        useSafeState<() => void | undefined>();
-
     const { login, token } = useLoginStore((state) => state);
     const { updatePower } = permissionsSliceFn();
+
+    // 获取验证码
+    const { data, run, loading } = useRequest(
+        async () => {
+            const { data } = await getCaptcha();
+            return data;
+        },
+        { manual: true },
+    );
+
+    // 校验验证码
+    const { run: verifyCaptchaRun } = useRequest(postVerifyCaptcha, {
+        manual: true,
+        onError: (err) => {
+            message.destroy();
+            message.error(err.message ?? '验证码错误');
+            run();
+        },
+        onSuccess: async () => {
+            const formValues = form.getFieldsValue();
+            loginFn(formValues);
+        },
+    });
 
     useEffect(() => {
         // 登录限制，如果有token，并且token未过期，就不能打开login页
         if (token) {
-            navigate('/projectManagem ent');
+            navigate('/');
+        } else {
+            run();
         }
     }, []);
+
+    const loginFn = async (values: FieldType) => {
+        await login(values);
+        await updatePower();
+        navigate('/');
+        message.success('登陆成功');
+    };
 
     // 登录
     const onFinish = async (values: FieldType): Promise<void> => {
@@ -46,17 +74,10 @@ const Login = () => {
                 verificationCode.replace(/[A-Za-z]/g, (char) =>
                     char.toLowerCase(),
                 );
-            if (captcha === toLowerCaseVerificationCode) {
-                await login(values);
-                await updatePower();
-                navigate('/');
-                message.success('登陆成功');
-            } else {
-                form.setFieldValue('verificationCode', undefined);
-                setCaptcha(undefined);
-                generateCaptchaFn && generateCaptchaFn();
-                message.error('验证码错误');
-            }
+            await verifyCaptchaRun({
+                captcha_id: data!.captcha_id,
+                code: toLowerCaseVerificationCode,
+            });
         } catch (err) {
             console.error(err);
         }
@@ -76,6 +97,7 @@ const Login = () => {
                         <img src={login_logo} className="w-10 h-10" />
                         <div className="font-YouSheBiaoTiHei text-[25px] font-normal color=[#31343F]">
                             分布式平台
+                            <div></div>
                         </div>
                     </div>
                 </div>
@@ -135,6 +157,10 @@ const Login = () => {
                                         required: true,
                                         message: '请输入验证码',
                                     },
+                                    {
+                                        min: 4,
+                                        message: '验证码格式不正确',
+                                    },
                                 ]}
                             >
                                 <Input
@@ -144,13 +170,18 @@ const Login = () => {
                                 />
                             </Item>
                             <div className="absolute right-3 top-2.5">
-                                <WizardCaptcha
-                                    onChange={(e) => {
-                                        setCaptcha(e);
-                                    }}
-                                    value={captcha}
-                                    onGenerateCaptcha={setGenerateCaptchaFn}
-                                />
+                                {!loading ? (
+                                    <img
+                                        className="cursor-pointer"
+                                        onClick={() => run()}
+                                        src={`data:image/png;base64,${data?.master_image_base64}`}
+                                    />
+                                ) : (
+                                    <Spin
+                                        spinning={loading}
+                                        className="translate-y-1"
+                                    ></Spin>
+                                )}
                             </div>
                         </div>
                         <Item noStyle>

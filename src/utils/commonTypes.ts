@@ -20,11 +20,13 @@ export interface TableRequestParam<T> {
 }
 // 表格数据响应标准模版
 export interface TableResponseData<T> {
-    currPage: number;
     list: T[];
-    pageSize: number;
-    totalCount: number;
-    totalPage: number;
+    pagemeta: {
+        limit: number;
+        page: number;
+        total: number;
+        total_page: number;
+    };
 }
 
 // 查询项目详情
