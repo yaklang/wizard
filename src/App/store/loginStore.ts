@@ -28,7 +28,6 @@ const useLoginStore = create<LoginStore>()((set) => ({
         });
     },
     outLogin: async () => {
-        // await outLoginAsync();
         localStorage.clear();
         set({ userInfo: {}, token: '' });
     },

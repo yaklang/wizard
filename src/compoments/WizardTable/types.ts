@@ -19,6 +19,8 @@ interface WizardColumnRadioOptions {
 type ExtendedColumnType<T> = ColumnType<T> & {
     columnsHeaderFilterType?: WizardColumnsType;
     rowSelection?: 'checkbox';
+    rowSelectKeys?: Record<string, Array<any>>;
+    onSelectChange?: (rowSelectKeys: Record<string, Array<any>>) => void;
 } & (
         | {
               columnsHeaderFilterType?: 'radio'; // 单选框，必需 wizardColumnsOptions
@@ -37,10 +39,16 @@ type ExtendedColumnType<T> = ColumnType<T> & {
 // 定义 CreateTableProps，扩展 columns 属性
 type CreateTableProps<T> = Omit<
     TableProps<T>,
-    'bordered' | 'pagination' | 'dataSource' | 'columns' | 'rowSelection'
+    | 'bordered'
+    | 'pagination'
+    | 'dataSource'
+    | 'columns'
+    | 'rowSelection'
+    | 'rowKey'
 > & {
     // 此处因传递key给我时，处理 render 的回调入参只存在record和key参数，不存在text, 我无法处理，所以我拒绝使用key
     columns: Omit<ExtendedColumnType<T>, 'key'>[];
+    rowKey: string;
 };
 
 interface TWizardTableHeader extends SwitchProps {
@@ -54,6 +62,8 @@ type RequestFunction = (
         page: number;
         total: number;
         total_page: number;
+        order?: string;
+        order_by?: string;
     },
     filter?: Record<string, any>,
 ) => Promise<{
@@ -63,6 +73,8 @@ type RequestFunction = (
         page: number;
         total: number;
         total_page: number;
+        order?: string;
+        order_by?: string;
     };
 }>;
 
@@ -84,6 +96,7 @@ type TableHeaderOptions = {
 interface TWizardTableProps<T = AnyObject> extends CreateTableProps<T> {
     tableHeader?: {
         tableHeaderGroup?: ReactNode;
+        title?: string | ReactNode;
         options?: Partial<TableHeaderOptions>;
         filterDispatch?: Dispatch<TRecudeInitiakValue>;
         filterState?: TRecudeInitiakValue;

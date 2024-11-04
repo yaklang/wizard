@@ -6,6 +6,7 @@ import { usePermissionsSlice } from '@/hooks';
 import { Button, Popover } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useSafeState } from 'ahooks';
+import { useNavigate } from 'react-router-dom';
 
 /**
  *
@@ -14,6 +15,7 @@ import { useSafeState } from 'ahooks';
  */
 const UserCard: FC<{ collapsed: boolean }> = ({ collapsed }) => {
     const [open, setOpen] = useSafeState(false);
+    const navigate = useNavigate();
 
     // 个人登录信息下拉菜单
     const { outLogin, userInfo } = useLoginStore((state) => state);
@@ -21,6 +23,7 @@ const UserCard: FC<{ collapsed: boolean }> = ({ collapsed }) => {
 
     const handleOutLogin = () => {
         outLogin();
+        navigate('/login', { replace: true });
         clearPower();
     };
 

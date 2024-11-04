@@ -1,19 +1,25 @@
-import { FC, useRef } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 
-import styles from './index.module.scss';
+import { useRequest, useSafeState } from 'ahooks';
+
+import { WizardModal } from '@/compoments';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { StartUpScriptModal } from './compoment/StartUpScriptModal';
-import { TaskScriptTags } from './compoment/TaskScriptTags';
-import { useRequest } from 'ahooks';
-import { getAnalysisScript, getScriptTaskGroup } from '@/apis/task';
-import { EmptyBox, WizardModal } from '@/compoments';
-import { Spin } from 'antd';
+import styles from '../../TaskScript/index.module.scss';
+import { TaskScriptTags } from '@/pages/TaskScript/compoment/TaskScriptTags';
+import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 
-const TaskScript: FC = () => {
+import { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import { getScriptTaskGroup } from '@/apis/task';
+
+const CreateTaskScriptModal = forwardRef<UseModalRefType>(({}, ref) => {
     const [model1] = WizardModal.useModal();
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
 
     const itemsRef = useRef();
+
+    const [scriptData, setScriptData] = useSafeState<
+        TGetAnalysisScriptReponse[]
+    >([]);
 
     // 获取 启动脚本任务 任务组参数
     const { run: runAsync } = useRequest(
@@ -42,21 +48,22 @@ const TaskScript: FC = () => {
         },
     );
 
-    // 获取脚本列表
-    const { loading: scriptLoading, data: scriptData } = useRequest(
-        async () => {
-            const result = await getAnalysisScript();
-            const {
-                data: { list },
-            } = result;
-            return list;
+    useImperativeHandle(ref, () => ({
+        open(scriptData: TGetAnalysisScriptReponse[]) {
+            setScriptData(scriptData);
+            model1.open();
         },
-    );
+    }));
 
     return (
-        <div className="p-4 h-full">
-            {Array.isArray(scriptData) && scriptData.length > 0 ? (
-                <Spin spinning={scriptLoading}>
+        <>
+            <WizardModal
+                footer={null}
+                width={'55%'}
+                modal={model1}
+                title="选择脚本"
+            >
+                <div className="pb-2 px-6 overflow-auto max-h-[75vh]">
                     <div className="grid grid-cols-3 gap-4">
                         {scriptData?.map((items) => {
                             return (
@@ -99,13 +106,15 @@ const TaskScript: FC = () => {
                             );
                         })}
                     </div>
-                </Spin>
-            ) : (
-                <EmptyBox />
-            )}
-            <StartUpScriptModal ref={StartUpScriptModalRef} title="创建任务" />
-        </div>
+                </div>
+            </WizardModal>
+            {/* 添加任务 */}
+            <StartUpScriptModal
+                ref={StartUpScriptModalRef}
+                title={'创建任务'}
+            />
+        </>
     );
-};
+});
 
-export { TaskScript };
+export { CreateTaskScriptModal };

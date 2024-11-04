@@ -36,9 +36,10 @@ const Login = () => {
     // 校验验证码
     const { run: verifyCaptchaRun } = useRequest(postVerifyCaptcha, {
         manual: true,
-        onError: (err) => {
+        onError: () => {
             message.destroy();
-            message.error(err.message ?? '验证码错误');
+            message.error('验证码错误');
+            form.setFieldValue('verificationCode', undefined);
             run();
         },
         onSuccess: async () => {

@@ -5,9 +5,16 @@ import type {
     TableResponseData,
 } from '@/utils/commonTypes';
 import type {
+    StopOnRunTsakResponse,
     TaskGrounpResponse,
     TaskListRequest,
     TaskListResponse,
+    TGetAnalysisScriptReponse,
+    TNodeListRequest,
+    TPostRpcQueryYakPluginsParams,
+    TPostRpcQueryYakPluginsRequest,
+    TPostRpcQueryYakPluginsRequestTable,
+    TPostTaskStartRequest,
     TTaskGroupResponse,
 } from './types';
 
@@ -28,9 +35,27 @@ const getScriptTaskGroup = (): Promise<
     );
 
 // 执行普通 / 定时任务
-const postTaskRun = (task_id: string): Promise<ResponseData<any>> =>
-    axios.post<never, ResponseData<any>>(
-        `/task/start/batch-invoking-script/run?task_id=${task_id}`,
+const getTaskRun = (
+    params: StopOnRunTsakResponse,
+): Promise<ResponseData<TaskListRequest>> =>
+    axios.get<never, ResponseData<TaskListRequest>>(
+        `/task/start/batch-invoking-script/run`,
+        { params },
+    );
+
+// 取消执行普通 / 定时任务
+const getTaskStop = (
+    params: StopOnRunTsakResponse,
+): Promise<ResponseData<TaskListRequest>> =>
+    axios.get<never, ResponseData<TaskListRequest>>(
+        `/task/stop/batch-invoking-script-task`,
+        { params },
+    );
+
+// 删除普通/定时任务
+const deleteTask = (id: number): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>(
+        `/task/start/batch-invoking-script-task?id=${id}`,
     );
 
 // 获取 task table list 执行节点
@@ -58,10 +83,78 @@ const deleteTaskGroup = (
         data: params,
     });
 
+// 获取脚本列表
+const getAnalysisScript = (params?: {
+    script_name: string;
+}): Promise<ResponseData<TableResponseData<TGetAnalysisScriptReponse>>> =>
+    axios.get<
+        never,
+        ResponseData<TableResponseData<TGetAnalysisScriptReponse>>
+    >('/threat/analysis/script', { params });
+
+// 添加删除 脚本列表 标签
+const postAnalysisScript = (
+    data: Partial<{
+        script_name: string;
+        tags: string[];
+    }>,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>('/threat/analysis/script ', data);
+
+//  获取 创建脚本任务 执行节点列表
+const getNodeList = (): Promise<
+    ResponseData<TableResponseData<TNodeListRequest>>
+> =>
+    axios.get<never, ResponseData<TableResponseData<TNodeListRequest>>>(
+        '/node?limit=1000&node_type=scanner&alive=true',
+    );
+
+// 获取插件列表
+const postRpcQueryYakPlugins = (
+    data: TPostRpcQueryYakPluginsParams,
+): Promise<
+    ResponseData<
+        TPostRpcQueryYakPluginsRequestTable<TPostRpcQueryYakPluginsRequest[]>
+    >
+> =>
+    axios.post<
+        never,
+        ResponseData<
+            TPostRpcQueryYakPluginsRequestTable<
+                TPostRpcQueryYakPluginsRequest[]
+            >
+        >
+    >('/node/scanner/rpc/query-yak-plugins', data);
+
+// 创建 脚本任务
+const postTaskStart = (
+    data: TPostTaskStartRequest,
+): Promise<ResponseData<boolean>> =>
+    axios.put<never, ResponseData<boolean>>(
+        '/task/start/batch-invoking-script/run',
+        data,
+    );
+
+// 任务列表 编辑回显
+const getTaskStartEditDispaly = (
+    id: string,
+): Promise<ResponseData<TableResponseData<any>>> =>
+    axios.get<never, ResponseData<TableResponseData<any>>>(
+        `/task/start/batch-invoking-script-task/fetch?id=${id}`,
+    );
+
 export {
     getScriptTaskGroup,
     postTaskGrounp,
     deleteTaskGroup,
     getBatchInvokingScriptTaskNode,
-    postTaskRun,
+    getTaskRun,
+    getTaskStop,
+    deleteTask,
+    getAnalysisScript,
+    postAnalysisScript,
+    getNodeList,
+    postTaskStart,
+    postRpcQueryYakPlugins,
+    getTaskStartEditDispaly,
 };

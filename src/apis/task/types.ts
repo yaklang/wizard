@@ -19,32 +19,17 @@ type TaskListResponse = Partial<{
     task_type: 1 | 2 | 3;
 }>;
 
-type Param = {
-    explain: string;
-    key: string;
-    value: string;
-};
-
 // 任务列表相应数据
 type TaskListRequest = Partial<{
     created_at: number;
     id: number;
-    updated_at: number;
-    task_id: string;
-    enable_sched: boolean;
-    interval_seconds: number;
-    concurrent: number;
-    is_disabled: string;
-    is_enable: boolean;
-    param_files?: any;
-    params: Param[];
     scanner: string[];
-    script_content: string;
-    script_id: string;
-    script_name: string;
-    script_type: string;
     task_group: string;
+    task_id: string;
     status: TTaskListStatus;
+    uodated_at: number;
+    start_at: number;
+    end_at: number;
 }>;
 
 // 任务分组相应数据
@@ -58,11 +43,122 @@ type TTaskGroupResponse = {
     new_group_name?: string;
 };
 
+// 执行/取消 普通和定时任务请求参数
+type StopOnRunTsakResponse = { task_id: number; task_type: number };
+
+type Prompt_arg = {
+    explain: string;
+    key: string;
+    value: string;
+};
+
+type TGetAnalysisScriptReponse = Partial<{
+    description: string;
+    disallow_scheduled: boolean;
+    prompt_args: Prompt_arg[];
+    script_type: string;
+    tags: string[];
+    script_name: string;
+}>;
+
+type TNodeListRequest = Partial<{
+    created_at: number;
+    id: number;
+    updated_at: number;
+    all_user: string;
+    cpu_percent: number;
+    external_ip: string;
+    go_arch: string;
+    go_os: string;
+    host_id: string;
+    hostname: string;
+    ip_address: string[];
+    last_updated_timestamp: number;
+    mac_address: string[];
+    main_addr: string;
+    main_mac: string;
+    memory_percent: number;
+    network_download: number;
+    network_upload: number;
+    node_id: string;
+    node_token: string;
+    node_type: string;
+    runtime_task_list?: any;
+    task_running: number;
+    version: string;
+}>;
+
+type TPromptArgs = Partial<{
+    target: string;
+    'preset-protes': string[];
+    ports: string;
+    'enable-brute': boolean;
+    'enbale-cve-baseline': boolean;
+    execution_node: number;
+    plugins: string;
+    'scheduling-type': number;
+    timestamp: string[];
+    interval_seconds: string;
+    interval_seconds_type: number;
+}>;
+
+type TPostTaskStartRequest = Partial<{
+    task_id: string;
+    task_group: string;
+    script_type: string;
+    prompt_args: TPromptArgs;
+    scanner: string[];
+    first: boolean;
+}>;
+
+type Pagination = {
+    page: number;
+    limit: number;
+    order_by: string;
+    order: string;
+};
+
+type TPostRpcQueryYakPluginsParams = Partial<{
+    pagination: Pagination;
+    nodes_id: string[];
+    exclude_types: string[];
+    keyword: string;
+    groups: string[];
+}>;
+
+type TPostRpcQueryYakPluginsRequest = Partial<{
+    CreatedAt: number;
+    Id: number;
+    Params: any;
+    ScriptName: string;
+    Type: string;
+}>;
+
+type TPostRpcQueryYakPluginsRequestTable<T> = {
+    list: T;
+    groups: string[];
+    pagemeta: {
+        limit: number;
+        page: number;
+        total: number;
+        total_page: number;
+        order: string;
+        order_by: string;
+    };
+};
+
 export type {
     TaskGrounpResponse,
     TTaskGroupResponse,
     TaskListResponse,
     TaskListRequest,
+    StopOnRunTsakResponse,
+    TGetAnalysisScriptReponse,
+    TNodeListRequest,
+    TPostTaskStartRequest,
+    TPostRpcQueryYakPluginsParams,
+    TPostRpcQueryYakPluginsRequest,
+    TPostRpcQueryYakPluginsRequestTable,
 };
 
 export { TTaskListStatus };

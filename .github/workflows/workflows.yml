@@ -1,0 +1,58 @@
+name: Build and Deploy
+
+on:
+    push:
+        # branches:
+        #     - 'feat/*'
+        tags:
+            - 'v*'
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+              with:
+                  persist-credentials: false
+
+            # 安装 Node.js 和 pnpm
+            - name: Install Node.js 22.7
+              run: |
+                  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+                  source ~/.nvm/nvm.sh
+                  nvm install 22.7
+                  nvm use 22.7
+                  node -v  # 验证 Node 版本
+
+            - name: Install pnpm 9.9
+              run: |
+                  npm install -g pnpm@9.9
+                  pnpm -v  # 验证 pnpm 版本
+
+            # 安装依赖并构建项目
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build project
+              run: pnpm build
+
+            # 调试：列出 src 目录结构
+            - name: List files in src directory
+              run: ls -R src
+
+            # 静态文件压缩
+            - name: Pack output files
+              if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+              run: tar -zcvf out.tgz dist
+
+            - name: Upload Build Artifact
+              if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+              uses: actions/upload-artifact@v3
+              with:
+                  name: build-output
+                  path: out.tgz
+
+            # 清理缓存（可选步骤）
+            - name: Clean pnpm cache
+              run: pnpm store prune

@@ -1,0 +1,51 @@
+.tools-list-wrapper {
+    overflow-y: overlay;
+    flex: 1;
+    .tools-list-item {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 10px 8px;
+        border-top: 1px solid #EAECF3;
+        transition: all 0.3s ease; /* 添加动画 */
+        min-height: 49px;
+        .tools-list-operate {
+            display: none;
+            transition: display 0.3s ease; /* 可选：如果动画库支持 display 的过渡 */
+        }
+        
+        &:last-child {
+            border-bottom: 1px solid #EAECF3;
+        }
+        
+        &:hover {
+            border-color: transparent;
+            border-radius: 8px;
+            background-color: #f8f8f8;
+
+            & + .tools-list-item {
+                border-top-color: transparent;
+            }
+
+            .tools-list-count {
+                display: none;
+            }
+
+            .tools-list-operate {
+                display: block; /* 显示时的过渡效果 */
+            }
+        }
+    }
+
+    .tools-list-click {
+        border-color: transparent;
+        border-radius: 8px;
+        background-color: #4A94F8 !important;
+        color: #fff;
+        transition: all 0.3s ease; /* 点击时添加过渡效果 */
+
+        & + .tools-list-item {
+            border-top-color: transparent;
+        }
+    }
+}

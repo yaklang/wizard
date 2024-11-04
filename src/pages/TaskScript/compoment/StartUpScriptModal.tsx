@@ -1,6 +1,5 @@
-import { WizardModal } from '@/compoments';
+import { ChunkUpload, WizardModal } from '@/compoments';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { PlusOutlined } from '@ant-design/icons';
 import {
     Button,
     Space,
@@ -10,133 +9,71 @@ import {
     Input,
     Radio,
     Select,
+    Checkbox,
+    Popover,
+    Switch,
+    message,
 } from 'antd';
 import { CollapseProps } from 'antd/lib';
 import { forwardRef, useImperativeHandle } from 'react';
 import { match } from 'ts-pattern';
 import { NodeCard } from './NodeCard';
+import { AddPlugins } from './AddPlugins';
+import { useRequest, useSafeState } from 'ahooks';
+import { generateUniqueId, randomString } from '@/utils';
+import dayjs from 'dayjs';
+import {
+    PresetPorts,
+    presetProtsGroupOptions,
+    scriptTypeOptions,
+} from '../data';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { getNodeList, postTaskStart } from '@/apis/task';
+import { TPostTaskStartRequest } from '@/apis/task/types';
 
 const { Item } = Form;
 const { RangePicker } = DatePicker;
 const { Compact } = Space;
 
-export const CardList = [
-    {
-        name: '节点一',
-        size: 10,
-        date: '2',
-    },
-    {
-        name: '节点二',
-        size: 10,
-        date: '2',
-    },
-    {
-        name: '节点三',
-        size: 10,
-        date: '2',
-    },
-    {
-        name: '节点四',
-        size: 10,
-        date: '2',
-    },
-    {
-        name: '节点五',
-        size: 10,
-        date: '2',
-    },
-    {
-        name: '节点六',
-        size: 10,
-        date: '2',
-    },
-    {
-        name: '节点七',
-        size: 10,
-        date: '2',
-    },
-];
+export type TScannerDataList = {
+    name?: string;
+    size?: number;
+    date: string | number;
+}[];
 
 const schedulingTypeFn = (type: 1 | 2 | 3) => {
-    const ExecutionNodeItems = (
-        <>
-            <Item
-                name="execution_node"
-                label={<div className="min-w-[112px]">执行节点</div>}
-                initialValue={1}
-            >
-                <Radio.Group
-                    className="h-8 flex items-center"
-                    options={[
-                        { value: 1, label: '手动分配' },
-                        { value: 2, label: '智能分配' },
-                    ]}
-                />
-            </Item>
-            <Item dependencies={['execution_node']}>
-                {({ getFieldValue }) => {
-                    const executionNodeValue = getFieldValue('execution_node');
-                    return executionNodeValue === 1 && CardList.length <= 6 ? (
-                        <Item name="node_card" noStyle>
-                            <NodeCard list={CardList} />
-                        </Item>
-                    ) : (
-                        <Item
-                            name="node_card"
-                            label={
-                                <div className="min-w-[112px]">节点选择</div>
-                            }
-                        >
-                            <Select
-                                mode="multiple"
-                                allowClear
-                                style={{ width: '100%' }}
-                                placeholder="请选择节点"
-                                optionRender={(option) => {
-                                    return (
-                                        <Space>
-                                            {option.data.value}
-                                            （当前任务量{option.data.size}）
-                                        </Space>
-                                    );
-                                }}
-                                options={CardList.map((it) => ({
-                                    label: it.name,
-                                    value: it.name,
-                                    size: it.size,
-                                }))}
-                            />
-                        </Item>
-                    );
-                }}
-            </Item>
-        </>
-    );
     return match(type)
         .with(1, () => {
-            return <>{ExecutionNodeItems}</>;
+            return null;
         })
         .with(2, () => {
             return (
-                <>
-                    <Item
-                        name="execution_date"
-                        label={<div className="min-w-[112px]">执行时间</div>}
-                    >
-                        <DatePicker
-                            className="w-full"
-                            format={'YYYY-MM-DD HH:mm'}
-                        />
-                    </Item>
-                    {ExecutionNodeItems}
-                </>
+                <Item
+                    name={['params', 'execution_date']}
+                    label={<div className="min-w-[112px]">执行时间</div>}
+                >
+                    <DatePicker
+                        className="w-full"
+                        format={'YYYY-MM-DD HH:mm'}
+                    />
+                </Item>
             );
         })
         .with(3, () => {
             return (
                 <>
-                    <Item name="date_scope" label="设定周期时间范围">
+                    <Item
+                        label={
+                            <div className="min-w-[112px]">第一次是否执行</div>
+                        }
+                        name={'first'}
+                    >
+                        <Switch />
+                    </Item>
+                    <Item
+                        name={['params', 'timestamp']}
+                        label="设定周期时间范围"
+                    >
                         <RangePicker
                             className="w-full"
                             showTime={{ format: 'HH:mm' }}
@@ -145,13 +82,16 @@ const schedulingTypeFn = (type: 1 | 2 | 3) => {
                     </Item>
                     <Item label={<div className="min-w-[112px]">执行周期</div>}>
                         <Compact block={true}>
-                            <Item name={['address', 'province']} noStyle>
+                            <Item name={['params', 'interval_seconds']} noStyle>
                                 <Input
                                     placeholder="请输入..."
                                     style={{ width: '150%' }}
                                 />
                             </Item>
-                            <Item name={['address', 'street']} noStyle>
+                            <Item
+                                name={['params', 'interval_seconds_type']}
+                                noStyle
+                            >
                                 <Select
                                     placeholder="请选择"
                                     options={[
@@ -170,7 +110,11 @@ const schedulingTypeFn = (type: 1 | 2 | 3) => {
         .exhaustive();
 };
 
-const items: CollapseProps['items'] = [
+const items = (
+    scriptTypeValue: '端口与漏洞扫描' | '敏感信息',
+    scriptGroupList: { value: string; label: string }[],
+    scannerDataList?: TScannerDataList,
+): CollapseProps['items'] => [
     {
         key: '1',
         label: '基本信息',
@@ -183,29 +127,50 @@ const items: CollapseProps['items'] = [
             <div>
                 <Item
                     label={<div className="min-w-[112px]">任务名称</div>}
-                    name={'name'}
+                    name={'task_id'}
                 >
                     <Input placeholder="请输入..." />
                 </Item>
                 <Item
-                    label={<div className="min-w-[112px]">任务组</div>}
-                    name={'group_task'}
+                    className="ml-8"
+                    label="所属任务组"
+                    name={'task_group'}
+                    rules={[{ message: '请选择所属任务组', required: true }]}
                 >
-                    <Select placeholder="请选择..." />
+                    <Select placeholder="请选择..." options={scriptGroupList} />
+                </Item>
+                <Item
+                    label={<div className="min-w-[112px]">脚本类型</div>}
+                    name={'script_type'}
+                >
+                    <Select options={scriptTypeOptions} disabled={true} />
                 </Item>
             </div>
         ),
         extra: (
-            <Button
-                color="danger"
-                variant="link"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    console.log(111);
+            <Item dependencies={[]} noStyle>
+                {({ setFieldValue }) => {
+                    return (
+                        <Button
+                            color="danger"
+                            variant="link"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const firstItemKeys = [
+                                    'task_id',
+                                    'task_group',
+                                    'script_typ',
+                                ];
+                                firstItemKeys.forEach((val) =>
+                                    setFieldValue(val, undefined),
+                                );
+                            }}
+                        >
+                            重置
+                        </Button>
+                    );
                 }}
-            >
-                重置
-            </Button>
+            </Item>
         ),
     },
     {
@@ -218,48 +183,371 @@ const items: CollapseProps['items'] = [
         },
         children: (
             <div>
+                <Item noStyle name={['param_files', 'value']} />
+
+                <Item dependencies={[]} noStyle>
+                    {({ setFieldValue }) => {
+                        return (
+                            <Item
+                                className={`${scriptTypeValue === '端口与漏洞扫描' ? 'ml-11' : 'ml-15'}`}
+                                label={
+                                    <div className="max-w-full">
+                                        {scriptTypeValue === '端口与漏洞扫描'
+                                            ? '扫描目标'
+                                            : '关键词'}
+                                    </div>
+                                }
+                                name={[
+                                    'params',
+                                    scriptTypeValue === '端口与漏洞扫描'
+                                        ? 'target'
+                                        : 'gsil_keyword',
+                                ]}
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: '请输入或上传扫描目标',
+                                    },
+                                ]}
+                                extra={
+                                    <div className="flex items-center font-normal text-xs color-[#85899E]">
+                                        可将TXT、Excel文件拖入框内或
+                                        <ChunkUpload
+                                            url="/material/files"
+                                            chunkSize={2}
+                                            accept=".txt"
+                                            maxCount={1}
+                                            onChange={(fileName) => {
+                                                setFieldValue(
+                                                    [
+                                                        'params',
+                                                        scriptTypeValue ===
+                                                        '端口与漏洞扫描'
+                                                            ? 'target'
+                                                            : 'gsil_keyword',
+                                                    ],
+                                                    fileName,
+                                                );
+                                                setFieldValue(
+                                                    ['param_files', 'value'],
+                                                    generateUniqueId(),
+                                                );
+                                            }}
+                                        >
+                                            <Button type="link">
+                                                点击此处
+                                            </Button>
+                                        </ChunkUpload>
+                                        上传
+                                    </div>
+                                }
+                            >
+                                <ChunkUpload
+                                    url="/material/files"
+                                    chunkSize={2}
+                                    accept=".txt"
+                                    childrenType={'textArea'}
+                                    encryptionKey={['param_files', 'value']}
+                                    setFieldValue={setFieldValue}
+                                    maxCount={1}
+                                    onChange={(fileName) => {
+                                        setFieldValue(
+                                            [
+                                                'params',
+                                                scriptTypeValue ===
+                                                '端口与漏洞扫描'
+                                                    ? 'target'
+                                                    : 'gsil_keyword',
+                                            ],
+                                            fileName,
+                                        );
+                                    }}
+                                />
+                            </Item>
+                        );
+                    }}
+                </Item>
+
+                {scriptTypeValue === '端口与漏洞扫描' && (
+                    <Item
+                        name={['params', 'preset-protes']}
+                        label={
+                            <div className="min-w-[112px] max-w-full">
+                                预设端口
+                            </div>
+                        }
+                    >
+                        <Checkbox.Group options={presetProtsGroupOptions} />
+                    </Item>
+                )}
+
+                {scriptTypeValue === '端口与漏洞扫描' && (
+                    <Item noStyle dependencies={[['params', 'preset-protes']]}>
+                        {({ getFieldValue, setFieldsValue }) => {
+                            const presetProtesValue:
+                                | Array<keyof typeof PresetPorts>
+                                | undefined = getFieldValue([
+                                'params',
+                                'preset-protes',
+                            ]);
+
+                            // 确保只在 presetProtesValue 有值时才设置
+                            if (presetProtesValue) {
+                                setFieldsValue({
+                                    ['params']: {
+                                        ...getFieldValue(['params']),
+                                        ports: presetProtesValue
+                                            .map((it) => PresetPorts?.[it])
+                                            .join(),
+                                    },
+                                });
+                            }
+
+                            return (
+                                <Item
+                                    name={['params', 'ports']}
+                                    label={
+                                        <span>
+                                            扫描端口
+                                            <Popover
+                                                content={
+                                                    '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
+                                                }
+                                                trigger="hover"
+                                            >
+                                                <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                            </Popover>
+                                        </span>
+                                    }
+                                    rules={[
+                                        {
+                                            message: '请输入扫描端口',
+                                            required: true,
+                                        },
+                                    ]}
+                                    className="ml-6"
+                                >
+                                    <Input.TextArea
+                                        placeholder="请输入扫描目标"
+                                        style={{ width: '100%' }}
+                                        rows={4}
+                                    />
+                                </Item>
+                            );
+                        }}
+                    </Item>
+                )}
+
+                {scriptTypeValue === '端口与漏洞扫描' && (
+                    <Item
+                        label={
+                            <span>
+                                弱口令
+                                <Popover
+                                    content={'是否启用弱口令检测'}
+                                    trigger="hover"
+                                >
+                                    <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                </Popover>
+                            </span>
+                        }
+                        name={['params', 'enable-brute']}
+                        className="ml-[48px]"
+                    >
+                        <Switch />
+                    </Item>
+                )}
+
+                {scriptTypeValue === '端口与漏洞扫描' && (
+                    <Item
+                        label={
+                            <span>
+                                CVE基线检查
+                                <Popover
+                                    content={'是否启用CVE基线检查'}
+                                    trigger="hover"
+                                >
+                                    <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                </Popover>
+                            </span>
+                        }
+                        name={['params', 'enbale-cve-baseline']}
+                        className="ml-2"
+                    >
+                        <Switch />
+                    </Item>
+                )}
+
                 <Item
-                    label={<div className="min-w-[112px]">扫描目标</div>}
-                    name={'name'}
-                    extra={
-                        <div className="font-normal text-xs color-[#85899E]">
-                            可将TXT、Excel文件拖入框内或
-                            <Button type="link">点击此处</Button>上传
-                        </div>
-                    }
+                    name={['params', 'execution_node']}
+                    label={<div className="min-w-[112px]">执行节点</div>}
+                    initialValue={1}
                 >
-                    <Input.TextArea
-                        placeholder="请输入扫描目标，多个目标用“英文逗号”或换行分割"
-                        rows={4}
+                    <Radio.Group
+                        className="h-8 flex items-center"
+                        options={[
+                            { value: 1, label: '手动分配' },
+                            { value: 2, label: '智能分配' },
+                        ]}
                     />
                 </Item>
-                <Item
-                    label={<div className="min-w-[112px]">额外参数</div>}
-                    name={'group_task'}
-                >
-                    <Select placeholder="请选择..." />
+
+                <Item dependencies={[['params', 'execution_node']]} noStyle>
+                    {({ getFieldValue, setFieldValue }) => {
+                        const executionNodeValue = getFieldValue([
+                            'params',
+                            'execution_node',
+                        ]);
+
+                        executionNodeValue === 2 &&
+                            setFieldValue('scanner', undefined);
+
+                        return (
+                            executionNodeValue === 1 &&
+                            (scannerDataList && scannerDataList?.length > 6 ? (
+                                <Item
+                                    name="scanner"
+                                    label={
+                                        <div className="min-w-[112px]">
+                                            节点选择
+                                        </div>
+                                    }
+                                    initialValue={[scannerDataList?.[0]?.name]}
+                                >
+                                    <Select
+                                        mode="multiple"
+                                        allowClear
+                                        style={{ width: '100%' }}
+                                        placeholder="请选择节点"
+                                        optionRender={(option) => {
+                                            return (
+                                                <Space>
+                                                    {option.data.value}
+                                                    （当前任务量
+                                                    {option.data.size}）
+                                                </Space>
+                                            );
+                                        }}
+                                        options={
+                                            Array.isArray(scannerDataList)
+                                                ? scannerDataList?.map(
+                                                      (it) => ({
+                                                          label: it?.name,
+                                                          value: it?.name,
+                                                          size: it?.size,
+                                                      }),
+                                                  )
+                                                : []
+                                        }
+                                    />
+                                </Item>
+                            ) : (
+                                <Item
+                                    name="scanner"
+                                    initialValue={[scannerDataList?.[0]?.name]}
+                                    label={
+                                        <div className="min-w-[112px]">
+                                            节点选择
+                                        </div>
+                                    }
+                                >
+                                    {scannerDataList &&
+                                    scannerDataList.length !== 0 ? (
+                                        <NodeCard list={scannerDataList} />
+                                    ) : (
+                                        <div
+                                            style={{
+                                                transform: 'translateY(4px)',
+                                            }}
+                                        >
+                                            -
+                                        </div>
+                                    )}
+                                </Item>
+                            ))
+                        );
+                    }}
                 </Item>
-                <Item
-                    label={<div className="min-w-[112px]">设置插件</div>}
-                    name={'group_task'}
-                >
-                    <Button type="link" style={{ padding: '4px 0' }}>
-                        <PlusOutlined /> 添加插件
-                    </Button>
-                </Item>
+
+                {scriptTypeValue === '端口与漏洞扫描' && (
+                    <Item
+                        dependencies={['scanner', ['params', 'execution_node']]}
+                        noStyle
+                    >
+                        {({ getFieldValue }) => {
+                            const nodeCardValue = getFieldValue('scanner');
+                            const execution_node = getFieldValue([
+                                'params',
+                                'execution_node',
+                            ]);
+                            console.log(
+                                execution_node,
+                                nodeCardValue,
+                                'execution_node, nodeCardValue',
+                            );
+                            return (
+                                <Item
+                                    label={
+                                        <div className="min-w-[112px]">
+                                            设置插件
+                                        </div>
+                                    }
+                                    name={['params', 'plugins']}
+                                >
+                                    <AddPlugins
+                                        nodeCardValue={nodeCardValue}
+                                        execution_node={execution_node}
+                                    />
+                                </Item>
+                            );
+                        }}
+                    </Item>
+                )}
             </div>
         ),
         extra: (
-            <Button
-                color="danger"
-                variant="link"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    console.log(111);
+            <Item dependencies={[]} noStyle>
+                {({ setFieldValue }) => {
+                    return (
+                        <Button
+                            color="danger"
+                            variant="link"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const twoItemKeys = [
+                                    ['param_files', 'value'],
+                                    ['params', 'gsil_keyword'],
+                                    ['params', 'target'],
+                                    ['params', 'preset-protes'],
+                                    ['params', 'ports'],
+                                ];
+                                twoItemKeys.forEach((val) => {
+                                    setFieldValue(val, undefined);
+                                });
+
+                                setFieldValue(['params', 'plugins'], {
+                                    ScriptName: [],
+                                });
+                                setFieldValue(
+                                    'scanner',
+                                    scannerDataList?.[0]?.name,
+                                );
+                                setFieldValue(['params', 'execution_node'], 1);
+                                setFieldValue(
+                                    ['params', 'enable-brute'],
+                                    false,
+                                );
+                                setFieldValue(
+                                    ['params', 'enbale-cve-baseline'],
+                                    false,
+                                );
+                            }}
+                        >
+                            重置
+                        </Button>
+                    );
                 }}
-            >
-                重置
-            </Button>
+            </Item>
         ),
     },
     {
@@ -286,7 +574,7 @@ const items: CollapseProps['items'] = [
             <div>
                 <Item
                     label={<div className="min-w-[112px]">调度类型</div>}
-                    name={'type'}
+                    name={['params', 'scheduling-type']}
                     initialValue={1}
                 >
                     <Select
@@ -297,9 +585,12 @@ const items: CollapseProps['items'] = [
                         ]}
                     />
                 </Item>
-                <Item dependencies={['type']}>
+                <Item dependencies={[['params', 'scheduling-type']]} noStyle>
                     {({ getFieldValue }) => {
-                        const formType = getFieldValue('type');
+                        const formType = getFieldValue([
+                            'params',
+                            'scheduling-type',
+                        ]);
                         return schedulingTypeFn(formType);
                     }}
                 </Item>
@@ -308,58 +599,127 @@ const items: CollapseProps['items'] = [
     },
 ];
 
-const StartUpScriptModal = forwardRef<
-    UseModalRefType,
-    { runAsync: () => void }
->(({}, ref) => {
-    const [model] = WizardModal.useModal();
-    const [form] = Form.useForm();
+const StartUpScriptModal = forwardRef<UseModalRefType, { title: string }>(
+    ({ title }, ref) => {
+        const [model] = WizardModal.useModal();
+        const [form] = Form.useForm();
+        const scriptTypeValue = Form.useWatch('script_type', form);
 
-    useImperativeHandle(ref, () => ({
-        open() {
-            model.open();
-        },
-    }));
+        const [scriptGroupList, setScriptGroupList] = useSafeState([]);
 
-    const onOk = () => {
-        const values = form.getFieldsValue();
-        console.log(values, 'values');
-    };
+        const { data: scannerDataList, runAsync } = useRequest(
+            async () => {
+                const result = await getNodeList();
+                const {
+                    data: { list },
+                } = result;
 
-    return (
-        <WizardModal
-            footer={
-                <>
-                    <Button
-                        key="link"
-                        onClick={() => {
-                            model.close();
-                            form.resetFields();
-                        }}
-                    >
-                        取消
-                    </Button>
-                    <Button key="submit" type="primary" onClick={() => onOk()}>
-                        确定
-                    </Button>
-                </>
-            }
-            width={640}
-            modal={model}
-            title="启动分布式脚本任务"
-        >
-            <div className="pb-2 px-6 overflow-auto max-h-[65vh]">
-                <Form form={form} layout="horizontal">
-                    <Collapse
-                        defaultActiveKey={['1', '2', '3']}
-                        bordered={true}
-                        ghost
-                        items={items}
-                    />
-                </Form>
-            </div>
-        </WizardModal>
-    );
-});
+                const targetNodeList = list?.map((it) => ({
+                    name: it?.node_id,
+                    size: it?.task_running,
+                    date: it?.updated_at
+                        ? dayjs(new Date().getTime()).unix() - it.updated_at
+                        : '-',
+                }));
+                return targetNodeList ?? [];
+            },
+            {
+                manual: true,
+            },
+        );
+
+        useImperativeHandle(ref, () => ({
+            async open(items, scriptGroupList) {
+                await runAsync();
+                const targetSetFormData = {
+                    task_id: `[${items?.script_type}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
+                    script_type: items?.script_type,
+                };
+                form.setFieldsValue(targetSetFormData);
+                setScriptGroupList(scriptGroupList);
+                model.open();
+            },
+        }));
+
+        const onOk = async () => {
+            const values = await form.validateFields();
+            const resultData: TPostTaskStartRequest = {
+                ...values,
+                params: {
+                    ...values.params,
+                    end_timestamp:
+                        Array.isArray(values?.prompt_agrs?.mestamp) &&
+                        dayjs(values?.prompt_agrs?.mestamp?.[0]).unix(),
+                    start_timestamp:
+                        Array.isArray(values?.prompt_agrs?.mestamp) &&
+                        dayjs(values?.prompt_agrs?.mestamp?.[1]).unix(),
+                    plugins: values.params?.plugins?.ScriptName?.join(','),
+                    execution_date:
+                        values?.prompt_agrs?.execution_date &&
+                        dayjs(values?.prompt_agrs?.execution_date).unix(),
+                },
+                param_files: {
+                    ...values?.param_files,
+                    key: 'target',
+                },
+                concurrent: 20,
+                task_type: 'batch-invoking-script',
+            };
+            await postTaskStart(resultData)
+                .then(() => {
+                    message.success('创建成功');
+                    model?.close();
+                })
+                .catch((err) => {
+                    message.destroy();
+                    message.error(err ?? '创建失败');
+                });
+        };
+
+        return (
+            <WizardModal
+                footer={
+                    <>
+                        <Button
+                            key="link"
+                            onClick={() => {
+                                model.close();
+                                form.resetFields();
+                            }}
+                        >
+                            取消
+                        </Button>
+                        <Button
+                            key="submit"
+                            type="primary"
+                            onClick={() => onOk()}
+                        >
+                            确定
+                        </Button>
+                    </>
+                }
+                width={750}
+                modal={model}
+                title={title}
+                onClose={() => form.resetFields()}
+            >
+                <div className="pb-2 px-6 overflow-auto max-h-[65vh]">
+                    <Form form={form} layout="horizontal">
+                        <Collapse
+                            defaultActiveKey={['1', '2', '3']}
+                            bordered={true}
+                            ghost
+                            items={items(
+                                scriptTypeValue,
+                                scriptGroupList,
+                                scannerDataList,
+                            )}
+                        />
+                    </Form>
+                </div>
+            </WizardModal>
+        );
+    },
+);
 
 export { StartUpScriptModal };

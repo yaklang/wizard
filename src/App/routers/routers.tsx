@@ -11,9 +11,11 @@ import {
     TaskCenterIcon,
 } from '@/assets/menu';
 
-import TaskList from '@/pages/TaskList';
+import TaskPageList from '@/pages/TaskPageList';
 import TaskScript from '@/pages/TaskScript';
 import TaskDetail from '@/pages/TaskDetail';
+
+import { NetworkError } from '@/pages/NetworkError';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -47,7 +49,7 @@ const routers: RouteObjectRootMy[] = [
                         children: [
                             {
                                 index: true,
-                                element: <TaskList />,
+                                element: <TaskPageList />,
                             },
                             {
                                 path: 'detail/:id',
@@ -72,6 +74,10 @@ const routers: RouteObjectRootMy[] = [
     {
         path: '/login',
         element: <Login />,
+    },
+    {
+        path: '/network-err',
+        element: <NetworkError />,
     },
 ];
 

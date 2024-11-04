@@ -36,16 +36,18 @@ const areValuesDifferent = (
 const extendTableProps = (
     dispatch: Dispatch<TRecudeInitiakValue>,
     state: TRecudeInitiakValue,
-    rowKey: any,
+    rowKey: string,
     columns?: CreateTableProps<any>['columns'],
 ): Array<any> => {
     const [search, setSearch] = useSafeState<Record<string, any>>({});
     const [open, setOpen] = useSafeState<Record<string, boolean>>();
-    const [selectedRowKeys, setSelectedRowKeys] = useSafeState<React.Key[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useSafeState<
+        Record<string, Array<React.Key>>
+    >({});
 
     useEffect(() => {
         // 获取存在 wizardColumnsType 存在的字段
-        const valueKeys =
+        const columnsHeaderFilterTypeValues =
             columns
                 ?.map((it) =>
                     typeof it.columnsHeaderFilterType === 'string'
@@ -54,7 +56,7 @@ const extendTableProps = (
                 )
                 .filter((key): key is string => key !== undefined) ?? []; // 过滤掉 undefined
         // 将获取的 valueKeys 默认值设置为 undefined 或来自 state.filter 的值
-        const searchResult = valueKeys.reduce(
+        const searchResult = columnsHeaderFilterTypeValues.reduce(
             (acc, key) => {
                 acc[key] = key in state.filter ? state.filter[key] : undefined; // 优先取 state.filter 中的值
                 return acc;
@@ -68,14 +70,30 @@ const extendTableProps = (
         setSearch(searchResult);
 
         // 筛选框打开状态
-        const resultOpen = valueKeys?.reduce<Record<string, boolean>>(
-            (acc, key) => {
-                acc[key] = false;
-                return acc;
-            },
-            {},
-        );
+        const resultOpen = columnsHeaderFilterTypeValues?.reduce<
+            Record<string, boolean>
+        >((acc, key) => {
+            acc[key] = false;
+            return acc;
+        }, {});
         setOpen(resultOpen);
+    }, [columns]);
+
+    useEffect(() => {
+        const rowSelectionValues =
+            columns?.reduce(
+                (acc, it) => {
+                    if (typeof it.rowSelection === 'string' && it.dataIndex) {
+                        // 从 rowSelectKeys 中获取与 dataIndex 相关联的键数组
+                        const keysArray =
+                            it.rowSelectKeys?.[it.dataIndex] ?? [];
+                        acc[it.dataIndex] = keysArray as React.Key[]; // 类型断言为 React.Key 数组
+                    }
+                    return acc;
+                },
+                {} as Record<string, Array<React.Key>>,
+            ) ?? {};
+        setSelectedRowKeys(rowSelectionValues);
     }, [columns]);
 
     // table header 关闭监听事件
@@ -104,25 +122,50 @@ const extendTableProps = (
     }, [open]);
 
     // 处理单个复选框的变化
-    const handleCheckboxChange = (record: any, e: CheckboxChangeEvent) => {
+    const handleCheckboxChange = (
+        record: any,
+        e: CheckboxChangeEvent,
+        dataIndex: string,
+    ) => {
         const rowKeys = rowKey;
         // 是否为选中状态
         const isChecked = e.target.checked;
-        const newSelectedRowKeys = isChecked
-            ? [...selectedRowKeys, record?.[rowKeys]] // 添加选中项
-            : selectedRowKeys.filter((key) => key !== record?.[rowKeys]); // 取消选中
 
-        setSelectedRowKeys(newSelectedRowKeys);
+        const addSelectedRowKeys = isChecked
+            ? [...selectedRowKeys?.[dataIndex], record?.[rowKeys]] // 添加选中项
+            : selectedRowKeys?.[dataIndex]?.filter(
+                  (key) => key !== record?.[rowKeys],
+              ); // 取消选中
+
+        setSelectedRowKeys((value) => {
+            const returnValue = {
+                ...value,
+                [dataIndex]: addSelectedRowKeys,
+            };
+            return returnValue;
+        });
+        return { [dataIndex]: addSelectedRowKeys };
     };
 
     // 处理表头全选的变化
-    const handleSelectAllChange = (_: any, e: CheckboxChangeEvent) => {
+    const handleSelectAllChange = (
+        _: any,
+        e: CheckboxChangeEvent,
+        dataIndex: string,
+    ) => {
         const rowKeys = rowKey;
         const isChecked = e.target.checked;
-        const newSelectedRowKeys = isChecked
+        const selectedRowKeysAll = isChecked
             ? state!.dataSource!.map((item: any) => item?.[rowKeys])
             : []; // 全选或全取消
-        setSelectedRowKeys(newSelectedRowKeys);
+        setSelectedRowKeys((value) => {
+            const returnValue = {
+                ...value,
+                [dataIndex]: selectedRowKeysAll,
+            };
+            return returnValue;
+        });
+        return selectedRowKeysAll;
     };
 
     // 更新筛选条件
@@ -147,39 +190,57 @@ const extendTableProps = (
 
         // table 勾选组件渲染
         const rowSelectionFn = (
-            checkeboxChangeType: (...args: any[]) => void,
+            checkeboxChangeType: (...args: any) => any,
             alone: 'all' | 'alone',
             record?: Record<string, any>,
         ) => {
             const rowKeys = rowKey;
-            const selectItems = () => {
+            const selectItems = (dataIndex: string) => {
                 return match(alone)
                     .with('all', () =>
                         state.dataSource!.length &&
-                        selectedRowKeys.length === state.dataSource!.length
+                        selectedRowKeys?.[dataIndex]?.length ===
+                            state.dataSource!.length
                             ? true
                             : false,
                     )
-                    .with('alone', () =>
-                        selectedRowKeys.includes(record?.[rowKeys]),
-                    )
+                    .with('alone', () => {
+                        return selectedRowKeys[dataIndex]?.includes(
+                            record?.[rowKeys],
+                        );
+                    })
                     .exhaustive();
             };
             return match(rowSelection)
-                .with('checkbox', () => (
-                    <Checkbox
-                        className="mr-2"
-                        checked={selectItems()}
-                        indeterminate={
-                            alone === 'all'
-                                ? selectedRowKeys.length > 0 &&
-                                  selectedRowKeys.length <
-                                      state.dataSource!.length
-                                : undefined
-                        }
-                        onChange={(e) => checkeboxChangeType(record, e)}
-                    />
-                ))
+                .with('checkbox', () => {
+                    return (
+                        <Checkbox
+                            className="mr-2"
+                            checked={selectItems(column.dataIndex)}
+                            indeterminate={
+                                alone === 'all' &&
+                                column?.rowSelectKeys?.[column?.dataIndex]
+                                    ? column?.rowSelectKeys?.[column?.dataIndex]
+                                          ?.length > 0 &&
+                                      column?.rowSelectKeys?.[column.dataIndex]
+                                          ?.length < state.dataSource!.length
+                                    : undefined
+                            }
+                            onChange={(e) => {
+                                const rowKeys = checkeboxChangeType(
+                                    record,
+                                    e,
+                                    column.dataIndex,
+                                );
+                                column?.onSelectChange &&
+                                    column.onSelectChange({
+                                        ...selectedRowKeys,
+                                        ...rowKeys,
+                                    });
+                            }}
+                        />
+                    );
+                })
                 .with(P.nullish, () => null)
                 .exhaustive();
         };
@@ -192,7 +253,7 @@ const extendTableProps = (
         ) => {
             return match(text)
                 .with(P.nullish, '', () => (
-                    <div className="flex-auto">
+                    <div className="flex">
                         {rowSelectionFn(handleCheckboxChange, 'alone', record)}
                         {column.render ? (
                             (column.render(
@@ -207,7 +268,7 @@ const extendTableProps = (
                 )) // 如果 text 是 undefined, null 或者 ''
                 .otherwise((text) =>
                     column.render ? (
-                        <div className="flex-auto">
+                        <div className="flex">
                             {rowSelectionFn(
                                 handleCheckboxChange,
                                 'alone',
@@ -223,7 +284,7 @@ const extendTableProps = (
                         </div>
                     ) : (
                         <Tooltip enable={text.length > 36} title={text}>
-                            <div className="flex-auto">
+                            <div className="flex">
                                 {rowSelectionFn(
                                     handleCheckboxChange,
                                     'alone',

@@ -349,6 +349,21 @@ const findPathNodes = (
     return null;
 };
 
+export const randomString = (length: number) => {
+    let chars =
+        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var result = '';
+    for (var i = length; i > 0; --i)
+        result += chars[Math.floor(Math.random() * chars.length)];
+    return result;
+};
+
+const generateUniqueId = (): string => {
+    const timestamp = Date.now().toString(36); // 当前时间戳转为36进制
+    const randomNum = Math.random().toString(36).substring(2, 8); // 生成随机数并转为36进制
+    return `${timestamp}-${randomNum}`;
+};
+
 export {
     createFlatTreeWithId,
     processMenu,
@@ -356,4 +371,5 @@ export {
     findFullPath,
     deepEqual,
     findPathNodes,
+    generateUniqueId,
 };

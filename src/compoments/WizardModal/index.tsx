@@ -1,10 +1,10 @@
-import { Modal as AntdModal } from 'antd';
 import type { FC } from 'react';
 import { useReducer } from 'react';
+
+import { Modal as AntdModal } from 'antd';
+
 import useModal from './useModal';
 import type { ModalPropsType, ModalStateType } from './types';
-// import styles from './index.module.scss';
-// import { CloseOutlined } from '@ant-design/icons';
 
 // 弹窗组件的组件类型
 type ModalType = FC<ModalPropsType> & { useModal: any };

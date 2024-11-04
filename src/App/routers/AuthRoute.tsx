@@ -1,20 +1,20 @@
 import type { FC, ReactNode } from 'react';
-import { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
 import useLoginStore from '../store/loginStore';
+import { NoLoginPermission } from '@/compoments';
 
 interface AuthRouteType {
-  children: ReactNode;
+    children: ReactNode;
 }
 
 const AuthRoute: FC<AuthRouteType> = ({ children }) => {
-  const { token } = useLoginStore((state) => state);
+    const { token } = useLoginStore((state) => state);
 
-  useEffect(() => {
-    if (!token) {
-      // dispatch(logOut(_pathname.slice(1)))
-    }
-  }, [token]);
-  return token ? children : <Navigate to="/login" replace />;
+    // useEffect(() => {
+    //   if (!token) {
+    //     // dispatch(logOut(_pathname.slice(1)))
+    //   }
+    // }, [token]);
+
+    return token ? children : <NoLoginPermission />;
 };
 export default AuthRoute;

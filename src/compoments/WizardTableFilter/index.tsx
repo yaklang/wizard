@@ -36,7 +36,7 @@ const WizardTableFilter: FC<{
     return (
         <div className="w-full pb-3 flex justify-between table-header-filter pr-3 gap-2">
             <div className="flex items-center font-bold text-xl">
-                {tableHeaderGroup}
+                <div> {props?.title ?? tableHeaderGroup}</div>
             </div>
 
             <div className="flex gap-2 items-center">
@@ -50,6 +50,7 @@ const WizardTableFilter: FC<{
                 {tableoptionsSearch &&
                     typeof tableoptionsSearch.key === 'string' && (
                         <Input.Search
+                            allowClear
                             onSearch={(e) => {
                                 filterDispatch &&
                                     filterDispatch({

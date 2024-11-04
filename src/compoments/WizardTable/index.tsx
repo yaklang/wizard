@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { Spin, Table } from 'antd';
+import { message, Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
@@ -7,7 +7,7 @@ import useListenWidth from '@/hooks/useListenHeight';
 
 import WizardTableFilter from '../WizardTableFilter';
 
-import { createCalcTableHeight, initialValue } from './data';
+import { initialValue } from './data';
 import {
     RequestFunction,
     TRecudeInitiakValue,
@@ -19,6 +19,7 @@ import { deepEqual } from '@/utils';
 import extendTableProps from './extendTableProps';
 
 import './index.scss';
+import { match } from 'ts-pattern';
 
 const reducer = <T extends TRecudeInitiakValue>(state: T, payload: T): T => ({
     ...state,
@@ -34,6 +35,8 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     const lastPage = useRef(0); // 跟踪上次的 page，防止重复请求
     const preFilter = useRef(undefined); // 跟踪上次的 filter, 触发请求
     const manualReq = useRef(false);
+    // 表格容器的 ref，用来控制滚动
+    const tableRef = useRef<HTMLDivElement>(null);
 
     const [state, dispatch] = useReducer(reducer, initialValue);
     const { dataSource, params, filter } = state;
@@ -52,6 +55,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                                 : (list ?? []),
                         pagemeta,
                     });
+                    return {
+                        pagemeta,
+                        list,
+                    };
                 } else {
                     manualReq.current = true;
                 }
@@ -93,25 +100,31 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         [params, filter],
     );
 
-    const [wizardScrollHeight] = useListenWidth('wizard-scroll');
+    const [wizardScrollHeight, _] = useListenWidth(tableRef);
 
     // 表格容器的 state, 用来保存计算得到的可滚动高度和表格高度
     const [height, setHeight] = useSafeState({
         tableHeight: 0,
-        tableContainerHeight: 0,
+        // tableContainerHeight: 0,
     });
-
-    // 表格容器的 ref，用来控制滚动
-    const tableRef = useRef<HTMLDivElement>(null);
 
     // 动态计算表格高度
     useEffect(() => {
-        const { calcWizardTableHeight, calcWizardTableContainerHeight } =
-            createCalcTableHeight(wizardScrollHeight);
+        const tableFilterDomHeight =
+            tableRef.current?.children[0].getBoundingClientRect().height ?? 0;
+        const antTableHeader =
+            tableRef?.current &&
+            tableRef.current.querySelector('.ant-table-header');
+        const antTableHeaderHeight =
+            antTableHeader?.getBoundingClientRect().height ?? 0;
+
         setHeight((val) => ({
             ...val,
-            tableContainerHeight: calcWizardTableContainerHeight,
-            tableHeight: calcWizardTableHeight,
+            // tableContainerHeight: wizardScrollHeight,
+            tableHeight:
+                wizardScrollHeight -
+                tableFilterDomHeight -
+                antTableHeaderHeight,
         }));
     }, [wizardScrollHeight]);
 
@@ -129,7 +142,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         ) {
             // 获取表格 DOM 节点
             const tableElement = tableRef.current.querySelector(
-                '.ant-table-body > table',
+                '.ant-table-body > table > tbody',
             );
             if (tableElement && !state.loading) {
                 const scrollHeight = tableElement.scrollHeight;
@@ -144,7 +157,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     });
             }
         }
-    }, [dataSource, height.tableHeight]);
+    }, [height.tableHeight, dataSource]);
 
     // 当筛选项变化时，重置分页、滚动条回到顶部，并请求新数据
     useUpdateEffect(() => {
@@ -244,6 +257,60 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         });
     };
 
+    page.localRefrech = (args) => {
+        match(args)
+            .with({ operate: 'edit' }, ({ oldObj, newObj }) => {
+                // 查找满足部分匹配条件的对象索引
+                const index =
+                    dataSource?.findIndex((item) =>
+                        Object.entries(oldObj).every(
+                            ([key, value]) => item[key] === value,
+                        ),
+                    ) ?? -1;
+                if (index !== -1) {
+                    // 使用新的常量创建更新后的数据
+                    const updatedItem = {
+                        ...(Array.isArray(dataSource) ? dataSource[index] : {}),
+                        ...newObj,
+                    };
+                    const list: any = [
+                        ...(dataSource ? dataSource.slice(0, index) : []),
+                        updatedItem,
+                        ...(dataSource ? dataSource.slice(index + 1) : []),
+                    ];
+                    dispatch({
+                        dataSource: list,
+                    });
+                } else {
+                    message.warning(`未找到该操作项`);
+                }
+            })
+            // 删除
+            .with({ operate: 'delete' }, ({ oldObj }) => {
+                if (args.operate === 'delete' && oldObj) {
+                    // 查找满足部分匹配条件的对象索引
+                    const index = dataSource?.findIndex((item) =>
+                        Object.entries(oldObj).every(
+                            ([key, value]) => item[key] === value,
+                        ),
+                    );
+
+                    // 如果找到符合条件的对象，删除它
+                    if (index !== -1) {
+                        const tragetDataSource = dataSource?.filter(
+                            (_, idx) => idx !== index,
+                        );
+                        dispatch({
+                            dataSource: tragetDataSource,
+                        });
+                    } else {
+                        message.warning('操作失败，请重试');
+                    }
+                }
+            })
+            .exhaustive();
+    };
+
     // 底部loading状态
     const bottomLoading = useMemo(() => {
         const pagemeta = state.pagemeta;
@@ -303,12 +370,17 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     }, [state.loading]);
 
     return (
-        <div className="flex w-full overflow-hidden justify-end">
+        <div className="flex w-full h-full overflow-hidden justify-end">
             {/* 表格部分 */}
+
             <div
                 id="table-container"
                 ref={tableRef}
-                className={`transition-all duration-500 w-full p-4 bg-[#fff] h-[${height.tableContainerHeight}px] relative`}
+                className={`
+                    transition-all duration-500 w-full p-4 bg-[#fff] 
+                    relative
+                `}
+                // h-[${height.tableContainerHeight}px]
                 style={{
                     width: `${
                         state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'
@@ -338,13 +410,14 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                         x:
                             (tableRef.current?.getBoundingClientRect().width ??
                                 0) - 72,
-                        y: height.tableHeight - 12,
+                        y: height.tableHeight - 32,
                     }}
                     onScroll={tableOnScrollFn}
                     summary={() => bottomLoading}
                     loading={state.loading && dataSource!.length === 0}
                 />
             </div>
+
             {/* 右侧抽屉 */}
             <div
                 className="transition-all duration-500 ease-in-out bg-gray-200 overflow-hidden"

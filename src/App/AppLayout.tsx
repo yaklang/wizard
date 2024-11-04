@@ -5,7 +5,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSafeState } from 'ahooks';
 
 import routers from './routers/routers';
-import { usePermissionsSlice } from '@/hooks';
+import { useNetworkStatus, usePermissionsSlice } from '@/hooks';
 
 import login_logo from '@/assets/compoments/login_logo.png';
 import header_text from '@/assets/login/header_text.png';
@@ -19,6 +19,8 @@ const { Header, Content, Sider } = Layout;
 const AppLayout = () => {
     const locations = useLocation();
     const navigate = useNavigate();
+    const { status } = useNetworkStatus();
+
     const [collapsed, setCollapsed] = useSafeState(false);
     const [headerTitle, setHeaderTitle] = useSafeState<
         Array<Record<'name' | 'path', string>> | undefined
@@ -69,6 +71,10 @@ const AppLayout = () => {
                 : `/${pathNameList.join('/')}`;
         return resultSelectedKey;
     }, [locations.pathname]);
+
+    useEffect(() => {
+        !status && navigate('/network-err', { replace: true });
+    }, [status]);
 
     return (
         <Layout hasSider className="h-full text-[14px]">
@@ -125,9 +131,9 @@ const AppLayout = () => {
                 <UserCard collapsed={collapsed} />
 
                 {!collapsed && (
-                    <p className="text-xs color-[#B4BBCA] font-normal text-center">
+                    <div className="text-xs color-[#B4BBCA] font-normal text-center mt-2">
                         版本: 20240528-e01f03cb
-                    </p>
+                    </div>
                 )}
             </Sider>
 
@@ -138,27 +144,27 @@ const AppLayout = () => {
                 >
                     {headerTitle?.map((item, index) => {
                         return index !== headerTitle.length - 1 && item ? (
-                            <span
+                            <div
                                 key={item.path}
-                                className="text-5 font-semibold color-[#b4bbcA] font-mono cursor-pointer"
+                                className="font-semibold color-[#b4bbcA] cursor-pointer text-base"
                                 onClick={() => navigate(`/${item.path}`)}
                             >
                                 <LeftOutlined className="color-[#31343F] mr-2 text-5" />
                                 {item.name}
-                            </span>
+                            </div>
                         ) : (
-                            <span
-                                className="text-5 font-semibold color-[#31343F] font-mono cursor-default"
+                            <div
+                                className="text-base font-semibold color-[#31343F] cursor-default flex justify-end"
                                 key={item.path}
                             >
                                 {headerTitle.length > 1 && (
-                                    <span className="mx-1">/</span>
+                                    <div className="mx-1">/</div>
                                 )}
-                                <span>{item.name}</span>
-                            </span>
+                                <div>{item.name}</div>
+                            </div>
                         );
                     })}
-                    <span className="ml-2 text-[14px] font-normal color-[#B4BBCA] font-mono">
+                    <span className="ml-2 text-[14px] color-[#B4BBCA]">
                         分布式调度yaklang引擎，执行分布式脚本，获得结果
                     </span>
                 </Header>
