@@ -6,7 +6,7 @@ import { StartUpScriptModal } from './compoment/StartUpScriptModal';
 import { TaskScriptTags } from './compoment/TaskScriptTags';
 import { useRequest } from 'ahooks';
 import { getAnalysisScript, getScriptTaskGroup } from '@/apis/task';
-import { EmptyBox, WizardModal } from '@/compoments';
+import { WizardModal } from '@/compoments';
 import { Spin } from 'antd';
 
 const TaskScript: FC = () => {
@@ -55,54 +55,50 @@ const TaskScript: FC = () => {
 
     return (
         <div className="p-4 h-full">
-            {Array.isArray(scriptData) && scriptData.length > 0 ? (
-                <Spin spinning={scriptLoading}>
-                    <div className="grid grid-cols-3 gap-4">
-                        {scriptData?.map((items) => {
-                            return (
-                                <div
-                                    key={items.script_name}
-                                    className={styles['wizard-card']}
-                                >
-                                    <div className={styles['card-header']}>
-                                        <div
-                                            className={`text-clip ${styles['card-header-text']}`}
-                                        >
-                                            {items?.script_name}
-                                        </div>
-                                    </div>
-
-                                    <div className={styles['card-content']}>
-                                        <TaskScriptTags
-                                            tags={items?.tags}
-                                            script_name={items.script_name}
-                                        />
-                                        <div
-                                            className={`text-clip2 ${styles['content-describe']}`}
-                                        >
-                                            {items?.description &&
-                                            items.description?.length > 0
-                                                ? items.description
-                                                : '-'}
-                                        </div>
-                                    </div>
-
+            <Spin spinning={scriptLoading}>
+                <div className="grid grid-cols-3 gap-4">
+                    {scriptData?.map((items) => {
+                        return (
+                            <div
+                                key={items.script_name}
+                                className={styles['wizard-card']}
+                            >
+                                <div className={styles['card-header']}>
                                     <div
-                                        className={styles['card-footer']}
-                                        onClick={async () => {
-                                            await runAsync(items);
-                                        }}
+                                        className={`text-clip ${styles['card-header-text']}`}
                                     >
-                                        使用模版
+                                        {items?.script_name}
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                </Spin>
-            ) : (
-                <EmptyBox />
-            )}
+
+                                <div className={styles['card-content']}>
+                                    <TaskScriptTags
+                                        tags={items?.tags}
+                                        script_name={items.script_name}
+                                    />
+                                    <div
+                                        className={`text-clip2 ${styles['content-describe']}`}
+                                    >
+                                        {items?.description &&
+                                        items.description?.length > 0
+                                            ? items.description
+                                            : '-'}
+                                    </div>
+                                </div>
+
+                                <div
+                                    className={styles['card-footer']}
+                                    onClick={async () => {
+                                        await runAsync(items);
+                                    }}
+                                >
+                                    使用模版
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </Spin>
             <StartUpScriptModal ref={StartUpScriptModalRef} title="创建任务" />
         </div>
     );
