@@ -11,7 +11,10 @@ import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptMo
 import { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { getScriptTaskGroup } from '@/apis/task';
 
-const CreateTaskScriptModal = forwardRef<UseModalRefType>(({}, ref) => {
+const CreateTaskScriptModal = forwardRef<
+    UseModalRefType,
+    { pageLoad: () => void }
+>(({ pageLoad }, ref) => {
     const [model1] = WizardModal.useModal();
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
 
@@ -112,6 +115,7 @@ const CreateTaskScriptModal = forwardRef<UseModalRefType>(({}, ref) => {
             <StartUpScriptModal
                 ref={StartUpScriptModalRef}
                 title={'创建任务'}
+                pageLoad={pageLoad}
             />
         </>
     );

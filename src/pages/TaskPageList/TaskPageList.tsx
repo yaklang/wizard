@@ -88,7 +88,16 @@ const TaskPageList: FC = () => {
 
                     // 返回更新后的任务列表
                     return updatedSiderTaskGrounpAllList
-                        .concat(fetchResultdata)
+                        .concat(
+                            fetchResultdata.filter(
+                                (it) => it.name === '默认分组',
+                            ),
+                        )
+                        .concat(
+                            fetchResultdata.filter(
+                                (it) => it.name !== '默认分组',
+                            ),
+                        )
                         .filter((it) => it);
                 };
                 setSiderContextList(transformTaskGroupData);
@@ -224,7 +233,10 @@ const TaskPageList: FC = () => {
                     };
                 }}
             />
-            <CreateTaskScriptModal ref={openCreateTaskModalRef} />
+            <CreateTaskScriptModal
+                ref={openCreateTaskModalRef}
+                pageLoad={page.onLoad}
+            />
         </div>
     );
 };

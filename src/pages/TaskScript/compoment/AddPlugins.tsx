@@ -13,7 +13,7 @@ import { match, P } from 'ts-pattern';
 
 type TAddPlugins = Partial<{
     nodeCardValue: string[];
-    execution_node: number;
+    execution_node: string;
     value?: Record<string, Array<string>>;
     onChange?: (value: Record<string, Array<string>>) => void;
 }>;
@@ -36,16 +36,16 @@ const AddPlugins: FC<TAddPlugins> = memo(
 
         // 判断 设置插件 禁用状态
         const isDisabled = match([execution_node, nodeCardValue])
-            .with([1, P.nullish], () => true)
+            .with(['1', P.nullish], () => true)
             .with(
-                [1, P.when((arr) => Array.isArray(arr) && arr.length > 0)],
+                ['1', P.when((arr) => Array.isArray(arr) && arr.length > 0)],
                 () => false,
             )
             .with(
-                [1, P.when((arr) => Array.isArray(arr) && arr.length <= 0)],
+                ['1', P.when((arr) => Array.isArray(arr) && arr.length <= 0)],
                 () => true,
             )
-            .with([2, P.nullish], () => false)
+            .with(['2', P.nullish], () => false)
             .with([P.nullish, P.nullish], () => true)
             .otherwise(() => true);
 
@@ -172,7 +172,5 @@ const AddPlugins: FC<TAddPlugins> = memo(
         );
     },
 );
-
-export default AddPlugins;
 
 export { AddPlugins };
