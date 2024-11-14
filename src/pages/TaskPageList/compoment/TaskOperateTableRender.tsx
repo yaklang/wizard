@@ -445,8 +445,8 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 // 任务列表 周期任务操作项
 const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     record,
-    // localRefrech,
-    // headerGroupValue,
+    localRefrech,
+    headerGroupValue,
 }) => {
     const [open, setOpen] = useSafeState({
         action: false,
