@@ -1,11 +1,8 @@
 name: Build and Deploy
 
 on:
-    push:
-        # branches:
-        #     - 'feat/*'
-        tags:
-            - 'v*'
+  push:
+    branches: [ main ]
 
 jobs:
     build-and-deploy:
@@ -42,7 +39,7 @@ jobs:
               run: ls -R src
 
             # 静态文件压缩
-            - name: Pack output files
+            - name: Pack output filesls
               if: ${{ startsWith(github.ref, 'refs/tags/v') }}
               run: tar -zcvf out.tgz dist
 
