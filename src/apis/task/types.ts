@@ -90,23 +90,24 @@ type TNodeListRequest = Partial<{
 
 type TPromptArgs = Partial<{
     target: string;
-    'preset-protes': string[];
+    'preset-protes': string;
     ports: string;
     'enable-brute': boolean;
     'enbale-cve-baseline': boolean;
     execution_node: number;
     plugins: string;
     'scheduling-type': number;
-    timestamp: string[];
+    timestamp: number[];
     interval_seconds: string;
     interval_seconds_type: number;
+    execution_date: number;
 }>;
 
 type TPostTaskStartRequest = Partial<{
     task_id: string;
     task_group: string;
     script_type: string;
-    prompt_args: TPromptArgs;
+    params: TPromptArgs;
     scanner: string[];
     first: boolean;
 }>;
