@@ -1,6 +1,6 @@
 import { WizardModal } from '@/compoments';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { Button, Collapse, Form, Input, message } from 'antd';
+import { Button, Collapse, Form, message } from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 import { randomString } from '@/utils';
