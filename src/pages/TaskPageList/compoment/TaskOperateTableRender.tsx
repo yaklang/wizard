@@ -442,8 +442,8 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 // 任务列表 周期任务操作项
 const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     record,
-    localRefrech,
-    headerGroupValue,
+    // localRefrech,
+    // headerGroupValue,
 }) => {
     const [open, setOpen] = useSafeState({
         action: false,
@@ -455,27 +455,28 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     const onEdit = async () => {
         if (record?.id) {
             await getTaskStartEditDispaly(record.id).then(({ data }) => {
-                const transformModalFormdata = {
-                    ...data,
-                    script_type: '端口与漏洞扫描',
-                    params: {
-                        ...data.params,
-                        'preset-protes': data?.params?.['preset-protes']
-                            ? (data?.params['preset-protes'])
-                                  .split(', ')
-                                  .map((item) => item.trim())
-                            : [],
-                        timestamp: Array.isArray(data?.params?.timestamp)
-                            ? [
-                                  dayjs.unix(data?.params?.timestamp?.[0]),
-                                  dayjs.unix(data?.params?.timestamp?.[0]),
-                              ]
-                            : undefined,
-                        execution_date: data?.params?.execution_date
-                            ? `${dayjs.unix(data?.params?.execution_date)}`
-                            : undefined,
-                    },
-                };
+                console.log(data);
+                // const transformModalFormdata = {
+                //     ...data,
+                //     script_type: '端口与漏洞扫描',
+                //     params: {
+                //         ...data.params,
+                //         'preset-protes': data?.params?.['preset-protes']
+                //             ? (data?.params['preset-protes'])
+                //                   .split(', ')
+                //                   .map((item) => item.trim())
+                //             : [],
+                //         timestamp: Array.isArray(data?.params?.timestamp)
+                //             ? [
+                //                   dayjs.unix(data?.params?.timestamp?.[0]),
+                //                   dayjs.unix(data?.params?.timestamp?.[0]),
+                //               ]
+                //             : undefined,
+                //         execution_date: data?.params?.execution_date
+                //             ? `${dayjs.unix(data?.params?.execution_date)}`
+                //             : undefined,
+                //     },
+                // };
                 // itemsRef.current = transformModalFormdata;
                 // runAsyncGroup();
             });
