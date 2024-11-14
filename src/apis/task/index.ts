@@ -137,9 +137,9 @@ const postTaskStart = (
 
 // 任务列表 编辑回显
 const getTaskStartEditDispaly = (
-    id: string,
-): Promise<ResponseData<TableResponseData<any>>> =>
-    axios.get<never, ResponseData<TableResponseData<any>>>(
+    id: number,
+): Promise<ResponseData<TPostTaskStartRequest>> =>
+    axios.get<never, ResponseData<TPostTaskStartRequest>>(
         `/task/start/batch-invoking-script-task/fetch?id=${id}`,
     );
 

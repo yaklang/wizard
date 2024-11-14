@@ -1,4 +1,4 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useRef } from 'react';
 import { Button, message, Popover } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
@@ -14,9 +14,18 @@ import {
 } from '@/apis/task/types';
 
 import StopUsingIcon from '@/assets/task/StopUsingIcon';
-import { deleteTask, getTaskRun, getTaskStop } from '@/apis/task';
+import {
+    deleteTask,
+    getScriptTaskGroup,
+    getTaskRun,
+    getTaskStartEditDispaly,
+    getTaskStop,
+} from '@/apis/task';
 import { match, P } from 'ts-pattern';
 import { UsePageRef } from '@/hooks/usePage';
+import dayjs from 'dayjs';
+import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
+import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 
 type TCommonTasksColumnsRenderProps = {
     record: TaskListRequest;
@@ -30,11 +39,38 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     localRefrech,
     headerGroupValue,
 }) => {
+    const StartUpScriptModalRef = useRef<UseModalRefType>(null);
+    const itemsRef = useRef<any>(null);
     const [open, setOpen] = useSafeState({
         action: false,
         delete: false,
     });
     const { status } = record;
+
+    // 获取 启动脚本任务 任务组参数
+    const { run: runAsyncGroup } = useRequest(
+        async () => {
+            const result = await getScriptTaskGroup();
+            const {
+                data: { list },
+            } = result;
+
+            const resultList = list?.map((it) => ({
+                value: it.name,
+                label: it.name,
+            }));
+            return resultList;
+        },
+        {
+            manual: true,
+            onSuccess: async (values) => {
+                await StartUpScriptModalRef.current?.open(
+                    itemsRef.current,
+                    values,
+                );
+            },
+        },
+    );
 
     //  执行
     const { loading, runAsync } = useRequest(
@@ -107,7 +143,6 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         },
         { manual: true },
     );
-
     const headDeleteTask = async () => {
         if (record.id) {
             await deleteRunAsync(record.id);
@@ -119,15 +154,44 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         }
     };
 
+    // 编辑任务
     const onEdit = async () => {
-        console.log('编辑');
+        if (record?.id) {
+            await getTaskStartEditDispaly(record.id).then(({ data }) => {
+                const transformModalFormdata = {
+                    ...data,
+                    script_type: '端口与漏洞扫描',
+                    params: {
+                        ...data.params,
+                        'preset-protes': data?.params?.['preset-protes']
+                            ? (data?.params['preset-protes'])
+                                  .split(', ')
+                                  .map((item) => item.trim())
+                            : [],
+                        timestamp: Array.isArray(data?.params?.timestamp)
+                            ? [
+                                  dayjs.unix(data?.params?.timestamp?.[0]),
+                                  dayjs.unix(data?.params?.timestamp?.[0]),
+                              ]
+                            : undefined,
+                        execution_date: data?.params?.execution_date
+                            ? `${dayjs.unix(data?.params?.execution_date)}`
+                            : undefined,
+                    },
+                };
+                itemsRef.current = transformModalFormdata;
+                runAsyncGroup();
+            });
+        } else {
+            message.error('未获取到当行数据ID');
+        }
     };
 
     const remainingOperate = useMemo(() => {
         return (
             <div className="flex">
                 <span className="w-7 mr-2">{''}</span>
-                <span className="cursor-pointer mr-2">
+                <span className="cursor-pointer mr-2" onClick={onEdit}>
                     <TableFormOutlined />
                 </span>
 
@@ -175,7 +239,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                     placement="left"
                     trigger="click"
                 >
-                    <span className="cursor-pointer" onClick={onEdit}>
+                    <span className="cursor-pointer">
                         <TableDeleteOutlined />
                     </span>
                 </Popover>
@@ -183,188 +247,203 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         );
     }, [status, open]);
 
-    return match(status)
-        .with(
-            P.not(
-                P.union(
-                    TTaskListStatus.cancel,
-                    TTaskListStatus.disabled,
-                    TTaskListStatus.enabled,
-                    TTaskListStatus.failed,
-                    TTaskListStatus.finish,
-                    TTaskListStatus.running,
-                    TTaskListStatus.success,
-                    TTaskListStatus.waiting,
-                ),
-            ),
-            () => remainingOperate,
-        )
-        .with(P.string, () => (
-            <div className="flex">
-                {(status === 'success' ||
-                    status === 'failed' ||
-                    status === 'cancel' ||
-                    status === 'waiting') && (
-                    <Popover
-                        open={open.action}
-                        content={
-                            <div className="flex justify-end gap-2">
-                                <Button
-                                    color="default"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    onClick={() =>
-                                        setOpen((val) => ({
-                                            ...val,
-                                            action: false,
-                                        }))
-                                    }
-                                >
-                                    取消
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    onClick={headImplement}
-                                    loading={loading}
-                                >
-                                    确定
-                                </Button>
-                            </div>
-                        }
-                        title={
-                            <div>
-                                <InfoCircleOutlined color="#faad14" />
-                                <span className="ml-1 font-400">
-                                    立即执行该任务？
-                                </span>
-                            </div>
-                        }
-                        trigger="click"
-                        onOpenChange={(newOpen) =>
-                            setOpen((val) => ({ ...val, action: newOpen }))
-                        }
-                    >
-                        <div className="mr-2 cursor-pointer">
-                            <PlayCircleOutlined />
-                        </div>
-                    </Popover>
-                )}
-                {status === 'running' && (
-                    <Popover
-                        content={
-                            <div className="flex justify-end gap-2">
-                                <Button
-                                    color="default"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    onClick={() =>
-                                        setOpen((val) => ({
-                                            ...val,
-                                            action: false,
-                                        }))
-                                    }
-                                >
-                                    取消
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    onClick={headTaskStop}
-                                    loading={stopRunning}
-                                >
-                                    确定
-                                </Button>
-                            </div>
-                        }
-                        title={
-                            <div>
-                                <InfoCircleOutlined color="#faad14" />
-                                <span className="ml-1 font-400">
-                                    停用该任务？
-                                </span>
-                            </div>
-                        }
-                        trigger="click"
-                        onOpenChange={(newOpen) =>
-                            setOpen((val) => ({ ...val, action: newOpen }))
-                        }
-                    >
-                        <div className="mr-2 cursor-pointer">
-                            <StopUsingIcon />
-                        </div>
-                    </Popover>
-                )}
-
-                <span className="cursor-pointer mr-2" onClick={onEdit}>
-                    <TableFormOutlined />
-                </span>
-
-                <Popover
-                    open={open.delete}
-                    onOpenChange={(newOpen) =>
-                        setOpen((val) => ({ ...val, delete: newOpen }))
-                    }
-                    content={
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                color="default"
-                                style={{
-                                    fontSize: '12px',
-                                }}
-                                onClick={() =>
+    return (
+        <>
+            {match(status)
+                .with(
+                    P.not(
+                        P.union(
+                            TTaskListStatus.cancel,
+                            TTaskListStatus.disabled,
+                            TTaskListStatus.enabled,
+                            TTaskListStatus.failed,
+                            TTaskListStatus.finish,
+                            TTaskListStatus.running,
+                            TTaskListStatus.success,
+                            TTaskListStatus.waiting,
+                        ),
+                    ),
+                    () => remainingOperate,
+                )
+                .with(P.string, () => (
+                    <div className="flex">
+                        {(status === 'success' ||
+                            status === 'failed' ||
+                            status === 'cancel' ||
+                            status === 'waiting') && (
+                            <Popover
+                                open={open.action}
+                                content={
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            color="default"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            onClick={() =>
+                                                setOpen((val) => ({
+                                                    ...val,
+                                                    action: false,
+                                                }))
+                                            }
+                                        >
+                                            取消
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            onClick={headImplement}
+                                            loading={loading}
+                                        >
+                                            确定
+                                        </Button>
+                                    </div>
+                                }
+                                title={
+                                    <div>
+                                        <InfoCircleOutlined color="#faad14" />
+                                        <span className="ml-1 font-400">
+                                            立即执行该任务？
+                                        </span>
+                                    </div>
+                                }
+                                trigger="click"
+                                onOpenChange={(newOpen) =>
                                     setOpen((val) => ({
                                         ...val,
-                                        delete: false,
+                                        action: newOpen,
                                     }))
                                 }
                             >
-                                取消
-                            </Button>
-                            <Button
-                                type="primary"
-                                style={{
-                                    fontSize: '12px',
-                                }}
-                                onClick={headDeleteTask}
-                                loading={DeleteLoading}
+                                <div className="mr-2 cursor-pointer">
+                                    <PlayCircleOutlined />
+                                </div>
+                            </Popover>
+                        )}
+                        {status === 'running' && (
+                            <Popover
+                                content={
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            color="default"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            onClick={() =>
+                                                setOpen((val) => ({
+                                                    ...val,
+                                                    action: false,
+                                                }))
+                                            }
+                                        >
+                                            取消
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            onClick={headTaskStop}
+                                            loading={stopRunning}
+                                        >
+                                            确定
+                                        </Button>
+                                    </div>
+                                }
+                                title={
+                                    <div>
+                                        <InfoCircleOutlined color="#faad14" />
+                                        <span className="ml-1 font-400">
+                                            停用该任务？
+                                        </span>
+                                    </div>
+                                }
+                                trigger="click"
+                                onOpenChange={(newOpen) =>
+                                    setOpen((val) => ({
+                                        ...val,
+                                        action: newOpen,
+                                    }))
+                                }
                             >
-                                确定
-                            </Button>
-                        </div>
-                    }
-                    title={
-                        <div>
-                            <InfoCircleOutlined color="#faad14" />
-                            <span className="ml-1 font-400">
-                                确认删除任务？
+                                <div className="mr-2 cursor-pointer">
+                                    <StopUsingIcon />
+                                </div>
+                            </Popover>
+                        )}
+
+                        <span className="cursor-pointer mr-2" onClick={onEdit}>
+                            <TableFormOutlined />
+                        </span>
+
+                        <Popover
+                            open={open.delete}
+                            onOpenChange={(newOpen) =>
+                                setOpen((val) => ({ ...val, delete: newOpen }))
+                            }
+                            content={
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        color="default"
+                                        style={{
+                                            fontSize: '12px',
+                                        }}
+                                        onClick={() =>
+                                            setOpen((val) => ({
+                                                ...val,
+                                                delete: false,
+                                            }))
+                                        }
+                                    >
+                                        取消
+                                    </Button>
+                                    <Button
+                                        type="primary"
+                                        style={{
+                                            fontSize: '12px',
+                                        }}
+                                        onClick={headDeleteTask}
+                                        loading={DeleteLoading}
+                                    >
+                                        确定
+                                    </Button>
+                                </div>
+                            }
+                            title={
+                                <div>
+                                    <InfoCircleOutlined color="#faad14" />
+                                    <span className="ml-1 font-400">
+                                        确认删除任务？
+                                    </span>
+                                </div>
+                            }
+                            placement="left"
+                            trigger="click"
+                        >
+                            <span className="cursor-pointer">
+                                <TableDeleteOutlined />
                             </span>
-                        </div>
-                    }
-                    placement="left"
-                    trigger="click"
-                >
-                    <span className="cursor-pointer">
-                        <TableDeleteOutlined />
-                    </span>
-                </Popover>
-            </div>
-        ))
-        .with(P.nullish, () => remainingOperate)
-        .exhaustive();
+                        </Popover>
+                    </div>
+                ))
+                .with(P.nullish, () => remainingOperate)
+                .exhaustive()}
+            <StartUpScriptModal
+                ref={StartUpScriptModalRef}
+                title={'编辑任务'}
+                localRefrech={localRefrech}
+            />
+        </>
+    );
 };
 
 // 任务列表 周期任务操作项
 const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     record,
-    // localRefrech,
-    // headerGroupValue,
+    localRefrech,
+    headerGroupValue,
 }) => {
     const [open, setOpen] = useSafeState({
         action: false,
@@ -372,12 +451,45 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     });
     const { status } = record;
 
+    // 编辑任务
+    const onEdit = async () => {
+        if (record?.id) {
+            await getTaskStartEditDispaly(record.id).then(({ data }) => {
+                const transformModalFormdata = {
+                    ...data,
+                    script_type: '端口与漏洞扫描',
+                    params: {
+                        ...data.params,
+                        'preset-protes': data?.params?.['preset-protes']
+                            ? (data?.params['preset-protes'])
+                                  .split(', ')
+                                  .map((item) => item.trim())
+                            : [],
+                        timestamp: Array.isArray(data?.params?.timestamp)
+                            ? [
+                                  dayjs.unix(data?.params?.timestamp?.[0]),
+                                  dayjs.unix(data?.params?.timestamp?.[0]),
+                              ]
+                            : undefined,
+                        execution_date: data?.params?.execution_date
+                            ? `${dayjs.unix(data?.params?.execution_date)}`
+                            : undefined,
+                    },
+                };
+                // itemsRef.current = transformModalFormdata;
+                // runAsyncGroup();
+            });
+        } else {
+            message.error('未获取到当行数据ID');
+        }
+    };
+
     const executionOperateOpearte = useMemo(() => {
         return (
             <div className="flex">
                 <span className="w-7 mr-2">{''}</span>
                 {/* 编辑操作 */}
-                <span className="cursor-pointer mr-2">
+                <span className="cursor-pointer mr-2" onClick={onEdit}>
                     <TableFormOutlined />
                 </span>
 
@@ -433,126 +545,138 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         );
     }, [status, open]);
 
-    return match(status)
-        .with(
-            P.not(
-                P.union(
-                    TTaskListStatus.cancel,
-                    TTaskListStatus.disabled,
-                    TTaskListStatus.enabled,
-                    TTaskListStatus.failed,
-                    TTaskListStatus.finish,
-                    TTaskListStatus.running,
-                    TTaskListStatus.success,
-                    TTaskListStatus.waiting,
-                ),
-            ),
-            () => executionOperateOpearte,
-        )
-        .with(P.string, (value) => (
-            <div className="flex">
-                {(value === 'waiting' || value === 'disabled') && (
-                    <Popover
-                        open={open.action}
-                        content={
-                            <div className="flex justify-end gap-2">
-                                <Button
-                                    color="default"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    onClick={() =>
-                                        setOpen((val) => ({
-                                            ...val,
-                                            action: false,
-                                        }))
-                                    }
-                                >
-                                    取消
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    // onClick={headImplement}
-                                    // loading={loading}
-                                >
-                                    确定
-                                </Button>
-                            </div>
-                        }
-                        title={
-                            <div>
-                                <InfoCircleOutlined color="#faad14" />
-                                <span className="ml-1 font-400">
-                                    立即执行该任务？
-                                </span>
-                            </div>
-                        }
-                        trigger="click"
-                        onOpenChange={(newOpen) =>
-                            setOpen((val) => ({ ...val, action: newOpen }))
-                        }
-                    >
-                        <div className="mr-2 cursor-pointer">
-                            <PlayCircleOutlined />
-                        </div>
-                    </Popover>
-                )}
-                {value === 'enabled' && (
-                    <Popover
-                        content={
-                            <div className="flex justify-end gap-2">
-                                <Button
-                                    color="default"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    onClick={() =>
-                                        setOpen((val) => ({
-                                            ...val,
-                                            action: false,
-                                        }))
-                                    }
-                                >
-                                    取消
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    style={{
-                                        fontSize: '12px',
-                                    }}
-                                    // onClick={headTaskStop}
-                                    // loading={stopRunning}
-                                >
-                                    确定
-                                </Button>
-                            </div>
-                        }
-                        title={
-                            <div>
-                                <InfoCircleOutlined color="#faad14" />
-                                <span className="ml-1 font-400">
-                                    结束该任务？
-                                </span>
-                            </div>
-                        }
-                        trigger="click"
-                        onOpenChange={(newOpen) =>
-                            setOpen((val) => ({ ...val, action: newOpen }))
-                        }
-                    >
-                        <div className="mr-2 cursor-pointer">
-                            <StopUsingIcon />
-                        </div>
-                    </Popover>
-                )}
-                {value === 'finish' && <div className="w-7 mr-2">{''}</div>}
-            </div>
-        ))
-        .with(P.nullish, () => executionOperateOpearte)
-        .exhaustive();
+    return (
+        <>
+            {match(status)
+                .with(
+                    P.not(
+                        P.union(
+                            TTaskListStatus.cancel,
+                            TTaskListStatus.disabled,
+                            TTaskListStatus.enabled,
+                            TTaskListStatus.failed,
+                            TTaskListStatus.finish,
+                            TTaskListStatus.running,
+                            TTaskListStatus.success,
+                            TTaskListStatus.waiting,
+                        ),
+                    ),
+                    () => executionOperateOpearte,
+                )
+                .with(P.string, (value) => (
+                    <div className="flex">
+                        {(value === 'waiting' || value === 'disabled') && (
+                            <Popover
+                                open={open.action}
+                                content={
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            color="default"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            onClick={() =>
+                                                setOpen((val) => ({
+                                                    ...val,
+                                                    action: false,
+                                                }))
+                                            }
+                                        >
+                                            取消
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            // onClick={headImplement}
+                                            // loading={loading}
+                                        >
+                                            确定
+                                        </Button>
+                                    </div>
+                                }
+                                title={
+                                    <div>
+                                        <InfoCircleOutlined color="#faad14" />
+                                        <span className="ml-1 font-400">
+                                            立即执行该任务？
+                                        </span>
+                                    </div>
+                                }
+                                trigger="click"
+                                onOpenChange={(newOpen) =>
+                                    setOpen((val) => ({
+                                        ...val,
+                                        action: newOpen,
+                                    }))
+                                }
+                            >
+                                <div className="mr-2 cursor-pointer">
+                                    <PlayCircleOutlined />
+                                </div>
+                            </Popover>
+                        )}
+                        {value === 'enabled' && (
+                            <Popover
+                                content={
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            color="default"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            onClick={() =>
+                                                setOpen((val) => ({
+                                                    ...val,
+                                                    action: false,
+                                                }))
+                                            }
+                                        >
+                                            取消
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            style={{
+                                                fontSize: '12px',
+                                            }}
+                                            // onClick={headTaskStop}
+                                            // loading={stopRunning}
+                                        >
+                                            确定
+                                        </Button>
+                                    </div>
+                                }
+                                title={
+                                    <div>
+                                        <InfoCircleOutlined color="#faad14" />
+                                        <span className="ml-1 font-400">
+                                            结束该任务？
+                                        </span>
+                                    </div>
+                                }
+                                trigger="click"
+                                onOpenChange={(newOpen) =>
+                                    setOpen((val) => ({
+                                        ...val,
+                                        action: newOpen,
+                                    }))
+                                }
+                            >
+                                <div className="mr-2 cursor-pointer">
+                                    <StopUsingIcon />
+                                </div>
+                            </Popover>
+                        )}
+                        {value === 'finish' && (
+                            <div className="w-7 mr-2">{''}</div>
+                        )}
+                    </div>
+                ))
+                .with(P.nullish, () => executionOperateOpearte)
+                .exhaustive()}
+        </>
+    );
 };
 
 export { PublicAndExecutionOperateRender, ExecutionOperateRender };

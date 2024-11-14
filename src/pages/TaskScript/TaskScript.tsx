@@ -7,7 +7,8 @@ import { TaskScriptTags } from './compoment/TaskScriptTags';
 import { useRequest } from 'ahooks';
 import { getAnalysisScript, getScriptTaskGroup } from '@/apis/task';
 import { WizardModal } from '@/compoments';
-import { Spin } from 'antd';
+import { Button, Input, Spin } from 'antd';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 
 const TaskScript: FC = () => {
     const [model1] = WizardModal.useModal();
@@ -56,6 +57,17 @@ const TaskScript: FC = () => {
     return (
         <div className="p-4 h-full">
             <Spin spinning={scriptLoading}>
+                <div className="flex justify-end gap-2 mb-4">
+                    <Input
+                        placeholder="请输入关键词搜索"
+                        prefix={<SearchOutlined />}
+                        className="w-54"
+                    />
+                    <Button type="primary">
+                        <PlusOutlined />
+                        创建脚本
+                    </Button>
+                </div>
                 <div className="grid grid-cols-3 gap-4">
                     {scriptData?.map((items) => {
                         return (
