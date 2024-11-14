@@ -64,7 +64,7 @@ jobs:
         - name: Download From Artifacts
           uses: actions/download-artifact@v3
           with:
-            name: frontend-dist.zip
+            name: preview-dist.zip
 
         - name: Set release name
           run: |
