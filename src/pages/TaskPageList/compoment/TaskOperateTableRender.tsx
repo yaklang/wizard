@@ -436,6 +436,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 ref={StartUpScriptModalRef}
                 title={'编辑任务'}
                 localRefrech={localRefrech}
+                record={record}
             />
         </>
     );

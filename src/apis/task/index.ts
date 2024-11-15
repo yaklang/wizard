@@ -156,8 +156,8 @@ const postEditScriptTask = (
 const getRunScriptTask = (params: {
     task_id: number;
     task_type: number;
-}): Promise<ResponseData<boolean>> =>
-    axios.get<never, ResponseData<boolean>>(
+}): Promise<ResponseData<TaskListRequest>> =>
+    axios.get<never, ResponseData<TaskListRequest>>(
         '/task/start/batch-invoking-script/run',
         { params },
     );

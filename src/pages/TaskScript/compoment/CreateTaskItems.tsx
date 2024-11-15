@@ -48,12 +48,15 @@ const CreateTaskItems = (
                     return (
                         <Item
                             name={'execution_date'}
-                            label={
-                                <div className="min-w-[112px]">执行时间</div>
-                            }
+                            rules={[
+                                { required: true, message: '请选择执行时间' },
+                            ]}
+                            label={'执行时间'}
+                            className="ml-14"
                         >
                             <DatePicker
                                 className="w-full"
+                                showTime={{ format: 'YYYY-MM-DD HH:mm' }}
                                 format={'YYYY-MM-DD HH:mm'}
                             />
                         </Item>
@@ -64,7 +67,7 @@ const CreateTaskItems = (
                         <>
                             <Item
                                 label={
-                                    <div className="min-w-[112px]">
+                                    <div className="min-w-[124px]">
                                         第一次是否执行
                                     </div>
                                 }
@@ -72,7 +75,16 @@ const CreateTaskItems = (
                             >
                                 <Switch />
                             </Item>
-                            <Item name={'timestamp'} label="设定周期时间范围">
+                            <Item
+                                name={'timestamp'}
+                                label="设定周期时间范围"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: '请设定周期时间范围',
+                                    },
+                                ]}
+                            >
                                 <RangePicker
                                     className="w-full"
                                     showTime={{ format: 'HH:mm' }}
@@ -81,19 +93,39 @@ const CreateTaskItems = (
                             </Item>
                             <Item
                                 label={
-                                    <div className="min-w-[112px]">
+                                    <div className="min-w-[124px]">
                                         执行周期
                                     </div>
                                 }
                             >
                                 <Compact block={true}>
-                                    <Item name={'interval_time'} noStyle>
+                                    <Item
+                                        name={'interval_time'}
+                                        noStyle
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: '请输入之执行周期时间',
+                                            },
+                                        ]}
+                                    >
                                         <InputNumber
                                             placeholder="请输入..."
                                             style={{ width: '150%' }}
                                         />
                                     </Item>
-                                    <Item name={'interval_type'} noStyle>
+                                    <Item
+                                        name={'interval_type'}
+                                        noStyle
+                                        initialValue={1}
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message:
+                                                    '请选择执行周期时间单位',
+                                            },
+                                        ]}
+                                    >
                                         <Select
                                             placeholder="请选择"
                                             options={[
@@ -124,13 +156,13 @@ const CreateTaskItems = (
             children: (
                 <div>
                     <Item
-                        label={<div className="min-w-[112px]">任务名称</div>}
+                        label={<div className="min-w-[124px]">任务名称</div>}
                         name={'task_id'}
                     >
                         <Input placeholder="请输入..." />
                     </Item>
                     <Item
-                        className="ml-8"
+                        className="ml-11"
                         label="所属任务组"
                         name={'task_group'}
                         rules={[
@@ -143,8 +175,10 @@ const CreateTaskItems = (
                         />
                     </Item>
                     <Item
-                        label={<div className="min-w-[112px]">脚本类型</div>}
+                        label={'脚本类型'}
                         name={'script_type'}
+                        rules={[{ required: true, message: '请选择脚本类型' }]}
+                        className="ml-14"
                     >
                         <Select options={scriptTypeOptions} disabled={true} />
                     </Item>
@@ -193,7 +227,7 @@ const CreateTaskItems = (
                         {({ setFieldValue }) => {
                             return (
                                 <Item
-                                    className={`${scriptTypeValue === '端口与漏洞扫描' ? 'ml-11' : 'ml-15'}`}
+                                    className={`${scriptTypeValue === '端口与漏洞扫描' ? 'ml-14' : 'ml-18'}`}
                                     label={
                                         <div className="max-w-full">
                                             {scriptTypeValue ===
@@ -279,7 +313,7 @@ const CreateTaskItems = (
                                     <Item
                                         name={['params', 'preset-protes']}
                                         label={
-                                            <div className="min-w-[112px] max-w-full">
+                                            <div className="min-w-[124px] max-w-full">
                                                 预设端口
                                             </div>
                                         }
@@ -331,7 +365,7 @@ const CreateTaskItems = (
                                             required: true,
                                         },
                                     ]}
-                                    className="ml-6"
+                                    className="ml-9"
                                 >
                                     <Input.TextArea
                                         placeholder="请输入扫描端口"
@@ -373,7 +407,7 @@ const CreateTaskItems = (
                                 </span>
                             }
                             name={['params', 'enable-brute']}
-                            className="ml-[48px]"
+                            className="ml-[62px]"
                             initialValue={false}
                         >
                             <Switch />
@@ -393,7 +427,7 @@ const CreateTaskItems = (
                                 </span>
                             }
                             name={['params', 'enbale-cve-baseline']}
-                            className="ml-2"
+                            className="ml-5"
                             initialValue={false}
                         >
                             <Switch />
@@ -401,7 +435,7 @@ const CreateTaskItems = (
                     )}
                     <Item
                         name={['params', 'execution_node']}
-                        label={<div className="min-w-[112px]">执行节点</div>}
+                        label={<div className="min-w-[124px]">执行节点</div>}
                         initialValue={'1'}
                     >
                         <Radio.Group
@@ -427,7 +461,7 @@ const CreateTaskItems = (
                                     <Item
                                         name="scanner"
                                         label={
-                                            <div className="min-w-[112px]">
+                                            <div className="min-w-[124px]">
                                                 节点选择
                                             </div>
                                         }
@@ -475,7 +509,7 @@ const CreateTaskItems = (
                                             scannerDataList?.[0]?.name,
                                         ]}
                                         label={
-                                            <div className="min-w-[112px]">
+                                            <div className="min-w-[124px]">
                                                 节点选择
                                             </div>
                                         }
@@ -529,7 +563,7 @@ const CreateTaskItems = (
                                 return (
                                     <Item
                                         label={
-                                            <div className="min-w-[112px]">
+                                            <div className="min-w-[124px]">
                                                 设置插件
                                             </div>
                                         }
@@ -631,7 +665,7 @@ const CreateTaskItems = (
             children: (
                 <div>
                     <Item
-                        label={<div className="min-w-[112px]">调度类型</div>}
+                        label={<div className="min-w-[124px]">调度类型</div>}
                         name={'scheduling-type'}
                         initialValue={'1'}
                     >

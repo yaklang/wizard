@@ -63,7 +63,7 @@ const AddPlugins: FC<TAddPlugins> = memo(
                 nodes_id: nodeCardValue, // 使用传入的 nodeCardValue
                 exclude_types: ['yak', 'codec'],
                 keyword: filter?.keyword,
-                groups: value?.ScriptName ?? [],
+                groups: filter?.Type ?? [],
             });
 
             setTableHeaderCount((val) => ({

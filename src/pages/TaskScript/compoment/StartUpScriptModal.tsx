@@ -11,7 +11,7 @@ import {
     postEditScriptTask,
     postTaskStart,
 } from '@/apis/task';
-import { TPostTaskStartRequest } from '@/apis/task/types';
+import { TaskListRequest, TPostTaskStartRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import { UsePageRef } from '@/hooks/usePage';
 import { transformaTimeUnit } from '../data';
@@ -28,8 +28,9 @@ const StartUpScriptModal = forwardRef<
         title: string;
         pageLoad?: () => void;
         localRefrech?: UsePageRef['localRefrech'];
+        record: TaskListRequest;
     }
->(({ title, pageLoad, localRefrech }, ref) => {
+>(({ title, pageLoad, localRefrech, record }, ref) => {
     const [model] = WizardModal.useModal();
     const [form] = Form.useForm();
     const scriptTypeValue = Form.useWatch('script_type', form);
@@ -110,24 +111,26 @@ const StartUpScriptModal = forwardRef<
                   }
                 : undefined,
             end_timestamp: Array.isArray(values?.timestamp)
-                ? `${dayjs(values?.timestamp?.[0]).unix()}`
+                ? dayjs(values?.timestamp?.[0]).unix()
                 : undefined,
             start_timestamp: Array.isArray(values?.timestamp)
-                ? `${dayjs(values?.params?.timestamp?.[1]).unix()}`
+                ? dayjs(values?.params?.timestamp?.[1]).unix()
                 : undefined,
             execution_date: values?.execution_date
-                ? `${dayjs(values?.execution_date).unix()}`
+                ? dayjs(values?.execution_date).unix()
                 : undefined,
             concurrent: 20,
             task_type: 'batch-invoking-script',
-            enable_sched: true,
+            enable_sched:
+                values?.parmas?.['scheduling-type'] !== 1 ? true : false,
+            timestamp: undefined,
         };
 
         pageLoad &&
             (await postTaskStart(resultData)
-                .then(() => {
+                .then(async () => {
                     message.success('创建成功');
-                    pageLoad?.();
+                    await pageLoad?.();
                     model?.close();
                 })
                 .catch((err) => {
@@ -137,13 +140,16 @@ const StartUpScriptModal = forwardRef<
 
         localRefrech &&
             postEditScriptTask(resultData)
-                .then(() => {
-                    getRunScriptTask({
+                .then(async () => {
+                    await getRunScriptTask({
                         task_id: editObj.id,
                         task_type: editObj.headerGroupValue,
-                    }).then(() => {
-                        message.success('编辑成功');
-                        pageLoad?.();
+                    }).then((res) => {
+                        localRefrech?.({
+                            operate: 'edit',
+                            oldObj: record,
+                            newObj: res?.data,
+                        });
                         model?.close();
                     });
                 })

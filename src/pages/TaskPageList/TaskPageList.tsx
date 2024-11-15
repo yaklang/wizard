@@ -235,7 +235,7 @@ const TaskPageList: FC = () => {
             />
             <CreateTaskScriptModal
                 ref={openCreateTaskModalRef}
-                pageLoad={page.onLoad}
+                pageLoad={page.refresh}
             />
         </div>
     );
