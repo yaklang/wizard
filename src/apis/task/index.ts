@@ -143,6 +143,14 @@ const getTaskStartEditDispaly = (
         `/task/start/batch-invoking-script-task/fetch?id=${id}`,
     );
 
+// 删除 脚本
+const deleteAnalysisScript = (
+    script_name: string,
+): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>(
+        `/threat/analysis/script?type=${script_name}`,
+    );
+
 export {
     getScriptTaskGroup,
     postTaskGrounp,
@@ -157,4 +165,5 @@ export {
     postTaskStart,
     postRpcQueryYakPlugins,
     getTaskStartEditDispaly,
+    deleteAnalysisScript,
 };

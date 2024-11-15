@@ -7,8 +7,11 @@ import { TaskScriptTags } from './compoment/TaskScriptTags';
 import { useRequest } from 'ahooks';
 import { getAnalysisScript, getScriptTaskGroup } from '@/apis/task';
 import { WizardModal } from '@/compoments';
-import { Button, Input, Spin } from 'antd';
+import { Button, Input, message, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import CopyOutlined from './compoment/svg/CopyOutlined';
+import FormOutlined from './compoment/svg/FormOutlined';
+import { DeletePopover } from './compoment/DeletePopover';
 
 const TaskScript: FC = () => {
     const [model1] = WizardModal.useModal();
@@ -44,15 +47,17 @@ const TaskScript: FC = () => {
     );
 
     // 获取脚本列表
-    const { loading: scriptLoading, data: scriptData } = useRequest(
-        async () => {
-            const result = await getAnalysisScript();
-            const {
-                data: { list },
-            } = result;
-            return list;
-        },
-    );
+    const {
+        loading: scriptLoading,
+        data: scriptData,
+        refreshAsync,
+    } = useRequest(async () => {
+        const result = await getAnalysisScript();
+        const {
+            data: { list },
+        } = result;
+        return list;
+    });
 
     return (
         <div className="p-4 h-full">
@@ -80,6 +85,25 @@ const TaskScript: FC = () => {
                                         className={`text-clip ${styles['card-header-text']}`}
                                     >
                                         {items?.script_name}
+                                    </div>
+                                    <div className="flex gap-1">
+                                        {/*  border-collapse: separate; */}
+                                        <FormOutlined
+                                            style={{
+                                                borderRight:
+                                                    '1px solid #EAECF3',
+                                            }}
+                                        />
+                                        <CopyOutlined
+                                            style={{
+                                                borderRight:
+                                                    '1px solid #EAECF3',
+                                            }}
+                                        />
+                                        <DeletePopover
+                                            script_name={items.script_name}
+                                            refreshAsync={refreshAsync}
+                                        />
                                     </div>
                                 </div>
 
