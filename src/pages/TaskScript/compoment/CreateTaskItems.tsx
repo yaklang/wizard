@@ -9,6 +9,7 @@ import {
     DatePicker,
     Form,
     Button,
+    InputNumber,
 } from 'antd';
 import { match } from 'ts-pattern';
 import { NodeCard } from './NodeCard';
@@ -46,7 +47,7 @@ const CreateTaskItems = (
                 .with('2', () => {
                     return (
                         <Item
-                            name={['params', 'execution_date']}
+                            name={'execution_date'}
                             label={
                                 <div className="min-w-[112px]">执行时间</div>
                             }
@@ -71,10 +72,7 @@ const CreateTaskItems = (
                             >
                                 <Switch />
                             </Item>
-                            <Item
-                                name={['params', 'timestamp']}
-                                label="设定周期时间范围"
-                            >
+                            <Item name={'timestamp'} label="设定周期时间范围">
                                 <RangePicker
                                     className="w-full"
                                     showTime={{ format: 'HH:mm' }}
@@ -89,29 +87,19 @@ const CreateTaskItems = (
                                 }
                             >
                                 <Compact block={true}>
-                                    <Item
-                                        name={['params', 'interval_seconds']}
-                                        noStyle
-                                    >
-                                        <Input
+                                    <Item name={'interval_time'} noStyle>
+                                        <InputNumber
                                             placeholder="请输入..."
                                             style={{ width: '150%' }}
                                         />
                                     </Item>
-                                    <Item
-                                        name={[
-                                            'params',
-                                            'interval_seconds_type',
-                                        ]}
-                                        noStyle
-                                    >
+                                    <Item name={'interval_type'} noStyle>
                                         <Select
                                             placeholder="请选择"
                                             options={[
-                                                { label: 'Second', value: 1 },
-                                                { label: 'Day', value: 2 },
-                                                { label: 'Hour', value: 3 },
-                                                { label: 'Minute', value: 4 },
+                                                { label: 'Day', value: 1 },
+                                                { label: 'Hour', value: 2 },
+                                                { label: 'Minute', value: 3 },
                                             ]}
                                         />
                                     </Item>
@@ -622,16 +610,13 @@ const CreateTaskItems = (
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     const lastItemKeys = [
-                                        ['params', 'execution_date'],
+                                        'execution_date',
                                         'first',
-                                        ['params', 'timestamp'],
-                                        ['params', 'interval_seconds'],
-                                        ['params', 'interval_seconds_type'],
+                                        'timestamp',
+                                        'interval_time',
+                                        'interval_type',
                                     ];
-                                    setFieldValue(
-                                        ['params', 'scheduling-type'],
-                                        '1',
-                                    );
+                                    setFieldValue('scheduling-type', '1');
                                     lastItemKeys.forEach((val) =>
                                         setFieldValue(val, undefined),
                                     );
@@ -647,7 +632,7 @@ const CreateTaskItems = (
                 <div>
                     <Item
                         label={<div className="min-w-[112px]">调度类型</div>}
-                        name={['params', 'scheduling-type']}
+                        name={'scheduling-type'}
                         initialValue={'1'}
                     >
                         <Select
@@ -661,15 +646,12 @@ const CreateTaskItems = (
                     </Item>
                     <Item
                         shouldUpdate={(prevValues, curValues) =>
-                            prevValues.params?.['scheduling-type'] !==
-                            curValues.params?.['scheduling-type']
+                            prevValues?.['scheduling-type'] !==
+                            curValues?.['scheduling-type']
                         }
                     >
                         {({ getFieldValue }) => {
-                            const formType = getFieldValue([
-                                'params',
-                                'scheduling-type',
-                            ]);
+                            const formType = getFieldValue('scheduling-type');
                             return schedulingTypeFn(formType);
                         }}
                     </Item>

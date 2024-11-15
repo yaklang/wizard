@@ -161,6 +161,8 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 const transformModalFormdata = {
                     ...data,
                     script_type: '端口与漏洞扫描',
+                    id: record.id,
+                    headerGroupValue,
                     params: {
                         ...data.params,
                         'preset-protes': data?.params?.['preset-protes']
@@ -175,7 +177,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                               ]
                             : undefined,
                         execution_date: data?.params?.execution_date
-                            ? `${dayjs.unix(data?.params?.execution_date)}`
+                            ? dayjs.unix(data?.params?.execution_date)
                             : undefined,
                     },
                 };

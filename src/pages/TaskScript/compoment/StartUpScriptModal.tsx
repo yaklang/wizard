@@ -5,7 +5,12 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 import { randomString } from '@/utils';
 import dayjs from 'dayjs';
-import { getNodeList, postTaskStart } from '@/apis/task';
+import {
+    getNodeList,
+    getRunScriptTask,
+    postEditScriptTask,
+    postTaskStart,
+} from '@/apis/task';
 import { TPostTaskStartRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import { UsePageRef } from '@/hooks/usePage';
@@ -24,12 +29,15 @@ const StartUpScriptModal = forwardRef<
         pageLoad?: () => void;
         localRefrech?: UsePageRef['localRefrech'];
     }
->(({ title, pageLoad }, ref) => {
+>(({ title, pageLoad, localRefrech }, ref) => {
     const [model] = WizardModal.useModal();
     const [form] = Form.useForm();
     const scriptTypeValue = Form.useWatch('script_type', form);
 
     const [scriptGroupList, setScriptGroupList] = useSafeState([]);
+    const [editObj, setEditObj] = useSafeState<
+        Record<'headerGroupValue' | 'id', number>
+    >({ id: 0, headerGroupValue: 0 });
 
     const { data: scannerDataList, runAsync } = useRequest(
         async () => {
@@ -60,9 +68,22 @@ const StartUpScriptModal = forwardRef<
                         task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
                         script_type: items?.script_type,
                         ...items,
+                        params: {
+                            ...items.params,
+                            plugins: items.params?.plugins
+                                ? {
+                                      ScriptName:
+                                          items.params?.plugins?.split(','),
+                                  }
+                                : undefined,
+                        },
                     };
                     form.setFieldsValue(targetSetFormData);
                     setScriptGroupList(scriptGroupList);
+                    setEditObj({
+                        id: items.id,
+                        headerGroupValue: items.headerGroupValue,
+                    });
                     model.open();
                 })
                 .catch((err) => console.error(err));
@@ -76,52 +97,60 @@ const StartUpScriptModal = forwardRef<
             ...values,
             params: {
                 ...values.params,
-                end_timestamp: Array.isArray(values?.params?.timestamp)
-                    ? `${dayjs(values?.params?.timestamp?.[0]).unix()}`
-                    : undefined,
-                start_timestamp: Array.isArray(values?.params?.timestamp)
-                    ? `${dayjs(values?.params?.timestamp?.[1]).unix()}`
-                    : undefined,
                 plugins: values.params?.plugins?.ScriptName?.join(','),
-                execution_date: values?.params?.execution_date
-                    ? `${dayjs(values?.params?.execution_date).unix()}`
-                    : undefined,
                 'enable-brute': `${values?.params?.['enable-brute']}`,
                 'enbale-cve-baseline': `${values?.params?.['enbale-cve-baseline']}`,
                 'preset-protes': values?.params?.['preset-protes']
                     ? `${values?.params?.['preset-protes']?.join()}`
                     : undefined,
-                interval_seconds:
-                    values?.params?.interval_seconds_type &&
-                    values?.params?.interval_seconds
-                        ? transformaTimeUnit[
-                              values?.params?.interval_seconds_type as
-                                  | '1'
-                                  | '2'
-                                  | '3'
-                                  | '4'
-                          ] * values?.params?.interval_seconds
-                        : undefined,
             },
             param_files: values?.param_files
                 ? {
                       target: values?.param_files,
                   }
                 : undefined,
+            end_timestamp: Array.isArray(values?.timestamp)
+                ? `${dayjs(values?.timestamp?.[0]).unix()}`
+                : undefined,
+            start_timestamp: Array.isArray(values?.timestamp)
+                ? `${dayjs(values?.params?.timestamp?.[1]).unix()}`
+                : undefined,
+            execution_date: values?.execution_date
+                ? `${dayjs(values?.execution_date).unix()}`
+                : undefined,
             concurrent: 20,
             task_type: 'batch-invoking-script',
+            enable_sched: true,
         };
 
-        await postTaskStart(resultData)
-            .then(() => {
-                message.success(pageLoad ? '创建成功' : '编辑成功');
-                pageLoad?.();
-                model?.close();
-            })
-            .catch((err) => {
-                message.destroy();
-                message.error(`错误: ${err}`);
-            });
+        pageLoad &&
+            (await postTaskStart(resultData)
+                .then(() => {
+                    message.success('创建成功');
+                    pageLoad?.();
+                    model?.close();
+                })
+                .catch((err) => {
+                    message.destroy();
+                    message.error(`错误: ${err}`);
+                }));
+
+        localRefrech &&
+            postEditScriptTask(resultData)
+                .then(() => {
+                    getRunScriptTask({
+                        task_id: editObj.id,
+                        task_type: editObj.headerGroupValue,
+                    }).then(() => {
+                        message.success('编辑成功');
+                        pageLoad?.();
+                        model?.close();
+                    });
+                })
+                .catch((err) => {
+                    message.destroy();
+                    message.error(`错误: ${err}`);
+                });
     };
 
     return (

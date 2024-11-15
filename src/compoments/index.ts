@@ -8,3 +8,4 @@ export { default as WizardModal } from './WizardModal';
 export { default as ChunkUpload } from './ChunkUpload';
 export { default as EmptyBox } from './EmptyBox';
 export { default as NoLoginPermission } from './NoLoginPermission';
+export { default as WizardDrawer } from './WizardDrawer';

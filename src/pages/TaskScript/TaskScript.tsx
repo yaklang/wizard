@@ -7,14 +7,17 @@ import { TaskScriptTags } from './compoment/TaskScriptTags';
 import { useRequest } from 'ahooks';
 import { getAnalysisScript, getScriptTaskGroup } from '@/apis/task';
 import { WizardModal } from '@/compoments';
-import { Button, Input, message, Spin } from 'antd';
+import { Button, Input, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import CopyOutlined from './compoment/svg/CopyOutlined';
 import FormOutlined from './compoment/svg/FormOutlined';
 import { DeletePopover } from './compoment/DeletePopover';
+import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import { TaskScriptDrawer } from './compoment/TaskScriptDrawer';
 
 const TaskScript: FC = () => {
     const [model1] = WizardModal.useModal();
+    const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
 
     const itemsRef = useRef();
@@ -68,7 +71,10 @@ const TaskScript: FC = () => {
                         prefix={<SearchOutlined />}
                         className="w-54"
                     />
-                    <Button type="primary">
+                    <Button
+                        type="primary"
+                        onClick={() => taskScriptDrawerRef.current?.open()}
+                    >
                         <PlusOutlined />
                         创建脚本
                     </Button>
@@ -87,7 +93,6 @@ const TaskScript: FC = () => {
                                         {items?.script_name}
                                     </div>
                                     <div className="flex gap-1">
-                                        {/*  border-collapse: separate; */}
                                         <FormOutlined
                                             style={{
                                                 borderRight:
@@ -136,6 +141,11 @@ const TaskScript: FC = () => {
                 </div>
             </Spin>
             <StartUpScriptModal ref={StartUpScriptModalRef} title="创建任务" />
+            <TaskScriptDrawer
+                ref={taskScriptDrawerRef}
+                title="创建分布式任务脚本"
+                TaskScriptRefresh={refreshAsync}
+            />
         </div>
     );
 };

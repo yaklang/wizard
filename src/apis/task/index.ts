@@ -143,6 +143,25 @@ const getTaskStartEditDispaly = (
         `/task/start/batch-invoking-script-task/fetch?id=${id}`,
     );
 
+// 编辑任务 确认
+const postEditScriptTask = (
+    data: TPostTaskStartRequest,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(
+        '/update/task/start/batch-invoking-script-task',
+        data,
+    );
+
+// 编辑任务确定后执行
+const getRunScriptTask = (params: {
+    task_id: number;
+    task_type: number;
+}): Promise<ResponseData<boolean>> =>
+    axios.get<never, ResponseData<boolean>>(
+        '/task/start/batch-invoking-script/run',
+        { params },
+    );
+
 // 删除 脚本
 const deleteAnalysisScript = (
     script_name: string,
@@ -166,4 +185,6 @@ export {
     postRpcQueryYakPlugins,
     getTaskStartEditDispaly,
     deleteAnalysisScript,
+    postEditScriptTask,
+    getRunScriptTask,
 };
