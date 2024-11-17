@@ -14,7 +14,6 @@ import {
 import { TaskListRequest, TPostTaskStartRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import { UsePageRef } from '@/hooks/usePage';
-import { transformaTimeUnit } from '../data';
 
 export type TScannerDataList = {
     name?: string;
@@ -28,7 +27,7 @@ const StartUpScriptModal = forwardRef<
         title: string;
         pageLoad?: () => void;
         localRefrech?: UsePageRef['localRefrech'];
-        record: TaskListRequest;
+        record?: TaskListRequest;
     }
 >(({ title, pageLoad, localRefrech, record }, ref) => {
     const [model] = WizardModal.useModal();
@@ -139,6 +138,7 @@ const StartUpScriptModal = forwardRef<
                 }));
 
         localRefrech &&
+            record &&
             postEditScriptTask(resultData)
                 .then(async () => {
                     await getRunScriptTask({

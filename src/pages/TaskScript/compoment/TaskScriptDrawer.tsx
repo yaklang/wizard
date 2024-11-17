@@ -11,7 +11,7 @@ const TaskScriptDrawer = forwardRef<
         TaskScriptRefresh: () => Promise<TGetAnalysisScriptReponse[]>;
         title: string;
     }
->(({ TaskScriptRefresh, title }, ref): ReactNode => {
+>(({ title }, ref): ReactNode => {
     const [drawer] = WizardDrawer.useDrawer();
     const [form] = Form.useForm();
 

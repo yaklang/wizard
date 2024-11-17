@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
                     // target: 'http://legion-4g.yaklang.com:8080/',
                     // 高鹏本地
                     target: env.VITE_BASE_URL,
+                    //
                     changeOrigin: true,
                     rewrite: (path) => path,
                 },
