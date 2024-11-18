@@ -15,6 +15,7 @@ import type {
     TPostRpcQueryYakPluginsParams,
     TPostRpcQueryYakPluginsRequest,
     TPostRpcQueryYakPluginsRequestTable,
+    TPostStorageTaskScriptResponse,
     TPostTaskStartRequest,
     TTaskGroupResponse,
 } from './types';
@@ -171,12 +172,13 @@ const deleteAnalysisScript = (
         `/threat/analysis/script?type=${script_name}`,
     );
 
-// 获取任务详情 - 查看报告信息
-const getTimeLineRuntimeMessage = (
-    runtime_id: string,
-): Promise<ResponseData<TGetTimeLineRuntimeMessage>> =>
-    axios.get<never, ResponseData<TGetTimeLineRuntimeMessage>>(
-        `/timeline/fetch?runtime_id=${runtime_id}`,
+// 添加/编辑任务模版
+const postStorageTaskScript = (
+    data: TPostStorageTaskScriptResponse,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(
+        '/task/start/batch-invoking-script/storage?force=false',
+        data,
     );
 
 export {
@@ -196,5 +198,5 @@ export {
     deleteAnalysisScript,
     postEditScriptTask,
     getRunScriptTask,
-    getTimeLineRuntimeMessage,
+    postStorageTaskScript,
 };

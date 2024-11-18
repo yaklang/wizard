@@ -8,12 +8,14 @@ import FormOutlined from './svg/FormOutlined';
 import CopyOutlined from './svg/CopyOutlined';
 import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
-import { Button, Spin } from 'antd';
+import { Spin } from 'antd';
 import { useRequest } from 'ahooks';
 import { getScriptTaskGroup } from '@/apis/task';
 import { WizardModal } from '@/compoments';
 import { StartUpScriptModal } from './StartUpScriptModal';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import { TaskScriptDrawer } from './TaskScriptDrawer';
 
 type TTaskScriptCard = {
     items: TGetAnalysisScriptReponse;
@@ -22,8 +24,9 @@ type TTaskScriptCard = {
 
 const TaskScriptCard: FC<TTaskScriptCard> = ({ items, refreshAsync }) => {
     const itemsRef = useRef();
-
     const [model1] = WizardModal.useModal();
+
+    const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
 
     // 获取 启动脚本任务 任务组参数
@@ -61,6 +64,9 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({ items, refreshAsync }) => {
                     </div>
                     <div className="flex gap-1">
                         <FormOutlined
+                            onClick={() =>
+                                taskScriptDrawerRef.current?.open(items)
+                            }
                             style={{
                                 borderRight: '1px solid #EAECF3',
                             }}
@@ -100,7 +106,16 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({ items, refreshAsync }) => {
                     </div>
                 </Spin>
             </div>
-            <StartUpScriptModal ref={StartUpScriptModalRef} title="创建任务" />
+            <StartUpScriptModal
+                ref={StartUpScriptModalRef}
+                title="创建任务"
+                pageLoad={refreshAsync}
+            />
+            <TaskScriptDrawer
+                ref={taskScriptDrawerRef}
+                title="编辑分布式任务脚本"
+                TaskScriptRefresh={refreshAsync}
+            />
         </>
     );
 };

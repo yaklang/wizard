@@ -148,6 +148,22 @@ type TPostRpcQueryYakPluginsRequestTable<T> = {
     };
 };
 
+// 添加/编辑任务模版请求参数
+type TPostStorageTaskScriptResponse = {
+    script_name: string;
+    description: string;
+    script_type: string;
+    param_files?: string;
+    params: {
+        target: string;
+        'preset-protes': string[];
+        ports: string;
+        'enable-brute': boolean;
+        'enbale-cve-baseline': boolean;
+    };
+    script: string;
+};
+
 export type {
     TaskGrounpResponse,
     TTaskGroupResponse,
@@ -160,6 +176,7 @@ export type {
     TPostRpcQueryYakPluginsParams,
     TPostRpcQueryYakPluginsRequest,
     TPostRpcQueryYakPluginsRequestTable,
+    TPostStorageTaskScriptResponse,
 };
 
 export { TTaskListStatus };

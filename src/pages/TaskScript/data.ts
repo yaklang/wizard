@@ -43,10 +43,3 @@ export {
     presetProtsGroupOptions,
     targetColorFn,
 };
-
-export const transformaTimeUnit = {
-    '1': 1,
-    '2': 60,
-    '3': 3600,
-    '4': 3600 * 24,
-};
