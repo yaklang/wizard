@@ -4,18 +4,22 @@ import { type ReactNode } from 'react';
 import AuthRoute from './AuthRoute';
 import Login from '@/pages/Login';
 import {
-    // DataServiceIcon,
-    // NodeConfigIcon,
-    // ReportManageIcon,
-    // SystemManagementIcon,
+    DataServiceIcon,
+    NodeConfigIcon,
+    ReportManageIcon,
+    SystemManagementIcon,
     TaskCenterIcon,
 } from '@/assets/menu';
+
+import { NetworkError } from '@/pages/NetworkError';
 
 import TaskPageList from '@/pages/TaskPageList';
 import TaskScript from '@/pages/TaskScript';
 import TaskDetail from '@/pages/TaskDetail';
-
-import { NetworkError } from '@/pages/NetworkError';
+import ReportManage from '@/pages/ReportManage';
+import DataService from '@/pages/DataService';
+import NodeConfig from '@/pages/NodeConfig';
+import SystemManagement from '@/pages/SystemManagement';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -69,6 +73,34 @@ const routers: RouteObjectRootMy[] = [
                     },
                 ],
             },
+            {
+                path: 'report-manage',
+                name: '报告管理',
+                key: 'project',
+                icon: <ReportManageIcon />,
+                element: <ReportManage />,
+            },
+            {
+                path: 'data-service',
+                name: '数据库',
+                key: 'data',
+                icon: <DataServiceIcon />,
+                element: <DataService />,
+            },
+            {
+                path: 'node-config',
+                name: '节点配置',
+                key: 'node',
+                icon: <NodeConfigIcon />,
+                element: <NodeConfig />,
+            },
+            {
+                path: 'system-management',
+                name: '系统管理',
+                key: 'system',
+                icon: <SystemManagementIcon />,
+                element: <SystemManagement />,
+            },
         ],
     },
     {
@@ -84,28 +116,3 @@ const routers: RouteObjectRootMy[] = [
 export type { RouteObjectRootMy };
 
 export default routers;
-
-// {
-//     path: "ReportManageIcon",
-//     name: "报告管理",
-//     key: "project",
-//     icon: <ReportManageIcon />,
-// },
-// {
-//     path: "DataServiceIcon",
-//     name: "数据库",
-//     key: "data",
-//     icon: <DataServiceIcon />,
-// },
-// {
-//     path: "NodeConfigIcon",
-//     name: "节点配置",
-//     key: "node",
-//     icon: <NodeConfigIcon />,
-// },
-// {
-//     path: "SystemManagementIcon",
-//     name: "系统管理",
-//     key: "system",
-//     icon: <SystemManagementIcon />,
-// },

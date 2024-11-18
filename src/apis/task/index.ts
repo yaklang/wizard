@@ -14,6 +14,7 @@ import type {
     TPostRpcQueryYakPluginsParams,
     TPostRpcQueryYakPluginsRequest,
     TPostRpcQueryYakPluginsRequestTable,
+    TPostStorageTaskScriptResponse,
     TPostTaskStartRequest,
     TTaskGroupResponse,
 } from './types';
@@ -170,6 +171,15 @@ const deleteAnalysisScript = (
         `/threat/analysis/script?type=${script_name}`,
     );
 
+// 添加/编辑任务模版
+const postStorageTaskScript = (
+    data: TPostStorageTaskScriptResponse,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(
+        '/task/start/batch-invoking-script/storage?force=false',
+        data,
+    );
+
 export {
     getScriptTaskGroup,
     postTaskGrounp,
@@ -187,4 +197,5 @@ export {
     deleteAnalysisScript,
     postEditScriptTask,
     getRunScriptTask,
+    postStorageTaskScript,
 };
