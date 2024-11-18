@@ -24,10 +24,9 @@ export default defineConfig(({ mode }) => {
             // port: 8082,
             proxy: {
                 '/api': {
-                    // target: 'http://legion-4g.yaklang.com:8080/',
+                    target: 'http://legion-4g.yaklang.com:8080/pre/',
                     // 高鹏本地
-                    target: env.VITE_BASE_URL,
-                    //
+                    // target: env.VITE_BASE_URL,
                     changeOrigin: true,
                     rewrite: (path) => path,
                 },

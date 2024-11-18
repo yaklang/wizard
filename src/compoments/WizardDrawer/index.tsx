@@ -6,7 +6,9 @@ import useDrawer from './useDrawer';
 import './index.scss';
 import { CloseOutlined } from '@ant-design/icons';
 
-type DrawerType = FC<DrawerPropsType> & { useDrawer: any };
+type DrawerType = FC<Omit<DrawerPropsType, 'extra'>> & {
+    useDrawer: any;
+};
 
 const initialValue: StateType = {
     open: false,
@@ -25,6 +27,7 @@ const WizardDrawer: DrawerType = ({
     noFooter,
     cancelText = '取消',
     okText = '确定',
+    title = '新建抽屉',
     ...props
 }) => {
     const [state, dispatch] = useReducer(reducer, initialValue);
@@ -61,18 +64,19 @@ const WizardDrawer: DrawerType = ({
         (noFooter ? null : (
             <div
                 style={{
-                    textAlign: 'right',
+                    textAlign: 'left',
                 }}
             >
                 <Button
-                    onClick={closeDrawer}
+                    loading={btnLoading}
+                    onClick={handleOk}
+                    type="primary"
                     style={{ marginRight: 8 }}
-                    disabled={btnLoading}
                 >
-                    {cancelText}
-                </Button>
-                <Button loading={btnLoading} onClick={handleOk} type="primary">
                     {okText}
+                </Button>
+                <Button onClick={closeDrawer} disabled={btnLoading}>
+                    {cancelText}
                 </Button>
             </div>
         ));
@@ -92,12 +96,21 @@ const WizardDrawer: DrawerType = ({
             maskClosable={noFooter ? true : false}
             keyboard={false}
             closeIcon={false}
-            extra={<CloseOutlined className="trigger" onClick={closeDrawer} />}
             width={props?.width || 600}
             destroyOnClose
             {...props}
+            title={
+                <div>
+                    <CloseOutlined
+                        className="color-[#85899E] mr-3"
+                        onClick={closeDrawer}
+                    />
+                    <span className="color-[#31343F] font-sm font-semibold">
+                        {title}
+                    </span>
+                </div>
+            }
         >
-            {/* className="h-full mt-4" */}
             <div>{children}</div>
         </AntdDrawer>
     );

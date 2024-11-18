@@ -1,6 +1,12 @@
 .drawer-container{
+    .ant-drawer-header {
+        background: #F8F8F8
+    }
+    .ant-drawer-footer{
+        background: #F8F8F8;
+    }
     .ant-drawer-body{
         padding: 16px  !important;
-        background-color: #F5F5F5;
+        // background-color: #F5F5F5;
     }
 }
