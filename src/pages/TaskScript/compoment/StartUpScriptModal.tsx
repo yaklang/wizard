@@ -120,8 +120,7 @@ const StartUpScriptModal = forwardRef<
                 : undefined,
             concurrent: 20,
             task_type: 'batch-invoking-script',
-            enable_sched:
-                values?.parmas?.['scheduling-type'] !== 1 ? true : false,
+            enable_sched: values?.['scheduling-type'] !== '1' ? true : false,
             timestamp: undefined,
         };
 

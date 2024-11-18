@@ -8,22 +8,35 @@ import FormOutlined from './svg/FormOutlined';
 import CopyOutlined from './svg/CopyOutlined';
 import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
-import { Spin } from 'antd';
-import { useRequest } from 'ahooks';
+import { Input, InputRef, Modal, Spin } from 'antd';
+import { useRequest, useUpdateEffect } from 'ahooks';
 import { getScriptTaskGroup } from '@/apis/task';
 import { WizardModal } from '@/compoments';
 import { StartUpScriptModal } from './StartUpScriptModal';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { TaskScriptDrawer } from './TaskScriptDrawer';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 
-type TTaskScriptCard = {
-    items: TGetAnalysisScriptReponse;
+const { confirm } = Modal;
+
+export type TTaskScriptCard = {
+    items: { isCopy?: boolean } & TGetAnalysisScriptReponse;
+    setTaskScriptList: React.Dispatch<
+        React.SetStateAction<TTaskScriptCard['items'][]>
+    >;
+    taskScriptList: TTaskScriptCard['items'][];
     refreshAsync: () => Promise<Partial<TGetAnalysisScriptReponse>[]>;
 };
 
-const TaskScriptCard: FC<TTaskScriptCard> = ({ items, refreshAsync }) => {
+const TaskScriptCard: FC<TTaskScriptCard> = ({
+    items,
+    setTaskScriptList,
+    taskScriptList,
+    refreshAsync,
+}) => {
     const itemsRef = useRef();
+    const inputRef = useRef<InputRef>(null);
     const [model1] = WizardModal.useModal();
 
     const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
@@ -55,14 +68,83 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({ items, refreshAsync }) => {
             },
         },
     );
+
+    // 点击复制按钮
+    const headCopy = (items: TTaskScriptCard['items']) => {
+        setTaskScriptList((val) => [{ ...items, isCopy: true }, ...val]);
+    };
+
+    // 复制任务脚本 回车/失去焦点 事件
+    const handAddInputBlur = async () => {
+        const inputValue =
+            inputRef.current?.input?.value.replace(/\s+/g, '') ?? '';
+        if (inputValue === '') {
+            return setTaskScriptList((val) =>
+                val.filter((item) => item.isCopy === false),
+            );
+        }
+        if (taskScriptList.some((item) => item.script_name === inputValue)) {
+            const oldName = taskScriptList.find(
+                (item) => item.script_name === inputValue,
+            )?.script_name;
+            const newItem = taskScriptList.find((item) => item.isCopy === true);
+            showConfirm(oldName, newItem);
+            return;
+        }
+        // TODO 调用接口
+        setTaskScriptList((it) =>
+            it.map((item) => {
+                return item.isCopy === true
+                    ? {
+                          ...item,
+                          isCopy: false,
+                          script_name: inputValue,
+                      }
+                    : { ...item };
+            }),
+        );
+    };
+
+    const showConfirm = (
+        oldName?: string,
+        newItem?: TTaskScriptCard['items'],
+    ) => {
+        confirm({
+            title: '提示',
+            icon: <ExclamationCircleFilled />,
+            content: `[${oldName}] 该脚本名称已存在，是否需要直接进行覆盖`,
+            onOk() {
+                console.log('OK');
+                // TODO 调用接口
+            },
+            onCancel() {
+                setTaskScriptList((it) =>
+                    it.filter((item) => item.isCopy === false),
+                );
+            },
+        });
+    };
+
+    // 监听是否存在新建分组
+    useUpdateEffect(() => {
+        inputRef && inputRef.current?.focus();
+    }, [items]);
+
     return (
         <>
             <div key={items.script_name} className={styles['wizard-card']}>
                 <div className={styles['card-header']}>
-                    <div className={`text-clip ${styles['card-header-text']}`}>
-                        {items?.script_name}
-                    </div>
+                    {items.isCopy ? (
+                        <Input ref={inputRef} onBlur={handAddInputBlur} />
+                    ) : (
+                        <div
+                            className={`text-clip ${styles['card-header-text']}`}
+                        >
+                            {items?.script_name}
+                        </div>
+                    )}
                     <div className="flex gap-1">
+                        {/* 编辑脚本 */}
                         <FormOutlined
                             onClick={() =>
                                 taskScriptDrawerRef.current?.open(items)
@@ -71,11 +153,14 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({ items, refreshAsync }) => {
                                 borderRight: '1px solid #EAECF3',
                             }}
                         />
+                        {/* 复制脚本 */}
                         <CopyOutlined
                             style={{
                                 borderRight: '1px solid #EAECF3',
                             }}
+                            onClick={() => headCopy(items)}
                         />
+                        {/* 删除脚本 */}
                         <DeletePopover
                             script_name={items.script_name}
                             refreshAsync={refreshAsync}

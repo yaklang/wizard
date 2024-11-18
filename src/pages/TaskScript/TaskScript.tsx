@@ -1,27 +1,28 @@
 import { FC, useRef } from 'react';
 
-import { useRequest } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 import { getAnalysisScript } from '@/apis/task';
 import { Button, Input, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { TaskScriptDrawer } from './compoment/TaskScriptDrawer';
-import { TaskScriptCard } from './compoment/TaskScirptCard';
+import { TaskScriptCard, TTaskScriptCard } from './compoment/TaskScirptCard';
 
 const TaskScript: FC = () => {
     const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
+    const [taskScriptList, setTaskScriptList] = useSafeState<
+        TTaskScriptCard['items'][]
+    >([]);
 
     // 获取脚本列表
-    const {
-        loading: scriptLoading,
-        data: scriptData,
-        refreshAsync,
-    } = useRequest(async () => {
+    const { loading: scriptLoading, refreshAsync } = useRequest(async () => {
         const result = await getAnalysisScript();
         const {
             data: { list },
         } = result;
-        return list;
+        const resultList = list?.map((it) => ({ isCopy: false, ...it })) ?? [];
+        setTaskScriptList(resultList);
+        return resultList;
     });
 
     return (
@@ -42,10 +43,12 @@ const TaskScript: FC = () => {
                     </Button>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                    {scriptData?.map((items) => {
+                    {taskScriptList?.map((items) => {
                         return (
                             <TaskScriptCard
                                 items={items}
+                                setTaskScriptList={setTaskScriptList}
+                                taskScriptList={taskScriptList}
                                 refreshAsync={refreshAsync}
                             />
                         );
