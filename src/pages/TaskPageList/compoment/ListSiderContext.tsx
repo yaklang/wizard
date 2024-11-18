@@ -151,8 +151,11 @@ const ListSiderContext: FC<TListSiderContext> = ({
     const handAddInputBlur = async () => {
         const inputValue =
             inputRef.current?.input?.value.replace(/\s+/g, '') ?? '';
-        if (inputValue === '') {
-            setSiderContextList((it) => it.filter((item) => !item.isEdit));
+        if (inputValue === '' && preTaskGroupName) {
+            setPreTaskGroupName(undefined);
+            setSiderContextList((it) =>
+                it.map((item) => ({ ...item, isEdit: false })),
+            );
         } else if (inputValue === '' && !preTaskGroupName) {
             setSiderContextList((values) => values.filter((it) => !it.isEdit));
         } else {
