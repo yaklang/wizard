@@ -146,7 +146,7 @@ const AppLayout = () => {
                         return index !== headerTitle.length - 1 && item ? (
                             <div
                                 key={item.path}
-                                className="font-semibold color-[#b4bbcA] cursor-pointer text-base"
+                                className="font-normal color-[#b4bbcA] cursor-pointer text-xl hover:[bg-[#4A94F8]"
                                 onClick={() => navigate(`/${item.path}`)}
                             >
                                 <LeftOutlined className="color-[#31343F] mr-2 text-5" />
@@ -154,11 +154,11 @@ const AppLayout = () => {
                             </div>
                         ) : (
                             <div
-                                className="text-base font-semibold color-[#31343F] cursor-default flex justify-end"
+                                className="text-xl font-normal color-[#31343F] cursor-default flex justify-end"
                                 key={item.path}
                             >
                                 {headerTitle.length > 1 && (
-                                    <div className="mx-1">/</div>
+                                    <div className="mx-3">/</div>
                                 )}
                                 <div>{item.name}</div>
                             </div>

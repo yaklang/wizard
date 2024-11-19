@@ -125,7 +125,6 @@ const TaskPageList: FC = () => {
     // 新建分组
     const headAddGroupng = () => {
         const hasEdit = siderContextList.some((it) => it.isEdit === true);
-
         const newItem = {
             name: 'ADDINPUT',
             defualtIcon: TaskSiderProject,
@@ -133,11 +132,9 @@ const TaskPageList: FC = () => {
             count: 0,
             isEdit: true,
         };
-
         const targetAddSiderContextList = hasEdit
             ? siderContextList
             : [...siderContextList, newItem];
-
         setSiderContextList(targetAddSiderContextList);
     };
 
