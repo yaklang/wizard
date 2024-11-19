@@ -41,7 +41,7 @@ const AppLayout = () => {
         const routesList = routers[0]?.children ?? [];
 
         // 路由列表转换菜单
-        const routerList = processMenu(routesList, collapsed, navigate);
+        const routerList = processMenu(routesList, navigate);
 
         // 获取 layout Header 面包屑
         const resultPathNodes = findPathNodes(locations.pathname, routesList);
@@ -126,6 +126,7 @@ const AppLayout = () => {
                         overflow: 'auto',
                     }}
                     items={items}
+                    inlineCollapsed={collapsed}
                 />
 
                 <UserCard collapsed={collapsed} />

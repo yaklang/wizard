@@ -240,7 +240,6 @@ type ResultItem = {
 // routelist 节点key转换
 const processMenu = (
     menus: RouteObjectRootMy[],
-    collapsed: boolean,
     navigate: (key: string) => void,
 ): ResultItem[] => {
     return menus.reduce<ResultItem[]>((acc, menu) => {
@@ -248,7 +247,8 @@ const processMenu = (
 
         const result: ResultItem = {
             key: `/${path}`, // 根路径
-            label: !collapsed ? (name ?? '') : '',
+            // label: !collapsed ? (name ?? '') : '',
+            label: name ?? '',
             icon,
             keypath: key ?? '',
             hidden: false,
