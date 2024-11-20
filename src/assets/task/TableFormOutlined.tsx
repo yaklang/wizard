@@ -9,7 +9,7 @@ const TableFormOutlined: FC<TIcon> = (props) => (
         viewBox="0 0 29 16"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="color-[#85899E] hover:color-[#4A94F8]"
+        className="color-[#85899E] hover:color-[#4A94F8] cursor-pointer"
         {...props}
     >
         <path

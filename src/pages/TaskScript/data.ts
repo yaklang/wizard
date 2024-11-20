@@ -1,4 +1,6 @@
+import { TPostTaskStartRequest } from '@/apis/task/types';
 import { PresetColors } from 'antd/es/theme/internal';
+import dayjs from 'dayjs';
 import { Key } from 'react';
 
 // 创建任务脚本 modal
@@ -37,9 +39,44 @@ const targetColorFn = (key: Key) => {
         ? 'default'
         : PresetColors[Math.floor(Math.random() * PresetColors.length)];
 };
+
+const transformFormData = (values: any): TPostTaskStartRequest => {
+    return {
+        ...values,
+        params: {
+            ...values.params,
+            plugins: values.params?.plugins?.ScriptName?.join(','),
+            'enable-brute': `${values?.params?.['enable-brute']}`,
+            'enbale-cve-baseline': `${values?.params?.['enbale-cve-baseline']}`,
+            'preset-protes': values?.params?.['preset-protes']
+                ? `${values?.params?.['preset-protes']?.join()}`
+                : undefined,
+        },
+        param_files: values?.param_files
+            ? {
+                  target: values?.param_files,
+              }
+            : undefined,
+        end_timestamp: Array.isArray(values?.timestamp)
+            ? dayjs(values?.timestamp?.[0]).unix()
+            : undefined,
+        start_timestamp: Array.isArray(values?.timestamp)
+            ? dayjs(values?.params?.timestamp?.[1]).unix()
+            : undefined,
+        execution_date: values?.execution_date
+            ? dayjs(values?.execution_date).unix()
+            : undefined,
+        concurrent: 20,
+        task_type: 'batch-invoking-script',
+        enable_sched: values?.['sched_type'] !== 1 ? true : false,
+        timestamp: undefined,
+    };
+};
+
 export {
     PresetPorts,
     scriptTypeOptions,
     presetProtsGroupOptions,
     targetColorFn,
+    transformFormData,
 };

@@ -96,7 +96,7 @@ type TPromptArgs = Partial<{
     'enbale-cve-baseline': boolean;
     execution_node: number;
     plugins: string;
-    'scheduling-type': number;
+    sched_type: number;
     timestamp: number[];
     interval_seconds: string;
     interval_seconds_type: number;
@@ -110,6 +110,8 @@ type TPostTaskStartRequest = Partial<{
     params: TPromptArgs;
     scanner: string[];
     first: boolean;
+    start_timestamp: number;
+    end_timestamp: number;
 }>;
 
 type Pagination = {

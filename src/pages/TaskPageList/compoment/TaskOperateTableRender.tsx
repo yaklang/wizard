@@ -1,5 +1,5 @@
 import { FC, useMemo, useRef } from 'react';
-import { Button, message, Popover } from 'antd';
+import { Button, message, Popover, Spin } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 import { useRequest, useSafeState } from 'ahooks';
@@ -163,6 +163,9 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                     script_type: '端口与漏洞扫描',
                     id: record.id,
                     headerGroupValue,
+                    execution_date: data?.params?.execution_date
+                        ? dayjs.unix(data?.params?.execution_date)
+                        : undefined,
                     params: {
                         ...data.params,
                         'preset-protes': data?.params?.['preset-protes']
@@ -170,15 +173,6 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                   .split(', ')
                                   .map((item) => item.trim())
                             : [],
-                        timestamp: Array.isArray(data?.params?.timestamp)
-                            ? [
-                                  dayjs.unix(data?.params?.timestamp?.[0]),
-                                  dayjs.unix(data?.params?.timestamp?.[0]),
-                              ]
-                            : undefined,
-                        execution_date: data?.params?.execution_date
-                            ? dayjs.unix(data?.params?.execution_date)
-                            : undefined,
                     },
                 };
                 itemsRef.current = transformModalFormdata;
@@ -445,43 +439,72 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 // 任务列表 周期任务操作项
 const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     record,
-    // localRefrech,
-    // headerGroupValue,
+    localRefrech,
+    headerGroupValue,
 }) => {
+    const StartUpScriptModalRef = useRef<UseModalRefType>(null);
     const [open, setOpen] = useSafeState({
         action: false,
         delete: false,
     });
+    const itemsRef = useRef<any>(null);
     const { status } = record;
+
+    // 获取 启动脚本任务 任务组参数
+    const { run: runAsyncGroup, loading } = useRequest(
+        async () => {
+            const result = await getScriptTaskGroup();
+            const {
+                data: { list },
+            } = result;
+
+            const resultList = list?.map((it) => ({
+                value: it.name,
+                label: it.name,
+            }));
+            return resultList;
+        },
+        {
+            manual: true,
+            onSuccess: async (values) => {
+                await StartUpScriptModalRef.current?.open(
+                    itemsRef.current,
+                    values,
+                );
+            },
+        },
+    );
 
     // 编辑任务
     const onEdit = async () => {
         if (record?.id) {
             await getTaskStartEditDispaly(record.id).then(({ data }) => {
-                console.log(data);
-                // const transformModalFormdata = {
-                //     ...data,
-                //     script_type: '端口与漏洞扫描',
-                //     params: {
-                //         ...data.params,
-                //         'preset-protes': data?.params?.['preset-protes']
-                //             ? (data?.params['preset-protes'])
-                //                   .split(', ')
-                //                   .map((item) => item.trim())
-                //             : [],
-                //         timestamp: Array.isArray(data?.params?.timestamp)
-                //             ? [
-                //                   dayjs.unix(data?.params?.timestamp?.[0]),
-                //                   dayjs.unix(data?.params?.timestamp?.[0]),
-                //               ]
-                //             : undefined,
-                //         execution_date: data?.params?.execution_date
-                //             ? `${dayjs.unix(data?.params?.execution_date)}`
-                //             : undefined,
-                //     },
-                // };
-                // itemsRef.current = transformModalFormdata;
-                // runAsyncGroup();
+                const transformModalFormdata = {
+                    ...data,
+                    script_type: '端口与漏洞扫描',
+                    headerGroupValue,
+                    sched_type: 3,
+                    timestamp:
+                        data?.end_timestamp && data?.start_timestamp
+                            ? [
+                                  dayjs.unix(data?.start_timestamp),
+                                  dayjs.unix(data?.end_timestamp),
+                              ]
+                            : undefined,
+                    execution_date: data?.params?.execution_date
+                        ? `${dayjs.unix(data?.params?.execution_date)}`
+                        : undefined,
+                    params: {
+                        ...data.params,
+                        'preset-protes': data?.params?.['preset-protes']
+                            ? (data?.params['preset-protes'])
+                                  .split(', ')
+                                  .map((item) => item.trim())
+                            : [],
+                    },
+                };
+                itemsRef.current = transformModalFormdata;
+                runAsyncGroup();
             });
         } else {
             message.error('未获取到当行数据ID');
@@ -493,9 +516,12 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             <div className="flex">
                 <span className="w-7 mr-2">{''}</span>
                 {/* 编辑操作 */}
-                <span className="cursor-pointer mr-2" onClick={onEdit}>
-                    <TableFormOutlined />
-                </span>
+                <Spin spinning={loading}>
+                    <TableFormOutlined
+                        onClick={onEdit}
+                        style={{ marginRight: 8 }}
+                    />
+                </Spin>
 
                 <Popover
                     open={open.delete}
@@ -675,10 +701,17 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                         {value === 'finish' && (
                             <div className="w-7 mr-2">{''}</div>
                         )}
+                        {executionOperateOpearte}
                     </div>
                 ))
                 .with(P.nullish, () => executionOperateOpearte)
                 .exhaustive()}
+            <StartUpScriptModal
+                ref={StartUpScriptModalRef}
+                title={'编辑任务'}
+                localRefrech={localRefrech}
+                record={record}
+            />
         </>
     );
 };

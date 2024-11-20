@@ -2,7 +2,7 @@ import { FC, memo, useRef } from 'react';
 
 import { Button, Popover } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { useSafeState } from 'ahooks';
+import { useSafeState, useUpdateEffect } from 'ahooks';
 import { WizardTable } from '@/compoments';
 import {
     CreateTableProps,
@@ -49,6 +49,28 @@ const AddPlugins: FC<TAddPlugins> = memo(
             .with([P.nullish, P.nullish], () => true)
             .otherwise(() => true);
 
+        const columns: CreateTableProps<any>['columns'] = [
+            {
+                title: '插件名',
+                dataIndex: 'ScriptName',
+                rowSelection: 'checkbox',
+                rowSelectKeys: value,
+                onSelectChange: onChange,
+                width: 300,
+            },
+            {
+                title: '所属分组',
+                dataIndex: 'Type',
+                columnsHeaderFilterType: 'checkbox',
+                wizardColumnsOptions: groupsList.current,
+                width: 110,
+            },
+            {
+                title: '插件描述',
+                dataIndex: 'Help',
+            },
+        ];
+
         const AddPluginTableRequest = async (
             params: Parameters<RequestFunction>['0'],
             filter: Record<string, any> | undefined,
@@ -84,27 +106,9 @@ const AddPlugins: FC<TAddPlugins> = memo(
             };
         };
 
-        const columns: CreateTableProps<any>['columns'] = [
-            {
-                title: '插件名',
-                dataIndex: 'ScriptName',
-                rowSelection: 'checkbox',
-                rowSelectKeys: value,
-                onSelectChange: onChange,
-                width: 300,
-            },
-            {
-                title: '所属分组',
-                dataIndex: 'Type',
-                columnsHeaderFilterType: 'checkbox',
-                wizardColumnsOptions: groupsList.current,
-                width: 110,
-            },
-            {
-                title: '插件描述',
-                dataIndex: 'Help',
-            },
-        ];
+        useUpdateEffect(() => {
+            open === true && page.onLoad({ nodeCardValue });
+        }, [nodeCardValue, open]);
 
         return (
             <Popover

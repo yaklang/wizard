@@ -13,7 +13,7 @@ import { getScriptTaskGroup } from '@/apis/task';
 
 const CreateTaskScriptModal = forwardRef<
     UseModalRefType,
-    { pageLoad: () => void }
+    { pageLoad: (arg: any) => void }
 >(({ pageLoad }, ref) => {
     const [model1] = WizardModal.useModal();
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);

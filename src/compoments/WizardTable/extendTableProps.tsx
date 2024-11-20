@@ -94,7 +94,7 @@ const extendTableProps = (
                 {} as Record<string, Array<React.Key>>,
             ) ?? {};
         setSelectedRowKeys(rowSelectionValues);
-    }, [columns]);
+    }, []);
 
     // table header 关闭监听事件
     useUpdateEffect(() => {
@@ -197,13 +197,13 @@ const extendTableProps = (
             const rowKeys = rowKey;
             const selectItems = (dataIndex: string) => {
                 return match(alone)
-                    .with('all', () =>
-                        state.dataSource!.length &&
-                        selectedRowKeys?.[dataIndex]?.length ===
-                            state.dataSource!.length
+                    .with('all', () => {
+                        return state.dataSource!.length &&
+                            selectedRowKeys?.[dataIndex]?.length ===
+                                state.dataSource!.length
                             ? true
-                            : false,
-                    )
+                            : false;
+                    })
                     .with('alone', () => {
                         return selectedRowKeys[dataIndex]?.includes(
                             record?.[rowKeys],
@@ -211,6 +211,7 @@ const extendTableProps = (
                     })
                     .exhaustive();
             };
+
             return match(rowSelection)
                 .with('checkbox', () => {
                     return (
