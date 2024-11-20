@@ -80,6 +80,51 @@ const StartUpScriptModal = forwardRef<
         },
     );
 
+    // 编辑任务 请求
+    const { runAsync: EditTaskRunAsync, loading: editLoading } = useRequest(
+        async (resultData) => postEditScriptTask(resultData),
+        {
+            manual: true,
+            onSuccess: () => {
+                ExecuteRunAsync();
+            },
+            onError: (err) => {
+                message.destroy();
+                message.error(`错误: ${err}`);
+            },
+        },
+    );
+
+    // 编辑之后执行该任务 请求
+    const { runAsync: ExecuteRunAsync, loading } = useRequest(
+        async () => {
+            const result = await getRunScriptTask({
+                task_id: editObj.id,
+                task_type: editObj.headerGroupValue,
+            });
+
+            const { data } = result;
+
+            return data;
+        },
+        {
+            manual: true,
+            onSuccess: async (values) => {
+                localRefrech?.({
+                    operate: 'edit',
+                    oldObj: record!,
+                    newObj: values,
+                });
+                message.success('修改成功');
+                model?.close();
+            },
+            onError: (err) => {
+                message.destroy();
+                message.error(`错误: ${err}`);
+            },
+        },
+    );
+
     useImperativeHandle(ref, () => ({
         async open(items, scriptGroupList) {
             await runAsync()
@@ -118,27 +163,7 @@ const StartUpScriptModal = forwardRef<
 
         pageLoad && (await AddTaskRunAsync(resultData));
 
-        localRefrech &&
-            record &&
-            postEditScriptTask(resultData)
-                .then(async () => {
-                    await getRunScriptTask({
-                        task_id: editObj.id,
-                        task_type: editObj.headerGroupValue,
-                    }).then((res) => {
-                        localRefrech?.({
-                            operate: 'edit',
-                            oldObj: record,
-                            newObj: res?.data,
-                        });
-                        model?.close();
-                    });
-                })
-                .catch((err) => {
-                    message.destroy();
-                    console.log(err, 'err');
-                    message.error(`错误: ${err.message}`);
-                });
+        localRefrech && record && EditTaskRunAsync(resultData);
     };
 
     return (
@@ -158,7 +183,7 @@ const StartUpScriptModal = forwardRef<
                         key="submit"
                         type="primary"
                         onClick={() => onOk()}
-                        loading={addLoading}
+                        loading={addLoading || editLoading || loading}
                     >
                         确定
                     </Button>
