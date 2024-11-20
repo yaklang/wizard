@@ -42,11 +42,14 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     const { dataSource, params, filter } = state;
 
     const { runAsync } = useRequest(
-        async (requests) => {
+        async (requests, reset?: boolean, arg?: any) => {
             dispatch({ loading: true });
             try {
                 if (!state.loading) {
-                    const data = await requests(params, filter);
+                    const data = await requests(
+                        reset ? { ...params, page: 1 } : params,
+                        { ...filter, ...arg },
+                    );
                     const { list, pagemeta } = data;
                     dispatch({
                         dataSource:
@@ -54,6 +57,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                                 ? (state.dataSource ?? []).concat(list ?? [])
                                 : (list ?? []),
                         pagemeta,
+                        params: pagemeta,
                     });
                     return {
                         pagemeta,
@@ -213,29 +217,22 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     // 刷新
     page.refresh = async () => {
         handClearFilter();
-        dispatch({
-            params: {
-                page: 1,
-                limit: state.params!.limit,
-                total: state.pagemeta!.total,
-                total_page: state.pagemeta!.total_page,
-            },
-        });
+        runAsync(request, true);
     };
 
     // 手动触发
-    page.onLoad = async (arg) => {
-        await handClearFilter();
-        dispatch({
-            params: {
-                page: 1,
-                limit: state.params!.limit,
-                total: state.pagemeta!.total,
-                total_page: state.pagemeta!.total_page,
-            },
-            filter: { ...filter, ...arg },
-            // externalParameters: {...arg}
-        });
+    page.onLoad = (arg) => {
+        handClearFilter();
+        runAsync(request, false, arg);
+        // dispatch({
+        //     params: {
+        //         page: 1,
+        //         limit: state.params!.limit,
+        //         total: state.pagemeta!.total,
+        //         total_page: state.pagemeta!.total_page,
+        //     },
+        //     filter: { ...filter, ...arg },
+        // });
     };
 
     // 获取表格参数

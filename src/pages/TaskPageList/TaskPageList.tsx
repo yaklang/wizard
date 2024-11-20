@@ -226,7 +226,9 @@ const TaskPageList: FC = () => {
                             ...params,
                         },
                     });
-
+                    setHeaderGroupValue((val) =>
+                        filter?.task_type ? filter.task_type : val,
+                    );
                     return {
                         list: data?.list,
                         pagemeta: data?.pagemeta,
@@ -235,7 +237,7 @@ const TaskPageList: FC = () => {
             />
             <CreateTaskScriptModal
                 ref={openCreateTaskModalRef}
-                pageLoad={page.refresh}
+                pageLoad={page.onLoad}
             />
         </div>
     );

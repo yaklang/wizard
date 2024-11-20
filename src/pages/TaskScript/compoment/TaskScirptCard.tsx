@@ -114,7 +114,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             icon: <ExclamationCircleFilled />,
             content: `[${oldName}] 该脚本名称已存在，是否需要直接进行覆盖`,
             onOk() {
-                console.log('OK');
+                console.log('OK', newItem);
                 // TODO 调用接口
             },
             onCancel() {

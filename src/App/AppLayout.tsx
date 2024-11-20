@@ -87,7 +87,11 @@ const AppLayout = () => {
                 theme="light"
             >
                 <div
-                    className={`flex justify-between items-center pl-3 pt-4 pr-2 pb-[10px] ${collapsed ? 'flex-col h-[100px]' : 'flex-row gap-4 h-[70px]'}`}
+                    className={`flex justify-between items-center pl-3 pt-4 pr-2 pb-[10px] ${
+                        collapsed
+                            ? 'flex-col h-[100px]'
+                            : 'flex-row gap-4 h-[70px]'
+                    }`}
                     style={{ borderBottom: '1px solid #E9EBED' }}
                 >
                     <div className="flex items-center">
@@ -120,13 +124,12 @@ const AppLayout = () => {
                     ]}
                     className="bg-[#F0F1F3]"
                     style={{
-                        height: !collapsed
-                            ? 'calc(100vh - 178px)'
-                            : 'calc(100vh - 180px)',
+                        height: collapsed
+                            ? 'calc(100vh - 180px)'
+                            : 'calc(100vh - 178px)',
                         overflow: 'auto',
                     }}
                     items={items}
-                    inlineCollapsed={collapsed}
                 />
 
                 <UserCard collapsed={collapsed} />

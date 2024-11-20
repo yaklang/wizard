@@ -1,7 +1,7 @@
 import { WizardModal } from '@/compoments';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { Button, Collapse, Form, message } from 'antd';
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 import { randomString } from '@/utils';
 import dayjs from 'dayjs';
@@ -14,6 +14,7 @@ import {
 import { TaskListRequest, TPostTaskStartRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import { UsePageRef } from '@/hooks/usePage';
+import { transformFormData } from '../data';
 
 export type TScannerDataList = {
     name?: string;
@@ -25,7 +26,7 @@ const StartUpScriptModal = forwardRef<
     UseModalRefType,
     {
         title: string;
-        pageLoad?: () => void;
+        pageLoad?: (arg: any) => void;
         localRefrech?: UsePageRef['localRefrech'];
         record?: TaskListRequest;
     }
@@ -33,12 +34,14 @@ const StartUpScriptModal = forwardRef<
     const [model] = WizardModal.useModal();
     const [form] = Form.useForm();
     const scriptTypeValue = Form.useWatch('script_type', form);
+    const taskTypeRef = useRef(1);
 
     const [scriptGroupList, setScriptGroupList] = useSafeState([]);
     const [editObj, setEditObj] = useSafeState<
         Record<'headerGroupValue' | 'id', number>
     >({ id: 0, headerGroupValue: 0 });
 
+    // 获取节点 请求
     const { data: scannerDataList, runAsync } = useRequest(
         async () => {
             const result = await getNodeList();
@@ -57,6 +60,23 @@ const StartUpScriptModal = forwardRef<
         },
         {
             manual: true,
+        },
+    );
+
+    // 创建任务 请求
+    const { runAsync: AddTaskRunAsync, loading: addLoading } = useRequest(
+        async (resultData) => await postTaskStart(resultData),
+        {
+            manual: true,
+            onSuccess: async () => {
+                message.success('创建成功');
+                await pageLoad?.({ task_type: taskTypeRef.current });
+                model?.close();
+            },
+            onError: (err) => {
+                message.destroy();
+                message.error(`错误: ${err}`);
+            },
         },
     );
 
@@ -92,49 +112,11 @@ const StartUpScriptModal = forwardRef<
 
     const onOk = async () => {
         const values = await form.validateFields();
+        taskTypeRef.current = values.sched_type;
 
-        const resultData: TPostTaskStartRequest = {
-            ...values,
-            params: {
-                ...values.params,
-                plugins: values.params?.plugins?.ScriptName?.join(','),
-                'enable-brute': `${values?.params?.['enable-brute']}`,
-                'enbale-cve-baseline': `${values?.params?.['enbale-cve-baseline']}`,
-                'preset-protes': values?.params?.['preset-protes']
-                    ? `${values?.params?.['preset-protes']?.join()}`
-                    : undefined,
-            },
-            param_files: values?.param_files
-                ? {
-                      target: values?.param_files,
-                  }
-                : undefined,
-            end_timestamp: Array.isArray(values?.timestamp)
-                ? dayjs(values?.timestamp?.[0]).unix()
-                : undefined,
-            start_timestamp: Array.isArray(values?.timestamp)
-                ? dayjs(values?.params?.timestamp?.[1]).unix()
-                : undefined,
-            execution_date: values?.execution_date
-                ? dayjs(values?.execution_date).unix()
-                : undefined,
-            concurrent: 20,
-            task_type: 'batch-invoking-script',
-            enable_sched: values?.['scheduling-type'] !== '1' ? true : false,
-            timestamp: undefined,
-        };
+        const resultData = transformFormData(values);
 
-        pageLoad &&
-            (await postTaskStart(resultData)
-                .then(async () => {
-                    message.success('创建成功');
-                    await pageLoad?.();
-                    model?.close();
-                })
-                .catch((err) => {
-                    message.destroy();
-                    message.error(`错误: ${err}`);
-                }));
+        pageLoad && (await AddTaskRunAsync(resultData));
 
         localRefrech &&
             record &&
@@ -154,7 +136,8 @@ const StartUpScriptModal = forwardRef<
                 })
                 .catch((err) => {
                     message.destroy();
-                    message.error(`错误: ${err}`);
+                    console.log(err, 'err');
+                    message.error(`错误: ${err.message}`);
                 });
     };
 
@@ -171,7 +154,12 @@ const StartUpScriptModal = forwardRef<
                     >
                         取消
                     </Button>
-                    <Button key="submit" type="primary" onClick={() => onOk()}>
+                    <Button
+                        key="submit"
+                        type="primary"
+                        onClick={() => onOk()}
+                        loading={addLoading}
+                    >
                         确定
                     </Button>
                 </>

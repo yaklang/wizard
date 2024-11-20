@@ -38,111 +38,104 @@ const CreateTaskItems = (
     scriptGroupList: { value: string; label: string }[],
     scannerDataList?: TScannerDataList,
 ) => {
-    const schedulingTypeFn = useMemoizedFn(
-        (schedulingType: '1' | '2' | '3') => {
-            return match(schedulingType)
-                .with('1', () => {
-                    return null;
-                })
-                .with('2', () => {
-                    return (
+    const schedulingTypeFn = useMemoizedFn((schedulingType: 1 | 2 | 3) => {
+        return match(schedulingType)
+            .with(1, () => {
+                return null;
+            })
+            .with(2, () => {
+                return (
+                    <Item
+                        name={'execution_date'}
+                        rules={[{ required: true, message: '请选择执行时间' }]}
+                        label={'执行时间'}
+                        className="ml-14"
+                    >
+                        <DatePicker
+                            className="w-full"
+                            showTime={{ format: 'YYYY-MM-DD HH:mm' }}
+                            format={'YYYY-MM-DD HH:mm'}
+                        />
+                    </Item>
+                );
+            })
+            .with(3, () => {
+                return (
+                    <>
                         <Item
-                            name={'execution_date'}
-                            rules={[
-                                { required: true, message: '请选择执行时间' },
-                            ]}
-                            label={'执行时间'}
-                            className="ml-14"
+                            label={
+                                <div className="min-w-[124px]">
+                                    第一次是否执行
+                                </div>
+                            }
+                            name={'first'}
                         >
-                            <DatePicker
+                            <Switch />
+                        </Item>
+                        <Item
+                            name={'timestamp'}
+                            label="设定周期时间范围"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: '请设定周期时间范围',
+                                },
+                            ]}
+                        >
+                            <RangePicker
                                 className="w-full"
-                                showTime={{ format: 'YYYY-MM-DD HH:mm' }}
-                                format={'YYYY-MM-DD HH:mm'}
+                                showTime={{ format: 'HH:mm' }}
+                                format="YYYY-MM-DD HH:mm"
                             />
                         </Item>
-                    );
-                })
-                .with('3', () => {
-                    return (
-                        <>
-                            <Item
-                                label={
-                                    <div className="min-w-[124px]">
-                                        第一次是否执行
-                                    </div>
-                                }
-                                name={'first'}
-                            >
-                                <Switch />
-                            </Item>
-                            <Item
-                                name={'timestamp'}
-                                label="设定周期时间范围"
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: '请设定周期时间范围',
-                                    },
-                                ]}
-                            >
-                                <RangePicker
-                                    className="w-full"
-                                    showTime={{ format: 'HH:mm' }}
-                                    format="YYYY-MM-DD HH:mm"
-                                />
-                            </Item>
-                            <Item
-                                label={
-                                    <div className="min-w-[124px]">
-                                        执行周期
-                                    </div>
-                                }
-                            >
-                                <Compact block={true}>
-                                    <Item
-                                        name={'interval_time'}
-                                        noStyle
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message: '请输入之执行周期时间',
-                                            },
+                        <Item
+                            label={
+                                <div className="min-w-[124px]">执行周期</div>
+                            }
+                        >
+                            <Compact block={true}>
+                                <Item
+                                    name={'interval_time'}
+                                    noStyle
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message: '请输入之执行周期时间',
+                                        },
+                                    ]}
+                                >
+                                    <InputNumber
+                                        placeholder="请输入..."
+                                        style={{ width: '150%' }}
+                                    />
+                                </Item>
+                                <Item
+                                    name={'interval_type'}
+                                    noStyle
+                                    initialValue={1}
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message: '请选择执行周期时间单位',
+                                        },
+                                    ]}
+                                >
+                                    <Select
+                                        placeholder="请选择"
+                                        options={[
+                                            { label: 'Day', value: 1 },
+                                            { label: 'Hour', value: 2 },
+                                            { label: 'Minute', value: 3 },
                                         ]}
-                                    >
-                                        <InputNumber
-                                            placeholder="请输入..."
-                                            style={{ width: '150%' }}
-                                        />
-                                    </Item>
-                                    <Item
-                                        name={'interval_type'}
-                                        noStyle
-                                        initialValue={1}
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message:
-                                                    '请选择执行周期时间单位',
-                                            },
-                                        ]}
-                                    >
-                                        <Select
-                                            placeholder="请选择"
-                                            options={[
-                                                { label: 'Day', value: 1 },
-                                                { label: 'Hour', value: 2 },
-                                                { label: 'Minute', value: 3 },
-                                            ]}
-                                        />
-                                    </Item>
-                                </Compact>
-                            </Item>
-                        </>
-                    );
-                })
-                .exhaustive();
-        },
-    );
+                                    />
+                                </Item>
+                            </Compact>
+                        </Item>
+                    </>
+                );
+            })
+            .exhaustive();
+    });
 
     return [
         {
@@ -472,7 +465,7 @@ const CreateTaskItems = (
                                             },
                                         ]}
                                         initialValue={[
-                                            scannerDataList?.[0]?.name,
+                                            scannerDataList?.[0]?.name ?? [],
                                         ]}
                                     >
                                         <Select
@@ -506,7 +499,7 @@ const CreateTaskItems = (
                                     <Item
                                         name="scanner"
                                         initialValue={[
-                                            scannerDataList?.[0]?.name,
+                                            scannerDataList?.[0]?.name ?? [],
                                         ]}
                                         label={
                                             <div className="min-w-[124px]">
@@ -650,7 +643,7 @@ const CreateTaskItems = (
                                         'interval_time',
                                         'interval_type',
                                     ];
-                                    setFieldValue('scheduling-type', '1');
+                                    setFieldValue('sched_type', 1);
                                     lastItemKeys.forEach((val) =>
                                         setFieldValue(val, undefined),
                                     );
@@ -666,26 +659,26 @@ const CreateTaskItems = (
                 <div>
                     <Item
                         label={<div className="min-w-[124px]">调度类型</div>}
-                        name={'scheduling-type'}
-                        initialValue={'1'}
+                        name={'sched_type'}
+                        initialValue={1}
                     >
                         <Select
                             disabled={title.includes('编辑')}
                             options={[
-                                { label: '无', value: '1' },
-                                { label: '定时任务', value: '2' },
-                                { label: '周期任务', value: '3' },
+                                { label: '无', value: 1 },
+                                { label: '定时任务', value: 2 },
+                                { label: '周期任务', value: 3 },
                             ]}
                         />
                     </Item>
                     <Item
                         shouldUpdate={(prevValues, curValues) =>
-                            prevValues?.['scheduling-type'] !==
-                            curValues?.['scheduling-type']
+                            prevValues?.['sched_type'] !==
+                            curValues?.['sched_type']
                         }
                     >
                         {({ getFieldValue }) => {
-                            const formType = getFieldValue('scheduling-type');
+                            const formType = getFieldValue('sched_type');
                             return schedulingTypeFn(formType);
                         }}
                     </Item>
