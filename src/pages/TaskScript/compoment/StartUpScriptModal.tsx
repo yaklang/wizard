@@ -11,7 +11,7 @@ import {
     postEditScriptTask,
     postTaskStart,
 } from '@/apis/task';
-import { TaskListRequest, TPostTaskStartRequest } from '@/apis/task/types';
+import { TaskListRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import { UsePageRef } from '@/hooks/usePage';
 import { transformFormData } from '../data';
@@ -132,7 +132,12 @@ const StartUpScriptModal = forwardRef<
                     const targetSetFormData = {
                         task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
                         script_type: items?.script_type,
+
                         ...items,
+                        execution_date:
+                            items?.sched_type === 2 && items?.start_timestamp
+                                ? dayjs(items.start_timestamp).unix()
+                                : undefined,
                         params: {
                             ...items.params,
                             plugins: items.params?.plugins

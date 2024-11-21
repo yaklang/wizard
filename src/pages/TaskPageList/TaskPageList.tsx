@@ -190,8 +190,9 @@ const TaskPageList: FC = () => {
                             options={options}
                             value={headerGroupValue}
                             onChange={(e) => {
-                                setHeaderGroupValue(e.target.value);
-                                page.onLoad({ task_type: e.target.value });
+                                const value = e.target.value;
+                                setHeaderGroupValue(value);
+                                page.onLoad({ task_type: value });
                             }}
                         />
                     ),

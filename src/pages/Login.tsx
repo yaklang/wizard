@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Form, Input, message, Spin } from 'antd';
-import { useRequest } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 import useLoginStore from '@/App/store/loginStore';
 import permissionsSliceFn from '@/App/store/powerStore';
 import { LoginIcon } from '@/assets/menu';
@@ -20,6 +20,7 @@ const { Password } = Input;
 const Login = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const [buttonLoading, setButtonLoading] = useSafeState(false);
 
     const { login, token } = useLoginStore((state) => state);
     const { updatePower } = permissionsSliceFn();
@@ -58,17 +59,22 @@ const Login = () => {
     }, []);
 
     const loginFn = async (values: FieldType) => {
-        await login(values);
-        await updatePower();
-        navigate('/');
-        message.success('登陆成功');
+        try {
+            await login(values);
+            await updatePower();
+            navigate('/');
+        } catch {
+            setButtonLoading(false);
+        } finally {
+            setButtonLoading(false);
+        }
     };
 
     // 登录
     const onFinish = async (values: FieldType): Promise<void> => {
         try {
             const verificationCode = values?.verificationCode;
-
+            setButtonLoading(true);
             // 将输入验证码全转为小写
             const toLowerCaseVerificationCode =
                 verificationCode &&
@@ -80,6 +86,7 @@ const Login = () => {
                 code: toLowerCaseVerificationCode,
             });
         } catch (err) {
+            setButtonLoading(false);
             console.error(err);
         }
     };
@@ -195,6 +202,7 @@ const Login = () => {
                                     fontFamily: 'PingFang HK',
                                 }}
                                 htmlType="submit"
+                                loading={buttonLoading}
                             >
                                 登录
                             </Button>
