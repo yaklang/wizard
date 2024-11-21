@@ -1,12 +1,14 @@
 import { FC } from 'react';
 
-import { Button, Radio } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Radio } from 'antd';
 
 import { WizardTable } from '@/compoments';
 import { useSafeState } from 'ahooks';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
 import { detailHeaderGroupOptions } from './compoments/data';
+import { TableOptionsFilterDrawer } from './compoments/TableOptionsFilterDrawer';
+import { getTaskList } from '@/apis/task';
+import { CommonTasksColumns } from '../TaskPageList/compoment/Columns';
 
 const { Group } = Radio;
 
@@ -21,7 +23,7 @@ const TaskDetail: FC = () => {
 
             <WizardTable
                 rowKey={'id'}
-                columns={[]}
+                columns={CommonTasksColumns(headerGroupValue, page)}
                 page={page}
                 tableHeader={{
                     tableHeaderGroup: (
@@ -41,29 +43,25 @@ const TaskDetail: FC = () => {
                             dowload_request: async () => console.log('下载'),
                         },
                         ProFilterSwitch: {
-                            trigger: <div>asd</div>,
+                            trigger: <TableOptionsFilterDrawer />,
+                            layout: 'vertical',
                         },
                     },
                 }}
                 request={async (params, filter) => {
-                    // const { data } = await getTaskList({
-                    //     dto: {
-                    //         task_type: headerGroupValue,
-                    //         ...filter,
-                    //     },
-                    //     pagemeta: {
-                    //         ...params,
-                    //     },
-                    // });
+                    const { data } = await getTaskList({
+                        dto: {
+                            task_type: headerGroupValue,
+                            ...filter,
+                        },
+                        pagemeta: {
+                            ...params,
+                        },
+                    });
 
                     return {
-                        list: [],
-                        pagemeta: {
-                            limit: 0,
-                            page: 0,
-                            total: 0,
-                            total_page: 0,
-                        },
+                        list: data?.list,
+                        pagemeta: data?.pagemeta,
                     };
                 }}
             />

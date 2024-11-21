@@ -159,10 +159,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         }
     }, [height.tableHeight, dataSource]);
 
-    // 当筛选项变化时，重置分页、滚动条回到顶部，并请求新数据
-    useUpdateEffect(() => {
-        handClearFilter();
-    }, [filter]);
+    // // 当筛选项变化时，重置分页、滚动条回到顶部，并请求新数据
+    // useUpdateEffect(() => {
+    //     handClearFilter();
+    // }, [filter]);
 
     // 表格滚动函数
     const tableOnScrollFn = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
@@ -376,10 +376,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             <div
                 id="table-container"
                 ref={tableRef}
-                className={`
-                    transition-all duration-500 w-full p-4 bg-[#fff] 
-                    relative
-                `}
+                className={`transition-all duration-500 w-full p-4 bg-[#fff] relative`}
                 // h-[${height.tableContainerHeight}px]
                 style={{
                     width: `${
@@ -430,6 +427,8 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     filterDispatch={dispatch}
                     tableHeight={height.tableHeight}
                     trigger={tableHeader?.options?.ProFilterSwitch?.trigger}
+                    layout={tableHeader?.options?.ProFilterSwitch?.layout}
+                    wizardScrollHeight={wizardScrollHeight}
                 />
             </div>
         </div>

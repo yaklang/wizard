@@ -2,16 +2,26 @@ import { Dispatch, FC, memo, ReactNode } from 'react';
 import { TRecudeInitiakValue } from '../WizardTable/types';
 import { Form, Switch } from 'antd';
 import { useUpdateEffect } from 'ahooks';
+import { FormLayout } from 'antd/es/form/Form';
 
 interface TWizardProFilterDrawerProps {
     status?: TRecudeInitiakValue;
     filterDispatch?: Dispatch<TRecudeInitiakValue>;
     trigger?: ReactNode;
     tableHeight: number;
+    wizardScrollHeight: number;
+    layout?: FormLayout;
 }
 
 const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
-    ({ status: state, filterDispatch, trigger, tableHeight }) => {
+    ({
+        status: state,
+        filterDispatch,
+        trigger,
+        tableHeight,
+        wizardScrollHeight,
+        layout = 'vertical',
+    }) => {
         const [form] = Form.useForm();
 
         const headChange = (e: boolean): void => {
@@ -26,10 +36,6 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
             filterDispatch &&
                 filterDispatch({
                     filter: { ...state?.filter, ...fieldsValue },
-                    // params: {
-                    //     limit: state!.params!.limit,
-                    //     page: 1,
-                    // },
                     pagemeta: {
                         limit: state!.pagemeta!.limit,
                         total: state!.pagemeta!.total,
@@ -45,9 +51,11 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
 
         return (
             state && (
-                <div className="h-full pt-4 bg-white min-w-[300px]">
+                <div
+                    className={`h-full bg-white min-w-[300px] min-h-[${wizardScrollHeight}px] border-l-solid border-1 border-[#EAECF3]`}
+                >
                     <div
-                        className="h-11 p-4 flex items-center justify-between"
+                        className="h-11 py-8 px-4 flex items-center justify-between"
                         style={{
                             borderBottom: '1px solid #EAECF3',
                         }}
@@ -61,6 +69,7 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
                     <Form
                         form={form}
                         onFieldsChange={headFieldsChange}
+                        layout={layout}
                         className={`px-4 pt-4 overflow-auto`}
                         style={{
                             maxHeight: tableHeight + 74 + 'px',

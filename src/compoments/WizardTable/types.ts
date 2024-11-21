@@ -6,6 +6,7 @@ import { UsePageRef } from '@/hooks/usePage';
 
 import { initialValue } from './data';
 import { AnyObject } from 'antd/es/_util/type';
+import { FormLayout } from 'antd/es/form/Form';
 
 // 定义 wizardColumnsType 的字符串字面量类型
 type WizardColumnsType = 'input' | 'radio' | 'checkbox';
@@ -53,6 +54,7 @@ type CreateTableProps<T> = Omit<
 
 interface TWizardTableHeader extends SwitchProps {
     trigger: ReactNode;
+    layout?: FormLayout;
 }
 
 // table请求
