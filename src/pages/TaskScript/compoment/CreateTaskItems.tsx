@@ -465,8 +465,8 @@ const CreateTaskItems = (
                                             },
                                         ]}
                                         initialValue={[
-                                            scannerDataList?.[0]?.name ?? [],
-                                        ]}
+                                            scannerDataList?.[0]?.name,
+                                        ].filter((it) => it)}
                                     >
                                         <Select
                                             mode="multiple"
@@ -499,8 +499,8 @@ const CreateTaskItems = (
                                     <Item
                                         name="scanner"
                                         initialValue={[
-                                            scannerDataList?.[0]?.name ?? [],
-                                        ]}
+                                            scannerDataList?.[0]?.name,
+                                        ].filter((it) => it)}
                                         label={
                                             <div className="min-w-[124px]">
                                                 节点选择
@@ -528,10 +528,18 @@ const CreateTaskItems = (
                     {scriptTypeValue === '端口与漏洞扫描' && (
                         <Item
                             shouldUpdate={(prevValues, curValues) => {
-                                const preScannerStr =
-                                    prevValues?.['scanner']?.join();
-                                const curScannerStr =
-                                    curValues?.['scanner']?.join();
+                                const preScannerStr = Array.isArray(
+                                    prevValues?.['scanner'],
+                                )
+                                    ? prevValues?.['scanner']?.join()
+                                    : prevValues?.['scanner'];
+
+                                const curScannerStr = Array.isArray(
+                                    curValues?.['scanner'],
+                                )
+                                    ? curValues?.['scanner']?.join()
+                                    : curValues?.['scanner'];
+
                                 const preExecution_nodeStr =
                                     prevValues.params?.['params']?.[
                                         'execution_node'

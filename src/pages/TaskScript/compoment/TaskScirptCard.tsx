@@ -9,7 +9,7 @@ import CopyOutlined from './svg/CopyOutlined';
 import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
 import { Input, InputRef, Modal, Spin } from 'antd';
-import { useRequest, useUpdateEffect } from 'ahooks';
+import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 import { getScriptTaskGroup } from '@/apis/task';
 import { WizardModal } from '@/compoments';
 import { StartUpScriptModal } from './StartUpScriptModal';
@@ -38,6 +38,8 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     const itemsRef = useRef();
     const inputRef = useRef<InputRef>(null);
     const [model1] = WizardModal.useModal();
+
+    const [confirmVisible, setConfirmVisible] = useSafeState(false);
 
     const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
@@ -83,12 +85,11 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                 val.filter((item) => item.isCopy === false),
             );
         }
-        if (taskScriptList.some((item) => item.script_name === inputValue)) {
-            const oldName = taskScriptList.find(
-                (item) => item.script_name === inputValue,
-            )?.script_name;
-            const newItem = taskScriptList.find((item) => item.isCopy === true);
-            showConfirm(oldName, newItem);
+        const resetNot = taskScriptList.some(
+            (item) => item.script_name === inputValue,
+        );
+        if (resetNot) {
+            openTipsConfirm(inputValue);
             return;
         }
         // TODO 调用接口
@@ -105,10 +106,20 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         );
     };
 
+    const openTipsConfirm = (inputValue: string) => {
+        const oldName = taskScriptList.find(
+            (item) => item.script_name === inputValue,
+        )?.script_name;
+        const newItem = taskScriptList.find((item) => item.isCopy === true);
+        showConfirm(oldName, newItem);
+    };
+
     const showConfirm = (
         oldName?: string,
         newItem?: TTaskScriptCard['items'],
     ) => {
+        if (confirmVisible) return; // 如果弹窗已显示，则不重复触发
+        setConfirmVisible(true);
         confirm({
             title: '提示',
             icon: <ExclamationCircleFilled />,
@@ -116,11 +127,13 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             onOk() {
                 console.log('OK', newItem);
                 // TODO 调用接口
+                setConfirmVisible(false);
             },
             onCancel() {
                 setTaskScriptList((it) =>
                     it.filter((item) => item.isCopy === false),
                 );
+                setConfirmVisible(false);
             },
         });
     };
@@ -135,7 +148,11 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             <div key={items.script_name} className={styles['wizard-card']}>
                 <div className={styles['card-header']}>
                     {items.isCopy ? (
-                        <Input ref={inputRef} onBlur={handAddInputBlur} />
+                        <Input
+                            ref={inputRef}
+                            onBlur={handAddInputBlur}
+                            onPressEnter={handAddInputBlur}
+                        />
                     ) : (
                         <div
                             className={`text-clip ${styles['card-header-text']}`}

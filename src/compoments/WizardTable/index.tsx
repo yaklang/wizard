@@ -44,6 +44,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     const { runAsync } = useRequest(
         async (requests, reset?: boolean, arg?: any) => {
             dispatch({ loading: true });
+            console.log(filter, 'filter');
             try {
                 if (!state.loading) {
                     const data = await requests(
@@ -223,16 +224,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     // 手动触发
     page.onLoad = (arg) => {
         handClearFilter();
-        runAsync(request, false, arg);
-        // dispatch({
-        //     params: {
-        //         page: 1,
-        //         limit: state.params!.limit,
-        //         total: state.pagemeta!.total,
-        //         total_page: state.pagemeta!.total_page,
-        //     },
-        //     filter: { ...filter, ...arg },
-        // });
+        runAsync(request, true, arg);
     };
 
     // 获取表格参数
