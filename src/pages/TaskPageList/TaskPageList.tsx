@@ -36,6 +36,9 @@ const TaskPageList: FC = () => {
         typeof siderTaskGrounpAllList
     >(siderTaskGrounpAllList);
     const [taskGroupKey, setTaskGroupKey] = useSafeState<string>('全部');
+    const [deleteValues, setDeleteValues] = useSafeState<Record<string, any[]>>(
+        {},
+    );
 
     // 获取项目组请求
     const { loading: taskGrounpLoading, refreshAsync } = useRequest(
@@ -184,7 +187,12 @@ const TaskPageList: FC = () => {
 
             <WizardTable
                 rowKey={'id'}
-                columns={CommonTasksColumns(headerGroupValue, page)}
+                columns={CommonTasksColumns(
+                    headerGroupValue,
+                    page,
+                    deleteValues,
+                    setDeleteValues,
+                )}
                 page={page}
                 tableHeader={{
                     tableHeaderGroup: (
@@ -196,20 +204,40 @@ const TaskPageList: FC = () => {
                             onChange={(e) => {
                                 const value = e.target.value;
                                 setHeaderGroupValue(value);
+                                setDeleteValues({});
                                 page.onLoad({ task_type: value });
                             }}
                         />
                     ),
                     options: {
                         trigger: (
-                            <Button
-                                type="primary"
-                                onClick={headCreatedScript}
-                                loading={scriptLoading}
-                            >
-                                <PlusOutlined />
-                                创建任务
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    danger
+                                    disabled={
+                                        deleteValues?.task_name &&
+                                        deleteValues?.task_name?.length > 0
+                                            ? false
+                                            : true
+                                    }
+                                    onClick={() =>
+                                        alert(
+                                            'id: ' +
+                                                deleteValues?.task_name?.join(),
+                                        )
+                                    }
+                                >
+                                    批量删除
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    onClick={headCreatedScript}
+                                    loading={scriptLoading}
+                                >
+                                    <PlusOutlined />
+                                    创建任务
+                                </Button>
+                            </div>
                         ),
                     },
                 }}

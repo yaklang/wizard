@@ -69,6 +69,10 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                     values,
                 );
             },
+            onError(error) {
+                message.destroy();
+                message.error(error?.message ?? '获取失败');
+            },
         },
     );
 
@@ -89,6 +93,10 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 });
                 message.success('执行成功');
                 setOpen((val) => ({ ...val, action: false }));
+            },
+            onError(error) {
+                message.destroy();
+                message.error(error?.message ?? '执行失败');
             },
         },
     );
@@ -120,6 +128,10 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 message.success('取消执行成功');
                 setOpen((val) => ({ ...val, action: false }));
             },
+            onError(error) {
+                message.destroy();
+                message.error(error?.message ?? '取消执行失败');
+            },
         },
     );
 
@@ -143,6 +155,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         },
         { manual: true },
     );
+
     const headDeleteTask = async () => {
         if (record.id) {
             await deleteRunAsync(record.id);
@@ -253,7 +266,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                             TTaskListStatus.disabled,
                             TTaskListStatus.enabled,
                             TTaskListStatus.failed,
-                            TTaskListStatus.finish,
+                            TTaskListStatus.finished,
                             TTaskListStatus.running,
                             TTaskListStatus.success,
                             TTaskListStatus.waiting,
@@ -514,13 +527,11 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     const executionOperateOpearte = useMemo(() => {
         return (
             <div className="flex">
-                <span className="w-7 mr-2">{''}</span>
                 {/* 编辑操作 */}
                 <Spin spinning={loading}>
-                    <TableFormOutlined
-                        onClick={onEdit}
-                        style={{ marginRight: 8 }}
-                    />
+                    <span className="cursor-pointer mr-2" onClick={onEdit}>
+                        <TableFormOutlined />
+                    </span>
                 </Spin>
 
                 <Popover
@@ -585,7 +596,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                             TTaskListStatus.disabled,
                             TTaskListStatus.enabled,
                             TTaskListStatus.failed,
-                            TTaskListStatus.finish,
+                            TTaskListStatus.finished,
                             TTaskListStatus.running,
                             TTaskListStatus.success,
                             TTaskListStatus.waiting,
@@ -649,6 +660,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                         )}
                         {value === 'enabled' && (
                             <Popover
+                                open={open.action}
                                 content={
                                     <div className="flex justify-end gap-2">
                                         <Button
@@ -681,7 +693,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                     <div>
                                         <InfoCircleOutlined color="#faad14" />
                                         <span className="ml-1 font-400">
-                                            结束该任务？
+                                            停用该任务？
                                         </span>
                                     </div>
                                 }
@@ -698,13 +710,18 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                 </div>
                             </Popover>
                         )}
-                        {value === 'finish' && (
-                            <div className="w-7 mr-2">{''}</div>
-                        )}
+                        {!['waiting', 'disabled', 'enabled'].includes(
+                            value,
+                        ) && <div className="w-7 mr-2">{''}</div>}
                         {executionOperateOpearte}
                     </div>
                 ))
-                .with(P.nullish, () => executionOperateOpearte)
+                .with(P.nullish, () => (
+                    <div className="flex">
+                        <div className="w-7 mr-2">{''}</div>
+                        {executionOperateOpearte}
+                    </div>
+                ))
                 .exhaustive()}
             <StartUpScriptModal
                 ref={StartUpScriptModalRef}

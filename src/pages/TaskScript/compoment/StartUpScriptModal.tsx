@@ -75,7 +75,7 @@ const StartUpScriptModal = forwardRef<
             },
             onError: (err) => {
                 message.destroy();
-                message.error(`错误: ${err}`);
+                message.error(`错误: ${err.message}`);
             },
         },
     );
@@ -86,11 +86,18 @@ const StartUpScriptModal = forwardRef<
         {
             manual: true,
             onSuccess: () => {
-                ExecuteRunAsync();
+                const { headerGroupValue } = editObj;
+                if (headerGroupValue !== 3) {
+                    ExecuteRunAsync();
+                    return;
+                } else {
+                    message.success('修改成功');
+                    model?.close();
+                }
             },
             onError: (err) => {
                 message.destroy();
-                message.error(`错误: ${err}`);
+                message.error(`错误: ${err.message}`);
             },
         },
     );
@@ -120,7 +127,7 @@ const StartUpScriptModal = forwardRef<
             },
             onError: (err) => {
                 message.destroy();
-                message.error(`错误: ${err}`);
+                message.error(`错误: ${err.message}`);
             },
         },
     );
@@ -136,7 +143,16 @@ const StartUpScriptModal = forwardRef<
                         ...items,
                         execution_date:
                             items?.sched_type === 2 && items?.start_timestamp
-                                ? dayjs(items.start_timestamp).unix()
+                                ? dayjs.unix(items.start_timestamp)
+                                : undefined,
+                        timestamp:
+                            items?.sched_type === 3 &&
+                            items?.start_timestamp &&
+                            items?.end_timestamp
+                                ? [
+                                      dayjs.unix(items?.start_timestamp),
+                                      dayjs.unix(items?.end_timestamp),
+                                  ]
                                 : undefined,
                         params: {
                             ...items.params,

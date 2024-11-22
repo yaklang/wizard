@@ -34,11 +34,6 @@ const AddPlugins: FC<TAddPlugins> = memo(
 
         const [page] = WizardTable.usePage();
 
-        console.log(
-            execution_node,
-            nodeCardValue,
-            'execution_node, nodeCardValue',
-        );
         // 判断 设置插件 禁用状态
         const isDisabled = match([execution_node, nodeCardValue])
             .with(['1', P.nullish], () => true)

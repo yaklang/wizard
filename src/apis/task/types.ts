@@ -7,7 +7,7 @@ enum TTaskListStatus {
     disabled = 'disabled',
     failed = 'failed',
     enabled = 'enabled',
-    finish = 'finish',
+    finished = 'finished',
 }
 
 // 任务列表请求数据
@@ -30,6 +30,8 @@ type TaskListRequest = Partial<{
     uodated_at: number;
     start_at: number;
     end_at: number;
+    start_timestamp: number;
+    end_timestamp: number;
 }>;
 
 // 任务分组相应数据
