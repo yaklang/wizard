@@ -144,7 +144,7 @@ const extendTableProps = (
             };
             return returnValue;
         });
-        return { [dataIndex]: addSelectedRowKeys };
+        return addSelectedRowKeys;
     };
 
     // 处理表头全选的变化
@@ -196,6 +196,7 @@ const extendTableProps = (
             record?: Record<string, any>,
         ) => {
             const rowKeys = rowKey;
+
             const selectItems = (dataIndex: string) => {
                 return match(alone)
                     .with('all', () => {
@@ -229,11 +230,13 @@ const extendTableProps = (
                                     : undefined
                             }
                             onChange={(e) => {
-                                const rowKeys = checkeboxChangeType(
-                                    record,
-                                    e,
-                                    column.dataIndex,
-                                );
+                                const rowKeys = {
+                                    [column.dataIndex]: checkeboxChangeType(
+                                        record,
+                                        e,
+                                        column.dataIndex,
+                                    ),
+                                };
                                 column?.onSelectChange &&
                                     column.onSelectChange({
                                         ...selectedRowKeys,
