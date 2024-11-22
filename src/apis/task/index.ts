@@ -3,6 +3,7 @@ import type {
     ResponseData,
     TableRequestParam,
     TableResponseData,
+    TGetTimeLineRuntimeMessage,
 } from '@/utils/commonTypes';
 import type {
     StopOnRunTsakResponse,
@@ -170,6 +171,14 @@ const deleteAnalysisScript = (
         `/threat/analysis/script?type=${script_name}`,
     );
 
+// 获取任务详情 - 查看报告信息
+const getTimeLineRuntimeMessage = (
+    runtime_id: string,
+): Promise<ResponseData<TGetTimeLineRuntimeMessage>> =>
+    axios.get<never, ResponseData<TGetTimeLineRuntimeMessage>>(
+        `/timeline/fetch?runtime_id=${runtime_id}`,
+    );
+
 export {
     getScriptTaskGroup,
     postTaskGrounp,
@@ -187,4 +196,5 @@ export {
     deleteAnalysisScript,
     postEditScriptTask,
     getRunScriptTask,
+    getTimeLineRuntimeMessage,
 };

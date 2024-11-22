@@ -1,7 +1,7 @@
-import { FC, useEffect } from 'react';
+import { FC } from 'react';
 import { useSafeState } from 'ahooks';
 
-import { Button, Collapse, Progress, Tag } from 'antd';
+import { Collapse, Progress, Tag } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 
 import { SiderClose, SiderOpen } from '@/assets/compoments';
@@ -9,6 +9,7 @@ import { SiderClose, SiderOpen } from '@/assets/compoments';
 import '../index.scss';
 import dayjs from 'dayjs';
 import { randomString } from '@/utils';
+import { ViewReportDrawer } from './ViewReportDrawer';
 
 const detailList = [
     {
@@ -41,10 +42,6 @@ const taskList = [
     {
         name: '子任务一',
         completion_degree: 30,
-    },
-    {
-        name: '子任务二',
-        completion_degree: 100,
     },
 ];
 
@@ -100,8 +97,6 @@ const historicalRecordsList = [
 
 const TaskDetailSider: FC = () => {
     const [collapsed, setCollapsed] = useSafeState(true);
-
-    useEffect(() => {}, []);
 
     const detailCollapseItems = [
         {
@@ -163,9 +158,7 @@ const TaskDetailSider: FC = () => {
                                     }
                                 </Tag>
                             </div>
-                            <Button type="link" className="p-0">
-                                查看报告
-                            </Button>
+                            <ViewReportDrawer runtime_id='7d021a26-46c7-43bb-a2d6-cd51d8fd1238"' />
                         </div>
                     ))}
                     <div className="min-h-[30px] color-[#CCD2DE] flex align-end justify-center mb-2">

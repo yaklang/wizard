@@ -54,8 +54,8 @@ const TaskPageList: FC = () => {
                         }, 0) ?? 0;
 
                     // 将子任务映射到新的任务列表
-                    const fetchResultdata = list?.map(
-                        (it: TaskGrounpResponse) => {
+                    const fetchResultdata =
+                        list?.map((it: TaskGrounpResponse) => {
                             return {
                                 ...it,
                                 isEdit: false,
@@ -71,8 +71,7 @@ const TaskPageList: FC = () => {
                                     ? TaskSelectdDefualt
                                     : TaskSelectdProject,
                             };
-                        },
-                    );
+                        }) ?? [];
 
                     // 更新全部任务的 count
                     const updatedSiderTaskGrounpAllList =

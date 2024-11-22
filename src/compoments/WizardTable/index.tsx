@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { message, Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
-import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 
 import useListenWidth from '@/hooks/useListenHeight';
 
@@ -46,6 +46,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             dispatch({ loading: true });
             try {
                 if (!state.loading) {
+                    await handClearFilter();
                     const data = await requests(params, filter);
                     const { list, pagemeta } = data;
                     dispatch({
@@ -212,7 +213,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     // 对外提供方法
     // 刷新
     page.refresh = async () => {
-        handClearFilter();
         dispatch({
             params: {
                 page: 1,
@@ -225,7 +225,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 手动触发
     page.onLoad = async (arg) => {
-        await handClearFilter();
         dispatch({
             params: {
                 page: 1,
