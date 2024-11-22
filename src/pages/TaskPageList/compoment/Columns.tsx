@@ -22,8 +22,13 @@ type TColumns = {
 const CommonTasksColumns = (
     headerGroupValue: 1 | 2 | 3,
     page: UsePageRef,
+    deleteValues: Record<string, any[]>,
+    setDeleteValues: React.Dispatch<
+        React.SetStateAction<Record<string, any[]>>
+    >,
 ): CreateTableProps<TaskListRequest>['columns'] => {
     const navigate = useNavigate();
+
     // 获取执行节点 列表
     const { data: taskNodeData } = useRequest(async () => {
         const result = await getBatchInvokingScriptTaskNode();
@@ -45,6 +50,9 @@ const CommonTasksColumns = (
             title: '任务名称',
             dataIndex: 'task_name',
             columnsHeaderFilterType: 'input',
+            rowSelection: 'checkbox',
+            rowSelectKeys: deleteValues,
+            onSelectChange: setDeleteValues,
             width: 480,
             render: (_, record) => (
                 <div
@@ -94,7 +102,7 @@ const CommonTasksColumns = (
             width: 240,
             columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: taskListStatus.filter(
-                (it) => !['disabled', 'finish', 'enabled'].includes(it.value),
+                (it) => !['disabled', 'finished', 'enabled'].includes(it.value),
             ),
             render: (_, record) => TaskStatus(record?.status),
         },
@@ -122,9 +130,9 @@ const CommonTasksColumns = (
         {
             title: '执行时间',
             width: 240,
-            dataIndex: 'start_at',
+            dataIndex: 'start_timestamp',
             render: (value) =>
-                value && dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss'),
+                value && dayjs.unix(value).format('YYYY-MM-DD HH:mm'),
         },
     ];
 
@@ -132,15 +140,13 @@ const CommonTasksColumns = (
     const executionTimePeriod: TColumns['columnsRender'] = [
         {
             title: '执行时间段',
-            width: 240,
-            dataIndex: 'start_at',
+            width: 320,
+            dataIndex: 'start_timestamp',
             render: (value, record) => (
                 <>
-                    {value
-                        ? dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss')
-                        : '-'}
-                    {record.end_at
-                        ? ` - ${dayjs.unix(record.end_at).format('YYYY-MM-DD HH:mm:ss')}`
+                    {value ? dayjs.unix(value).format('YYYY-MM-DD HH:mm') : '-'}
+                    {record.end_timestamp
+                        ? ` - ${dayjs.unix(record.end_timestamp).format('YYYY-MM-DD HH:mm')}`
                         : null}
                 </>
             ),
@@ -155,7 +161,9 @@ const CommonTasksColumns = (
             width: 240,
             columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: taskListStatus.filter((it) =>
-                ['disabled', 'waiting', 'finish', 'enabled'].includes(it.value),
+                ['disabled', 'waiting', 'finished', 'enabled'].includes(
+                    it.value,
+                ),
             ),
             render: (_, record) => TaskStatus(record?.status),
         },

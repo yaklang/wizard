@@ -44,7 +44,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     const { runAsync } = useRequest(
         async (requests, reset?: boolean, arg?: any) => {
             dispatch({ loading: true });
-            console.log(filter, 'filter');
             try {
                 if (!state.loading) {
                     const data = await requests(

@@ -63,7 +63,7 @@ const taskListStatus: Array<{
         label: '取消',
     },
     {
-        value: 'finish',
+        value: 'finished',
         label: '结束',
     },
 ];

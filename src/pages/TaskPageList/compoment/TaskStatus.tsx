@@ -42,7 +42,7 @@ const TaskStatus = (status?: TTaskListStatusType) =>
                 启用
             </Tag>
         ))
-        .with('finish', () => (
+        .with('finished', () => (
             <Tag color="default" className="cursor-default">
                 结束
             </Tag>

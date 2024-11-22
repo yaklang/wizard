@@ -94,7 +94,7 @@ const extendTableProps = (
                 {} as Record<string, Array<React.Key>>,
             ) ?? {};
         setSelectedRowKeys(rowSelectionValues);
-    }, []);
+    }, [columns]);
 
     // table header 关闭监听事件
     useUpdateEffect(() => {
@@ -181,6 +181,7 @@ const extendTableProps = (
             getExternal: { ...search },
         });
     };
+
     const newColumns = columns?.map((column) => {
         // tablehead 筛选类型
         const { columnsHeaderFilterType, rowSelection, title } = column;
