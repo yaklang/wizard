@@ -1,7 +1,10 @@
 import { FC, useRef } from 'react';
-import { Button, message } from 'antd';
+import {
+    Button,
+    // message
+} from 'antd';
 
-import { useRequest } from 'ahooks';
+// import { useRequest } from 'ahooks';
 
 // import { getTimeLineRuntimeMessage } from '@/apis/task';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
@@ -159,6 +162,7 @@ const items = {
 };
 
 const ViewReportDrawer: FC<{ runtime_id: string }> = ({ runtime_id }) => {
+    console.log(runtime_id, 'runtime_id');
     const scriptDetailDrawerRef = useRef<UseDrawerRefType>(null);
 
     // const { run, loading } = useRequest(getTimeLineRuntimeMessage, {

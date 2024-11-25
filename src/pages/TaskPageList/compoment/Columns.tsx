@@ -22,8 +22,8 @@ type TColumns = {
 const CommonTasksColumns = (
     headerGroupValue: 1 | 2 | 3,
     page: UsePageRef,
-    deleteValues: Record<string, any[]>,
-    setDeleteValues: React.Dispatch<
+    deleteValues?: Record<string, any[]>,
+    setDeleteValues?: React.Dispatch<
         React.SetStateAction<Record<string, any[]>>
     >,
 ): CreateTableProps<TaskListRequest>['columns'] => {
