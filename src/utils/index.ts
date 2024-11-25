@@ -1,5 +1,7 @@
 import { RouteObjectRootMy } from '@/App/routers/routers';
 import { ReactNode } from 'react';
+import { RuleObject } from 'antd/lib/form';
+import { Dayjs } from 'dayjs';
 
 // 计算表格总宽度
 export function getColumnsWidth(columns: any[]) {
@@ -364,6 +366,40 @@ const generateUniqueId = (): string => {
     return `${timestamp}-${randomNum}`;
 };
 
+const createRules = ({
+    required = false,
+    requiredMessage = '该字段为必填项',
+    validateStartTime,
+}: {
+    required?: boolean;
+    requiredMessage?: string;
+    validateStartTime?: (value: [Dayjs | null, Dayjs | null]) => string | void;
+}): RuleObject[] => {
+    const rules: RuleObject[] = [];
+
+    // 必填校验
+    if (required) {
+        rules.push({
+            required: true,
+            message: requiredMessage,
+        });
+    }
+
+    // 自定义校验：校验开始时间是否合理
+    if (validateStartTime) {
+        rules.push({
+            validator: (_, value: [Dayjs | null, Dayjs | null]) => {
+                const errorMessage = validateStartTime(value);
+                return errorMessage
+                    ? Promise.reject(new Error(errorMessage))
+                    : Promise.resolve();
+            },
+        });
+    }
+
+    return rules;
+};
+
 export {
     createFlatTreeWithId,
     processMenu,
@@ -372,4 +408,5 @@ export {
     deepEqual,
     findPathNodes,
     generateUniqueId,
+    createRules,
 };

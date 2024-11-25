@@ -100,7 +100,6 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
         },
     );
-
     // 确定执行操作
     const headImplement = async () => {
         if (record.id) {
@@ -134,7 +133,6 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
         },
     );
-
     // 取消执行操作
     const headTaskStop = async () => {
         if (record.id) {
@@ -488,6 +486,94 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         },
     );
 
+    // 删除任务
+    const { runAsync: deleteRunAsync, loading: DeleteLoading } = useRequest(
+        async (id: number) => {
+            const result = await deleteTask(id);
+            return result;
+        },
+        { manual: true },
+    );
+    const headDeleteTask = async () => {
+        if (record.id) {
+            await deleteRunAsync(record.id);
+            localRefrech({ operate: 'delete', oldObj: { id: record.id } });
+            message.success('删除成功');
+            setOpen((val) => ({ ...val, delete: false }));
+        } else {
+            message.error('未获取到当前任务ID');
+        }
+    };
+
+    // 取消执行
+    const { loading: stopRunning, runAsync: stopRunAsync } = useRequest(
+        async (params: StopOnRunTsakResponse) => {
+            const result = await getTaskStop(params);
+            const { data } = result;
+            return data;
+        },
+        {
+            manual: true,
+            onSuccess: async (value) => {
+                localRefrech({
+                    operate: 'edit',
+                    newObj: value,
+                    oldObj: record,
+                });
+                message.success('取消执行成功');
+                setOpen((val) => ({ ...val, action: false }));
+            },
+            onError(error) {
+                message.destroy();
+                message.error(error?.message ?? '取消执行失败');
+            },
+        },
+    );
+    // 取消执行操作
+    const headTaskStop = async () => {
+        if (record.id) {
+            await stopRunAsync({
+                task_id: record.id,
+                task_type: headerGroupValue,
+            });
+        } else {
+            message.error('未获取到当前任务ID');
+        }
+    };
+
+    //  执行
+    const { loading: starLoading, runAsync } = useRequest(
+        async (params: StopOnRunTsakResponse) => {
+            const result = await getTaskRun(params);
+            const { data } = result;
+            return data;
+        },
+        {
+            manual: true,
+            onSuccess: async (value) => {
+                localRefrech({
+                    operate: 'edit',
+                    newObj: value,
+                    oldObj: record,
+                });
+                message.success('执行成功');
+                setOpen((val) => ({ ...val, action: false }));
+            },
+            onError(error) {
+                message.destroy();
+                message.error(error?.message ?? '执行失败');
+            },
+        },
+    );
+    // 确定执行操作
+    const headImplement = async () => {
+        if (record.id) {
+            await runAsync({ task_id: record.id, task_type: headerGroupValue });
+        } else {
+            message.error('未获取到当前任务ID');
+        }
+    };
+
     // 编辑任务
     const onEdit = async () => {
         if (record?.id) {
@@ -560,8 +646,8 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                 style={{
                                     fontSize: '12px',
                                 }}
-                                // onClick={headDeleteTask}
-                                // loading={DeleteLoading}
+                                onClick={headDeleteTask}
+                                loading={DeleteLoading}
                             >
                                 确定
                             </Button>
@@ -606,7 +692,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 )
                 .with(P.string, (value) => (
                     <div className="flex">
-                        {(value === 'waiting' || value === 'disabled') && (
+                        {value === 'disabled' && (
                             <Popover
                                 open={open.action}
                                 content={
@@ -630,8 +716,8 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                             style={{
                                                 fontSize: '12px',
                                             }}
-                                            // onClick={headImplement}
-                                            // loading={loading}
+                                            onClick={headImplement}
+                                            loading={starLoading}
                                         >
                                             确定
                                         </Button>
@@ -682,8 +768,8 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                             style={{
                                                 fontSize: '12px',
                                             }}
-                                            // onClick={headTaskStop}
-                                            // loading={stopRunning}
+                                            onClick={headTaskStop}
+                                            loading={stopRunning}
                                         >
                                             确定
                                         </Button>
@@ -710,9 +796,9 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                 </div>
                             </Popover>
                         )}
-                        {!['waiting', 'disabled', 'enabled'].includes(
-                            value,
-                        ) && <div className="w-7 mr-2">{''}</div>}
+                        {!['disabled', 'enabled'].includes(value) && (
+                            <div className="w-7 mr-2">{''}</div>
+                        )}
                         {executionOperateOpearte}
                     </div>
                 ))

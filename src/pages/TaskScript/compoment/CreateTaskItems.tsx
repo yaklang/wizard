@@ -14,7 +14,7 @@ import {
 import { match } from 'ts-pattern';
 import { NodeCard } from './NodeCard';
 import { AddPlugins } from './AddPlugins';
-import { generateUniqueId } from '@/utils';
+import { createRules, generateUniqueId } from '@/utils';
 import {
     PresetPorts,
     presetProtsGroupOptions,
@@ -25,6 +25,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { ChunkUpload } from '@/compoments';
 import { TScannerDataList } from './StartUpScriptModal';
 import { useMemoizedFn } from 'ahooks';
+import dayjs, { Dayjs } from 'dayjs';
 
 type PresetKey = keyof typeof PresetPorts;
 
@@ -38,6 +39,74 @@ const CreateTaskItems = (
     scriptGroupList: { value: string; label: string }[],
     scannerDataList?: TScannerDataList,
 ) => {
+    const disabledDate = (current: Dayjs | null): boolean => {
+        // 禁用当前日期之前的日期
+        return !!current && current.isBefore(dayjs(), 'day');
+    };
+
+    const disabledTime = (selectedDate: Dayjs | null) => {
+        const now = dayjs();
+
+        if (!selectedDate || !selectedDate.isSame(now, 'day')) {
+            // 如果日期不是今天，不禁用时间
+            return {};
+        }
+
+        return {
+            disabledHours: (): number[] => [...Array(now.hour()).keys()], // 禁用当前小时之前的小时
+            disabledMinutes: (): number[] => [...Array(now.minute()).keys()], // 禁用当前分钟之前的分钟
+        };
+    };
+
+    const validateStartTime = (
+        value: [Dayjs | null, Dayjs | null],
+    ): string | void => {
+        if (!value || !value[0]) {
+            return '开始时间不能为空';
+        }
+        if (value[0].isBefore(dayjs())) {
+            return '开始时间不能小于当前时间';
+        }
+    };
+
+    const disabledTimeRangePicker = (
+        date: Dayjs | null,
+        type: 'start' | 'end',
+        range: [Dayjs | null, Dayjs | null],
+    ) => {
+        const now = dayjs();
+
+        if (!date) return {};
+
+        if (type === 'start') {
+            // 开始时间禁用到当前时间
+            return date.isSame(now, 'day')
+                ? {
+                      disabledHours: () => [...Array(now.hour()).keys()],
+                      disabledMinutes: () => [...Array(now.minute()).keys()],
+                  }
+                : {};
+        }
+
+        if (type === 'end' && range[0]) {
+            // 结束时间禁用早于开始时间的时间
+            const startDate = range[0];
+            return date.isSame(startDate, 'day')
+                ? {
+                      disabledHours: () => [
+                          ...Array(startDate.hour() + 1).keys(),
+                      ],
+                      disabledMinutes: () =>
+                          date.hour() === startDate.hour()
+                              ? [...Array(startDate.minute()).keys()]
+                              : [],
+                  }
+                : {};
+        }
+
+        return {};
+    };
+
     const schedulingTypeFn = useMemoizedFn((schedulingType: 1 | 2 | 3) => {
         return match(schedulingType)
             .with(1, () => {
@@ -47,7 +116,24 @@ const CreateTaskItems = (
                 return (
                     <Item
                         name={'execution_date'}
-                        rules={[{ required: true, message: '请选择执行时间' }]}
+                        rules={[
+                            { required: true, message: '请选择执行时间' },
+                            {
+                                validator: (_, value: Dayjs) => {
+                                    if (!value) {
+                                        return Promise.resolve();
+                                    }
+                                    if (value.isBefore(dayjs())) {
+                                        return Promise.reject(
+                                            new Error(
+                                                '所选时间不能小于当前时间',
+                                            ),
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                },
+                            },
+                        ]}
                         label={'执行时间'}
                         className="ml-14"
                     >
@@ -55,6 +141,8 @@ const CreateTaskItems = (
                             className="w-full"
                             showTime={{ format: 'YYYY-MM-DD HH:mm' }}
                             format={'YYYY-MM-DD HH:mm'}
+                            disabledDate={disabledDate} // 禁用日期部分
+                            disabledTime={disabledTime} // 禁用时间部分到分钟
                         />
                     </Item>
                 );
@@ -72,21 +160,40 @@ const CreateTaskItems = (
                         >
                             <Switch />
                         </Item>
-                        <Item
-                            name={'timestamp'}
-                            label="设定周期时间范围"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: '请设定周期时间范围',
-                                },
-                            ]}
-                        >
-                            <RangePicker
-                                className="w-full"
-                                showTime={{ format: 'HH:mm' }}
-                                format="YYYY-MM-DD HH:mm"
-                            />
+                        <Item dependencies={[]} noStyle>
+                            {({ getFieldValue }) => {
+                                return (
+                                    <Item
+                                        name={'timestamp'}
+                                        label="设定周期时间范围"
+                                        rules={createRules({
+                                            required: true,
+                                            requiredMessage:
+                                                '请设定周期时间范围',
+                                            validateStartTime,
+                                        })}
+                                    >
+                                        <RangePicker
+                                            className="w-full"
+                                            showTime={{ format: 'HH:mm' }}
+                                            format="YYYY-MM-DD HH:mm"
+                                            disabledDate={disabledDate} // 禁用日期部分
+                                            disabledTime={(date, type) =>
+                                                disabledTimeRangePicker(
+                                                    date,
+                                                    type,
+                                                    (getFieldValue(
+                                                        'timestamp',
+                                                    ) as [Dayjs, Dayjs]) || [
+                                                        null,
+                                                        null,
+                                                    ],
+                                                )
+                                            }
+                                        />
+                                    </Item>
+                                );
+                            }}
                         </Item>
                         <Item
                             label={
