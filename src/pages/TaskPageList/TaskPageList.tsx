@@ -1,12 +1,13 @@
 import { useRef, type FC } from 'react';
-import { Button, Radio, Spin } from 'antd';
+import { Button, message, Radio, Spin } from 'antd';
 
 import { WizardTable } from '@/compoments';
-import { useRequest, useSafeState } from 'ahooks';
+import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 import {
     getTaskList,
     getScriptTaskGroup,
     getAnalysisScript,
+    deleteScriptTask,
 } from '@/apis/task';
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -38,6 +39,24 @@ const TaskPageList: FC = () => {
     const [taskGroupKey, setTaskGroupKey] = useSafeState<string>('全部');
     const [deleteValues, setDeleteValues] = useSafeState<Record<string, any[]>>(
         {},
+    );
+
+    const { loading, run } = useRequest(
+        async () => {
+            await deleteScriptTask({
+                ids: deleteValues?.task_name ?? [],
+            });
+        },
+        {
+            manual: true,
+            onSuccess: async () => {
+                page.localRefrech({
+                    operate: 'delete',
+                    oldObj: { id: deleteValues?.task_name },
+                });
+                message.success('删除成功');
+            },
+        },
     );
 
     // 获取项目组请求
@@ -145,6 +164,10 @@ const TaskPageList: FC = () => {
         await scriptRun();
     };
 
+    useUpdateEffect(() => {
+        page.onLoad({ task_groups: taskGroupKey });
+    }, [taskGroupKey]);
+
     return (
         <div className="flex align-start h-full">
             <div
@@ -174,7 +197,6 @@ const TaskPageList: FC = () => {
                         siderContextList={siderContextList}
                         setSiderContextList={setSiderContextList}
                         refreshAsync={refreshAsync}
-                        onload={page.onLoad}
                         taskGroupKey={taskGroupKey}
                         setTaskGroupKey={setTaskGroupKey}
                     />
@@ -216,12 +238,10 @@ const TaskPageList: FC = () => {
                                             ? false
                                             : true
                                     }
-                                    onClick={() =>
-                                        alert(
-                                            'id: ' +
-                                                deleteValues?.task_name?.join(),
-                                        )
-                                    }
+                                    onClick={async () => {
+                                        run();
+                                    }}
+                                    loading={loading}
                                 >
                                     批量删除
                                 </Button>

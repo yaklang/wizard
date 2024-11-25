@@ -44,6 +44,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     const { runAsync } = useRequest(
         async (requests, reset?: boolean, arg?: any) => {
             dispatch({ loading: true });
+            console.log(dataSource, page, 'data');
             try {
                 if (!state.loading) {
                     const data = await requests(
@@ -276,18 +277,21 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             // 删除
             .with({ operate: 'delete' }, ({ oldObj }) => {
                 if (args.operate === 'delete' && oldObj) {
-                    // 查找满足部分匹配条件的对象索引
-                    const index = dataSource?.findIndex((item) =>
-                        Object.entries(oldObj).every(
-                            ([key, value]) => item[key] === value,
-                        ),
+                    // 过滤掉满足 oldObj 条件的对象
+                    const tragetDataSource = dataSource?.filter((item) =>
+                        Object.entries(oldObj).some(([key, value]) => {
+                            if (Array.isArray(value)) {
+                                // 如果值是数组，检查 item[key] 是否包含在数组中
+                                return !value.includes(item[key]);
+                            } else {
+                                // 如果是其他类型，直接检查是否不匹配
+                                return item[key] !== value;
+                            }
+                        }),
                     );
 
-                    // 如果找到符合条件的对象，删除它
-                    if (index !== -1) {
-                        const tragetDataSource = dataSource?.filter(
-                            (_, idx) => idx !== index,
-                        );
+                    if (tragetDataSource?.length !== dataSource?.length) {
+                        // 更新数据源
                         dispatch({
                             dataSource: tragetDataSource,
                         });

@@ -22,7 +22,6 @@ interface TListSiderContext {
         React.SetStateAction<TListSiderContext['siderContextList']>
     >;
     refreshAsync: () => Promise<any>;
-    onload: (agrs: any) => void;
     taskGroupKey: string;
     setTaskGroupKey: Dispatch<React.SetStateAction<string>>;
 }
@@ -33,7 +32,6 @@ const ListSiderContext: FC<TListSiderContext> = ({
     siderContextList,
     setSiderContextList,
     refreshAsync,
-    onload,
     taskGroupKey,
     setTaskGroupKey,
 }) => {
@@ -202,7 +200,6 @@ const ListSiderContext: FC<TListSiderContext> = ({
                         className={`${styles['tools-list-item']} ${taskGroupKey === item.name ? styles['tools-list-click'] : null}`}
                         key={item.name + key}
                         onClick={() => {
-                            onload({ task_groups: [item.name] });
                             setTaskGroupKey(item.name);
                         }}
                     >

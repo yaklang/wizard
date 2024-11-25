@@ -181,6 +181,15 @@ const postStorageTaskScript = (
         data,
     );
 
+// 批量删除任务 /api
+const deleteScriptTask = (data: {
+    ids: number[];
+}): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(
+        '/task/start/batch-invoking-script-task/delete',
+        data,
+    );
+
 export {
     getScriptTaskGroup,
     postTaskGrounp,
@@ -199,4 +208,5 @@ export {
     postEditScriptTask,
     getRunScriptTask,
     postStorageTaskScript,
+    deleteScriptTask,
 };
