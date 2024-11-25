@@ -35,7 +35,9 @@ const CommonTasksColumns = (
         const {
             data: { list },
         } = result;
-        const resultData = list.map((it) => ({ label: it, value: it }));
+        const resultData = Array.isArray(list)
+            ? list.map((it) => ({ label: it, value: it }))
+            : [];
         return resultData;
     });
 
@@ -156,14 +158,12 @@ const CommonTasksColumns = (
     // 周期任务 任务状态
     const executionTaskStatus: TColumns['columnsRender'] = [
         {
-            title: '任务状态',
+            title: '周期状态',
             dataIndex: 'task_status',
             width: 240,
             columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: taskListStatus.filter((it) =>
-                ['disabled', 'waiting', 'finished', 'enabled'].includes(
-                    it.value,
-                ),
+                ['disabled', 'finished', 'enabled'].includes(it.value),
             ),
             render: (_, record) => TaskStatus(record?.status),
         },

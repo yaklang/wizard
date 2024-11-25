@@ -58,10 +58,10 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
               }
             : undefined,
         end_timestamp: Array.isArray(values?.timestamp)
-            ? dayjs(values?.timestamp?.[0]).unix()
+            ? dayjs(values?.timestamp?.[1]).unix()
             : undefined,
         start_timestamp: Array.isArray(values?.timestamp)
-            ? dayjs(values?.params?.timestamp?.[1]).unix()
+            ? dayjs(values?.timestamp?.[0]).unix()
             : undefined,
         execution_date: values?.execution_date
             ? dayjs(values?.execution_date).unix()
