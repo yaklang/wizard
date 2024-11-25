@@ -11,7 +11,7 @@ type TWizardAceEditor = {
     onChange?: <T extends TWizardAceEditor['value']>(value: T) => T;
 };
 
-const WizardAceEditor: FC<TWizardAceEditor> = ({ value, onChange }) => {
+const Markdown: FC<TWizardAceEditor> = ({ value, onChange }) => {
     return (
         <AceEditor
             width="100%"
@@ -35,4 +35,4 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({ value, onChange }) => {
     );
 };
 
-export default WizardAceEditor;
+export default Markdown;

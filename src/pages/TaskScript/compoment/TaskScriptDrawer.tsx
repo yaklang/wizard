@@ -11,7 +11,7 @@ import {
 } from 'antd';
 
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
-import { ChunkUpload, WizardAceEditor, WizardDrawer } from '@/compoments';
+import { ChunkUpload, Markdown, WizardDrawer } from '@/compoments';
 import { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import {
     PresetPorts,
@@ -287,7 +287,7 @@ const TaskScriptDrawer = forwardRef<
                 </Item>
 
                 <Item name={'script'} label="分布式脚本内容">
-                    <WizardAceEditor />
+                    <Markdown />
                 </Item>
             </Form>
         </WizardDrawer>

@@ -9,4 +9,4 @@ export { default as ChunkUpload } from './ChunkUpload';
 export { default as EmptyBox } from './EmptyBox';
 export { default as NoLoginPermission } from './NoLoginPermission';
 export { default as WizardDrawer } from './WizardDrawer';
-export { default as WizardAceEditor } from './WizardAceEditor';
+export { default as Markdown } from './MarkDown';

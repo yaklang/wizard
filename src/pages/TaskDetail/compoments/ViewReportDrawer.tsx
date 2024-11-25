@@ -3,7 +3,7 @@ import { Button, message } from 'antd';
 
 import { useRequest } from 'ahooks';
 
-import { getTimeLineRuntimeMessage } from '@/apis/task';
+// import { getTimeLineRuntimeMessage } from '@/apis/task';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 
 import { ScriptDetailButton } from './ScriptDetailButton';
@@ -161,29 +161,32 @@ const items = {
 const ViewReportDrawer: FC<{ runtime_id: string }> = ({ runtime_id }) => {
     const scriptDetailDrawerRef = useRef<UseDrawerRefType>(null);
 
-    const { run, loading } = useRequest(getTimeLineRuntimeMessage, {
-        manual: true,
-        onSuccess: async (value) => {
-            scriptDetailDrawerRef.current?.open(value?.data?.data ?? {});
-        },
-        onError: async (err) => {
-            message.destroy();
-            scriptDetailDrawerRef.current?.open(items);
-            message.error(err?.message ?? '请求失败');
-        },
-    });
+    // const { run, loading } = useRequest(getTimeLineRuntimeMessage, {
+    //     manual: true,
+    //     onSuccess: async (value) => {
+    //         scriptDetailDrawerRef.current?.open(value?.data?.data ?? {});
+    //     },
+    //     onError: async (err) => {
+    //         message.destroy();
+    //         scriptDetailDrawerRef.current?.open(items);
+    //         message.error(err?.message ?? '请求失败');
+    //     },
+    // });
 
-    const headViewReport = async () => {
-        await run(runtime_id);
-    };
+    // const headViewReport = async () => {
+    //     await run(runtime_id);
+    // };
 
     return (
         <>
             <Button
                 type="link"
                 className="p-0"
-                loading={loading}
-                onClick={() => headViewReport()}
+                // loading={loading}
+                onClick={
+                    () => scriptDetailDrawerRef.current?.open(items)
+                    // headViewReport()
+                }
             >
                 查看报告
             </Button>
