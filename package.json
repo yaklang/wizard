@@ -28,7 +28,7 @@
     "dayjs": "^1.11.13",
     "echarts": "^5.5.1",
     "eslint-import-resolver-alias": "^1.1.2",
-    "github-markdown-css": "^5.8.0",
+    "github-markdown-css": "^4.0.0",
     "highlight.js": "^11.10.0",
     "lodash": "^4.17.21",
     "react": "^18.3.1",

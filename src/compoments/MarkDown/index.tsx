@@ -10,6 +10,7 @@ export interface MarkdownProp extends Options {
 
 const Markdown: React.FC<MarkdownProp> = (props) => {
     const { escapeHtml = true } = props;
+    console.log(props, 'props');
 
     return (
         <div className={'markdown-body'}>

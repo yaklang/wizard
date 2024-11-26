@@ -12,8 +12,8 @@ import { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { deleteAnalysisScript } from '@/apis/task';
 
 const DeletePopover: FC<{
-    script_name?: string;
     refreshAsync: () => Promise<TGetAnalysisScriptReponse[]>;
+    script_name?: string;
 }> = ({ refreshAsync, script_name }) => {
     const [open, setOpen] = useSafeState(false);
 

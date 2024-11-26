@@ -7,16 +7,23 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { TaskScriptDrawer } from './compoment/TaskScriptDrawer';
 import { TaskScriptCard, TTaskScriptCard } from './compoment/TaskScirptCard';
+// import { EmptyBox } from '@/compoments';
 
 const TaskScript: FC = () => {
     const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
+
+    const [searchName, setSearchName] = useSafeState('');
     const [taskScriptList, setTaskScriptList] = useSafeState<
         TTaskScriptCard['items'][]
     >([]);
 
     // 获取脚本列表
-    const { loading: scriptLoading, refreshAsync } = useRequest(async () => {
-        const result = await getAnalysisScript();
+    const {
+        loading: scriptLoading,
+        runAsync,
+        refreshAsync,
+    } = useRequest(async (script_name: string) => {
+        const result = await getAnalysisScript({ script_name });
         const {
             data: { list },
         } = result;
@@ -24,6 +31,10 @@ const TaskScript: FC = () => {
         setTaskScriptList(resultList);
         return resultList;
     });
+
+    const heanSearch = () => {
+        runAsync(searchName);
+    };
 
     return (
         <div className="p-4 h-full">
@@ -33,6 +44,8 @@ const TaskScript: FC = () => {
                         placeholder="请输入关键词搜索"
                         prefix={<SearchOutlined />}
                         className="w-54"
+                        onChange={(e) => setSearchName(e.target.value)}
+                        onPressEnter={heanSearch}
                     />
                     <Button
                         type="primary"
@@ -42,6 +55,9 @@ const TaskScript: FC = () => {
                         创建脚本
                     </Button>
                 </div>
+                {/* {Array.isArray(taskScriptList) &&
+                !!(taskScriptList.length > 0) &&
+                !scriptLoading ? ( */}
                 <div className="grid grid-cols-3 gap-4">
                     {taskScriptList?.map((items) => {
                         return (
@@ -54,6 +70,9 @@ const TaskScript: FC = () => {
                         );
                     })}
                 </div>
+                {/* ) : (
+                    <EmptyBox />
+                )} */}
             </Spin>
             <TaskScriptDrawer
                 ref={taskScriptDrawerRef}

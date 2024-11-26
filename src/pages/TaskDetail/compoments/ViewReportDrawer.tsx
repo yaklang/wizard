@@ -161,8 +161,8 @@ const items = {
     ],
 };
 
-const ViewReportDrawer: FC<{ runtime_id: string }> = ({ runtime_id }) => {
-    console.log(runtime_id, 'runtime_id');
+const ViewReportDrawer: FC<{ runtime_id: string }> = ({}) => {
+    // console.log(runtime_id, 'runtime_id');
     const scriptDetailDrawerRef = useRef<UseDrawerRefType>(null);
 
     // const { run, loading } = useRequest(getTimeLineRuntimeMessage, {
@@ -178,7 +178,8 @@ const ViewReportDrawer: FC<{ runtime_id: string }> = ({ runtime_id }) => {
     // });
 
     // const headViewReport = async () => {
-    //     await run(runtime_id);
+    //     console.log(runtime_id, 'runtime_id');
+    //     // await run(runtime_id);
     // };
 
     return (

@@ -8,15 +8,16 @@ import FormOutlined from './svg/FormOutlined';
 import CopyOutlined from './svg/CopyOutlined';
 import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
-import { Input, InputRef, Modal, Spin } from 'antd';
+import { Input, InputRef, message, Modal, Spin } from 'antd';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
-import { getScriptTaskGroup } from '@/apis/task';
+import { getScriptTaskGroup, getStroageDetail } from '@/apis/task';
 import { WizardModal } from '@/compoments';
 import { StartUpScriptModal } from './StartUpScriptModal';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { TaskScriptDrawer } from './TaskScriptDrawer';
 import { ExclamationCircleFilled } from '@ant-design/icons';
+import { match, P } from 'ts-pattern';
 
 const { confirm } = Modal;
 
@@ -40,6 +41,8 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     const [model1] = WizardModal.useModal();
 
     const [confirmVisible, setConfirmVisible] = useSafeState(false);
+    const [status, setStatus] = useSafeState<'edit' | 'copy'>();
+    const [copyInputValue, setCopyInputValue] = useSafeState('');
 
     const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
@@ -71,9 +74,44 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         },
     );
 
+    const { run: detailRun, loading: detailLoading } = useRequest(
+        async (script_name: string) => {
+            const result = await getStroageDetail({ script_name });
+            const { data } = result;
+            return data;
+        },
+        {
+            manual: true,
+            onSuccess: (data) => {
+                return match(status)
+                    .with('copy', () => {
+                        setTaskScriptList((val) => [
+                            {
+                                ...data,
+                                script_name: `Copy ${data?.script_name ?? ''}`,
+                                isCopy: true,
+                            },
+                            ...val,
+                        ]);
+                        setCopyInputValue(`Copy ${data?.script_name ?? ''}`);
+                    })
+                    .with('edit', () => {
+                        taskScriptDrawerRef.current?.open(data);
+                    })
+                    .with(P.nullish, () => message.error('错误'))
+                    .exhaustive();
+            },
+        },
+    );
+
     // 点击复制按钮
-    const headCopy = (items: TTaskScriptCard['items']) => {
-        setTaskScriptList((val) => [{ ...items, isCopy: true }, ...val]);
+    const headCopy = async (script_name?: string) => {
+        if (script_name) {
+            setStatus('copy');
+            await detailRun(script_name);
+        } else {
+            message.info('系统错误，请刷新页面重试');
+        }
     };
 
     // 复制任务脚本 回车/失去焦点 事件
@@ -138,6 +176,15 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         });
     };
 
+    const headEdit = async (script_name?: string) => {
+        if (script_name) {
+            setStatus('edit');
+            await detailRun(script_name);
+        } else {
+            message.info('系统错误，请刷新页面重试');
+        }
+    };
+
     // 监听是否存在新建分组
     useUpdateEffect(() => {
         inputRef && inputRef.current?.focus();
@@ -152,6 +199,11 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                             ref={inputRef}
                             onBlur={handAddInputBlur}
                             onPressEnter={handAddInputBlur}
+                            value={copyInputValue}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setCopyInputValue(value);
+                            }}
                         />
                     ) : (
                         <div
@@ -162,20 +214,20 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                     )}
                     <div className="flex gap-1">
                         {/* 编辑脚本 */}
-                        <FormOutlined
-                            onClick={() =>
-                                taskScriptDrawerRef.current?.open(items)
-                            }
-                            style={{
-                                borderRight: '1px solid #EAECF3',
-                            }}
-                        />
+                        <Spin spinning={detailLoading}>
+                            <FormOutlined
+                                onClick={() => headEdit(items.script_name)}
+                                style={{
+                                    borderRight: '1px solid #EAECF3',
+                                }}
+                            />
+                        </Spin>
                         {/* 复制脚本 */}
                         <CopyOutlined
                             style={{
                                 borderRight: '1px solid #EAECF3',
                             }}
-                            onClick={() => headCopy(items)}
+                            onClick={() => headCopy(items.script_name)}
                         />
                         {/* 删除脚本 */}
                         <DeletePopover

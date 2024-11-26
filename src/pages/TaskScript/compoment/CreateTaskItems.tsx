@@ -24,27 +24,46 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 
 import { ChunkUpload } from '@/compoments';
 import { TScannerDataList } from './StartUpScriptModal';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useSafeState } from 'ahooks';
 import dayjs, { Dayjs } from 'dayjs';
+import { useEffect, useMemo } from 'react';
+import { ItemType } from 'antd/es/menu/interface';
 
 type PresetKey = keyof typeof PresetPorts;
+
+type TCreateTaskItemsProps = (
+    title: string,
+    scriptTypeValue: '端口与漏洞扫描' | '敏感信息',
+    scriptGroupList: { value: string; label: string }[],
+    scannerDataList?: TScannerDataList,
+) => ItemType[] | any;
 
 const { Item } = Form;
 const { RangePicker } = DatePicker;
 const { Compact } = Space;
 
 // 设置调度 下拉选项 对应渲染dom
-const CreateTaskItems = (
-    title: string,
-    scriptTypeValue: '端口与漏洞扫描' | '敏感信息',
-    scriptGroupList: { value: string; label: string }[],
-    scannerDataList?: TScannerDataList,
+const CreateTaskItems: TCreateTaskItemsProps = (
+    title,
+    scriptTypeValue,
+    scriptGroupList,
+    scannerDataList,
 ) => {
+    const [copyScriptGroupList, setCopyScriptGroupLis] = useSafeState<
+        Parameters<TCreateTaskItemsProps>['2']
+    >([]);
+
+    useEffect(() => {
+        setCopyScriptGroupLis(scriptGroupList);
+    }, []);
+
+    // 时间 天数禁用fn
     const disabledDate = (current: Dayjs | null): boolean => {
         // 禁用当前日期之前的日期
         return !!current && current.isBefore(dayjs(), 'day');
     };
 
+    // 时间 小时分钟禁用fn
     const disabledTime = (selectedDate: Dayjs | null) => {
         const now = dayjs();
 
@@ -59,6 +78,7 @@ const CreateTaskItems = (
         };
     };
 
+    // 校验时间
     const validateStartTime = (
         value: [Dayjs | null, Dayjs | null],
     ): string | void => {
@@ -70,6 +90,7 @@ const CreateTaskItems = (
         }
     };
 
+    // 时间段 小时分钟禁用fn
     const disabledTimeRangePicker = (
         date: Dayjs | null,
         type: 'start' | 'end',
@@ -108,6 +129,7 @@ const CreateTaskItems = (
         return {};
     };
 
+    // 调度枚举对应展示dom fn
     const schedulingTypeFn = useMemoizedFn((schedulingType: 1 | 2 | 3) => {
         return match(schedulingType)
             .with(1, () => {
@@ -245,6 +267,29 @@ const CreateTaskItems = (
             .exhaustive();
     });
 
+    const groupSelectMemo = useMemo(() => {
+        return (
+            <Select
+                placeholder="请选择..."
+                showSearch
+                optionFilterProp="label"
+                onSearch={() => {
+                    // setTimeout(() => {
+                    //     setScriptGroupList((list) =>
+                    //         list.findIndex((it) => it.value === value) === -1
+                    //             ? list.concat({ label: `新增${value}`, value })
+                    //             : list,
+                    //     );
+                    // }, 300);
+                }}
+                onSelect={(value, options) => {
+                    console.log(value, options, 'options');
+                }}
+                options={scriptGroupList}
+            />
+        );
+    }, [copyScriptGroupList, scriptGroupList]);
+
     return [
         {
             key: '1',
@@ -270,10 +315,7 @@ const CreateTaskItems = (
                             { message: '请选择所属任务组', required: true },
                         ]}
                     >
-                        <Select
-                            placeholder="请选择..."
-                            options={scriptGroupList}
-                        />
+                        {groupSelectMemo}
                     </Item>
                     <Item
                         label={'脚本类型'}

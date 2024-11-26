@@ -137,6 +137,15 @@ const postTaskStart = (
         data,
     );
 
+// 获取脚本详情
+const getStroageDetail = (params: {
+    script_name: string;
+}): Promise<ResponseData<TPostStorageTaskScriptResponse>> =>
+    axios.get<never, ResponseData<TPostStorageTaskScriptResponse>>(
+        '/task/start/batch-invoking-script/storage/fetch',
+        { params },
+    );
+
 // 任务列表 编辑回显
 const getTaskStartEditDispaly = (
     id: number,
@@ -169,15 +178,16 @@ const deleteAnalysisScript = (
     script_name: string,
 ): Promise<ResponseData<boolean>> =>
     axios.delete<never, ResponseData<boolean>>(
-        `/threat/analysis/script?type=${script_name}`,
+        `/threat/analysis/script?script_name=${script_name}`,
     );
 
 // 添加/编辑任务模版
 const postStorageTaskScript = (
     data: TPostStorageTaskScriptResponse,
+    force: boolean,
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(
-        '/task/start/batch-invoking-script/storage?force=false',
+        `/task/start/batch-invoking-script/storage?force=${force}`,
         data,
     );
 
@@ -209,4 +219,5 @@ export {
     getRunScriptTask,
     postStorageTaskScript,
     deleteScriptTask,
+    getStroageDetail,
 };

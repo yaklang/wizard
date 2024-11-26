@@ -1,8 +1,12 @@
 import { forwardRef, ReactNode, useImperativeHandle, useRef } from 'react';
 
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
-import { Markdown, WizardDrawer } from '@/compoments';
+import {
+    // Markdown,
+    WizardDrawer,
+} from '@/compoments';
 import { TGetTimeLineRuntimeMessage } from '@/utils/commonTypes';
+// import { useSafeState } from 'ahooks';
 
 const ScriptDetailButton = forwardRef<
     UseDrawerRefType,
@@ -16,36 +20,36 @@ const ScriptDetailButton = forwardRef<
         [],
     );
 
+    // const [blocks, setBlocks] = useSafeState([]);
+
     useImperativeHandle(ref, () => ({
         async open(items) {
-            const itemsBlocks = await transformItems(items?.blocks);
-            itemsBlocksRef.current = itemsBlocks;
+            console.log(items, 'items');
+
+            // setBlocks(items?.blocks);
+            itemsBlocksRef.current = items?.blocks;
+            // const itemsBlocks = await transformItems(items?.blocks);
             drawer.open();
         },
     }));
 
-    const transformItems = async (blocks: any[]) => {
-        return blocks ?? [];
-    };
+    // const transformItems = async (blocks: any[]) => {
+    //     return blocks ?? [];
+    // };
 
     return (
-        <WizardDrawer
-            drawer={drawer}
-            width={'100%'}
-            title={title}
-            footer={null}
-        >
-            {Array.isArray(itemsBlocksRef.current) &&
-                itemsBlocksRef.current.map((it, index) => {
-                    return it.type === 'markdown' ? (
-                        <div key={index}>
-                            <Markdown children={it.data} />
-                            <br />
-                        </div>
-                    ) : (
-                        <div key={index}>asd</div>
-                    );
-                })}
+        <WizardDrawer drawer={drawer} width={'75%'} title={title} footer={null}>
+            {/* {blocks.map((it, index) => {
+                return it.type === 'markdown' ? (
+                    <div key={index}>
+                        <Markdown children={it.data} />
+                        <br />
+                    </div>
+                ) : (
+                    <div key={index}>asd</div>
+                );
+            })} */}
+            <></>
         </WizardDrawer>
     );
 });

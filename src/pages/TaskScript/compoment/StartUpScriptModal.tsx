@@ -36,7 +36,9 @@ const StartUpScriptModal = forwardRef<
     const scriptTypeValue = Form.useWatch('script_type', form);
     const taskTypeRef = useRef(1);
 
-    const [scriptGroupList, setScriptGroupList] = useSafeState([]);
+    const [scriptGroupList, setScriptGroupList] = useSafeState<
+        { value: string; label: string }[]
+    >([]);
     const [editObj, setEditObj] = useSafeState<
         Record<'headerGroupValue' | 'id', number>
     >({ id: 0, headerGroupValue: 0 });

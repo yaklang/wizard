@@ -11,17 +11,18 @@ import {
 } from 'antd';
 
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
-import { ChunkUpload, Markdown, WizardDrawer } from '@/compoments';
+import { ChunkUpload, WizardAceEditor, WizardDrawer } from '@/compoments';
 import { TGetAnalysisScriptReponse } from '@/apis/task/types';
-import {
-    PresetPorts,
-    presetProtsGroupOptions,
-    scriptTypeOptions,
-} from '../data';
+import { PresetPorts, presetProtsGroupOptions } from '../data';
 import { generateUniqueId } from '@/utils';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { postStorageTaskScript } from '@/apis/task';
+
+const scriptTypeOptions = [
+    { label: '端口与漏洞扫描', value: 'portAndVulScan' },
+    { label: '敏感信息', value: 'weakinfo' },
+];
 
 const { Item } = Form;
 const { TextArea } = Input;
@@ -52,7 +53,10 @@ const TaskScriptDrawer = forwardRef<
 
     useImperativeHandle(ref, () => ({
         async open(items) {
-            form.setFieldsValue(items);
+            form.setFieldsValue({
+                ...items,
+                name: items.script_name,
+            });
             drawer.open();
         },
     }));
@@ -61,13 +65,13 @@ const TaskScriptDrawer = forwardRef<
         const formValue = await form.validateFields();
         const transformFormValue = {
             ...formValue,
-            params: {
-                ...formValue.params,
-                'enable-brute': `${formValue?.params?.['enable-brute']}`,
-                'enbale-cve-baseline': `${formValue?.params?.['enbale-cve-baseline']}`,
+            prompt_args: {
+                ...formValue.prompt_args,
+                'enable-brute': `${formValue?.prompt_args?.['enable-brute']}`,
+                'enbale-cve-baseline': `${formValue?.prompt_args?.['enbale-cve-baseline']}`,
             },
         };
-        run(transformFormValue);
+        run(transformFormValue, !title.includes('创建'));
     };
 
     return (
@@ -100,6 +104,7 @@ const TaskScriptDrawer = forwardRef<
                     label={'脚本类型'}
                     name={'script_type'}
                     rules={[{ required: true, message: '请选择脚本类型' }]}
+                    initialValue={'portAndVulScan'}
                 >
                     <Select
                         options={scriptTypeOptions}
@@ -109,12 +114,21 @@ const TaskScriptDrawer = forwardRef<
                 </Item>
 
                 <Item noStyle name={'param_files'} />
-                <Item noStyle dependencies={[]}>
-                    {({ setFieldValue }) => {
+                <Item noStyle dependencies={['script_type']}>
+                    {({ setFieldValue, getFieldValue }) => {
+                        const scriptType = getFieldValue('script_type');
                         return (
                             <Item
-                                label={'扫描目标'}
-                                name={['params', 'target']}
+                                label={
+                                    scriptType === 'portAndVulScan'
+                                        ? '扫描目标'
+                                        : '关键词'
+                                }
+                                name={
+                                    scriptType === 'portAndVulScan'
+                                        ? ['prompt_args', 'target']
+                                        : ['prompt_args', 'keyword']
+                                }
                                 rules={[
                                     {
                                         required: true,
@@ -131,7 +145,16 @@ const TaskScriptDrawer = forwardRef<
                                             maxCount={1}
                                             onChange={(fileName) => {
                                                 setFieldValue(
-                                                    ['params', 'target'],
+                                                    scriptType ===
+                                                        'portAndVulScan'
+                                                        ? [
+                                                              'prompt_args',
+                                                              'target',
+                                                          ]
+                                                        : [
+                                                              'prompt_args',
+                                                              'keyword',
+                                                          ],
                                                     fileName,
                                                 );
                                                 setFieldValue(
@@ -158,7 +181,9 @@ const TaskScriptDrawer = forwardRef<
                                     maxCount={1}
                                     onChange={(fileName) => {
                                         setFieldValue(
-                                            ['params', 'target'],
+                                            scriptType === 'portAndVulScan'
+                                                ? ['prompt_args', 'target']
+                                                : ['prompt_args', 'keyword'],
                                             fileName,
                                         );
                                     }}
@@ -168,126 +193,163 @@ const TaskScriptDrawer = forwardRef<
                     }}
                 </Item>
 
-                <Item noStyle dependencies={[]}>
-                    {({ setFieldValue }) => {
+                <Item noStyle dependencies={['script_type']}>
+                    {({ getFieldValue }) => {
+                        const scriptType = getFieldValue('script_type');
                         return (
-                            <Item
-                                name={['params', 'preset-protes']}
-                                label={
-                                    <div className="min-w-[124px] max-w-full">
-                                        预设端口
-                                    </div>
-                                }
-                            >
-                                <Checkbox.Group
-                                    options={presetProtsGroupOptions}
-                                    onChange={(e) => {
-                                        const portsValue = e
-                                            .map(
-                                                (it) =>
-                                                    PresetPorts[
-                                                        it as keyof typeof PresetPorts
-                                                    ],
-                                            )
-                                            .join();
-                                        setFieldValue(
-                                            ['params', 'ports'],
-                                            portsValue,
-                                        );
-                                        return e;
-                                    }}
-                                />
-                            </Item>
+                            scriptType === 'portAndVulScan' && (
+                                <>
+                                    <Item noStyle dependencies={[]}>
+                                        {({ setFieldValue }) => {
+                                            return (
+                                                <Item
+                                                    name={[
+                                                        'prompt_args',
+                                                        'preset-protes',
+                                                    ]}
+                                                    label={
+                                                        <div className="min-w-[124px] max-w-full">
+                                                            预设端口
+                                                        </div>
+                                                    }
+                                                >
+                                                    <Checkbox.Group
+                                                        options={
+                                                            presetProtsGroupOptions
+                                                        }
+                                                        onChange={(e) => {
+                                                            const portsValue = e
+                                                                .map(
+                                                                    (it) =>
+                                                                        PresetPorts[
+                                                                            it as keyof typeof PresetPorts
+                                                                        ],
+                                                                )
+                                                                .join();
+                                                            setFieldValue(
+                                                                [
+                                                                    'prompt_args',
+                                                                    'ports',
+                                                                ],
+                                                                portsValue,
+                                                            );
+                                                            return e;
+                                                        }}
+                                                    />
+                                                </Item>
+                                            );
+                                        }}
+                                    </Item>
+
+                                    <Item noStyle dependencies={[]}>
+                                        {({ setFieldValue }) => (
+                                            <Item
+                                                name={['prompt_args', 'ports']}
+                                                label={
+                                                    <span>
+                                                        扫描端口
+                                                        <Popover
+                                                            content={
+                                                                '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
+                                                            }
+                                                            trigger="hover"
+                                                        >
+                                                            <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                        </Popover>
+                                                    </span>
+                                                }
+                                                rules={[
+                                                    {
+                                                        message:
+                                                            '请输入扫描端口',
+                                                        required: true,
+                                                    },
+                                                ]}
+                                            >
+                                                <Input.TextArea
+                                                    placeholder="请输入扫描端口"
+                                                    style={{ width: '100%' }}
+                                                    rows={2}
+                                                    onChange={(e) => {
+                                                        const value =
+                                                            e.target.value;
+                                                        const keys =
+                                                            Object.keys(
+                                                                PresetPorts,
+                                                            ) as PresetKey[];
+                                                        const match =
+                                                            keys.filter((key) =>
+                                                                value.includes(
+                                                                    PresetPorts[
+                                                                        key
+                                                                    ],
+                                                                ),
+                                                            );
+
+                                                        setFieldValue(
+                                                            [
+                                                                'prompt_args',
+                                                                'preset-protes',
+                                                            ],
+                                                            match,
+                                                        );
+                                                        return value;
+                                                    }}
+                                                />
+                                            </Item>
+                                        )}
+                                    </Item>
+
+                                    <Item
+                                        label={
+                                            <span>
+                                                弱口令
+                                                <Popover
+                                                    content={
+                                                        '是否启用弱口令检测'
+                                                    }
+                                                    trigger="hover"
+                                                >
+                                                    <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                </Popover>
+                                            </span>
+                                        }
+                                        name={['prompt_args', 'enable-brute']}
+                                        initialValue={false}
+                                    >
+                                        <Switch />
+                                    </Item>
+
+                                    <Item
+                                        label={
+                                            <span>
+                                                CVE基线检查
+                                                <Popover
+                                                    content={
+                                                        '是否启用CVE基线检查'
+                                                    }
+                                                    trigger="hover"
+                                                >
+                                                    <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                </Popover>
+                                            </span>
+                                        }
+                                        name={[
+                                            'prompt_args',
+                                            'enbale-cve-baseline',
+                                        ]}
+                                        initialValue={false}
+                                    >
+                                        <Switch />
+                                    </Item>
+                                </>
+                            )
                         );
                     }}
                 </Item>
 
-                <Item noStyle dependencies={[]}>
-                    {({ setFieldValue }) => (
-                        <Item
-                            name={['params', 'ports']}
-                            label={
-                                <span>
-                                    扫描端口
-                                    <Popover
-                                        content={
-                                            '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
-                                        }
-                                        trigger="hover"
-                                    >
-                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                    </Popover>
-                                </span>
-                            }
-                            rules={[
-                                {
-                                    message: '请输入扫描端口',
-                                    required: true,
-                                },
-                            ]}
-                        >
-                            <Input.TextArea
-                                placeholder="请输入扫描端口"
-                                style={{ width: '100%' }}
-                                rows={2}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    const keys = Object.keys(
-                                        PresetPorts,
-                                    ) as PresetKey[];
-                                    const match = keys.filter((key) =>
-                                        value.includes(PresetPorts[key]),
-                                    );
-
-                                    setFieldValue(
-                                        ['params', 'preset-protes'],
-                                        match,
-                                    );
-                                    return value;
-                                }}
-                            />
-                        </Item>
-                    )}
-                </Item>
-
-                <Item
-                    label={
-                        <span>
-                            弱口令
-                            <Popover
-                                content={'是否启用弱口令检测'}
-                                trigger="hover"
-                            >
-                                <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                            </Popover>
-                        </span>
-                    }
-                    name={['params', 'enable-brute']}
-                    initialValue={false}
-                >
-                    <Switch />
-                </Item>
-
-                <Item
-                    label={
-                        <span>
-                            CVE基线检查
-                            <Popover
-                                content={'是否启用CVE基线检查'}
-                                trigger="hover"
-                            >
-                                <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                            </Popover>
-                        </span>
-                    }
-                    name={['params', 'enbale-cve-baseline']}
-                    initialValue={false}
-                >
-                    <Switch />
-                </Item>
-
                 <Item name={'script'} label="分布式脚本内容">
-                    <Markdown />
+                    <WizardAceEditor />
                 </Item>
             </Form>
         </WizardDrawer>

@@ -10,3 +10,4 @@ export { default as EmptyBox } from './EmptyBox';
 export { default as NoLoginPermission } from './NoLoginPermission';
 export { default as WizardDrawer } from './WizardDrawer';
 export { default as Markdown } from './MarkDown';
+export { default as WizardAceEditor } from './WizardAceEditor';

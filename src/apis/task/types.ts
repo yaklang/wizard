@@ -168,6 +168,11 @@ type TPostStorageTaskScriptResponse = {
     script: string;
 };
 
+// 获取 脚本 详情
+type TGetStroageDetailRequest = {
+    prompt_args: Pick<TPostStorageTaskScriptResponse, 'params'>;
+} & Omit<TPostStorageTaskScriptResponse, 'params'>;
+
 export type {
     TaskGrounpResponse,
     TTaskGroupResponse,
@@ -181,6 +186,7 @@ export type {
     TPostRpcQueryYakPluginsRequest,
     TPostRpcQueryYakPluginsRequestTable,
     TPostStorageTaskScriptResponse,
+    TGetStroageDetailRequest,
 };
 
 export { TTaskListStatus };
