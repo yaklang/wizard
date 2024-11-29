@@ -1,5 +1,5 @@
 import { useRef, type FC } from 'react';
-import { Button, message, Radio, Spin } from 'antd';
+import { Button, message, Spin } from 'antd';
 
 import { WizardTable } from '@/compoments';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
@@ -19,13 +19,11 @@ import TaskSelectdProject from '@/assets/task/taskSelectdProject.png';
 
 import { CommonTasksColumns } from './compoment/Columns';
 import { ListSiderContext } from './compoment/ListSiderContext';
-import { TaskGrounpResponse } from '@/apis/task/types';
+import type { TaskGrounpResponse } from '@/apis/task/types';
 
-import { options, siderTaskGrounpAllList } from './utils/data';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { siderTaskGrounpAllList } from './utils/data';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CreateTaskScriptModal } from './compoment/CreateTaskScriptModal';
-
-const { Group } = Radio;
 
 const TaskPageList: FC = () => {
     const [page] = WizardTable.usePage();
@@ -204,7 +202,7 @@ const TaskPageList: FC = () => {
             </div>
 
             <WizardTable
-                rowKey={'id'}
+                rowKey="id"
                 columns={CommonTasksColumns(
                     headerGroupValue,
                     page,
@@ -213,20 +211,6 @@ const TaskPageList: FC = () => {
                 )}
                 page={page}
                 tableHeader={{
-                    tableHeaderGroup: (
-                        <Group
-                            optionType="button"
-                            buttonStyle="solid"
-                            options={options}
-                            value={headerGroupValue}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                setHeaderGroupValue(value);
-                                setDeleteValues({});
-                                page.onLoad({ task_type: value });
-                            }}
-                        />
-                    ),
                     options: {
                         trigger: (
                             <div className="flex gap-2">

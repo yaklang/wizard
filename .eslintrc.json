@@ -4,7 +4,7 @@
     "project": [
       "./tsconfig.json",
       "./tsconfig.node.json",
-      "./uno.config.ts",
+      "./uno.config.ts"
     ]
   },
   "settings": {

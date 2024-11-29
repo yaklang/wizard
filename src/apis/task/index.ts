@@ -36,6 +36,14 @@ const getScriptTaskGroup = (): Promise<
         '/task/query/batch-invoking-script-task-group?page=1&limit=-1&is_enable_schedules=true',
     );
 
+// 获取所有任务组
+const getAllTaskGroupApi = (): Promise<
+    ResponseData<TableResponseData<TaskGrounpResponse>>
+> =>
+    axios.get<never, ResponseData<TableResponseData<TaskGrounpResponse>>>(
+        '/task/query/batch-invoking-script-task-group?page=1&limit=-1',
+    );
+
 // 执行普通 / 定时任务
 const getTaskRun = (
     params: StopOnRunTsakResponse,
@@ -192,6 +200,7 @@ const deleteScriptTask = (data: {
 
 export {
     getScriptTaskGroup,
+    getAllTaskGroupApi,
     postTaskGrounp,
     deleteTaskGroup,
     getBatchInvokingScriptTaskNode,

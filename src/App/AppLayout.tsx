@@ -45,7 +45,9 @@ const AppLayout = () => {
 
         // 获取 layout Header 面包屑
         const resultPathNodes = findPathNodes(locations.pathname, routesList);
-        const resultRouteList = resultPathNodes ? resultPathNodes.slice(1) : [];
+        const resultRouteList = resultPathNodes
+            ? resultPathNodes.slice(-1)
+            : [];
         setHeaderTitle(resultRouteList);
 
         // setHeaderTitle(routers);

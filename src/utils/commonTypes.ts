@@ -63,3 +63,8 @@ export interface TGetTimeLineRuntimeMessage {
     };
     type: string;
 }
+
+export interface ApiStatusResponse {
+    from: string;
+    ok: boolean;
+}

@@ -126,3 +126,62 @@ li {
 .markdown-body{
     background-color: #fff;
 }
+
+// 表格上的操作按钮公共样式
+.table-action-icon {
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+
+    .action-icon {
+        svg {
+            width: 16px;
+            &:hover {
+                cursor: pointer;
+                color: #4096ff;
+            }
+        }
+    }
+
+    span {
+        padding: 0 12px;
+        border-right: 1px solid #eaecf3;
+        color: #85899e;
+
+        &:first-child {
+            padding-left: 0;
+        }
+
+        &:last-child {
+            border-right: none;
+        }
+    }
+
+    .action-loading {
+        padding: 0 12px;
+        border-right: 1px solid #eaecf3;
+        &:first-child {
+            padding-left: 0;
+        }
+        &:last-child {
+            border-right: none;
+        }
+        svg {
+            color: #4096ff;
+        }
+    }
+
+    .action-del-loading {
+        svg {
+            color: #f6544a;
+        }
+    }
+
+    .del-icon {
+        svg {
+            &:hover {
+                color: #f6544a;
+            }
+        }
+    }
+}
