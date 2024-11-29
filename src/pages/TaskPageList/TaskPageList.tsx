@@ -37,14 +37,14 @@ const TaskPageList: FC = () => {
         typeof siderTaskGrounpAllList
     >(siderTaskGrounpAllList);
     const [taskGroupKey, setTaskGroupKey] = useSafeState<string>('全部');
-    const [deleteValues, setDeleteValues] = useSafeState<Record<string, any[]>>(
-        {},
-    );
+    const [deleteValues, setDeleteValues] = useSafeState<
+        Record<string, { ids: any[]; isAll: boolean }>
+    >({});
 
     const { loading, run } = useRequest(
         async () => {
             await deleteScriptTask({
-                ids: deleteValues?.task_name ?? [],
+                ids: deleteValues?.task_name?.ids ?? [],
             });
         },
         {
@@ -234,11 +234,12 @@ const TaskPageList: FC = () => {
                                     danger
                                     disabled={
                                         deleteValues?.task_name &&
-                                        deleteValues?.task_name?.length > 0
+                                        deleteValues?.task_name?.ids?.length > 0
                                             ? false
                                             : true
                                     }
                                     onClick={async () => {
+                                        console.log(page.getParams());
                                         run();
                                     }}
                                     loading={loading}

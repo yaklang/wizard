@@ -51,15 +51,3 @@ export interface ProjectDetailNodes {
     level: number;
     projectId: string;
 }
-
-// 查看任务详情报告返回数据
-export interface TGetTimeLineRuntimeMessage {
-    data: {
-        id: string;
-        blocks: {
-            data: string;
-            type: string;
-        }[];
-    };
-    type: string;
-}

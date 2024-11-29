@@ -25,6 +25,11 @@ const scriptTypeOptions = [
     { label: '敏感信息', value: '敏感信息' },
 ];
 
+const scriptTypeOption = [
+    { label: '端口与漏洞扫描', value: 'portAndVulScan' },
+    { label: '敏感信息', value: 'weakinfo' },
+];
+
 // 预设端口多选数据
 const presetProtsGroupOptions = [
     { label: '常见100端口', value: 'top100' },
@@ -79,4 +84,5 @@ export {
     presetProtsGroupOptions,
     targetColorFn,
     transformFormData,
+    scriptTypeOption,
 };

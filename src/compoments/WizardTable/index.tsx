@@ -104,12 +104,11 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         [params, filter],
     );
 
-    const [wizardScrollHeight, _] = useListenWidth(tableRef);
+    const [wizardScrollHeight, wizardScrollWidth] = useListenWidth(tableRef);
 
     // 表格容器的 state, 用来保存计算得到的可滚动高度和表格高度
     const [height, setHeight] = useSafeState({
         tableHeight: 0,
-        // tableContainerHeight: 0,
     });
 
     // 动态计算表格高度
@@ -124,7 +123,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
         setHeight((val) => ({
             ...val,
-            // tableContainerHeight: wizardScrollHeight,
             tableHeight:
                 wizardScrollHeight -
                 tableFilterDomHeight -
@@ -162,11 +160,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             }
         }
     }, [height.tableHeight, dataSource]);
-
-    // // 当筛选项变化时，重置分页、滚动条回到顶部，并请求新数据
-    // useUpdateEffect(() => {
-    //     handClearFilter();
-    // }, [filter]);
 
     // 表格滚动函数
     const tableOnScrollFn = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
@@ -325,7 +318,9 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                                     : 1
                             }
                         >
-                            <div className="min-h-[24px]">
+                            <div
+                                className={`min-h-[24px] w-${wizardScrollWidth}`}
+                            >
                                 {pagemetaStatus &&
                                     dataSource!.length !== 0 &&
                                     !state.loading && (
@@ -358,7 +353,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 </Table.Summary>
             </>
         );
-    }, [state.loading]);
+    }, [state.loading, wizardScrollWidth]);
 
     return (
         <div className="flex w-full h-full overflow-hidden justify-end">
@@ -368,7 +363,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 id="table-container"
                 ref={tableRef}
                 className={`transition-all duration-500 w-full p-4 bg-[#fff] relative`}
-                // h-[${height.tableContainerHeight}px]
                 style={{
                     width: `${
                         state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'

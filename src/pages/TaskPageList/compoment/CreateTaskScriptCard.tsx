@@ -7,6 +7,7 @@ import { Spin } from 'antd';
 import { useRequest } from 'ahooks';
 import { getScriptTaskGroup } from '@/apis/task';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { scriptTypeOption } from '@/pages/TaskScript/data';
 
 type TCreateTaskScriptCard = {
     items: TGetAnalysisScriptReponse;
@@ -29,7 +30,16 @@ const CreateTaskScriptCard: FC<TCreateTaskScriptCard> = ({
                 data: { list },
             } = result;
 
-            itemsRef.current = items;
+            const target_script_type = scriptTypeOption.find(
+                (it) => it.value === items.script_type,
+            )?.label;
+
+            const resuteItems = {
+                ...items,
+                script_type: target_script_type ?? items.script_type,
+            };
+
+            itemsRef.current = resuteItems;
             const resultList = list?.map((it) => ({
                 value: it.name,
                 label: it.name,

@@ -67,7 +67,7 @@ const DeletePopover: FC<{
             title={
                 <div>
                     <InfoCircleOutlined color="#faad14" />
-                    <span className="ml-1 font-400">确认删除任务？</span>
+                    <span className="ml-1 font-400">确认删除脚本？</span>
                 </div>
             }
             trigger="click"

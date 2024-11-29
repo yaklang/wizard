@@ -11,6 +11,7 @@ import type {
     TaskListRequest,
     TaskListResponse,
     TGetAnalysisScriptReponse,
+    TGetStroageDetailRequest,
     TNodeListRequest,
     TPostRpcQueryYakPluginsParams,
     TPostRpcQueryYakPluginsRequest,
@@ -140,8 +141,8 @@ const postTaskStart = (
 // 获取脚本详情
 const getStroageDetail = (params: {
     script_name: string;
-}): Promise<ResponseData<TPostStorageTaskScriptResponse>> =>
-    axios.get<never, ResponseData<TPostStorageTaskScriptResponse>>(
+}): Promise<ResponseData<TGetStroageDetailRequest>> =>
+    axios.get<never, ResponseData<TGetStroageDetailRequest>>(
         '/task/start/batch-invoking-script/storage/fetch',
         { params },
     );

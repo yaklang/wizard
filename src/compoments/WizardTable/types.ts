@@ -9,7 +9,7 @@ import { AnyObject } from 'antd/es/_util/type';
 import { FormLayout } from 'antd/es/form/Form';
 
 // 定义 wizardColumnsType 的字符串字面量类型
-type WizardColumnsType = 'input' | 'radio' | 'checkbox';
+type WizardColumnsType = 'input' | 'radio' | 'checkbox' | 'rangePicker';
 
 // 定义 wizardColumnsOptions 的类型
 interface WizardColumnRadioOptions {
@@ -20,20 +20,54 @@ interface WizardColumnRadioOptions {
 type ExtendedColumnType<T> = ColumnType<T> & {
     columnsHeaderFilterType?: WizardColumnsType;
     rowSelection?: 'checkbox';
-    rowSelectKeys?: Record<string, Array<any>>;
-    onSelectChange?: (rowSelectKeys: Record<string, Array<any>>) => void;
+    rowSelectKeys?: Record<
+        string,
+        {
+            ids: Array<any>;
+            isAll: boolean;
+        }
+    >;
+    onSelectChange?: (
+        rowSelectKeys: Record<
+            string,
+            {
+                ids: Array<any>;
+                isAll: boolean;
+            }
+        >,
+    ) => void;
 } & (
-        | {
-              columnsHeaderFilterType?: 'radio'; // 单选框，必需 wizardColumnsOptions
-              wizardColumnsOptions: WizardColumnRadioOptions[];
-          }
         | {
               columnsHeaderFilterType?: 'input'; // 输入框，不需要 wizardColumnsOptions
               wizardColumnsOptions?: never;
+              wizardColumnsDatePickFn?: never;
+              rangePickSetting?: never;
+          }
+        | {
+              columnsHeaderFilterType?: 'radio'; // 单选框，必需 wizardColumnsOptions
+              wizardColumnsOptions: WizardColumnRadioOptions[];
+              wizardColumnsDatePickFn?: never;
+              rangePickSetting?: never;
           }
         | {
               columnsHeaderFilterType?: 'checkbox'; // 组合框，必需 wizardColumnsOptions
               wizardColumnsOptions: WizardColumnRadioOptions[];
+              wizardColumnsDatePickFn?: never;
+              rangePickSetting?: never;
+          }
+        | {
+              columnsHeaderFilterType?: 'rangePicker'; // 组合框，必需 wizardColumnsOptions
+              wizardColumnsOptions?: never;
+              wizardColumnsDatePickFn?: (
+                  dates: any,
+                  dateStrings: [string, string],
+              ) => void;
+              rangePickSetting?: {
+                  format?: string;
+                  showTime?: string;
+                  //   请求返回格式
+                  resultFormat?: [string, string];
+              };
           }
     );
 

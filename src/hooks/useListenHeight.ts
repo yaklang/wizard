@@ -20,10 +20,13 @@ const useListenHeight = (target: BasicTarget): number[] => {
     const onSetWrapperHeight = useDebounceFn(
         useMemoizedFn((height: number, width: number) => {
             if (height === 0) return;
-            if (oldSize.current.height === height) return;
-            if (oldSize.current.width === width) return;
+            if (
+                oldSize.current.height === height &&
+                oldSize.current.width === width
+            )
+                return;
             oldSize.current.height = height;
-            oldSize.current.width = height;
+            oldSize.current.width = width;
             setSize({
                 height,
                 width,

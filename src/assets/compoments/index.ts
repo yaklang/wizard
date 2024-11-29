@@ -4,3 +4,4 @@ export { default as CloseIcon } from './CloseIcon';
 export { default as ExportsIcon } from './ExportsIcon';
 export { default as TableHeaderFilter } from './TableHeaderFilter';
 export { default as TableHeaderSearch } from './TableHeaderSearch';
+export { default as VerticalAlignMiddleHeaderFilter } from './VerticalAlignMiddleHeaderFilter';

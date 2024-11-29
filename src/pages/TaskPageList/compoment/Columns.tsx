@@ -22,9 +22,23 @@ type TColumns = {
 const CommonTasksColumns = (
     headerGroupValue: 1 | 2 | 3,
     page: UsePageRef,
-    deleteValues?: Record<string, any[]>,
+    deleteValues?: Record<
+        string,
+        {
+            ids: any[];
+            isAll: boolean;
+        }
+    >,
     setDeleteValues?: React.Dispatch<
-        React.SetStateAction<Record<string, any[]>>
+        React.SetStateAction<
+            Record<
+                string,
+                {
+                    ids: any[];
+                    isAll: boolean;
+                }
+            >
+        >
     >,
 ): CreateTableProps<TaskListRequest>['columns'] => {
     const navigate = useNavigate();
@@ -43,9 +57,8 @@ const CommonTasksColumns = (
 
     // 前往详情页面
     const handGoDetail = (record: TaskListRequest) => {
-        navigate(`detail/${record.id}`);
+        navigate(`detail/${record.task_id}`);
     };
-
     // 任务列表可通用的 cloumns 字段
     const columns: CreateTableProps<TaskListRequest>['columns'] = [
         {

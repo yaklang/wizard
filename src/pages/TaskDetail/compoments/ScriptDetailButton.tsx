@@ -1,12 +1,10 @@
-import { forwardRef, ReactNode, useImperativeHandle, useRef } from 'react';
+import { forwardRef, ReactNode, useImperativeHandle } from 'react';
 
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
-import {
-    // Markdown,
-    WizardDrawer,
-} from '@/compoments';
-import { TGetTimeLineRuntimeMessage } from '@/utils/commonTypes';
-// import { useSafeState } from 'ahooks';
+import { WizardDrawer } from '@/compoments';
+import { useSafeState } from 'ahooks';
+import ReportTemplate from '@/compoments/ReportTemplate';
+import { TReportTemplateProps } from '@/compoments/ReportTemplate/type';
 
 const ScriptDetailButton = forwardRef<
     UseDrawerRefType,
@@ -16,40 +14,20 @@ const ScriptDetailButton = forwardRef<
 >(({ title }, ref): ReactNode => {
     const [drawer] = WizardDrawer.useDrawer();
 
-    const itemsBlocksRef = useRef<TGetTimeLineRuntimeMessage['data']['blocks']>(
+    const [blocks, setBlocks] = useSafeState<TReportTemplateProps['blocks']>(
         [],
     );
 
-    // const [blocks, setBlocks] = useSafeState([]);
-
     useImperativeHandle(ref, () => ({
         async open(items) {
-            console.log(items, 'items');
-
-            // setBlocks(items?.blocks);
-            itemsBlocksRef.current = items?.blocks;
-            // const itemsBlocks = await transformItems(items?.blocks);
+            setBlocks(items?.blocks);
             drawer.open();
         },
     }));
 
-    // const transformItems = async (blocks: any[]) => {
-    //     return blocks ?? [];
-    // };
-
     return (
         <WizardDrawer drawer={drawer} width={'75%'} title={title} footer={null}>
-            {/* {blocks.map((it, index) => {
-                return it.type === 'markdown' ? (
-                    <div key={index}>
-                        <Markdown children={it.data} />
-                        <br />
-                    </div>
-                ) : (
-                    <div key={index}>asd</div>
-                );
-            })} */}
-            <></>
+            <ReportTemplate blocks={blocks} />
         </WizardDrawer>
     );
 });

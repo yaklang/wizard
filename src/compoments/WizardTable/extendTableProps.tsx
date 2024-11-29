@@ -7,15 +7,29 @@ import {
     TRecudeInitiakValue,
     WizardColumnsType,
 } from './types';
-import { Checkbox, Input, Popover, Radio } from 'antd';
+import { Checkbox, DatePicker, Input, Popover, Radio } from 'antd';
 import { useSafeState, useUpdateEffect } from 'ahooks';
-import { TableHeaderFilter, TableHeaderSearch } from '@/assets/compoments';
+import {
+    TableHeaderFilter,
+    TableHeaderSearch,
+    VerticalAlignMiddleHeaderFilter,
+} from '@/assets/compoments';
 import { ColumnType } from 'antd/es/table';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import dayjs from 'dayjs';
 
 const CheckboxGroup = Checkbox.Group;
+const { RangePicker } = DatePicker;
 
 type Text = string | undefined | null;
+
+type TSelectedRowKeys = Record<
+    string,
+    {
+        ids: Array<React.Key>;
+        isAll: boolean;
+    }
+>;
 
 // 判断两个对象中相同的 key 的值是否不同
 const areValuesDifferent = (
@@ -41,9 +55,8 @@ const extendTableProps = (
 ): Array<any> => {
     const [search, setSearch] = useSafeState<Record<string, any>>({});
     const [open, setOpen] = useSafeState<Record<string, boolean>>();
-    const [selectedRowKeys, setSelectedRowKeys] = useSafeState<
-        Record<string, Array<React.Key>>
-    >({});
+    const [selectedRowKeys, setSelectedRowKeys] =
+        useSafeState<TSelectedRowKeys>({});
 
     useEffect(() => {
         // 获取存在 wizardColumnsType 存在的字段
@@ -81,18 +94,18 @@ const extendTableProps = (
 
     useEffect(() => {
         const rowSelectionValues =
-            columns?.reduce(
-                (acc, it) => {
-                    if (typeof it.rowSelection === 'string' && it.dataIndex) {
-                        // 从 rowSelectKeys 中获取与 dataIndex 相关联的键数组
-                        const keysArray =
-                            it.rowSelectKeys?.[it.dataIndex] ?? [];
-                        acc[it.dataIndex] = keysArray as React.Key[]; // 类型断言为 React.Key 数组
-                    }
-                    return acc;
-                },
-                {} as Record<string, Array<React.Key>>,
-            ) ?? {};
+            columns?.reduce((acc, it) => {
+                if (typeof it.rowSelection === 'string' && it.dataIndex) {
+                    // 明确类型
+                    const keysArray = (selectedRowKeys[it.dataIndex]?.ids ??
+                        []) as React.Key[];
+                    acc[it.dataIndex] = {
+                        ids: keysArray, // 确保是 React.Key[] 类型
+                        isAll: it.rowSelectKeys?.[it.dataIndex]?.isAll ?? false, // 初始状态
+                    };
+                }
+                return acc;
+            }, {} as TSelectedRowKeys) ?? {};
         setSelectedRowKeys(rowSelectionValues);
     }, [columns]);
 
@@ -121,6 +134,27 @@ const extendTableProps = (
             });
     }, [open]);
 
+    useUpdateEffect(() => {
+        const { dataSource } = state;
+
+        const selectKey = Object.keys(selectedRowKeys ?? {});
+
+        const targetSeletedKeys =
+            selectKey.reduce((acc, it) => {
+                const selected = selectedRowKeys[it];
+                if (selected) {
+                    acc[it] = {
+                        ids: selected.isAll
+                            ? (dataSource?.map((item) => item[rowKey]) ?? []) // 默认值防止 undefined
+                            : selected.ids,
+                        isAll: selected.isAll,
+                    };
+                }
+                return acc;
+            }, {} as TSelectedRowKeys) ?? {};
+        setSelectedRowKeys(targetSeletedKeys);
+    }, [state.dataSource]);
+
     // 处理单个复选框的变化
     const handleCheckboxChange = (
         record: any,
@@ -132,19 +166,29 @@ const extendTableProps = (
         const isChecked = e.target.checked;
 
         const addSelectedRowKeys = isChecked
-            ? [...selectedRowKeys?.[dataIndex], record?.[rowKeys]] // 添加选中项
-            : selectedRowKeys?.[dataIndex]?.filter(
+            ? [...selectedRowKeys?.[dataIndex]?.ids, record?.[rowKeys]] // 添加选中项
+            : selectedRowKeys?.[dataIndex]?.ids?.filter(
                   (key) => key !== record?.[rowKeys],
               ); // 取消选中
 
         setSelectedRowKeys((value) => {
             const returnValue = {
                 ...value,
-                [dataIndex]: addSelectedRowKeys,
+                [dataIndex]: {
+                    ids: addSelectedRowKeys,
+                    isAll: isChecked,
+                },
             };
             return returnValue;
         });
-        return addSelectedRowKeys;
+
+        return {
+            ids: addSelectedRowKeys,
+            isAll:
+                addSelectedRowKeys.length === state.pagemeta?.total
+                    ? true
+                    : false,
+        };
     };
 
     // 处理表头全选的变化
@@ -161,11 +205,17 @@ const extendTableProps = (
         setSelectedRowKeys((value) => {
             const returnValue = {
                 ...value,
-                [dataIndex]: selectedRowKeysAll,
+                [dataIndex]: {
+                    ids: selectedRowKeysAll,
+                    isAll: isChecked,
+                },
             };
             return returnValue;
         });
-        return selectedRowKeysAll;
+        return {
+            ids: selectedRowKeysAll,
+            isAll: isChecked,
+        };
     };
 
     // 更新筛选条件
@@ -184,8 +234,14 @@ const extendTableProps = (
 
     const newColumns = columns?.map((column) => {
         // tablehead 筛选类型
-        const { columnsHeaderFilterType, rowSelection, title } = column;
-        const { wizardColumnsOptions } = column;
+        const {
+            wizardColumnsOptions,
+            columnsHeaderFilterType,
+            rowSelection,
+            title,
+            wizardColumnsDatePickFn,
+            rangePickSetting,
+        } = column;
 
         const selectKeys = column?.dataIndex;
 
@@ -200,14 +256,10 @@ const extendTableProps = (
             const selectItems = (dataIndex: string) => {
                 return match(alone)
                     .with('all', () => {
-                        return state.dataSource!.length &&
-                            selectedRowKeys?.[dataIndex]?.length ===
-                                state.dataSource!.length
-                            ? true
-                            : false;
+                        return selectedRowKeys?.[dataIndex]?.isAll;
                     })
                     .with('alone', () => {
-                        return selectedRowKeys[dataIndex]?.includes(
+                        return selectedRowKeys[dataIndex]?.ids?.includes(
                             record?.[rowKeys],
                         );
                     })
@@ -222,12 +274,13 @@ const extendTableProps = (
                             checked={selectItems(column.dataIndex)}
                             indeterminate={
                                 alone === 'all' &&
-                                column?.rowSelectKeys?.[column?.dataIndex]
-                                    ? column?.rowSelectKeys?.[column?.dataIndex]
-                                          ?.length > 0 &&
-                                      column?.rowSelectKeys?.[column.dataIndex]
-                                          ?.length < state.dataSource!.length
-                                    : undefined
+                                selectedRowKeys?.[column.dataIndex]?.ids
+                                    .length > 0 &&
+                                !selectedRowKeys?.[column.dataIndex]?.isAll
+                                    ? true
+                                    : selectedRowKeys?.[column.dataIndex]?.isAll
+                                      ? false
+                                      : undefined
                             }
                             onChange={(e) => {
                                 const rowKeys = {
@@ -455,7 +508,69 @@ const extendTableProps = (
                                                         }),
                                                     );
                                                 }}
-                                            ></Radio.Group>
+                                            />
+                                        ))
+                                        .with('rangePicker', () => (
+                                            <RangePicker
+                                                showTime={{
+                                                    format:
+                                                        rangePickSetting?.showTime ??
+                                                        'HH:mm',
+                                                }}
+                                                format={
+                                                    rangePickSetting?.format ??
+                                                    'YYYY-MM-DD HH:mm'
+                                                }
+                                                onChange={(
+                                                    value,
+                                                    dateString,
+                                                ) => {
+                                                    const resultDateData =
+                                                        wizardColumnsDatePickFn &&
+                                                        wizardColumnsDatePickFn(
+                                                            value,
+                                                            dateString,
+                                                        );
+                                                    return resultDateData;
+                                                }}
+                                                onOk={(value) => {
+                                                    const starTime =
+                                                        rangePickSetting?.resultFormat &&
+                                                        rangePickSetting
+                                                            ?.resultFormat[0];
+
+                                                    const endTime =
+                                                        rangePickSetting?.resultFormat &&
+                                                        rangePickSetting
+                                                            ?.resultFormat[1];
+                                                    const result =
+                                                        rangePickSetting?.resultFormat
+                                                            ? {
+                                                                  [starTime!]:
+                                                                      value[0]
+                                                                          ? dayjs(
+                                                                                value[0],
+                                                                            ).unix()
+                                                                          : null,
+                                                                  [endTime!]:
+                                                                      value[1]
+                                                                          ? dayjs(
+                                                                                value[0],
+                                                                            ).unix()
+                                                                          : null,
+                                                              }
+                                                            : {
+                                                                  selectKeys:
+                                                                      value,
+                                                              };
+                                                    setSearch(
+                                                        (searchValue) => ({
+                                                            ...searchValue,
+                                                            ...result,
+                                                        }),
+                                                    );
+                                                }}
+                                            />
                                         ))
                                         .with(P.nullish, () => null)
                                         .exhaustive()}
@@ -488,6 +603,9 @@ const extendTableProps = (
                                 .with('input', () => <TableHeaderSearch />)
                                 .with('checkbox', () => <TableHeaderFilter />)
                                 .with('radio', () => <TableHeaderFilter />)
+                                .with('rangePicker', () => (
+                                    <VerticalAlignMiddleHeaderFilter />
+                                ))
                                 .with(P.nullish, () => null)
                                 .exhaustive()}
                         </div>

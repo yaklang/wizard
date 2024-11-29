@@ -48,16 +48,9 @@ type TTaskGroupResponse = {
 // 执行/取消 普通和定时任务请求参数
 type StopOnRunTsakResponse = { task_id: number; task_type: number };
 
-type Prompt_arg = {
-    explain: string;
-    key: string;
-    value: string;
-};
-
 type TGetAnalysisScriptReponse = Partial<{
     description: string;
     disallow_scheduled: boolean;
-    prompt_args: Prompt_arg[];
     script_type: string;
     tags: string[];
     script_name: string;
@@ -158,6 +151,7 @@ type TPostStorageTaskScriptResponse = {
     description: string;
     script_type: string;
     param_files?: string;
+    tags?: string[];
     params: {
         target: string;
         'preset-protes': string[];

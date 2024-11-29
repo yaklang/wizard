@@ -1,6 +1,9 @@
 import { FC, useRef } from 'react';
 
-import { type TGetAnalysisScriptReponse } from '@/apis/task/types';
+import {
+    TGetStroageDetailRequest,
+    type TGetAnalysisScriptReponse,
+} from '@/apis/task/types';
 
 import styles from '../index.module.scss';
 
@@ -10,7 +13,11 @@ import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
 import { Input, InputRef, message, Modal, Spin } from 'antd';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
-import { getScriptTaskGroup, getStroageDetail } from '@/apis/task';
+import {
+    getScriptTaskGroup,
+    getStroageDetail,
+    postStorageTaskScript,
+} from '@/apis/task';
 import { WizardModal } from '@/compoments';
 import { StartUpScriptModal } from './StartUpScriptModal';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
@@ -18,6 +25,7 @@ import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { TaskScriptDrawer } from './TaskScriptDrawer';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { match, P } from 'ts-pattern';
+import { scriptTypeOption } from '../data';
 
 const { confirm } = Modal;
 
@@ -43,6 +51,8 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     const [confirmVisible, setConfirmVisible] = useSafeState(false);
     const [status, setStatus] = useSafeState<'edit' | 'copy'>();
     const [copyInputValue, setCopyInputValue] = useSafeState('');
+    const [detailData, setDetailData] =
+        useSafeState<TGetStroageDetailRequest>();
 
     const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
@@ -55,7 +65,14 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                 data: { list },
             } = result;
 
-            itemsRef.current = items;
+            const resuteItems = {
+                ...items,
+                script_type: scriptTypeOption.find(
+                    (it) => it.value === items.script_type,
+                )?.label,
+            };
+
+            itemsRef.current = resuteItems;
             const resultList = list?.map((it) => ({
                 value: it.name,
                 label: it.name,
@@ -94,6 +111,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                             ...val,
                         ]);
                         setCopyInputValue(`Copy ${data?.script_name ?? ''}`);
+                        setDetailData(data);
                     })
                     .with('edit', () => {
                         taskScriptDrawerRef.current?.open(data);
@@ -103,6 +121,17 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             },
         },
     );
+
+    const { run: copyRun } = useRequest(postStorageTaskScript, {
+        manual: true,
+        onSuccess: async () => {
+            await refreshAsync();
+            // message.success(title.includes('创建') ? '创建成功' : '编辑成功');
+        },
+        onError: (err) => {
+            console.log(err);
+        },
+    });
 
     // 点击复制按钮
     const headCopy = async (script_name?: string) => {
@@ -130,7 +159,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             openTipsConfirm(inputValue);
             return;
         }
-        // TODO 调用接口
+        await copyRun({ ...(detailData as any), name: copyInputValue }, false);
         setTaskScriptList((it) =>
             it.map((item) => {
                 return item.isCopy === true
@@ -165,6 +194,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             onOk() {
                 console.log('OK', newItem);
                 // TODO 调用接口
+                copyRun({ ...(detailData as any), name: copyInputValue }, true);
                 setConfirmVisible(false);
             },
             onCancel() {

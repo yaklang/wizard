@@ -1,14 +1,16 @@
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 
 import { Radio } from 'antd';
+import { match } from 'ts-pattern';
+import { useSafeState } from 'ahooks';
 
 import { WizardTable } from '@/compoments';
-import { useSafeState } from 'ahooks';
+
+import { ProtColumns } from './compoments/Columns';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
 import { detailHeaderGroupOptions } from './compoments/data';
 import { TableOptionsFilterDrawer } from './compoments/TableOptionsFilterDrawer';
-import { getTaskList } from '@/apis/task';
-import { CommonTasksColumns } from '../TaskPageList/compoment/Columns';
+import { getAssetsProts } from '@/apis/taskDetail';
 
 const { Group } = Radio;
 
@@ -17,13 +19,23 @@ const TaskDetail: FC = () => {
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
 
+    const columnsMemeo = useMemo(
+        () =>
+            match(headerGroupValue)
+                .with(1, () => ProtColumns)
+                .with(2, () => ProtColumns)
+                .with(3, () => ProtColumns)
+                .exhaustive(),
+        [headerGroupValue],
+    );
+
     return (
         <div className="flex align-start h-full">
             <TaskDetailSider />
 
             <WizardTable
                 rowKey={'id'}
-                columns={CommonTasksColumns(headerGroupValue, page)}
+                columns={columnsMemeo}
                 page={page}
                 tableHeader={{
                     tableHeaderGroup: (
@@ -49,18 +61,15 @@ const TaskDetail: FC = () => {
                     },
                 }}
                 request={async (params, filter) => {
-                    const { data } = await getTaskList({
-                        dto: {
-                            task_type: headerGroupValue,
-                            ...filter,
-                        },
-                        pagemeta: {
-                            ...params,
-                        },
+                    const { data } = await getAssetsProts({
+                        ...params,
+                        ...filter,
+                        taskid: '乐山专项检测漏洞任务',
+                        // taskid: '[20240715]-[7月15日]-[oxSYI3]-',
                     });
 
                     return {
-                        list: data?.list,
+                        list: data?.list ?? [],
                         pagemeta: data?.pagemeta,
                     };
                 }}

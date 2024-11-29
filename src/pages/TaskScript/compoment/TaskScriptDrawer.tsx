@@ -13,16 +13,15 @@ import {
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { ChunkUpload, WizardAceEditor, WizardDrawer } from '@/compoments';
 import { TGetAnalysisScriptReponse } from '@/apis/task/types';
-import { PresetPorts, presetProtsGroupOptions } from '../data';
+import {
+    PresetPorts,
+    presetProtsGroupOptions,
+    scriptTypeOption,
+} from '../data';
 import { generateUniqueId } from '@/utils';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { postStorageTaskScript } from '@/apis/task';
-
-const scriptTypeOptions = [
-    { label: '端口与漏洞扫描', value: 'portAndVulScan' },
-    { label: '敏感信息', value: 'weakinfo' },
-];
 
 const { Item } = Form;
 const { TextArea } = Input;
@@ -55,7 +54,7 @@ const TaskScriptDrawer = forwardRef<
         async open(items) {
             form.setFieldsValue({
                 ...items,
-                name: items.script_name,
+                name: items?.script_name,
             });
             drawer.open();
         },
@@ -103,11 +102,15 @@ const TaskScriptDrawer = forwardRef<
                 <Item
                     label={'脚本类型'}
                     name={'script_type'}
-                    rules={[{ required: true, message: '请选择脚本类型' }]}
+                    rules={
+                        !title.includes('创建')
+                            ? [{ required: true, message: '请选择脚本类型' }]
+                            : undefined
+                    }
                     initialValue={'portAndVulScan'}
                 >
                     <Select
-                        options={scriptTypeOptions}
+                        options={scriptTypeOption}
                         placeholder="请选择"
                         allowClear
                     />
@@ -129,12 +132,17 @@ const TaskScriptDrawer = forwardRef<
                                         ? ['prompt_args', 'target']
                                         : ['prompt_args', 'keyword']
                                 }
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: '请输入或上传扫描目标',
-                                    },
-                                ]}
+                                rules={
+                                    !title.includes('创建')
+                                        ? [
+                                              {
+                                                  required: true,
+                                                  message:
+                                                      '请输入或上传扫描目标',
+                                              },
+                                          ]
+                                        : undefined
+                                }
                                 extra={
                                     <div className="flex items-center font-normal text-xs color-[#85899E]">
                                         可将TXT、Excel文件拖入框内或
@@ -258,13 +266,18 @@ const TaskScriptDrawer = forwardRef<
                                                         </Popover>
                                                     </span>
                                                 }
-                                                rules={[
-                                                    {
-                                                        message:
-                                                            '请输入扫描端口',
-                                                        required: true,
-                                                    },
-                                                ]}
+                                                rules={
+                                                    !title.includes('创建')
+                                                        ? [
+                                                              {
+                                                                  message:
+                                                                      '请输入扫描端口',
+                                                                  required:
+                                                                      true,
+                                                              },
+                                                          ]
+                                                        : undefined
+                                                }
                                             >
                                                 <Input.TextArea
                                                     placeholder="请输入扫描端口"

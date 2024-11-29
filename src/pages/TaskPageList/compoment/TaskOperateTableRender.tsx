@@ -277,7 +277,8 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                         {(status === 'success' ||
                             status === 'failed' ||
                             status === 'cancel' ||
-                            status === 'waiting') && (
+                            status === 'waiting') &&
+                        headerGroupValue === 1 ? (
                             <Popover
                                 open={open.action}
                                 content={
@@ -328,8 +329,8 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                     <PlayCircleOutlined />
                                 </div>
                             </Popover>
-                        )}
-                        {status === 'running' && (
+                        ) : null}
+                        {status === 'running' ? (
                             <Popover
                                 content={
                                     <div className="flex justify-end gap-2">
@@ -379,9 +380,16 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                     <StopUsingIcon />
                                 </div>
                             </Popover>
+                        ) : (
+                            headerGroupValue === 2 && (
+                                <span className="w-7 mr-2">{''}</span>
+                            )
                         )}
 
-                        <span className="cursor-pointer mr-2" onClick={onEdit}>
+                        <span
+                            className={`cursor-pointer mr-2`}
+                            onClick={onEdit}
+                        >
                             <TableFormOutlined />
                         </span>
 
