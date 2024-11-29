@@ -160,8 +160,12 @@ const StartUpScriptModal = forwardRef<
                             ...items.params,
                             plugins: items.params?.plugins
                                 ? {
-                                      ScriptName:
-                                          items.params?.plugins?.split(','),
+                                      ScriptName: {
+                                          ids: items.params?.plugins?.split(
+                                              ',',
+                                          ),
+                                          isAll: false,
+                                      },
                                   }
                                 : undefined,
                         },

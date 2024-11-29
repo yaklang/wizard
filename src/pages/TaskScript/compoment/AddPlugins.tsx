@@ -14,25 +14,32 @@ import { match, P } from 'ts-pattern';
 type TAddPlugins = Partial<{
     nodeCardValue: string[];
     execution_node: string;
-    value?: Record<string, Array<string>>;
-    onChange?: (value: Record<string, Array<string>>) => void;
+    value?: Record<
+        string,
+        {
+            ids: Array<any>;
+            isAll: boolean;
+        }
+    >;
+    onChange?: (value: TAddPlugins['value']) => void;
 }>;
 
 const AddPlugins: FC<TAddPlugins> = memo(
     ({ nodeCardValue, execution_node, value, onChange }) => {
+        const [page] = WizardTable.usePage();
+
         const [open, setOpen] = useSafeState(false);
+        const [tableHeaderCount, setTableHeaderCount] = useSafeState({
+            total: 0,
+            checkRow: 0,
+        });
+
         const groupsList = useRef<
             {
                 label: string | number;
                 value: string | number;
             }[]
         >([]);
-        const [tableHeaderCount, setTableHeaderCount] = useSafeState({
-            total: 0,
-            checkRow: 0,
-        });
-
-        const [page] = WizardTable.usePage();
 
         // 判断 设置插件 禁用状态
         const isDisabled = match([execution_node, nodeCardValue])
@@ -136,7 +143,8 @@ const AddPlugins: FC<TAddPlugins> = memo(
                                         <div className="color-[#B4BBCA] text-xs font-normal flex items-center gap-2">
                                             <div>Total</div>
                                             <div className="color-[#4A94F8]">
-                                                {value?.ScriptName.length ?? 0}
+                                                {value?.ScriptName?.ids
+                                                    .length ?? 0}
                                             </div>
                                             |<div>Selected</div>
                                             <div className="color-[#4A94F8]">
@@ -176,8 +184,8 @@ const AddPlugins: FC<TAddPlugins> = memo(
                     disabled={isDisabled}
                 >
                     <PlusOutlined />{' '}
-                    {value?.ScriptName && value?.ScriptName.length > 0
-                        ? `已添加${value.ScriptName.length}个插件`
+                    {value?.ScriptName && value?.ScriptName?.ids.length > 0
+                        ? `已添加${value.ScriptName?.ids.length}个插件`
                         : '添加插件'}
                 </Button>
             </Popover>

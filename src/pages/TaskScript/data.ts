@@ -50,7 +50,7 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
         ...values,
         params: {
             ...values.params,
-            plugins: values.params?.plugins?.ScriptName?.join(','),
+            plugins: values.params?.plugins?.ScriptName?.ids?.join(','),
             'enable-brute': `${values?.params?.['enable-brute']}`,
             'enbale-cve-baseline': `${values?.params?.['enbale-cve-baseline']}`,
             'preset-protes': values?.params?.['preset-protes']
