@@ -17,9 +17,9 @@ import TaskPageList from '@/pages/TaskPageList';
 import TaskScript from '@/pages/TaskScript';
 import TaskDetail from '@/pages/TaskDetail';
 import ReportManage from '@/pages/ReportManage';
-import DataService from '@/pages/DataService';
 import NodeConfig from '@/pages/NodeConfig';
 import SystemManagement from '@/pages/SystemManagement';
+import { PortAssets } from '@/pages/DataService/PortAssets';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -47,9 +47,9 @@ const routers: RouteObjectRootMy[] = [
                 icon: <TaskCenterIcon />,
                 children: [
                     {
-                        path: 'task_list',
+                        path: 'task-list',
                         name: '任务列表',
-                        key: 'task_list',
+                        key: 'task-list',
                         children: [
                             {
                                 index: true,
@@ -61,15 +61,15 @@ const routers: RouteObjectRootMy[] = [
                                 element: <TaskDetail />,
                                 name: '任务详情',
                                 hidden: true,
-                                parentpath: '/task/task_list',
+                                parentpath: '/task/task-list',
                             },
                         ],
                     },
                     {
-                        path: 'task_script',
+                        path: 'task-script',
                         element: <TaskScript />,
                         name: '脚本列表',
-                        key: 'task_script',
+                        key: 'task-script',
                     },
                 ],
             },
@@ -83,9 +83,16 @@ const routers: RouteObjectRootMy[] = [
             {
                 path: 'data-service',
                 name: '数据库',
-                key: 'data',
+                key: 'data-service',
                 icon: <DataServiceIcon />,
-                element: <DataService />,
+                children: [
+                    {
+                        path: 'port',
+                        name: '端口资产',
+                        key: 'port-assets',
+                        element: <PortAssets />,
+                    },
+                ],
             },
             {
                 path: 'node-config',

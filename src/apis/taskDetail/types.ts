@@ -13,7 +13,8 @@ interface TGetAssetsProtsRequest {
     services?: string[];
     state?: string;
     tags?: string[];
-    taskid: string;
+    taskid?: string;
+    Ppge?: number;
 }
 
 // 获取端口资产 响应参数
@@ -31,7 +32,6 @@ interface TGetAssetsProtsResponse {
     created_at: number;
     id: number;
     updated_at: number;
-    [property: string]: any;
 }
 
 export type { TGetAssetsProtsRequest, TGetAssetsProtsResponse };
