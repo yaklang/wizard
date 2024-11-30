@@ -98,7 +98,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
             lastPage.current = params!.page; // 更新 lastPage
             preFilter.current = filter;
-
             await runAsync(request);
         },
         [params, filter],

@@ -58,6 +58,14 @@ const WizardTableFilter: FC<{
                                             ...filterState?.filter,
                                             [tableoptionsSearch.key]: e,
                                         },
+                                        params: {
+                                            limit: filterState!.params!.limit,
+                                            page: 1,
+                                            total: filterState!.pagemeta!.total,
+                                            total_page:
+                                                filterState!.pagemeta!
+                                                    .total_page,
+                                        },
                                     });
                             }}
                             placeholder={
