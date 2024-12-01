@@ -45,12 +45,11 @@ const ReportManage: FC = () => {
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,
-            width: 280,
         },
         {
             title: '任务名',
             dataIndex: 'source',
-            width: 240,
+            width: 320,
         },
         {
             title: '任务组',
@@ -61,7 +60,7 @@ const ReportManage: FC = () => {
         },
         {
             title: '生成时间',
-            width: 240,
+            width: 320,
             dataIndex: 'start_time',
             columnsHeaderFilterType: 'rangePicker',
             rangePickSetting: {
