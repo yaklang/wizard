@@ -16,7 +16,6 @@ import {
 } from '@/assets/compoments';
 import { ColumnType } from 'antd/es/table';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import dayjs from 'dayjs';
 
 const CheckboxGroup = Checkbox.Group;
 const { RangePicker } = DatePicker;
@@ -239,7 +238,6 @@ const extendTableProps = (
             columnsHeaderFilterType,
             rowSelection,
             title,
-            wizardColumnsDatePickFn,
             rangePickSetting,
         } = column;
 
@@ -378,9 +376,8 @@ const extendTableProps = (
                         [selectKeys]: undefined,
                     },
                 });
-            } else {
-                return;
             }
+            return;
         };
 
         // 确定搜索事件
@@ -521,52 +518,12 @@ const extendTableProps = (
                                                     rangePickSetting?.format ??
                                                     'YYYY-MM-DD HH:mm'
                                                 }
-                                                onChange={(
-                                                    value,
-                                                    dateString,
-                                                ) => {
-                                                    const resultDateData =
-                                                        wizardColumnsDatePickFn &&
-                                                        wizardColumnsDatePickFn(
-                                                            value,
-                                                            dateString,
-                                                        );
-                                                    return resultDateData;
-                                                }}
-                                                onOk={(value) => {
-                                                    const starTime =
-                                                        rangePickSetting?.resultFormat &&
-                                                        rangePickSetting
-                                                            ?.resultFormat[0];
-
-                                                    const endTime =
-                                                        rangePickSetting?.resultFormat &&
-                                                        rangePickSetting
-                                                            ?.resultFormat[1];
-                                                    const result =
-                                                        rangePickSetting?.resultFormat
-                                                            ? {
-                                                                  [starTime!]:
-                                                                      value[0]
-                                                                          ? dayjs(
-                                                                                value[0],
-                                                                            ).unix()
-                                                                          : null,
-                                                                  [endTime!]:
-                                                                      value[1]
-                                                                          ? dayjs(
-                                                                                value[0],
-                                                                            ).unix()
-                                                                          : null,
-                                                              }
-                                                            : {
-                                                                  selectKeys:
-                                                                      value,
-                                                              };
+                                                value={search[selectKeys]}
+                                                onChange={(value) => {
                                                     setSearch(
                                                         (searchValue) => ({
                                                             ...searchValue,
-                                                            ...result,
+                                                            [selectKeys]: value,
                                                         }),
                                                     );
                                                 }}

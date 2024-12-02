@@ -4,7 +4,7 @@ import { WizardTable } from '@/compoments';
 
 import { getAssetsProts } from '@/apis/taskDetail';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
-import { Tag } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import { TGetAssetsProtsResponse } from '@/apis/taskDetail/types';
 
@@ -41,7 +41,13 @@ const PortAssets: FC = () => {
             columnsHeaderFilterType: 'input',
             width: 180,
             render: (_, render) =>
-                render?.fingerprint ? render?.fingerprint : '-',
+                render?.fingerprint ? (
+                    <Tooltip title={render?.fingerprint}>
+                        <div className="text-clip">{render?.fingerprint}</div>
+                    </Tooltip>
+                ) : (
+                    '-'
+                ),
         },
         {
             title: '最近更新时间',

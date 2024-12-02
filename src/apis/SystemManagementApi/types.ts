@@ -1,3 +1,5 @@
+import { Order } from '@/types';
+
 interface User {
     email?: string;
     in_charge_of_systems?: string[];
@@ -17,11 +19,6 @@ interface UserRequest {
     page?: number;
     role?: string;
     user_group?: string;
-}
-
-enum Order {
-    Asc = 'asc',
-    Desc = 'desc',
 }
 
 /**

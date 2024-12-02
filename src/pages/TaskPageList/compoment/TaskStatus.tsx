@@ -49,6 +49,5 @@ const TaskStatus = (status?: TTaskListStatusType) =>
         ))
         .with(P.string, () => '-')
         .with(P.nullish, () => '-')
-        // TODO 此处 key 可能没有，需要后端调整，最后将 run 方法修改为 exhaustive 方法 确保安全性
         .exhaustive();
 export { TaskStatus };

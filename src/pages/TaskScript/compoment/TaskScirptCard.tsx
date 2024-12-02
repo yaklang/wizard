@@ -25,7 +25,6 @@ import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { TaskScriptDrawer } from './TaskScriptDrawer';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { match, P } from 'ts-pattern';
-import { scriptTypeOption } from '../data';
 
 const { confirm } = Modal;
 
@@ -65,14 +64,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                 data: { list },
             } = result;
 
-            const resuteItems = {
-                ...items,
-                script_type: scriptTypeOption.find(
-                    (it) => it.value === items.script_type,
-                )?.label,
-            };
-
-            itemsRef.current = resuteItems;
+            itemsRef.current = items;
             const resultList = list?.map((it) => ({
                 value: it.name,
                 label: it.name,
@@ -192,8 +184,6 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             icon: <ExclamationCircleFilled />,
             content: `[${oldName}] 该脚本名称已存在，是否需要直接进行覆盖`,
             onOk() {
-                console.log('OK', newItem);
-                // TODO 调用接口
                 copyRun({ ...(detailData as any), name: copyInputValue }, true);
                 setConfirmVisible(false);
             },

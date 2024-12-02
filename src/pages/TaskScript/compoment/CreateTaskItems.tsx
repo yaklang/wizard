@@ -18,7 +18,7 @@ import { createRules, generateUniqueId } from '@/utils';
 import {
     PresetPorts,
     presetProtsGroupOptions,
-    scriptTypeOptions,
+    scriptTypeOption,
 } from '../data';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
@@ -82,10 +82,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
     const validateStartTime = (
         value: [Dayjs | null, Dayjs | null],
     ): string | void => {
-        if (!value || !value[0]) {
-            return '开始时间不能为空';
-        }
-        if (value[0].isBefore(dayjs())) {
+        if (value && value[0] && value[0].isBefore(dayjs())) {
             return '开始时间不能小于当前时间';
         }
     };
@@ -164,8 +161,8 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             className="w-full"
                             showTime={{ format: 'YYYY-MM-DD HH:mm' }}
                             format={'YYYY-MM-DD HH:mm'}
-                            disabledDate={disabledDate} // 禁用日期部分
-                            disabledTime={disabledTime} // 禁用时间部分到分钟
+                            // disabledDate={disabledDate} // 禁用日期部分
+                            // disabledTime={disabledTime} // 禁用时间部分到分钟
                         />
                     </Item>
                 );
@@ -200,19 +197,19 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                             className="w-full"
                                             showTime={{ format: 'HH:mm' }}
                                             format="YYYY-MM-DD HH:mm"
-                                            disabledDate={disabledDate} // 禁用日期部分
-                                            disabledTime={(date, type) =>
-                                                disabledTimeRangePicker(
-                                                    date,
-                                                    type,
-                                                    (getFieldValue(
-                                                        'timestamp',
-                                                    ) as [Dayjs, Dayjs]) || [
-                                                        null,
-                                                        null,
-                                                    ],
-                                                )
-                                            }
+                                            // disabledDate={disabledDate} // 禁用日期部分
+                                            // disabledTime={(date, type) =>
+                                            //     disabledTimeRangePicker(
+                                            //         date,
+                                            //         type,
+                                            //         (getFieldValue(
+                                            //             'timestamp',
+                                            //         ) as [Dayjs, Dayjs]) || [
+                                            //             null,
+                                            //             null,
+                                            //         ],
+                                            //     )
+                                            // }
                                         />
                                     </Item>
                                 );
@@ -323,7 +320,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         rules={[{ required: true, message: '请选择脚本类型' }]}
                         className="ml-14"
                     >
-                        <Select options={scriptTypeOptions} disabled={true} />
+                        <Select options={scriptTypeOption} disabled={true} />
                     </Item>
                     <Item name={'script_id'} noStyle />
                     <Item name={'script_name'} noStyle />
@@ -383,7 +380,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         'params',
                                         scriptTypeValue === '端口与漏洞扫描'
                                             ? 'target'
-                                            : 'gsil_keyword',
+                                            : 'keyword',
                                     ]}
                                     rules={[
                                         {
@@ -406,7 +403,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                             scriptTypeValue ===
                                                             '端口与漏洞扫描'
                                                                 ? 'target'
-                                                                : 'gsil_keyword',
+                                                                : 'keyword',
                                                         ],
                                                         fileName,
                                                     );
@@ -439,7 +436,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                     scriptTypeValue ===
                                                     '端口与漏洞扫描'
                                                         ? 'target'
-                                                        : 'gsil_keyword',
+                                                        : 'keyword',
                                                 ],
                                                 fileName,
                                             );
@@ -742,7 +739,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                     e.stopPropagation();
                                     const twoItemKeys = [
                                         'param_files',
-                                        ['params', 'gsil_keyword'],
+                                        ['params', 'keyword'],
                                         ['params', 'target'],
                                         ['params', 'preset-protes'],
                                         ['params', 'ports'],

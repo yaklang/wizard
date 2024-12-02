@@ -63,9 +63,6 @@ const ReportManage: FC = () => {
             width: 320,
             dataIndex: 'start_time',
             columnsHeaderFilterType: 'rangePicker',
-            rangePickSetting: {
-                resultFormat: ['start', 'end'],
-            },
             render: (value, record) => (
                 <>
                     {value ? dayjs.unix(value).format('YYYY-MM-DD HH:mm') : '-'}
@@ -113,9 +110,14 @@ const ReportManage: FC = () => {
                 },
             }}
             request={async (params, filter) => {
+                const star = filter?.start_time?.[0];
+                const end = filter?.start_time?.[1];
                 const request = {
                     ...params,
                     ...filter,
+                    start: star ? dayjs(star).unix() : undefined,
+                    end: end ? dayjs(end).unix() : undefined,
+                    start_time: undefined,
                 } as TReportRequest;
                 const result = await getssetsProts({ ...request });
                 const { data } = result;

@@ -48,15 +48,6 @@ const AppLayout = () => {
         const resultRouteList = resultPathNodes ? resultPathNodes.slice(1) : [];
         setHeaderTitle(resultRouteList);
 
-        // setHeaderTitle(routers);
-        // const filterRouterList = routerList?.filter((item) =>
-        //   permissionsSlice?.find((prop) => item.keypath === prop)
-        // );
-        // const navitateLink = filterRouterList?.map((it) => it.key);
-        // if (navitateLink && !navitateLink?.includes(locations.pathname)) {
-        //   navigate(navitateLink[0] ?? "/");
-        // }
-        // return filterRouterList;
         return routerList;
     }, [routers, collapsed, permissionsSlice, locations.pathname]);
 

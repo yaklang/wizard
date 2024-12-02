@@ -26,6 +26,7 @@ import { UsePageRef } from '@/hooks/usePage';
 import dayjs from 'dayjs';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { scriptTypeOption } from '@/pages/TaskScript/data';
 
 type TCommonTasksColumnsRenderProps = {
     record: TaskListRequest;
@@ -171,7 +172,9 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             await getTaskStartEditDispaly(record.id).then(({ data }) => {
                 const transformModalFormdata = {
                     ...data,
-                    script_type: '端口与漏洞扫描',
+                    script_type: scriptTypeOption.find(
+                        (it) => it.label === data?.script_type,
+                    )?.value,
                     id: record.id,
                     headerGroupValue,
                     execution_date: data?.params?.execution_date
@@ -588,7 +591,9 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             await getTaskStartEditDispaly(record.id).then(({ data }) => {
                 const transformModalFormdata = {
                     ...data,
-                    script_type: '端口与漏洞扫描',
+                    script_type: scriptTypeOption.find(
+                        (it) => it.label === data?.script_type,
+                    )?.value,
                     headerGroupValue,
                     sched_type: 3,
                     timestamp:

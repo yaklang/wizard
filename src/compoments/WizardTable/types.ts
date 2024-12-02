@@ -40,33 +40,24 @@ type ExtendedColumnType<T> = ColumnType<T> & {
         | {
               columnsHeaderFilterType?: 'input'; // 输入框，不需要 wizardColumnsOptions
               wizardColumnsOptions?: never;
-              wizardColumnsDatePickFn?: never;
               rangePickSetting?: never;
           }
         | {
               columnsHeaderFilterType?: 'radio'; // 单选框，必需 wizardColumnsOptions
               wizardColumnsOptions: WizardColumnRadioOptions[];
-              wizardColumnsDatePickFn?: never;
               rangePickSetting?: never;
           }
         | {
               columnsHeaderFilterType?: 'checkbox'; // 组合框，必需 wizardColumnsOptions
               wizardColumnsOptions: WizardColumnRadioOptions[];
-              wizardColumnsDatePickFn?: never;
               rangePickSetting?: never;
           }
         | {
               columnsHeaderFilterType?: 'rangePicker'; // 组合框，必需 wizardColumnsOptions
               wizardColumnsOptions?: never;
-              wizardColumnsDatePickFn?: (
-                  dates: any,
-                  dateStrings: [string, string],
-              ) => void;
               rangePickSetting?: {
                   format?: string;
                   showTime?: string;
-                  //   请求返回格式
-                  resultFormat?: [string, string];
               };
           }
     );
