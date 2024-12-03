@@ -9,11 +9,15 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { deleteProts } from '@/apis/reportManage';
 import { UsePageRef } from '@/hooks/usePage';
+import { TDeleteValues } from '../ReportManage';
 
 const ColumnsOperateRender: FC<{
     render: ReportItem;
     localRefrech: UsePageRef['localRefrech'];
-}> = ({ render, localRefrech }) => {
+    setDeleteValues: React.Dispatch<
+        React.SetStateAction<TDeleteValues | undefined>
+    >;
+}> = ({ render, localRefrech, setDeleteValues }) => {
     const [open, setOpen] = useSafeState(false);
 
     const { run, loading: DeleteLoading } = useRequest(deleteProts, {
@@ -22,7 +26,16 @@ const ColumnsOperateRender: FC<{
 
     const headDeleteReport = async () => {
         if (render.report_id) {
-            await run(render.report_id);
+            await run({ id: render.report_id });
+            setDeleteValues((values) => ({
+                report_title: {
+                    isAll: values?.report_title?.isAll ?? false,
+                    ids:
+                        values?.report_title?.ids.filter(
+                            (it) => it !== render.report_id,
+                        ) ?? [],
+                },
+            }));
             localRefrech({
                 operate: 'delete',
                 oldObj: { report_id: render.report_id },

@@ -29,8 +29,9 @@ const StartUpScriptModal = forwardRef<
         pageLoad?: (arg: any) => void;
         localRefrech?: UsePageRef['localRefrech'];
         record?: TaskListRequest;
+        refreshAsync?: () => Promise<any>;
     }
->(({ title, pageLoad, localRefrech, record }, ref) => {
+>(({ title, pageLoad, localRefrech, record, refreshAsync }, ref) => {
     const [model] = WizardModal.useModal();
     const [form] = Form.useForm();
     const scriptTypeValue = Form.useWatch('script_type', form);
@@ -73,6 +74,7 @@ const StartUpScriptModal = forwardRef<
             onSuccess: async () => {
                 message.success('创建成功');
                 await pageLoad?.({ task_type: taskTypeRef.current });
+                refreshAsync && (await refreshAsync());
                 model?.close();
             },
             onError: (err) => {
@@ -87,12 +89,13 @@ const StartUpScriptModal = forwardRef<
         async (resultData) => postEditScriptTask(resultData),
         {
             manual: true,
-            onSuccess: () => {
+            onSuccess: async () => {
                 const { headerGroupValue } = editObj;
                 if (headerGroupValue !== 3) {
                     ExecuteRunAsync();
                     return;
                 } else {
+                    refreshAsync && (await refreshAsync());
                     message.success('修改成功');
                     model?.close();
                 }
@@ -124,6 +127,7 @@ const StartUpScriptModal = forwardRef<
                     oldObj: record!,
                     newObj: values,
                 });
+                refreshAsync && (await refreshAsync());
                 message.success('修改成功');
                 model?.close();
             },

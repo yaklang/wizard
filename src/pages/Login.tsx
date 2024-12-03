@@ -31,7 +31,7 @@ const Login = () => {
             const { data } = await getCaptcha();
             return data;
         },
-        { manual: true },
+        { manual: true, onSuccess: () => setButtonLoading(false) },
     );
 
     // 校验验证码

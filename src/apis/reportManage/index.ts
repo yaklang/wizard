@@ -12,7 +12,7 @@ const getssetsProts = (
     });
 
 // 删除报告管理
-const deleteProts = (id: number): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(`/timeline/items?id=${id}`);
+const deleteProts = (params: any): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>(`/timeline/items`, { params });
 
 export { getssetsProts, deleteProts };

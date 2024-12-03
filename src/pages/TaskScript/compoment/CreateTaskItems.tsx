@@ -16,6 +16,8 @@ import { NodeCard } from './NodeCard';
 import { AddPlugins } from './AddPlugins';
 import { createRules, generateUniqueId } from '@/utils';
 import {
+    disabledDate,
+    disabledTime,
     PresetPorts,
     presetProtsGroupOptions,
     scriptTypeOption,
@@ -26,15 +28,17 @@ import { ChunkUpload } from '@/compoments';
 import { TScannerDataList } from './StartUpScriptModal';
 import { useMemoizedFn, useSafeState } from 'ahooks';
 import dayjs, { Dayjs } from 'dayjs';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import { ItemType } from 'antd/es/menu/interface';
 
 type PresetKey = keyof typeof PresetPorts;
 
+type TScriptGrounpList = Array<{ value: string; label: string }>;
+
 type TCreateTaskItemsProps = (
     title: string,
     scriptTypeValue: '端口与漏洞扫描' | '敏感信息',
-    scriptGroupList: { value: string; label: string }[],
+    scriptGroupList: TScriptGrounpList,
     scannerDataList?: TScannerDataList,
 ) => ItemType[] | any;
 
@@ -49,34 +53,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
     scriptGroupList,
     scannerDataList,
 ) => {
-    const [copyScriptGroupList, setCopyScriptGroupLis] = useSafeState<
-        Parameters<TCreateTaskItemsProps>['2']
-    >([]);
-
-    useEffect(() => {
-        setCopyScriptGroupLis(scriptGroupList);
-    }, []);
-
-    // 时间 天数禁用fn
-    const disabledDate = (current: Dayjs | null): boolean => {
-        // 禁用当前日期之前的日期
-        return !!current && current.isBefore(dayjs(), 'day');
-    };
-
-    // 时间 小时分钟禁用fn
-    const disabledTime = (selectedDate: Dayjs | null) => {
-        const now = dayjs();
-
-        if (!selectedDate || !selectedDate.isSame(now, 'day')) {
-            // 如果日期不是今天，不禁用时间
-            return {};
-        }
-
-        return {
-            disabledHours: (): number[] => [...Array(now.hour()).keys()], // 禁用当前小时之前的小时
-            disabledMinutes: (): number[] => [...Array(now.minute()).keys()], // 禁用当前分钟之前的分钟
-        };
-    };
+    const starTimeRf = useRef<Dayjs | null>();
 
     // 校验时间
     const validateStartTime = (
@@ -91,33 +68,28 @@ const CreateTaskItems: TCreateTaskItemsProps = (
     const disabledTimeRangePicker = (
         date: Dayjs | null,
         type: 'start' | 'end',
-        range: [Dayjs | null, Dayjs | null],
     ) => {
-        const now = dayjs();
-
+        const startDate = starTimeRf.current;
         if (!date) return {};
 
         if (type === 'start') {
-            // 开始时间禁用到当前时间
-            return date.isSame(now, 'day')
-                ? {
-                      disabledHours: () => [...Array(now.hour()).keys()],
-                      disabledMinutes: () => [...Array(now.minute()).keys()],
-                  }
-                : {};
+            return disabledTime(date);
         }
 
-        if (type === 'end' && range[0]) {
-            // 结束时间禁用早于开始时间的时间
-            const startDate = range[0];
+        if (type === 'end' && startDate) {
+            const starMinutes = startDate.format('mm');
             return date.isSame(startDate, 'day')
                 ? {
                       disabledHours: () => [
-                          ...Array(startDate.hour() + 1).keys(),
+                          ...Array(
+                              starMinutes === '59'
+                                  ? startDate.hour() + 1
+                                  : startDate.hour(),
+                          ).keys(),
                       ],
                       disabledMinutes: () =>
                           date.hour() === startDate.hour()
-                              ? [...Array(startDate.minute()).keys()]
+                              ? [...Array(startDate.minute() + 1).keys()]
                               : [],
                   }
                 : {};
@@ -161,8 +133,8 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             className="w-full"
                             showTime={{ format: 'YYYY-MM-DD HH:mm' }}
                             format={'YYYY-MM-DD HH:mm'}
-                            // disabledDate={disabledDate} // 禁用日期部分
-                            // disabledTime={disabledTime} // 禁用时间部分到分钟
+                            disabledDate={disabledDate} // 禁用日期部分
+                            disabledTime={disabledTime} // 禁用时间部分到分钟
                         />
                     </Item>
                 );
@@ -180,40 +152,29 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         >
                             <Switch />
                         </Item>
-                        <Item dependencies={[]} noStyle>
-                            {({ getFieldValue }) => {
-                                return (
-                                    <Item
-                                        name={'timestamp'}
-                                        label="设定周期时间范围"
-                                        rules={createRules({
-                                            required: true,
-                                            requiredMessage:
-                                                '请设定周期时间范围',
-                                            validateStartTime,
-                                        })}
-                                    >
-                                        <RangePicker
-                                            className="w-full"
-                                            showTime={{ format: 'HH:mm' }}
-                                            format="YYYY-MM-DD HH:mm"
-                                            // disabledDate={disabledDate} // 禁用日期部分
-                                            // disabledTime={(date, type) =>
-                                            //     disabledTimeRangePicker(
-                                            //         date,
-                                            //         type,
-                                            //         (getFieldValue(
-                                            //             'timestamp',
-                                            //         ) as [Dayjs, Dayjs]) || [
-                                            //             null,
-                                            //             null,
-                                            //         ],
-                                            //     )
-                                            // }
-                                        />
-                                    </Item>
-                                );
-                            }}
+                        <Item
+                            name={'timestamp'}
+                            label="设定周期时间范围"
+                            rules={createRules({
+                                required: true,
+                                requiredMessage: '请设定周期时间范围',
+                                validateStartTime,
+                            })}
+                        >
+                            <RangePicker
+                                className="w-full"
+                                showTime={{ format: 'HH:mm' }}
+                                format="YYYY-MM-DD HH:mm"
+                                disabledDate={(date) => disabledDate(date)} // 禁用日期部分
+                                onCalendarChange={(dates) => {
+                                    if (dates && dates[0]) {
+                                        starTimeRf.current = dates[0]; // 记录选中的开始时间
+                                    }
+                                }}
+                                disabledTime={(date, type) =>
+                                    disabledTimeRangePicker(date, type)
+                                }
+                            />
                         </Item>
                         <Item
                             label={
@@ -264,28 +225,14 @@ const CreateTaskItems: TCreateTaskItemsProps = (
             .exhaustive();
     });
 
-    const groupSelectMemo = useMemo(() => {
-        return (
-            <Select
-                placeholder="请选择..."
-                showSearch
-                optionFilterProp="label"
-                onSearch={() => {
-                    // setTimeout(() => {
-                    //     setScriptGroupList((list) =>
-                    //         list.findIndex((it) => it.value === value) === -1
-                    //             ? list.concat({ label: `新增${value}`, value })
-                    //             : list,
-                    //     );
-                    // }, 300);
-                }}
-                onSelect={(value, options) => {
-                    console.log(value, options, 'options');
-                }}
-                options={scriptGroupList}
-            />
-        );
-    }, [copyScriptGroupList, scriptGroupList]);
+    const [copyScriptGroupList, setCopyScriptGroupLis] =
+        useSafeState<TScriptGrounpList>([]);
+    const scriptGroupListRef = useRef<TScriptGrounpList>();
+
+    useEffect(() => {
+        setCopyScriptGroupLis(scriptGroupList);
+        scriptGroupListRef.current = scriptGroupList ?? [];
+    }, [scriptGroupList]);
 
     return [
         {
@@ -307,12 +254,49 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                     <Item
                         className="ml-11"
                         label="所属任务组"
-                        name={'task_group'}
+                        name="task_group"
                         rules={[
-                            { message: '请选择所属任务组', required: true },
+                            {
+                                message: '请选择所属任务组',
+                                required: true,
+                            },
                         ]}
                     >
-                        {groupSelectMemo}
+                        <Select
+                            placeholder="请选择..."
+                            showSearch
+                            optionFilterProp="label"
+                            onSearch={(value) => {
+                                setTimeout(() => {
+                                    setCopyScriptGroupLis((list) =>
+                                        list.findIndex(
+                                            (it) => it.value === value,
+                                        ) === -1
+                                            ? list.concat({
+                                                  label: `${value}`,
+                                                  value,
+                                              })
+                                            : list,
+                                    );
+                                }, 500);
+                            }}
+                            onSelect={(_, options) => {
+                                const addList =
+                                    scriptGroupListRef.current!.concat({
+                                        label: options.value,
+                                        value: options.value,
+                                    });
+                                const resultList = addList.filter(
+                                    (item, index, self) =>
+                                        self.findIndex(
+                                            (obj) => obj.value === item.value,
+                                        ) === index,
+                                );
+                                scriptGroupListRef.current = resultList;
+                                setCopyScriptGroupLis(resultList);
+                            }}
+                            options={copyScriptGroupList ?? scriptGroupList}
+                        />
                     </Item>
                     <Item
                         label={'脚本类型'}

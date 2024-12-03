@@ -11,8 +11,8 @@ import { CreateTaskScriptCard } from './CreateTaskScriptCard';
 
 const CreateTaskScriptModal = forwardRef<
     UseModalRefType,
-    { pageLoad: (arg: any) => void }
->(({ pageLoad }, ref) => {
+    { pageLoad: (arg: any) => void; refreshAsync?: () => Promise<any> }
+>(({ pageLoad, refreshAsync }, ref) => {
     const [model1] = WizardModal.useModal();
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
 
@@ -53,6 +53,7 @@ const CreateTaskScriptModal = forwardRef<
                 ref={StartUpScriptModalRef}
                 title={'创建任务'}
                 pageLoad={pageLoad}
+                refreshAsync={refreshAsync}
             />
         </>
     );

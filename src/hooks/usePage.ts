@@ -2,7 +2,7 @@ import { useRef } from 'react';
 
 interface UsePageRef {
     onLoad: (...arg: any[]) => void;
-    getParams: () => void;
+    getParams: () => any;
     clear: (...arg: any[]) => void;
     refresh: () => void;
     localRefrech: <T extends Record<string, any>>(

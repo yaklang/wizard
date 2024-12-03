@@ -1,6 +1,6 @@
 import { TPostTaskStartRequest } from '@/apis/task/types';
 import { PresetColors } from 'antd/es/theme/internal';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { Key } from 'react';
 
 // 创建任务脚本 modal
@@ -73,10 +73,61 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
     };
 };
 
+// 时间 天数禁用fn
+const disabledDate = (current: Dayjs | null): boolean => {
+    const nowHours = dayjs().format('HH');
+    const nowMinutes = dayjs().format('mm');
+
+    if (nowHours === '59' && nowMinutes === '59') {
+        return !!current && current.isBefore(dayjs().add(1, 'day'), 'day');
+    } else {
+        return !!current && current.isBefore(dayjs(), 'day');
+    }
+};
+
+// 时间 小时分钟禁用fn
+const disabledTime = (selectedDate: Dayjs | null) => {
+    const now = dayjs();
+    const nowHours = dayjs().format('HH');
+    const nowMinutes = dayjs().format('mm');
+
+    if (!selectedDate || !selectedDate.isSame(now, 'day')) {
+        // 如果日期不是今天，不禁用时间
+        return {};
+    }
+    // 如果当前时间为59分， 禁用当前小时
+    if (nowMinutes === '59') {
+        return {
+            // 禁用当前小时之前的小时
+            disabledHours: (): number[] => [
+                ...Array(now.hour()).keys(),
+                parseInt(nowHours, 10),
+            ],
+            disabledMinutes: () => [],
+        };
+    }
+    // 如果不是当前小时,不禁用分钟
+    if (!selectedDate || !selectedDate.isSame(now, 'hours')) {
+        return {
+            disabledHours: (): number[] => [...Array(now.hour()).keys()],
+            disabledMinutes: (): number[] => [],
+        };
+    }
+    return {
+        disabledHours: (): number[] => [...Array(now.hour()).keys()], // 禁用当前小时之前的小时
+        disabledMinutes: (): number[] => [
+            ...Array(now.minute()).keys(),
+            parseInt(nowMinutes, 10),
+        ], // 禁用当前分钟之前的分钟
+    };
+};
+
 export {
     PresetPorts,
     presetProtsGroupOptions,
     targetColorFn,
     transformFormData,
     scriptTypeOption,
+    disabledDate,
+    disabledTime,
 };

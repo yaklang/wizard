@@ -1,5 +1,3 @@
-import { Order } from '@/types';
-
 // 获取端口资产 请求参数
 interface TGetAssetsProtsRequest {
     cpes?: string[];

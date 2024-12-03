@@ -170,13 +170,10 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             (item) => item.script_name === inputValue,
         )?.script_name;
         const newItem = taskScriptList.find((item) => item.isCopy === true);
-        showConfirm(oldName, newItem);
+        showConfirm(oldName);
     };
 
-    const showConfirm = (
-        oldName?: string,
-        newItem?: TTaskScriptCard['items'],
-    ) => {
+    const showConfirm = (oldName?: string) => {
         if (confirmVisible) return; // 如果弹窗已显示，则不重复触发
         setConfirmVisible(true);
         confirm({

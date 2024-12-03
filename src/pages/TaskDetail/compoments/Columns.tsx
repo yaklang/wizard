@@ -7,13 +7,12 @@ import {
 } from '@/apis/taskDetail/types';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
 
-import infoImg from './img/info.png';
-import highImg from './img/high.png';
-import fatalImg from './img/fatal.png';
-import middleImg from './img/middle.png';
-import lowImg from './img/low.png';
-import debugImg from './img/debug.png';
-import styles from '@/compoments/YakitTag/YakitTag.module.scss';
+// import infoImg from './img/info.png';
+// import highImg from './img/high.png';
+// import fatalImg from './img/fatal.png';
+// import middleImg from './img/middle.png';
+// import lowImg from './img/low.png';
+// import debugImg from './img/debug.png';
 import { YakitTag } from '@/compoments/YakitTag/YakitTag';
 import { YakitTagColor } from '@/compoments/YakitTag/YakitTagType';
 
@@ -133,11 +132,14 @@ const AssetsVulnsColumns: CreateTableProps<TGetAssetsVulnsResponse>['columns'] =
         {
             title: '操作',
             width: 70,
-            render: (_, render) => (
-                <Button className="p-0" type="link">
-                    详情
-                </Button>
-            ),
+            render: (_, render) => {
+                console.log(render, 'rens');
+                return (
+                    <Button className="p-0" type="link">
+                        详情
+                    </Button>
+                );
+            },
         },
     ];
 

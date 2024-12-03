@@ -1,4 +1,4 @@
-import React, { Dispatch, useEffect } from 'react';
+import React, { Dispatch, useEffect, useRef } from 'react';
 import { match, P } from 'ts-pattern';
 
 import Tooltip from '../WizardTooltip';
@@ -56,6 +56,7 @@ const extendTableProps = (
     const [open, setOpen] = useSafeState<Record<string, boolean>>();
     const [selectedRowKeys, setSelectedRowKeys] =
         useSafeState<TSelectedRowKeys>({});
+    const selectedRef = useRef<TSelectedRowKeys>();
 
     useEffect(() => {
         // 获取存在 wizardColumnsType 存在的字段
@@ -96,7 +97,7 @@ const extendTableProps = (
             columns?.reduce((acc, it) => {
                 if (typeof it.rowSelection === 'string' && it.dataIndex) {
                     // 明确类型
-                    const keysArray = (selectedRowKeys[it.dataIndex]?.ids ??
+                    const keysArray = (it.rowSelectKeys?.[it.dataIndex]?.ids ??
                         []) as React.Key[];
                     acc[it.dataIndex] = {
                         ids: keysArray, // 确保是 React.Key[] 类型
@@ -106,6 +107,7 @@ const extendTableProps = (
                 return acc;
             }, {} as TSelectedRowKeys) ?? {};
         setSelectedRowKeys(rowSelectionValues);
+        selectedRef.current = rowSelectionValues;
     }, [columns]);
 
     // table header 关闭监听事件
@@ -136,11 +138,12 @@ const extendTableProps = (
     useUpdateEffect(() => {
         const { dataSource } = state;
 
-        const selectKey = Object.keys(selectedRowKeys ?? {});
+        const selectKey = Object.keys(selectedRef.current ?? {});
 
         const targetSeletedKeys =
             selectKey.reduce((acc, it) => {
-                const selected = selectedRowKeys[it];
+                const selected = selectedRef.current?.[it];
+
                 if (selected) {
                     acc[it] = {
                         ids: selected.isAll

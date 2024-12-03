@@ -4,7 +4,7 @@ import { Radio, Spin } from 'antd';
 import { match } from 'ts-pattern';
 import { useRequest, useSafeState } from 'ahooks';
 
-import { EmptyBox, WizardTable } from '@/compoments';
+import { WizardTable } from '@/compoments';
 
 import { AssetsVulnsColumns, ProtColumns } from './compoments/Columns';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
