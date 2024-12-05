@@ -1,19 +1,19 @@
-import { FC, useRef } from 'react';
+import { type FC, useRef } from 'react';
 
 import styles from '../../TaskScript/index.module.scss';
-import { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { TaskScriptTags } from '@/pages/TaskScript/compoment/TaskScriptTags';
 import { Spin } from 'antd';
 import { useRequest } from 'ahooks';
 import { getScriptTaskGroup } from '@/apis/task';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { scriptTypeOption } from '@/pages/TaskScript/data';
 
-type TCreateTaskScriptCard = {
+interface TCreateTaskScriptCard {
     items: TGetAnalysisScriptReponse;
     StartUpScriptModalRef: React.RefObject<UseModalRefType>;
     model1: any;
-};
+}
 
 const CreateTaskScriptCard: FC<TCreateTaskScriptCard> = ({
     items,

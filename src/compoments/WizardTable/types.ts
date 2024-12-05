@@ -1,12 +1,12 @@
-import { Dispatch, ReactNode } from 'react';
+import type { Dispatch, ReactNode } from 'react';
 
-import { ButtonProps, TableProps, SwitchProps } from 'antd';
-import { ColumnType } from 'antd/es/table';
-import { UsePageRef } from '@/hooks/usePage';
+import type { ButtonProps, TableProps, SwitchProps } from 'antd';
+import type { ColumnType } from 'antd/es/table';
+import type { UsePageRef } from '@/hooks/usePage';
 
-import { initialValue } from './data';
-import { AnyObject } from 'antd/es/_util/type';
-import { FormLayout } from 'antd/es/form/Form';
+import type { initialValue } from './data';
+import type { AnyObject } from 'antd/es/_util/type';
+import type { FormLayout } from 'antd/es/form/Form';
 
 // 定义 wizardColumnsType 的字符串字面量类型
 type WizardColumnsType = 'input' | 'radio' | 'checkbox' | 'rangePicker';
@@ -110,7 +110,7 @@ interface TWizardExportProps extends ButtonProps {
     dowload_request: () => Promise<any>;
 }
 
-type TableHeaderOptions = {
+interface TableHeaderOptions {
     ProFilterSwitch: TWizardTableHeader;
     dowloadFile: TWizardExportProps;
     optionsSearch: {
@@ -118,7 +118,7 @@ type TableHeaderOptions = {
         placeholder?: string;
     };
     trigger: ReactNode;
-};
+}
 
 interface TWizardTableProps<T = AnyObject> extends CreateTableProps<T> {
     tableHeader?: {

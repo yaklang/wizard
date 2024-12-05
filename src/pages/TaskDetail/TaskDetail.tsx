@@ -1,4 +1,5 @@
-import { FC, useEffect, useMemo, useState } from 'react';
+import type { FC } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Radio, Spin } from 'antd';
 import { match } from 'ts-pattern';
@@ -6,36 +7,46 @@ import { useRequest, useSafeState } from 'ahooks';
 
 import { WizardTable } from '@/compoments';
 
-import { AssetsVulnsColumns, ProtColumns } from './compoments/Columns';
+import {
+    AssertsDataColumns,
+    AssetsVulnsColumns,
+    ProtColumns,
+} from './compoments/Columns';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
 import { detailHeaderGroupOptions } from './compoments/data';
-import { TableOptionsFilterDrawer } from './compoments/TableOptionsFilterDrawer';
 import {
+    getAssertsData,
+    getAssertsDataStateTable,
     getAssetsProts,
     getAssetsVulns,
     getTaskDetail,
 } from '@/apis/taskDetail';
-import { RequestFunction } from '@/compoments/WizardTable/types';
+import type { RequestFunction } from '@/compoments/WizardTable/types';
 import { useDependentCallback } from '@/hooks/useDependentCallback';
 import { useParams } from 'react-router-dom';
+import { TableOptionsFilterDrawer } from './compoments/TableOptionsFilterDrawer/AssertsTableFilterDrawer';
 
 const { Group } = Radio;
 
 const TaskDetail: FC = () => {
     const [page] = WizardTable.usePage();
-    const { id } = useParams(); // 获取路径参数
+    const { id: task_id } = useParams(); // 获取路径参数
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
+    const [columns, setColumns] = useSafeState<any>([]);
 
+    // 获取基础信息
     const { data, runAsync, loading } = useRequest(getTaskDetail, {
         manual: true, // 手动触发请求
     });
+
+    console.log(data, 'data');
 
     const [isReady, setIsReady] = useState(false); // 控制页面是否可以渲染
 
     useEffect(() => {
         // 请求数据并等待完成
-        runAsync(id!)
+        runAsync(task_id!)
             .then(() => {
                 setIsReady(true); // 数据加载完成，允许渲染
             })
@@ -45,54 +56,53 @@ const TaskDetail: FC = () => {
             });
     }, [runAsync]);
 
-    // 渲染columns 数据
-    const columnsMemeo = useMemo(
-        () =>
-            match(headerGroupValue)
-                .with(1, () => ProtColumns)
-                .with(2, () => AssetsVulnsColumns)
-                .with(3, () => ProtColumns)
-                .exhaustive(),
-        [headerGroupValue],
-    ) as any;
-
-    // table 请求
+    // table 请求  此处因 columns 渲染为静态，所以等 datasource 数据回来之后在渲染columns， 解决竞态请求问题
     const requestCallback = useDependentCallback(
         (
             params: Parameters<RequestFunction>['0'],
             filter: Parameters<RequestFunction>['1'],
         ) => {
-            console.log(data, 'data');
             return match(headerGroupValue)
-                .with(
-                    1,
-                    async () =>
-                        await getAssetsProts({
-                            ...params,
-                            ...filter,
-                            // TODO 此处需要修改
-                            taskid: '乐山专项检测漏洞任务',
-                        }),
-                )
-                .with(
-                    2,
-                    async () =>
-                        await getAssetsVulns({
-                            ...params,
-                            ...filter,
-                            from_task_id: '乐山专项检测漏洞任务',
-                        }),
-                )
-                .with(
-                    3,
-                    async () =>
-                        await getAssetsProts({
-                            ...params,
-                            ...filter,
-                            // TODO 此处需要修改
-                            taskid: '乐山专项检测漏洞任务',
-                        }),
-                )
+                .with(1, async () => {
+                    const { data } = await getAssetsProts({
+                        ...params,
+                        ...filter,
+                        taskid: task_id,
+                    });
+                    setColumns(ProtColumns);
+                    return {
+                        data,
+                    };
+                })
+                .with(2, async () => {
+                    const { data } = await getAssetsVulns({
+                        ...params,
+                        ...filter,
+                        task_id,
+                    });
+                    setColumns(AssetsVulnsColumns);
+                    return {
+                        data,
+                    };
+                })
+                .with(3, async () => {
+                    const { data } = await getAssertsData({
+                        ...params,
+                        ...filter,
+                        task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
+                    });
+                    const { data: StateTableData } =
+                        await getAssertsDataStateTable(
+                            '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
+                            // id!
+                        );
+                    console.log(StateTableData, 'aaa');
+                    setColumns(AssertsDataColumns);
+                    return {
+                        data,
+                        // count:
+                    };
+                })
                 .exhaustive();
         },
         [headerGroupValue],
@@ -109,11 +119,11 @@ const TaskDetail: FC = () => {
 
     return (
         <div className="flex align-start h-full">
-            <TaskDetailSider />
+            <TaskDetailSider id={task_id} />
 
             <WizardTable
-                rowKey={'id'}
-                columns={columnsMemeo}
+                rowKey="id"
+                columns={columns}
                 page={page}
                 tableHeader={{
                     tableHeaderGroup: (

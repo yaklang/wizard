@@ -36,7 +36,7 @@ interface TGetAssetsProtsResponse {
 
 interface TGetAssetsVulnsRequest {
     form_runtime_id?: string;
-    from_task_id?: string;
+    task_id?: string;
     ip?: string;
     keyword?: string;
     limit?: number;
@@ -55,11 +55,7 @@ interface TGetAssetsVulnsRequest {
 
 interface TGetAssetsVulnsResponse {
     created_at: number;
-    detail: {
-        password: string;
-        target: string;
-        username: string;
-    };
+    detail: Record<string, any>;
     from_yak_script: string;
     hash?: any;
     host: string;
@@ -85,9 +81,35 @@ interface TGetAssetsVulnsResponse {
     url: string;
 }
 
+interface TGetAssertsDataResponse {
+    created_at: number;
+    critical: number;
+    high: number;
+    host: string;
+    id?: any;
+    state: 'open' | 'close' | 'unknwon';
+    updated_at: number;
+    warning: number;
+    low?: number;
+}
+
+// 历史执行记录 报告信息响应数据
+interface TReportTableResponse {
+    created_at: number;
+    id: number;
+    runtime_id: string;
+    subtask_failed_count: number;
+    subtask_succeeded_count: number;
+    subtask_total: number;
+    task_id: string;
+    updated_at: number;
+}
+
 export type {
     TGetAssetsProtsRequest,
     TGetAssetsProtsResponse,
     TGetAssetsVulnsRequest,
     TGetAssetsVulnsResponse,
+    TReportTableResponse,
+    TGetAssertsDataResponse,
 };

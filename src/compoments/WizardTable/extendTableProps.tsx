@@ -1,8 +1,8 @@
-import React, { Dispatch, useEffect, useRef } from 'react';
+import React, { type Dispatch, useEffect, useRef } from 'react';
 import { match, P } from 'ts-pattern';
 
 import Tooltip from '../WizardTooltip';
-import {
+import type {
     CreateTableProps,
     TRecudeInitiakValue,
     WizardColumnsType,
@@ -14,8 +14,8 @@ import {
     TableHeaderSearch,
     VerticalAlignMiddleHeaderFilter,
 } from '@/assets/compoments';
-import { ColumnType } from 'antd/es/table';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import type { ColumnType } from 'antd/es/table';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 const CheckboxGroup = Checkbox.Group;
 const { RangePicker } = DatePicker;
@@ -74,6 +74,7 @@ const extendTableProps = (
                 acc[key] = key in state.filter ? state.filter[key] : undefined; // 优先取 state.filter 中的值
                 return acc;
             },
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {} as Record<string, any>,
         );
 
@@ -105,6 +106,7 @@ const extendTableProps = (
                     };
                 }
                 return acc;
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             }, {} as TSelectedRowKeys) ?? {};
         setSelectedRowKeys(rowSelectionValues);
         selectedRef.current = rowSelectionValues;
@@ -441,7 +443,7 @@ const extendTableProps = (
                                     {match(wizardTableType)
                                         .with('input', () => (
                                             <Input
-                                                placeholder={`请输入`}
+                                                placeholder="请输入"
                                                 value={search[selectKeys]}
                                                 onChange={(e) => {
                                                     setSearch((val) => {

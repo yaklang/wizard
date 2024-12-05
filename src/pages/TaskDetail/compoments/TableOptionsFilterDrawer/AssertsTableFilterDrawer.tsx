@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 
-import { Button, Form } from 'antd';
+import { Button, Form, Tooltip } from 'antd';
 
 import { VulnerabilityLevelPie } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPie';
 import { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
-import { VulnerabilityTypePie } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePie';
+// import { VulnerabilityTypePie } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePie';
 import { VulnerabilityTypePieRefProps } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePieType';
 import { useMemoizedFn } from 'ahooks';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Item } = Form;
 
@@ -34,6 +35,7 @@ const data = [
 ];
 
 const TableOptionsFilterDrawer = () => {
+    const form = Form.useFormInstance();
     const pieLevelRef = useRef<VulnerabilityLevelPieRefProps>({
         onReset: () => {},
     });
@@ -51,10 +53,17 @@ const TableOptionsFilterDrawer = () => {
         pieTypeRef.current.onReset();
     });
 
+    console.log('form', form.getFieldsValue());
+
     return (
         <div>
             <div className="flex align-center justify-between">
-                <div>漏洞等级</div>
+                <div>
+                    存活状态{' '}
+                    <Tooltip title="手动选择所有漏洞类型后，点击重置即可查看所有数据">
+                        <ExclamationCircleOutlined />
+                    </Tooltip>
+                </div>
                 <Button
                     danger
                     type="link"
@@ -65,14 +74,14 @@ const TableOptionsFilterDrawer = () => {
                 </Button>
             </div>
             <Item
-                name={'aa'}
+                name={'state'}
                 initialValue={[]}
                 className="border-b-solid border-[#EAECF3] border-b-[1px]"
             >
                 <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
             </Item>
             <div className="flex align-center justify-between">
-                <div>漏洞类型Top 10</div>
+                <div>风险状态</div>
                 <Button
                     danger
                     type="link"
@@ -82,8 +91,9 @@ const TableOptionsFilterDrawer = () => {
                     重置
                 </Button>
             </div>
-            <Item name={'bb'} initialValue={[]}>
-                <VulnerabilityTypePie ref={pieTypeRef} list={data} />
+            <Item name={'level'} initialValue={[]}>
+                {/* <VulnerabilityTypePie ref={pieTypeRef} list={data} /> */}
+                <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
             </Item>
         </div>
     );

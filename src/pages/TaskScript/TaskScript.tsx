@@ -55,9 +55,6 @@ const TaskScript: FC = () => {
                         创建脚本
                     </Button>
                 </div>
-                {/* {Array.isArray(taskScriptList) &&
-                !!(taskScriptList.length > 0) &&
-                !scriptLoading ? ( */}
                 <div className="grid grid-cols-3 gap-4">
                     {taskScriptList?.map((items) => {
                         return (
@@ -70,9 +67,6 @@ const TaskScript: FC = () => {
                         );
                     })}
                 </div>
-                {/* ) : (
-                    <EmptyBox />
-                )} */}
             </Spin>
             <TaskScriptDrawer
                 ref={taskScriptDrawerRef}

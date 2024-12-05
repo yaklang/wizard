@@ -1,4 +1,4 @@
-import { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { TaskStatus } from './TaskStatus';
 import dayjs from 'dayjs';
 
@@ -6,17 +6,17 @@ import {
     ExecutionOperateRender,
     PublicAndExecutionOperateRender,
 } from './TaskOperateTableRender';
-import { TaskListRequest } from '@/apis/task/types';
+import type { TaskListRequest } from '@/apis/task/types';
 import { match } from 'ts-pattern';
 import { useNavigate } from 'react-router-dom';
 import { useRequest } from 'ahooks';
 import { getBatchInvokingScriptTaskNode } from '@/apis/task';
 import { taskListStatus } from '../utils/data';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 
-type TColumns = {
+interface TColumns {
     columnsRender: CreateTableProps<TaskListRequest>['columns'];
-};
+}
 
 // 任务列表 columns
 const CommonTasksColumns = (

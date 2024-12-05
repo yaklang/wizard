@@ -1,5 +1,7 @@
 import { FC, useRef } from 'react';
 
+import { match, P } from 'ts-pattern';
+
 import {
     TGetStroageDetailRequest,
     type TGetAnalysisScriptReponse,
@@ -24,7 +26,6 @@ import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { TaskScriptDrawer } from './TaskScriptDrawer';
 import { ExclamationCircleFilled } from '@ant-design/icons';
-import { match, P } from 'ts-pattern';
 
 const { confirm } = Modal;
 
@@ -73,8 +74,8 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         },
         {
             manual: true,
-            onSuccess: async (values) => {
-                await StartUpScriptModalRef.current?.open(
+            onSuccess:  (values) => {
+                StartUpScriptModalRef.current?.open(
                     itemsRef.current,
                     values,
                 );
@@ -92,6 +93,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         {
             manual: true,
             onSuccess: (data) => {
+                console.log(data, status, 'data');
                 return match(status)
                     .with('copy', () => {
                         setTaskScriptList((val) => [
@@ -102,7 +104,6 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                             },
                             ...val,
                         ]);
-                        setCopyInputValue(`Copy ${data?.script_name ?? ''}`);
                         setDetailData(data);
                     })
                     .with('edit', () => {
@@ -118,7 +119,6 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         manual: true,
         onSuccess: async () => {
             await refreshAsync();
-            // message.success(title.includes('创建') ? '创建成功' : '编辑成功');
         },
         onError: (err) => {
             console.log(err);
@@ -129,6 +129,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     const headCopy = async (script_name?: string) => {
         if (script_name) {
             setStatus('copy');
+            setCopyInputValue(`Copy ${script_name ?? ''}`);
             await detailRun(script_name);
         } else {
             message.info('系统错误，请刷新页面重试');
@@ -169,7 +170,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         const oldName = taskScriptList.find(
             (item) => item.script_name === inputValue,
         )?.script_name;
-        const newItem = taskScriptList.find((item) => item.isCopy === true);
+        // const newItem = taskScriptList.find((item) => item.isCopy === true);
         showConfirm(oldName);
     };
 
