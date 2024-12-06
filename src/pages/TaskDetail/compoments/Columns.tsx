@@ -1,15 +1,15 @@
 import { Tag } from 'antd';
 import dayjs from 'dayjs';
 
-import {
+import type {
     TGetAssertsDataResponse,
     TGetAssetsProtsResponse,
     TGetAssetsVulnsResponse,
 } from '@/apis/taskDetail/types';
-import { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
 
 import { YakitTag } from '@/compoments/YakitTag/YakitTag';
-import { YakitTagColor } from '@/compoments/YakitTag/YakitTagType';
+import type { YakitTagColor } from '@/compoments/YakitTag/YakitTagType';
 import { scriptTypeOption } from '@/pages/TaskScript/data';
 import { AssetsVulnsDetailOperate } from './AssetsVulnsDetailOperate';
 import infoImg from './img/info.png';
@@ -19,7 +19,7 @@ import middleImg from './img/middle.png';
 import lowImg from './img/low.png';
 import debugImg from './img/debug.png';
 
-/**name字段里面的内容不可随意更改，与查询条件有关 */
+/** name字段里面的内容不可随意更改，与查询条件有关 */
 export const SeverityMapTag = [
     {
         key: ['info', 'fingerprint', 'infof', 'default'],

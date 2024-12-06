@@ -35,7 +35,6 @@ const data = [
 ];
 
 const TableOptionsFilterDrawer = () => {
-    const form = Form.useFormInstance();
     const pieLevelRef = useRef<VulnerabilityLevelPieRefProps>({
         onReset: () => {},
     });
@@ -53,7 +52,7 @@ const TableOptionsFilterDrawer = () => {
         pieTypeRef.current.onReset();
     });
 
-    console.log('form', form.getFieldsValue());
+    // console.log('form', form.getFieldsValue());
 
     return (
         <div>

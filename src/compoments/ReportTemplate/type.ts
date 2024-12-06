@@ -133,8 +133,37 @@ type TimelineReportBlockData =
 // 报告模版最外层数据类型结构
 type TReportTemplateProps = {
     blocks: TimelineReportBlockData[];
+    width?: number;
+    divRef: React.RefObject<HTMLDivElement>;
 };
 
 type BlockType = TReportTemplateProps['blocks'][number];
 
-export type { TReportTemplateProps, BlockType, TimelineReportBlockData };
+/**
+ * @name 报告-json数据类型种类
+ */
+type ReportJsonKindData = {
+    /**
+     * @name 柱状图
+     */
+    'bar-graph': {
+        color: string[];
+        data: { name: string; value: number }[];
+        type: string;
+        title?: string;
+    };
+    /**
+     * @name 报告封面
+     */
+    'report-cover': {
+        type: string;
+        data: 'critical' | 'high' | 'warning' | 'low' | 'security';
+    };
+};
+
+export type {
+    TReportTemplateProps,
+    BlockType,
+    TimelineReportBlockData,
+    ReportJsonKindData,
+};

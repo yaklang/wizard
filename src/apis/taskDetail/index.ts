@@ -1,17 +1,20 @@
 import axios from '@/utils/axios';
-import { ResponseData, TableResponseData } from '@/utils/commonTypes';
-import {
+import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
+import type {
     TReportTableResponse,
     TGetAssetsProtsRequest,
     TGetAssetsProtsResponse,
     TGetAssetsVulnsRequest,
     TGetAssetsVulnsResponse,
     TGetAssertsDataResponse,
+    TTaskDetail,
 } from './types';
 
 // 获取任务详情 基础信息
-const getTaskDetail = (form_runtime_id: string): Promise<ResponseData<any>> =>
-    axios.get<never, ResponseData<any>>(
+const getTaskDetail = (
+    form_runtime_id: string,
+): Promise<ResponseData<TTaskDetail>> =>
+    axios.get<never, ResponseData<TTaskDetail>>(
         `/task/detail?form_runtime_id=${form_runtime_id}`,
     );
 

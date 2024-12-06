@@ -220,7 +220,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 获取表格参数
     page.getParams = () => {
-        return { filter, params };
+        return { filter, params, loading: state.loading };
     };
 
     // 清除页面选中项

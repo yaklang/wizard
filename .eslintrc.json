@@ -35,7 +35,14 @@
   "globals": {},
   "rules": {
     "prettier/prettier": "error",
-    "react/jsx-filename-extension": [1, { "extensions": [".tsx"] }],
+    "react/jsx-filename-extension": [
+      1,
+      {
+        "extensions": [
+          ".tsx"
+        ]
+      }
+    ],
     "react/react-in-jsx-scope": "off", // For React 17+
     "semi": "off",
     "comma-dangle": "off"

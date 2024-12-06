@@ -1,3 +1,10 @@
+// 获取详情
+interface TTaskDetail {
+    ip_num: number;
+    port_num: number;
+    risk_num: number;
+    sensitive_num: number;
+}
 // 获取端口资产 请求参数
 interface TGetAssetsProtsRequest {
     cpes?: string[];
@@ -112,4 +119,5 @@ export type {
     TGetAssetsVulnsResponse,
     TReportTableResponse,
     TGetAssertsDataResponse,
+    TTaskDetail,
 };

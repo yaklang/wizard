@@ -1,4 +1,7 @@
-import React, { type Dispatch, useEffect, useRef } from 'react';
+/* eslint-disable no-unsafe-optional-chaining */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable max-params */
+import React, { type Dispatch, useCallback, useEffect, useRef } from 'react';
 import { match, P } from 'ts-pattern';
 
 import Tooltip from '../WizardTooltip';
@@ -222,6 +225,36 @@ const extendTableProps = (
         };
     };
 
+    const tableHeaderMemo = useCallback(
+        (selectKeys: any, columnsHeaderFilterType?: WizardColumnsType) => {
+            const color = state?.getExternal?.[selectKeys];
+            return match(columnsHeaderFilterType)
+                .with('input', () => (
+                    <TableHeaderSearch
+                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                    />
+                ))
+                .with('checkbox', () => (
+                    <TableHeaderFilter
+                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                    />
+                ))
+                .with('radio', () => (
+                    <TableHeaderFilter
+                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                    />
+                ))
+                .with('rangePicker', () => (
+                    <VerticalAlignMiddleHeaderFilter
+                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                    />
+                ))
+                .with(P.nullish, () => null)
+                .exhaustive();
+        },
+        [state.getExternal],
+    );
+
     // 更新筛选条件
     const updataRequestFilter = () => {
         dispatch({
@@ -244,9 +277,8 @@ const extendTableProps = (
             rowSelection,
             title,
             rangePickSetting,
+            dataIndex: selectKeys,
         } = column;
-
-        const selectKeys = column?.dataIndex;
 
         // table 勾选组件渲染
         const rowSelectionFn = (
@@ -416,7 +448,7 @@ const extendTableProps = (
         const getColumnSearchProps = (
             wizardTableType?: WizardColumnsType,
         ): ColumnType<Record<string, any>> => ({
-            filterDropdown: wizardTableType ? <></> : null,
+            filterDropdown: wizardTableType ? <div /> : null,
 
             filterIcon: (filtered: boolean) => {
                 return (
@@ -561,15 +593,7 @@ const extendTableProps = (
                                 color: filtered ? '#1890ff' : undefined,
                             }}
                         >
-                            {match(columnsHeaderFilterType)
-                                .with('input', () => <TableHeaderSearch />)
-                                .with('checkbox', () => <TableHeaderFilter />)
-                                .with('radio', () => <TableHeaderFilter />)
-                                .with('rangePicker', () => (
-                                    <VerticalAlignMiddleHeaderFilter />
-                                ))
-                                .with(P.nullish, () => null)
-                                .exhaustive()}
+                            {tableHeaderMemo(selectKeys, wizardTableType)}
                         </div>
                     </Popover>
                 );

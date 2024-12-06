@@ -35,12 +35,17 @@ const TaskDetail: FC = () => {
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
     const [columns, setColumns] = useSafeState<any>([]);
 
-    // 获取基础信息
-    const { data, runAsync, loading } = useRequest(getTaskDetail, {
-        manual: true, // 手动触发请求
-    });
-
-    console.log(data, 'data');
+    // 获取基础信息 此处数据需要组合
+    const { data, runAsync, loading } = useRequest(
+        async (task_id) => {
+            const result = await getTaskDetail(task_id);
+            const { data } = result;
+            return data;
+        },
+        {
+            manual: true, // 手动触发请求
+        },
+    );
 
     const [isReady, setIsReady] = useState(false); // 控制页面是否可以渲染
 
@@ -96,7 +101,7 @@ const TaskDetail: FC = () => {
                             '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
                             // id!
                         );
-                    console.log(StateTableData, 'aaa');
+                    console.log(StateTableData);
                     setColumns(AssertsDataColumns);
                     return {
                         data,
@@ -119,7 +124,7 @@ const TaskDetail: FC = () => {
 
     return (
         <div className="flex align-start h-full">
-            <TaskDetailSider id={task_id} />
+            <TaskDetailSider id={task_id} data={data} />
 
             <WizardTable
                 rowKey="id"
@@ -132,6 +137,7 @@ const TaskDetail: FC = () => {
                             buttonStyle="solid"
                             options={detailHeaderGroupOptions}
                             value={headerGroupValue}
+                            disabled={!page.getParams()?.loading}
                             onChange={(e) => {
                                 setHeaderGroupValue(e.target.value);
                                 page.onLoad({ task_type: e.target.value });
