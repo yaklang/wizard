@@ -20,6 +20,7 @@
     "@ant-design/icons": "^5.5.1",
     "@ant-design/pro-components": "^2.8.2",
     "@antv/data-set": "^0.11.8",
+    "@antv/g6": "^4.2.7",
     "@antv/l7": "^2.22.3",
     "@antv/l7-maps": "^2.22.3",
     "ace-builds": "^1.36.5",

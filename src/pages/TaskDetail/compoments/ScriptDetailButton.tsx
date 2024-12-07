@@ -11,7 +11,10 @@ import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { WizardDrawer } from '@/compoments';
 import { useSafeState } from 'ahooks';
 import ReportTemplate from '@/compoments/ReportTemplate';
-import { TReportTemplateProps } from '@/compoments/ReportTemplate/type';
+import {
+    ReportJsonKindData,
+    TReportTemplateProps,
+} from '@/compoments/ReportTemplate/type';
 
 const ScriptDetailButton = forwardRef<
     UseDrawerRefType,
@@ -20,6 +23,7 @@ const ScriptDetailButton = forwardRef<
     }
 >(({ title }, ref): ReactNode => {
     const [drawer] = WizardDrawer.useDrawer();
+    const [cover, setCover] = useState<string>('');
 
     const [blocks, setBlocks] = useSafeState<TReportTemplateProps['blocks']>(
         [],
@@ -48,12 +52,13 @@ const ScriptDetailButton = forwardRef<
                         item.data.raw !== 'undefined' &&
                         item.data.title === '__raw__'
                     ) {
-                        // const info = JSON.parse(item.data.raw);
-                        // if (info.type === 'report-cover') {
-                        //     const barGraphData: ReportJsonKindData['report-cover'] =
-                        //         info;
-                        //     break;
-                        // }
+                        const info = JSON.parse(item.data.raw);
+                        if (info.type === 'report-cover') {
+                            const barGraphData: ReportJsonKindData['report-cover'] =
+                                info;
+                            setCover(barGraphData.data);
+                            break;
+                        }
                     }
                 }
             }

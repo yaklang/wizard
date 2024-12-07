@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import G6, { Graph, Minimap } from '@antv/g6';
-import { NodeConfig } from '@antv/g6/lib/types';
-import { Palm } from '@/gen/schema';
 import './RadialGraph.css';
 import { GraphProps } from './GraphViewer';
 
@@ -12,7 +10,8 @@ interface PalmRadialGraphEdge {
     value: number;
 }
 
-type PalmRadialGraphNode = NodeConfig & Palm.G6GraphNode;
+type PalmRadialGraphNode = any;
+// NodeConfig & Palm.G6GraphNode;
 
 export const RadialGraph: React.FC<GraphProps> = (g) => {
     const ref = React.useRef(null);
@@ -96,7 +95,7 @@ export const RadialGraph: React.FC<GraphProps> = (g) => {
                         e.shape = 'modelRect';
                         let width = 0;
                         let lineTotal = 0;
-                        e.label.split('\n').map((item) => {
+                        e.label.split('\n').map((item: any) => {
                             if (!!item) {
                                 lineTotal++;
                             }
