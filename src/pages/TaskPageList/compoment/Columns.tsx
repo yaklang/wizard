@@ -57,7 +57,7 @@ const CommonTasksColumns = (
 
     // 前往详情页面
     const handGoDetail = (record: TaskListRequest) => {
-        navigate(`detail/${record.task_id}`);
+        navigate(`detail/${record.id}/${record.task_id}`);
     };
     // 任务列表可通用的 cloumns 字段
     const columns: CreateTableProps<TaskListRequest>['columns'] = [
@@ -90,7 +90,7 @@ const CommonTasksColumns = (
             title: '执行节点',
             dataIndex: 'node_ids',
             columnsHeaderFilterType: 'checkbox',
-            wizardColumnsOptions: taskNodeData ?? [{ label: 0, value: 0 }],
+            wizardColumnsOptions: taskNodeData,
             width: 240,
             render: (_, record) => (
                 <div className="text-clip-2">{record?.scanner?.join('、')}</div>

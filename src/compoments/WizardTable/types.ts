@@ -7,6 +7,7 @@ import type { UsePageRef } from '@/hooks/usePage';
 import type { initialValue } from './data';
 import type { AnyObject } from 'antd/es/_util/type';
 import type { FormLayout } from 'antd/es/form/Form';
+import { ExportProps } from '../ExportButton/types';
 
 // 定义 wizardColumnsType 的字符串字面量类型
 type WizardColumnsType = 'input' | 'radio' | 'checkbox' | 'rangePicker';
@@ -108,11 +109,14 @@ type RequestFunction = (
 // 导出按钮组件props
 interface TWizardExportProps extends ButtonProps {
     dowload_request: () => Promise<any>;
+    fileName?: string;
+    btnProps?: ButtonProps;
 }
 
 interface TableHeaderOptions {
     ProFilterSwitch: TWizardTableHeader;
-    dowloadFile: TWizardExportProps;
+    dowloadFile: ExportProps;
+    // TWizardExportProps;
     optionsSearch: {
         key: string;
         placeholder?: string;

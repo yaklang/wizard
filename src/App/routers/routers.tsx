@@ -20,6 +20,8 @@ import ReportManage from '@/pages/ReportManage';
 import NodeConfig from '@/pages/NodeConfig';
 import SystemManagement from '@/pages/SystemManagement';
 import { PortAssets } from '@/pages/DataService/PortAssets';
+import { AssetsVulns } from '@/pages/DataService/AssetsVulns';
+import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -56,7 +58,7 @@ const routers: RouteObjectRootMy[] = [
                                 element: <TaskPageList />,
                             },
                             {
-                                path: 'detail/:id',
+                                path: 'detail/:id/:task_id',
                                 key: 'task_detail',
                                 element: <TaskDetail />,
                                 name: '任务详情',
@@ -92,6 +94,18 @@ const routers: RouteObjectRootMy[] = [
                         key: 'port-assets',
                         element: <PortAssets />,
                     },
+                    {
+                        path: 'assets-vulns',
+                        name: '漏洞与风险',
+                        key: 'assets-vulns',
+                        element: <AssetsVulns />,
+                    },
+                    {
+                        path: 'sensitive-message',
+                        name: '敏感信息',
+                        key: 'sensitive-message',
+                        element: <SensitiveMessage />,
+                    },
                 ],
             },
             {
@@ -99,7 +113,14 @@ const routers: RouteObjectRootMy[] = [
                 name: '节点配置',
                 key: 'node',
                 icon: <NodeConfigIcon />,
-                element: <NodeConfig />,
+                children: [
+                    {
+                        path: 'install',
+                        name: '节点安装',
+                        key: 'node-intsall',
+                        element: <NodeConfig />,
+                    },
+                ],
             },
             {
                 path: 'system-management',

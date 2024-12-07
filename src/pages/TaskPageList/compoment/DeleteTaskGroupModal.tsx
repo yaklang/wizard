@@ -63,7 +63,7 @@ const DeleteTaskGroupConfig = (
                     >
                         <WhetherRadio />
                     </Item>
-                    <Form.Item noStyle dependencies={['whether']}>
+                    <Item noStyle dependencies={['whether']}>
                         {({ getFieldValue }) => {
                             const whetherValue = getFieldValue('whether');
                             return (
@@ -93,7 +93,7 @@ const DeleteTaskGroupConfig = (
                                 )
                             );
                         }}
-                    </Form.Item>
+                    </Item>
                 </Form>
             </div>
         ),

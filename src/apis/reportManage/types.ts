@@ -22,4 +22,33 @@ interface TReportResonse {
     total: number;
 }
 
-export type { TReportRequest, TReportResonse, ReportItem };
+interface TSensitiveMessageReqeust {
+    form_runtime_id?: string;
+    from_task_id?: string;
+    keyword?: string;
+    limit?: number;
+    page?: number;
+    status?: number;
+}
+
+interface TSensitiveMessageResponse {
+    id: number;
+    created_at: number;
+    updated_at: number;
+    repo_name?: string;
+    file_path?: string;
+    repo_desc?: string;
+    keywords?: string;
+    /**
+     * 表示敏感信息的处理状态，1=已处理，2=忽略，3=待处理
+     */
+    status?: 1 | 2 | 3;
+}
+
+export type {
+    TReportRequest,
+    TReportResonse,
+    ReportItem,
+    TSensitiveMessageReqeust,
+    TSensitiveMessageResponse,
+};

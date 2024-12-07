@@ -1,6 +1,6 @@
 const initialValue = {
     params: {
-        limit: 10,
+        limit: 20,
         page: 1,
         total: 1,
         total_page: 1,
@@ -16,6 +16,7 @@ const initialValue = {
     loading: false,
     proSwitchStatus: false,
     checkedKeys: [],
+    noResetFields: true,
 };
 
 export { initialValue };

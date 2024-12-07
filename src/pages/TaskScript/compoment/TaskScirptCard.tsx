@@ -74,11 +74,8 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         },
         {
             manual: true,
-            onSuccess:  (values) => {
-                StartUpScriptModalRef.current?.open(
-                    itemsRef.current,
-                    values,
-                );
+            onSuccess: (values) => {
+                StartUpScriptModalRef.current?.open(itemsRef.current, values);
                 model1?.close && model1.close();
             },
         },
@@ -93,7 +90,6 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         {
             manual: true,
             onSuccess: (data) => {
-                console.log(data, status, 'data');
                 return match(status)
                     .with('copy', () => {
                         setTaskScriptList((val) => [

@@ -70,6 +70,9 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
         task_type: 'batch-invoking-script',
         enable_sched: values?.['sched_type'] !== 1 ? true : false,
         timestamp: undefined,
+        script_type: scriptTypeOption.find(
+            (it) => it.label === values?.script_type,
+        )?.value,
     };
 };
 

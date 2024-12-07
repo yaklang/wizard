@@ -10,7 +10,7 @@ import type {
     TRecudeInitiakValue,
     WizardColumnsType,
 } from './types';
-import { Checkbox, DatePicker, Input, Popover, Radio } from 'antd';
+import { Checkbox, DatePicker, Empty, Input, Popover, Radio } from 'antd';
 import { useSafeState, useUpdateEffect } from 'ahooks';
 import {
     TableHeaderFilter,
@@ -162,6 +162,10 @@ const extendTableProps = (
         setSelectedRowKeys(targetSeletedKeys);
     }, [state.dataSource]);
 
+    useUpdateEffect(() => {
+        setSearch(() => ({ ...state.filter }));
+    }, [state.filter]);
+
     // 处理单个复选框的变化
     const handleCheckboxChange = (
         record: any,
@@ -227,32 +231,32 @@ const extendTableProps = (
 
     const tableHeaderMemo = useCallback(
         (selectKeys: any, columnsHeaderFilterType?: WizardColumnsType) => {
-            const color = state?.getExternal?.[selectKeys];
+            const colorStatus = search?.[selectKeys]?.length;
             return match(columnsHeaderFilterType)
                 .with('input', () => (
                     <TableHeaderSearch
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with('checkbox', () => (
                     <TableHeaderFilter
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with('radio', () => (
                     <TableHeaderFilter
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with('rangePicker', () => (
                     <VerticalAlignMiddleHeaderFilter
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with(P.nullish, () => null)
                 .exhaustive();
         },
-        [state.getExternal],
+        [search, state.getExternal],
     );
 
     // 更新筛选条件
@@ -493,57 +497,76 @@ const extendTableProps = (
                                                 }}
                                             />
                                         ))
-                                        .with('checkbox', () => (
-                                            <CheckboxGroup
-                                                style={{
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    minWidth: '108px',
-                                                    marginBottom: '8px',
-                                                    flexWrap: 'nowrap',
-                                                    gap: '8px',
-                                                    maxHeight: '118px',
-                                                    overflowY: 'auto',
-                                                }}
-                                                value={search[selectKeys]}
-                                                options={wizardColumnsOptions}
-                                                onChange={(e) => {
-                                                    setSearch(
-                                                        (searchValue) => ({
-                                                            ...searchValue,
-                                                            [selectKeys]: e,
-                                                        }),
-                                                    );
-                                                }}
-                                            />
-                                        ))
-                                        .with('radio', () => (
-                                            <Radio.Group
-                                                style={{
-                                                    marginBottom: 8,
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    minWidth: 108,
-                                                    flexWrap: 'nowrap',
-                                                    gap: 8,
-                                                    maxHeight: 118,
-                                                    overflowY: 'auto',
-                                                }}
-                                                value={search[selectKeys]}
-                                                options={wizardColumnsOptions}
-                                                onChange={(e) => {
-                                                    const value =
-                                                        e.target.value;
+                                        .with('checkbox', () =>
+                                            Array.isArray(
+                                                wizardColumnsOptions,
+                                            ) &&
+                                            wizardColumnsOptions?.length > 0 ? (
+                                                <CheckboxGroup
+                                                    style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        minWidth: '108px',
+                                                        marginBottom: '8px',
+                                                        flexWrap: 'nowrap',
+                                                        gap: '8px',
+                                                        maxHeight: '118px',
+                                                        overflowY: 'auto',
+                                                    }}
+                                                    value={search[selectKeys]}
+                                                    options={
+                                                        wizardColumnsOptions
+                                                    }
+                                                    onChange={(e) => {
+                                                        setSearch(
+                                                            (searchValue) => ({
+                                                                ...searchValue,
+                                                                [selectKeys]: e,
+                                                            }),
+                                                        );
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Empty className="max-w-27" />
+                                            ),
+                                        )
+                                        .with('radio', () =>
+                                            Array.isArray(
+                                                wizardColumnsOptions,
+                                            ) &&
+                                            wizardColumnsOptions?.length > 0 ? (
+                                                <Radio.Group
+                                                    style={{
+                                                        marginBottom: 8,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        minWidth: 108,
+                                                        flexWrap: 'nowrap',
+                                                        gap: 8,
+                                                        maxHeight: 118,
+                                                        overflowY: 'auto',
+                                                    }}
+                                                    value={search[selectKeys]}
+                                                    options={
+                                                        wizardColumnsOptions
+                                                    }
+                                                    onChange={(e) => {
+                                                        const value =
+                                                            e.target.value;
 
-                                                    setSearch(
-                                                        (searchValue) => ({
-                                                            ...searchValue,
-                                                            [selectKeys]: value,
-                                                        }),
-                                                    );
-                                                }}
-                                            />
-                                        ))
+                                                        setSearch(
+                                                            (searchValue) => ({
+                                                                ...searchValue,
+                                                                [selectKeys]:
+                                                                    value,
+                                                            }),
+                                                        );
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Empty className="max-w-27" />
+                                            ),
+                                        )
                                         .with('rangePicker', () => (
                                             <RangePicker
                                                 showTime={{
@@ -609,6 +632,7 @@ const extendTableProps = (
             ...getColumnSearchProps(columnsHeaderFilterType),
         };
     });
+
     return newColumns ?? [];
 };
 

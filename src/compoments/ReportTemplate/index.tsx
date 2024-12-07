@@ -7,19 +7,27 @@ import ReactJson from 'react-json-view';
 
 import { generateUniqueId, randomString } from '@/utils';
 
-import Markdown from '../MarkDown';
-
 import type {
     BlockType,
     ReportJsonKindData,
     TReportTemplateProps,
 } from './type';
 // import { ReportMergeTable } from './compoments/SearchJsonTable';
-import { ReportTable } from './compoments/JsonTable';
+import { ReportMergeTable, ReportTable } from './compoments/JsonTable';
 import { NewBarGraph } from './compoments/NewBarGraph';
 import { CodeViewer } from './compoments/CodeViewer';
 import { AnyObject } from 'antd/es/_util/type';
 import { GraphBasicInfoTable } from './compoments/GraphBasicInfoTable';
+import { GraphViewer } from './compoments/GraphViewer';
+import { HollowPie, MultiPie } from './compoments/EchartsInit';
+import { FoldHoleCard, FoldRuleCard } from './compoments/ReportExtendCard';
+import { FoldTable, RiskTable } from './compoments/ReportTable';
+import {
+    EchartsCard,
+    NightingleRose,
+    StackedVerticalBar,
+} from './compoments/EchartsInit';
+import { Markdown } from './compoments/utils/Markdown';
 
 const ReportTemplate: FC<TReportTemplateProps> = ({
     blocks,
@@ -30,13 +38,13 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
         return (
             match(item)
                 .with({ type: 'markdown' }, (value) => (
-                    <div key={`${item.type}-${randomString(5)}`}>
+                    <div key={`${value.type}-${randomString(5)}`}>
                         <Markdown children={value.data} />
                         <br />
                     </div>
                 ))
                 .with({ type: 'json-table' }, (value) => (
-                    <div key={`${item.type}-${randomString(5)}`}>
+                    <div key={`${value.type}-${randomString(5)}`}>
                         <ReportTable data={value.data} />
                         <br />
                     </div>
@@ -121,7 +129,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                 })
                 .with({ type: 'active_graph_name' }, (value) => {
                     return (
-                        <div key={`${item.type}-${randomString(5)}`}>
+                        <div key={`${value.type}-${randomString(5)}`}>
                             <Collapse
                                 activeKey={['1']}
                                 items={[
@@ -148,6 +156,277 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                         </div>
                     );
                 })
+                .with({ type: 'graph_name' }, (value) => {
+                    return (
+                        <div key={`${value.type}-${randomString(5)}`}>
+                            <Collapse
+                                activeKey={['1']}
+                                items={[
+                                    {
+                                        label: (
+                                            <div>
+                                                按照图例名称展示图例内容：
+                                                {value.data}
+                                            </div>
+                                        ),
+                                        key: '1',
+                                        children: (
+                                            <GraphBasicInfoTable
+                                                miniMode={true}
+                                                defaultFilter={{
+                                                    name: value.data,
+                                                }}
+                                            />
+                                        ),
+                                    },
+                                ]}
+                            />
+                            <br />
+                        </div>
+                    );
+                })
+                .with({ type: 'graph_source' }, (value) => {
+                    return (
+                        <div key={`${value.type}-${randomString(5)}`}>
+                            <Collapse
+                                activeKey={['1']}
+                                items={[
+                                    {
+                                        label: (
+                                            <div>
+                                                按照图例名称展示图例内容：
+                                                {value.data.name}
+                                            </div>
+                                        ),
+                                        key: '1',
+                                        children: (
+                                            <GraphBasicInfoTable
+                                                source={value.data.source}
+                                                miniMode={true}
+                                                defaultFilter={{
+                                                    source: value.data.source,
+                                                }}
+                                            />
+                                        ),
+                                    },
+                                ]}
+                            />
+                            <br />
+                        </div>
+                    );
+                })
+                .with({ type: 'graph' }, (value) => {
+                    return (
+                        <div key={`${value.type}-${randomString(5)}`}>
+                            <Collapse
+                                activeKey={['1']}
+                                items={[
+                                    {
+                                        label: (
+                                            <div>
+                                                按照图例ID展示图例内容：
+                                                {value.data}
+                                            </div>
+                                        ),
+                                        key: '1',
+                                        children: (
+                                            <GraphViewer
+                                                id={value.data}
+                                                showBigGraphButton={true}
+                                            />
+                                        ),
+                                    },
+                                ]}
+                            />
+                            <br />
+                        </div>
+                    );
+                })
+
+                .with({ type: 'raw' }, (value) => {
+                    try {
+                        const { data, type } = value;
+                        const newData = JSON.parse(data);
+
+                        if (newData.type === 'report-cover') {
+                            return (
+                                <div
+                                    key={`${type}-${randomString(5)}`}
+                                    style={{ height: 0 }}
+                                ></div>
+                            );
+                        } else if (newData.type === 'bar-graph') {
+                            const barGraphData: ReportJsonKindData['bar-graph'] =
+                                newData;
+                            return (
+                                <NewBarGraph
+                                    key={`${type}-${randomString(5)}`}
+                                    width={width / 2 < 450 ? width / 2 : 450}
+                                    data={barGraphData.data}
+                                    color={barGraphData.color}
+                                    title={barGraphData.title}
+                                />
+                            );
+                        } else if (newData.type === 'pie-graph') {
+                            return (
+                                <HollowPie
+                                    key={`${type}-${randomString(5)}`}
+                                    data={newData.data}
+                                    title={newData.title}
+                                />
+                            );
+                        } else if (newData.type === 'fix-list') {
+                            return (
+                                <FoldHoleCard
+                                    key={`${type}-${randomString(5)}`}
+                                    data={newData.data}
+                                />
+                            );
+                        } else if (newData.type === 'info-risk-list') {
+                            return <FoldTable data={newData} />;
+                        } else {
+                            // kv图 南丁格尔玫瑰图 多层饼环
+                            const content =
+                                typeof newData === 'string'
+                                    ? JSON.parse(newData)
+                                    : newData;
+                            const { type, data } = content;
+
+                            if (type) {
+                                switch (type) {
+                                    case 'multi-pie':
+                                        return <MultiPie content={content} />;
+                                    case 'nightingle-rose':
+                                        return (
+                                            <NightingleRose content={content} />
+                                        );
+                                    // 通用kv
+                                    case 'general':
+                                        // kv图展示柱状图
+                                        let kvObj: ReportJsonKindData['bar-graph'] =
+                                            {
+                                                color: [],
+                                                data: [],
+                                                type: 'bar-graph',
+                                            };
+                                        kvObj.data = data.map((item: any) => ({
+                                            name:
+                                                item?.key_verbose || item?.key,
+                                            value:
+                                                item?.value || item?.show_value,
+                                        }));
+                                        return (
+                                            <div style={{ margin: '24px 0' }}>
+                                                <NewBarGraph
+                                                    key={`${type}-${randomString(5)}`}
+                                                    width={
+                                                        width / 2 < 450
+                                                            ? width / 2
+                                                            : 450
+                                                    }
+                                                    data={kvObj.data}
+                                                    color={kvObj.color}
+                                                    title={
+                                                        content?.name_verbose ||
+                                                        content?.name
+                                                    }
+                                                />
+                                            </div>
+                                        );
+                                    case 'year-cve':
+                                        return (
+                                            <StackedVerticalBar
+                                                content={content}
+                                            />
+                                        );
+                                    case 'card':
+                                        const dataTitle =
+                                            content?.name_verbose ||
+                                            content?.name ||
+                                            '';
+                                        return (
+                                            <EchartsCard
+                                                dataTitle={dataTitle}
+                                                dataSource={data}
+                                            />
+                                        );
+                                    case 'fix-array-list':
+                                        return (
+                                            <FoldRuleCard content={content} />
+                                        );
+                                    case 'risk-list':
+                                        return <RiskTable data={content} />;
+                                    case 'potential-risks-list':
+                                        return <RiskTable data={content} />;
+                                    case 'search-json-table':
+                                        return (
+                                            <div
+                                                key={`${content.type}-${randomString(5)}`}
+                                            >
+                                                <ReportMergeTable
+                                                    data={content}
+                                                />
+                                                <br />
+                                            </div>
+                                        );
+                                    default:
+                                        return (
+                                            <ReactJson
+                                                src={content}
+                                                collapsed={true}
+                                            />
+                                        );
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        return (
+                            <ReactJson
+                                key={`default-${randomString(5)}`}
+                                src={item}
+                            />
+                        );
+                    }
+                    return <></>;
+                })
+
+                // TODO 未做
+                // .with({ type: 'asset-rss' }, (value) => {
+                //     return (
+                //         <div key={`${value.type}-${randomString(5)}`}>
+                //             <Collapse
+                //                 activeKey={['1']}
+                //                 defaultActiveKey={value.data.active ? ["1"] : undefined}
+                //                 items={[
+                //                     {
+                //                         label: (
+                //                             <div>
+                //                                 RSS 安全情报订阅源
+                //                                 【点击即可展开/收起】
+                //                             </div>
+                //                         ),
+                //                         key: '1',
+                //                         children: (
+                //                             <div>
+                //                                 {' '}
+                //                                 <ReactJson
+                //                                     src={value.data.filter}
+                //                                     name={'filter'}
+                //                                 />
+                //                                 <br />
+                //                                 <RssBriefingTable
+                //                                     hideSourceXmlSearch={true}
+                //                                     {...value.data.filter}
+                //                                 />
+                //                             </div>
+                //                         ),
+                //                     },
+                //                 ]}
+                //             />
+                //             <br />
+                //         </div>
+                //     );
+                // })
                 // .with({ type: 'search-json-table' }, (value) => (
                 //     <ReportMergeTable data={value.data} />
                 // ))
@@ -156,7 +435,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
     });
     return (
         <div ref={divRef}>
-            {blocks.map((item) => (
+            {blocks?.map((item) => (
                 <div key={generateUniqueId()}>{transformBlocks(item)}</div>
             ))}
         </div>

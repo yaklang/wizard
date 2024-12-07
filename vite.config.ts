@@ -6,7 +6,6 @@ import path from 'path';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
-    console.log(env.VITE_BASE_URL, 'env.VITE_BASE_URL');
     return {
         base: './',
         plugins: [
@@ -18,6 +17,7 @@ export default defineConfig(({ mode }) => {
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, 'src'),
+                './cptable': 'cptable', // 指向已安装的模块
             },
             extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
@@ -25,7 +25,6 @@ export default defineConfig(({ mode }) => {
             // port: 8082,
             proxy: {
                 '/api': {
-                    // target: 'http://legion-4g.yaklang.com:8080/pre/',
                     target: env.VITE_BASE_URL,
                     changeOrigin: true,
                     rewrite: (path) => path,
@@ -33,6 +32,9 @@ export default defineConfig(({ mode }) => {
             },
             host: '0.0.0.0',
             hmr: true,
+        },
+        build: {
+            sourcemap: mode === 'development',
         },
     };
 });

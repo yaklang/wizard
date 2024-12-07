@@ -126,3 +126,26 @@ li {
 .markdown-body{
     background-color: #fff;
 }
+
+/* 强制让横向滚动条始终出现 */
+.ant-table-body{
+    padding-bottom: 48px;
+    scrollbar-width: auto !important;
+    scrollbar-color: auto !important;
+    overflow-x: scroll !important;  /* 强制显示横向滚动条 */
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+        -webkit-appearance: none;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(167, 164, 164, 0.8);
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-track-piece {
+        background-color: rgba(0, 0, 0, 0);
+        border-radius: 0;
+    }
+}

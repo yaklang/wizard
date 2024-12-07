@@ -20,7 +20,7 @@ interface TGetAssetsProtsRequest {
     services?: string[];
     state?: string;
     tags?: string[];
-    taskid?: string;
+    task_id?: string;
     Ppge?: number;
 }
 
@@ -98,6 +98,7 @@ interface TGetAssertsDataResponse {
     updated_at: number;
     warning: number;
     low?: number;
+    level: string;
 }
 
 // 历史执行记录 报告信息响应数据
@@ -112,6 +113,17 @@ interface TReportTableResponse {
     updated_at: number;
 }
 
+type TTableFilterList = Array<{
+    explain?: null;
+    key?: string;
+    value?: string;
+}>;
+
+interface TGetAssetsValueFilterResponse {
+    list: TTableFilterList;
+    severity: TTableFilterList;
+}
+
 export type {
     TGetAssetsProtsRequest,
     TGetAssetsProtsResponse,
@@ -120,4 +132,5 @@ export type {
     TReportTableResponse,
     TGetAssertsDataResponse,
     TTaskDetail,
+    TGetAssetsValueFilterResponse,
 };

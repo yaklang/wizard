@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useRef } from 'react';
 
 import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import { ReportItem } from '@/apis/reportManage/types';
@@ -7,9 +7,12 @@ import { FileOutlinedIcon } from '@/assets/report/FileOutlinedIcon';
 import { Button, message, Popover } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
-import { deleteProts } from '@/apis/reportManage';
+import { deleteProts, getTimelinId } from '@/apis/reportManage';
 import { UsePageRef } from '@/hooks/usePage';
 import { TDeleteValues } from '../ReportManage';
+import { ExportButton } from '@/compoments';
+import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { PreviewReportModal } from './PreviewReportModal';
 
 const ColumnsOperateRender: FC<{
     render: ReportItem;
@@ -18,6 +21,7 @@ const ColumnsOperateRender: FC<{
         React.SetStateAction<TDeleteValues | undefined>
     >;
 }> = ({ render, localRefrech, setDeleteValues }) => {
+    const PreviewReportRef = useRef<UseModalRefType>(null);
     const [open, setOpen] = useSafeState(false);
 
     const { run, loading: DeleteLoading } = useRequest(deleteProts, {
@@ -46,15 +50,38 @@ const ColumnsOperateRender: FC<{
             message.error('请求错误，请重试');
         }
     };
+
+    const handPreviewReport = async () => {
+        if (render?.report_id) {
+            const { data } = await getTimelinId(render!.report_id);
+            const block = data.data.data.blocks;
+            PreviewReportRef.current?.open(block);
+        } else {
+            message.error('获取失败');
+        }
+    };
+
     return (
         <div className="flex gap-2 items-center justify-center">
             <FileOutlinedIcon
                 style={{ width: '32px', borderRight: '1px solid #EAECF3' }}
-                onClick={() => console.log(111)}
+                onClick={() => handPreviewReport()}
             />
-            <DownloadOutlinedIcon
-                style={{ width: '32px', borderRight: '1px solid #EAECF3' }}
-                onClick={() => console.log(222)}
+            <ExportButton
+                type="link"
+                params={{ id: render?.report_id }}
+                fileName={render?.report_title + '.zip'}
+                method={'get'}
+                url="/timeline/download"
+                className="p-0"
+                title={
+                    <DownloadOutlinedIcon
+                        style={{
+                            width: '32px',
+                            borderRight: '1px solid #EAECF3',
+                        }}
+                    />
+                }
             />
 
             <Popover
@@ -94,6 +121,8 @@ const ColumnsOperateRender: FC<{
             >
                 <TableDeleteOutlined style={{ marginLeft: '12px' }} />
             </Popover>
+
+            <PreviewReportModal ref={PreviewReportRef} title="报告详情" />
         </div>
     );
 };

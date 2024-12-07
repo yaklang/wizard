@@ -18,6 +18,17 @@ export interface TableRequestParam<T> {
         total_page: number;
     };
 }
+
+export interface TableRequestParams<T> {
+    data: T;
+    pagemeta: {
+        limit: number;
+        page: number;
+        total: number;
+        total_page: number;
+    };
+}
+
 // 表格数据响应标准模版
 export interface TableResponseData<T> {
     list: T[];

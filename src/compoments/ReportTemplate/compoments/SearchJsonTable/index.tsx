@@ -271,7 +271,6 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
             });
             tableData.push(itemData);
         });
-        // console.log("tableData", tableData);
         setHeader(header);
         setDataSource(tableData);
     }, []);

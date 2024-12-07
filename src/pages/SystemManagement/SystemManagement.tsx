@@ -50,7 +50,6 @@ const SystemManagement: FC = () => {
     ];
 
     const handCreateUser = async () => {
-        console.log(222);
         CreateUserModalRef.current?.open();
     };
 

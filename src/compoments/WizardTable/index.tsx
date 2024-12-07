@@ -20,6 +20,7 @@ import extendTableProps from './extendTableProps';
 
 import './index.scss';
 import { match } from 'ts-pattern';
+import throttle from 'lodash/throttle';
 
 const reducer = <T extends TRecudeInitiakValue>(state: T, payload: T): T => ({
     ...state,
@@ -54,8 +55,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     dispatch({
                         dataSource:
                             pagemeta?.page > 1
-                                ? (state.dataSource ?? []).concat(list ?? [])
-                                : (list ?? []),
+                                ? (state.dataSource ?? [])
+                                      .concat(list ?? [])
+                                      .concat([])
+                                : (list ?? []).concat([]),
                         pagemeta,
                         params: pagemeta,
                     });
@@ -74,13 +77,13 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     runAsync(request);
                 }
 
-                dispatch({ loading: false });
+                dispatch({ loading: false, noResetFields: true });
             }
         },
         {
             manual: true,
             onError: () => {
-                dispatch({ loading: false });
+                dispatch({ loading: false, noResetFields: true });
             },
             debounceWait: 300,
         },
@@ -104,11 +107,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     );
 
     const [wizardScrollHeight, wizardScrollWidth] = useListenWidth(tableRef);
+    const [isBottom, setIsBottom] = useSafeState(false);
 
     // 表格容器的 state, 用来保存计算得到的可滚动高度和表格高度
-    const [height, setHeight] = useSafeState({
-        tableHeight: 0,
-    });
+    const [height, setHeight] = useSafeState(0);
 
     // 动态计算表格高度
     useEffect(() => {
@@ -120,13 +122,12 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         const antTableHeaderHeight =
             antTableHeader?.getBoundingClientRect().height ?? 0;
 
-        setHeight((val) => ({
-            ...val,
-            tableHeight:
-                wizardScrollHeight -
+        setHeight(
+            wizardScrollHeight -
                 tableFilterDomHeight -
-                antTableHeaderHeight,
-        }));
+                antTableHeaderHeight -
+                32,
+        );
     }, [wizardScrollHeight]);
 
     // 数据源更新后执行
@@ -143,11 +144,11 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         ) {
             // 获取表格 DOM 节点
             const tableElement = tableRef.current.querySelector(
-                '.ant-table-body > table > tbody',
+                '#table-container > .ant-table-wrapper',
             );
             if (tableElement && !state.loading) {
                 const scrollHeight = tableElement.scrollHeight;
-                scrollHeight < height.tableHeight &&
+                scrollHeight < height &&
                     dispatch({
                         params: {
                             limit: params!.limit,
@@ -157,18 +158,22 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                         },
                     });
             }
+        } else {
+            setIsBottom(true);
         }
-    }, [height.tableHeight, dataSource]);
+    }, [height, dataSource]);
 
     // 表格滚动函数
-    const tableOnScrollFn = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
-        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const throttledTableOnScrollFn = throttle((e: any) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
 
         const { params, pagemeta } = state;
         const hasMore = params!.limit * params!.page >= pagemeta!.total;
 
         const scrollBottomBoolean =
-            scrollTop + clientHeight >= scrollHeight - 100;
+            scrollTop + clientHeight >= scrollHeight - 500;
+
+        setIsBottom(scrollTop + clientHeight >= scrollHeight - 48);
 
         if (
             scrollBottomBoolean &&
@@ -186,7 +191,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 },
             });
         }
-    };
+    }, 300);
 
     // 初始请求
     useEffect(() => {
@@ -234,6 +239,19 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 total_page: state.pagemeta!.total_page,
             },
             filter: {},
+            getExternal: {},
+            proSwitchStatus: false,
+            noResetFields: false,
+        });
+    };
+
+    // 更改高级筛选项
+    page.editFilter = (args) => {
+        dispatch({
+            filter: {
+                ...state.filter,
+                ...args,
+            },
         });
     };
 
@@ -306,53 +324,42 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             (tableRef.current?.getBoundingClientRect().width ?? 0) - 108;
 
         return (
-            <>
-                <Table.Summary fixed>
-                    <Table.Summary.Row>
-                        <Table.Summary.Cell
-                            index={0}
-                            colSpan={
-                                typeof props.columns!.length === 'number'
-                                    ? props.columns?.length
-                                    : 1
-                            }
+            <div
+                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none relative bottom-14`}
+                style={{
+                    width: dataSource?.length
+                        ? wizardScrollWidth - 40
+                        : wizardScrollWidth - 33,
+                    height: dataSource?.length ? '48px' : '56px',
+                }}
+            >
+                {pagemetaStatus &&
+                    dataSource!.length !== 0 &&
+                    !state.loading &&
+                    isBottom && (
+                        <div
+                            className={`color-[#777] whitespace-nowrap  text-center`}
+                            style={{
+                                width: width + 'px',
+                            }}
                         >
-                            <div
-                                className={`min-h-[24px] w-${wizardScrollWidth}`}
-                            >
-                                {pagemetaStatus &&
-                                    dataSource!.length !== 0 &&
-                                    !state.loading && (
-                                        <div
-                                            className={`color-[#777] whitespace-nowrap sticky left-0 text-center`}
-                                            style={{
-                                                width: width + 'px',
-                                            }}
-                                        >
-                                            已获取完毕所有数据
-                                        </div>
-                                    )}
-                                {status && (
-                                    <div
-                                        className={`color-[#777] whitespace-nowrap sticky left-0 text-center`}
-                                        style={{
-                                            width: width + 'px',
-                                        }}
-                                    >
-                                        <Spin
-                                            spinning={state.loading}
-                                            className="mr-2"
-                                        />
-                                        加载中...
-                                    </div>
-                                )}
-                            </div>
-                        </Table.Summary.Cell>
-                    </Table.Summary.Row>
-                </Table.Summary>
-            </>
+                            已获取完毕所有数据
+                        </div>
+                    )}
+                {status && (
+                    <div
+                        className={`color-[#777] whitespace-nowrap text-center`}
+                        style={{
+                            width: width + 'px',
+                        }}
+                    >
+                        <Spin spinning={state.loading} className="mr-2" />
+                        加载中...
+                    </div>
+                )}
+            </div>
         );
-    }, [state.loading, wizardScrollWidth]);
+    }, [state.loading, wizardScrollWidth, isBottom]);
 
     return (
         <div className="flex w-full h-full overflow-hidden justify-end">
@@ -388,15 +395,13 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     bordered
                     pagination={false}
                     scroll={{
-                        x:
-                            (tableRef.current?.getBoundingClientRect().width ??
-                                0) - 72,
-                        y: height.tableHeight - 32,
+                        x: wizardScrollHeight,
+                        y: height - 1,
                     }}
-                    onScroll={tableOnScrollFn}
-                    summary={() => bottomLoading}
+                    onScroll={throttledTableOnScrollFn}
                     loading={state.loading && dataSource!.length === 0}
                 />
+                {bottomLoading}
             </div>
 
             {/* 右侧抽屉 */}
@@ -409,7 +414,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 <WizardProFilterDrawer
                     status={state}
                     filterDispatch={dispatch}
-                    tableHeight={height.tableHeight}
+                    tableHeight={height}
                     trigger={tableHeader?.options?.ProFilterSwitch?.trigger}
                     layout={tableHeader?.options?.ProFilterSwitch?.layout}
                     wizardScrollHeight={wizardScrollHeight}

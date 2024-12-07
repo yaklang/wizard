@@ -1,6 +1,9 @@
-import { deleteProts, getssetsProts } from '@/apis/reportManage';
+import {
+    deleteProts,
+    getReportTaskGroups,
+    getssetsProts,
+} from '@/apis/reportManage';
 import { ReportItem, TReportRequest } from '@/apis/reportManage/types';
-import { getScriptTaskGroup } from '@/apis/task';
 import { WizardTable } from '@/compoments';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
 import { useRequest, useSafeState } from 'ahooks';
@@ -28,19 +31,14 @@ const ReportManage: FC = () => {
     });
 
     const { data } = useRequest(async () => {
-        const result = await getScriptTaskGroup();
-        const {
-            data: { list },
-        } = result;
+        const result = await getReportTaskGroups();
+        const { data } = result;
         const transformGroupList =
-            list?.map((it) => ({
-                value: it.name,
-                label: it.name,
+            data?.list?.map((it) => ({
+                value: it,
+                label: it,
             })) ?? [];
-        const filterDefualt = transformGroupList
-            .filter((it) => it.label === '默认分组')
-            .concat(transformGroupList.filter((it) => it.label !== '默认分组'));
-        return filterDefualt ?? [];
+        return transformGroupList ?? [];
     });
 
     // 批量删除
@@ -90,6 +88,7 @@ const ReportManage: FC = () => {
         {
             title: '报告名称',
             dataIndex: 'report_title',
+            width: 200,
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,

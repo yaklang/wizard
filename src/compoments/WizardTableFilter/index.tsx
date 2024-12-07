@@ -2,8 +2,8 @@ import { FC } from 'react';
 import { Input, Switch } from 'antd';
 
 import type { TWizardTableProps } from '../WizardTable/types';
-import WizardExport from '../WizardExportButton';
 import { AnyObject } from 'antd/es/_util/type';
+import ExportButton from '../ExportButton';
 
 const WizardTableFilter: FC<{
     props: TWizardTableProps<AnyObject>['tableHeader'];
@@ -41,9 +41,13 @@ const WizardTableFilter: FC<{
 
             <div className="flex gap-2 items-center">
                 {exprotExcel && (
-                    <WizardExport
-                        dowload_request={exprotExcel.dowload_request}
-                        loading={exprotExcel.loading}
+                    <ExportButton
+                        // url={exprotExcel.url}
+                        // title={exprotExcel.title}
+                        // params={exprotExcel.params}
+                        // method={exprotExcel.method}
+                        // fileName={exprotExcel.fileName}
+                        {...exprotExcel}
                     />
                 )}
 

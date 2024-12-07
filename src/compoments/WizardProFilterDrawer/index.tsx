@@ -46,8 +46,19 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
         };
 
         useUpdateEffect(() => {
-            form.resetFields();
-        }, [state?.getExternal]);
+            const fieldsValue = form.getFieldsValue();
+            filterDispatch?.({
+                params: {
+                    page: 1,
+                    limit: state!.params!.limit,
+                    total: state!.pagemeta!.total,
+                    total_page: state!.pagemeta!.total_page,
+                },
+                getExternal: { ...fieldsValue },
+            });
+            form.setFieldsValue(state?.filter);
+            !state?.noResetFields && form.resetFields();
+        }, [state?.filter, state?.noResetFields]);
 
         return (
             state && (
@@ -55,14 +66,14 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
                     className={`h-full bg-white min-w-[300px] min-h-[${wizardScrollHeight}px] border-l-solid border-1 border-[#EAECF3]`}
                 >
                     <div
-                        className="h-11 py-8 px-4 flex items-center justify-between"
+                        className="h-11 py-8 px-4 flex items-center justify-between flex-nowrap"
                         style={{
                             borderBottom: '1px solid #EAECF3',
                         }}
                     >
-                        <div>高级筛选</div>
+                        <div className="text-nowrap">高级筛选</div>
                         <Switch
-                            value={state.proSwitchStatus}
+                            value={state?.proSwitchStatus}
                             onChange={headChange}
                         />
                     </div>

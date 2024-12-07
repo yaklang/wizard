@@ -6,7 +6,7 @@ import { Col, Row, Typography } from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
 
 import dayjs from 'dayjs';
-import { SeverityMapTag } from './Columns';
+import { SeverityMapTag } from './utils';
 const { Paragraph } = Typography;
 
 const AssetsVulnsDetailModal = forwardRef<
@@ -20,7 +20,6 @@ const AssetsVulnsDetailModal = forwardRef<
 
     useImperativeHandle(ref, () => ({
         open(render) {
-            console.log(render, 'render');
             setInfo(render);
             model.open();
         },
