@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { Radio, Spin } from 'antd';
 import { match } from 'ts-pattern';
@@ -20,6 +20,7 @@ import {
     getAssetsProts,
     getAssetsVulns,
     getTaskDetail,
+    getTaskDetailTop,
 } from '@/apis/taskDetail';
 import type { RequestFunction } from '@/compoments/WizardTable/types';
 import { useDependentCallback } from '@/hooks/useDependentCallback';
@@ -30,28 +31,40 @@ const { Group } = Radio;
 
 const TaskDetail: FC = () => {
     const [page] = WizardTable.usePage();
-    const { id: task_id } = useParams(); // 获取路径参数
+    const { id, task_id } = useParams(); // 获取路径参数
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
     const [columns, setColumns] = useSafeState<any>([]);
 
     // 获取基础信息 此处数据需要组合
     const { data, runAsync, loading } = useRequest(
-        async (task_id) => {
+        async (id, task_id) => {
             const result = await getTaskDetail(task_id);
+            const resultTop = await getTaskDetailTop(id);
+            const { data: dataTop } = resultTop;
             const { data } = result;
-            return data;
+            const transformResultDat = {
+                ...data,
+                task_id: dataTop?.task_id,
+                target: dataTop?.params?.target,
+                ports: dataTop?.params?.ports,
+                plugins: dataTop?.params?.plugins,
+                'enable-brute': dataTop?.params?.['enable-brute'],
+                'enbale-cve-baseline': dataTop?.params?.['enbale-cve-baseline'],
+            };
+            return transformResultDat;
         },
         {
             manual: true, // 手动触发请求
         },
     );
 
-    const [isReady, setIsReady] = useState(false); // 控制页面是否可以渲染
+    const [isReady, setIsReady] = useSafeState(false); // 控制页面是否可以渲染
+    const [tableLoading, setTableLoadings] = useSafeState(false);
 
     useEffect(() => {
         // 请求数据并等待完成
-        runAsync(task_id!)
+        runAsync(id!, task_id!)
             .then(() => {
                 setIsReady(true); // 数据加载完成，允许渲染
             })
@@ -69,44 +82,62 @@ const TaskDetail: FC = () => {
         ) => {
             return match(headerGroupValue)
                 .with(1, async () => {
-                    const { data } = await getAssetsProts({
-                        ...params,
-                        ...filter,
-                        taskid: task_id,
-                    });
-                    setColumns(ProtColumns);
-                    return {
-                        data,
-                    };
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await getAssetsProts({
+                            ...params,
+                            ...filter,
+                            taskid: id,
+                        });
+                        setColumns(ProtColumns);
+                        setTableLoadings(false);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
                 })
                 .with(2, async () => {
-                    const { data } = await getAssetsVulns({
-                        ...params,
-                        ...filter,
-                        task_id,
-                    });
-                    setColumns(AssetsVulnsColumns);
-                    return {
-                        data,
-                    };
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await getAssetsVulns({
+                            ...params,
+                            ...filter,
+                            task_id,
+                        });
+                        setColumns(AssetsVulnsColumns);
+                        setTableLoadings(false);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
                 })
                 .with(3, async () => {
-                    const { data } = await getAssertsData({
-                        ...params,
-                        ...filter,
-                        task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
-                    });
-                    const { data: StateTableData } =
-                        await getAssertsDataStateTable(
-                            '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
-                            // id!
-                        );
-                    console.log(StateTableData);
-                    setColumns(AssertsDataColumns);
-                    return {
-                        data,
-                        // count:
-                    };
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await getAssertsData({
+                            ...params,
+                            ...filter,
+                            task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
+                        });
+                        const { data: StateTableData } =
+                            await getAssertsDataStateTable(
+                                '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
+                                // id!
+                            );
+                        console.log(StateTableData);
+                        setTableLoadings(false);
+                        setColumns(AssertsDataColumns);
+                        return {
+                            data,
+                            // count:
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
                 })
                 .exhaustive();
         },
@@ -124,7 +155,7 @@ const TaskDetail: FC = () => {
 
     return (
         <div className="flex align-start h-full">
-            <TaskDetailSider id={task_id} data={data} />
+            <TaskDetailSider id={id} data={data} />
 
             <WizardTable
                 rowKey="id"
@@ -137,7 +168,7 @@ const TaskDetail: FC = () => {
                             buttonStyle="solid"
                             options={detailHeaderGroupOptions}
                             value={headerGroupValue}
-                            disabled={!page.getParams()?.loading}
+                            disabled={tableLoading}
                             onChange={(e) => {
                                 setHeaderGroupValue(e.target.value);
                                 page.onLoad({ task_type: e.target.value });

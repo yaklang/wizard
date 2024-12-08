@@ -7,8 +7,6 @@ import ReactJson from 'react-json-view';
 
 import { generateUniqueId, randomString } from '@/utils';
 
-import Markdown from '../MarkDown';
-
 import type {
     BlockType,
     ReportJsonKindData,
@@ -29,6 +27,7 @@ import {
     NightingleRose,
     StackedVerticalBar,
 } from './compoments/EchartsInit';
+import { Markdown } from './compoments/utils/Markdown';
 
 const ReportTemplate: FC<TReportTemplateProps> = ({
     blocks,

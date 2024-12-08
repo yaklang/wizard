@@ -18,6 +18,11 @@ const getTaskDetail = (
         `/task/detail?form_runtime_id=${form_runtime_id}`,
     );
 
+const getTaskDetailTop = (id: number): Promise<ResponseData<any>> =>
+    axios.get<never, ResponseData<TTaskDetail>>(
+        `/task/start/batch-invoking-script-task/fetch?id=${id}`,
+    );
+
 // 获取端口资产 表格数据
 const getAssetsProts = (
     params: TGetAssetsProtsRequest,
@@ -74,4 +79,5 @@ export {
     getBatchInvokingScript,
     getAssertsData,
     getAssertsDataStateTable,
+    getTaskDetailTop,
 };
