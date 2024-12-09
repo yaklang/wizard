@@ -9,6 +9,7 @@ import type {
     TGetAssertsDataResponse,
     TTaskDetail,
 } from './types';
+import { Palm } from '@/gen/schema';
 
 // 获取任务详情 基础信息
 const getTaskDetail = (
@@ -72,6 +73,10 @@ const getAssertsDataStateTable = (
         `/asserts/data/state_table?task_id=${task_id}`,
     );
 
+const PostSendEmailReportData = (
+    data: Palm.SendSmtp,
+): Promise<ResponseData<Palm.ActionSucceeded>> =>
+    axios.post<never, ResponseData<Palm.ActionSucceeded>>('/send/smtp', data);
 export {
     getAssetsProts,
     getAssetsVulns,
@@ -80,4 +85,5 @@ export {
     getAssertsData,
     getAssertsDataStateTable,
     getTaskDetailTop,
+    PostSendEmailReportData,
 };

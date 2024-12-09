@@ -80,7 +80,12 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
                 time: it.created_at
                     ? dayjs.unix(it.created_at).format('YYYY-MM-DD HH:mm')
                     : '-',
-            }));
+            })) ?? [
+                {
+                    status: 'error',
+                    time: 812376817246,
+                },
+            ];
             return resultData;
         },
         { manual: true },
