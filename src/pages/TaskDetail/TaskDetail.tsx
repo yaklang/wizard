@@ -29,6 +29,20 @@ import { TableOptionsFilterDrawer } from './compoments/TableOptionsFilterDrawer/
 
 const { Group } = Radio;
 
+export type TDetailDatailOptions = Array<{
+    label: string;
+    value:
+        | 'task_id'
+        | 'target'
+        | 'ports'
+        | 'enable-brute'
+        | 'enbale-cve-baseline'
+        | 'plugins'
+        | 'ip_num'
+        | 'port_num'
+        | 'risk_num';
+}>;
+
 const TaskDetail: FC = () => {
     const [page] = WizardTable.usePage();
     const { id, task_id } = useParams(); // 获取路径参数
@@ -43,16 +57,53 @@ const TaskDetail: FC = () => {
             const resultTop = await getTaskDetailTop(id);
             const { data: dataTop } = resultTop;
             const { data } = result;
-            const transformResultDat = {
-                ...data,
-                task_id: dataTop?.task_id,
-                target: dataTop?.params?.target,
-                ports: dataTop?.params?.ports,
-                plugins: dataTop?.params?.plugins,
-                'enable-brute': dataTop?.params?.['enable-brute'],
-                'enbale-cve-baseline': dataTop?.params?.['enbale-cve-baseline'],
-            };
-            return transformResultDat;
+            const combinationData = [
+                {
+                    label: '任务ID',
+                    value: dataTop?.task_id,
+                },
+                {
+                    label: '目标',
+                    value: dataTop?.params?.target,
+                },
+                {
+                    label: '端口',
+                    value: dataTop?.params?.ports,
+                },
+                {
+                    label: 'enable-brute',
+                    value: dataTop?.params?.['enable-brute'],
+                },
+                {
+                    label: 'enbale-cve-baseline',
+                    value: dataTop?.params?.['enbale-cve-baseline'],
+                },
+                {
+                    label: '节点',
+                    value: dataTop?.params?.plugins,
+                },
+                {
+                    label: '存活主机数',
+                    value: data.ip_num ?? 0,
+                },
+                {
+                    label: '开放端口数',
+                    value: data?.port_num ?? 0,
+                },
+                {
+                    label: '漏洞与风险',
+                    value: data.risk_num ?? 0,
+                },
+            ];
+
+            const filterData: TDetailDatailOptions = combinationData.filter(
+                (item) =>
+                    item.value !== undefined &&
+                    item.value !== 'undefined' &&
+                    item.value !== null,
+            );
+
+            return filterData;
         },
         {
             manual: true, // 手动触发请求
@@ -168,7 +219,7 @@ const TaskDetail: FC = () => {
                             buttonStyle="solid"
                             options={detailHeaderGroupOptions}
                             value={headerGroupValue}
-                            disabled={tableLoading}
+                            // disabled={tableLoading}
                             onChange={(e) => {
                                 setHeaderGroupValue(e.target.value);
                                 page.onLoad({ task_type: e.target.value });
@@ -178,6 +229,10 @@ const TaskDetail: FC = () => {
                     options: {
                         dowloadFile: {
                             dowload_request: async () => console.log('下载'),
+                            fileName: '端口资产',
+                            btnProps: {
+                                type: 'primary',
+                            },
                         },
                         ProFilterSwitch: {
                             trigger: <TableOptionsFilterDrawer />,

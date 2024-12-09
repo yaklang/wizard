@@ -108,6 +108,8 @@ type RequestFunction = (
 // 导出按钮组件props
 interface TWizardExportProps extends ButtonProps {
     dowload_request: () => Promise<any>;
+    fileName?: string;
+    btnProps?: ButtonProps;
 }
 
 interface TableHeaderOptions {

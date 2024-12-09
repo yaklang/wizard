@@ -186,7 +186,7 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
                 title: item,
                 dataIndex: `name-${index}`,
                 key: `name-${index}`,
-                render: (text: any, record: any, index: number) => {
+                render: (text: any, _: any, index: number) => {
                     const firstRowIndex = newData.findIndex(
                         (item: string[]) => item[0] === text,
                     );

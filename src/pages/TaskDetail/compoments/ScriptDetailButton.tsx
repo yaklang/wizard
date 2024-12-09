@@ -23,7 +23,7 @@ const ScriptDetailButton = forwardRef<
     }
 >(({ title }, ref): ReactNode => {
     const [drawer] = WizardDrawer.useDrawer();
-    const [cover, setCover] = useState<string>('');
+    const [_, setCover] = useState<string>('');
 
     const [blocks, setBlocks] = useSafeState<TReportTemplateProps['blocks']>(
         [],
