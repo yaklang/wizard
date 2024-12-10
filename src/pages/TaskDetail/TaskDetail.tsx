@@ -28,6 +28,7 @@ import {
     exportsTableFn,
     tableFilterEnum,
 } from './compoments/utils';
+import { randomString } from '@/utils';
 
 const { Group } = Radio;
 
@@ -211,7 +212,7 @@ const TaskDetail: FC = () => {
             <TaskDetailSider id={id} data={data} />
 
             <WizardTable
-                rowKey="id"
+                rowKey={`updated_at${randomString(10)}`}
                 columns={columns}
                 page={page}
                 tableHeader={{

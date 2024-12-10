@@ -21,7 +21,7 @@ const IpTag: FC<TIpTagProps> = ({ value, onChange, data }) => {
                         )
                     }
                     className={`flex items-center justify-between cursor-pointer mt-3 color-${
-                        value?.includes(it.Verbose) ? '[#31343F]' : '[#4A94F8]'
+                        value?.includes(it.Verbose) ? '[#4A94F8]' : '[#31343F]'
                     }`}
                 >
                     <div>{it.Verbose}</div>

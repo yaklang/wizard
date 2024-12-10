@@ -79,7 +79,7 @@ const AssertsDataFilterDrawer = () => {
                     重置
                 </Button>
             </div>
-            <Item name={'host'} initialValue={[]}>
+            <Item name={'hosts'} initialValue={[]}>
                 <IpTag data={list} />
             </Item>
             <div className="flex align-center justify-between">

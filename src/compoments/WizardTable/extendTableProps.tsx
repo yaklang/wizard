@@ -227,26 +227,26 @@ const extendTableProps = (
 
     const tableHeaderMemo = useCallback(
         (selectKeys: any, columnsHeaderFilterType?: WizardColumnsType) => {
-            const color = state?.getExternal?.[selectKeys];
+            const colorStatus = state?.getExternal?.[selectKeys]?.length;
             return match(columnsHeaderFilterType)
                 .with('input', () => (
                     <TableHeaderSearch
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with('checkbox', () => (
                     <TableHeaderFilter
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with('radio', () => (
                     <TableHeaderFilter
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with('rangePicker', () => (
                     <VerticalAlignMiddleHeaderFilter
-                        className={`color-[${color ? '#1677ff' : '#B4BBCA'}]`}
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
                 .with(P.nullish, () => null)
