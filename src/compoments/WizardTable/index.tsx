@@ -222,6 +222,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     page.getParams = () => {
         return { filter, params, loading: state.loading };
     };
+    console.log(filter, 'filter');
 
     // 清除页面选中项
     page.clear = () => {

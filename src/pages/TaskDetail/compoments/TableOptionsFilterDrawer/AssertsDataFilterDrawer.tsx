@@ -4,10 +4,10 @@ import { Button, Form, Tooltip } from 'antd';
 
 import { VulnerabilityLevelPie } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPie';
 import { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
-// import { VulnerabilityTypePie } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePie';
 import { VulnerabilityTypePieRefProps } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePieType';
 import { useMemoizedFn } from 'ahooks';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { IpTag } from './IpTag';
 
 const { Item } = Form;
 
@@ -34,7 +34,19 @@ const data = [
     },
 ];
 
-const TableOptionsFilterDrawer = () => {
+const list = [
+    {
+        Verbose: '47.52.100.1/24',
+        Total: 824,
+    },
+    {
+        Verbose: '192.168.3.1/24',
+        Total: 14,
+    },
+];
+
+// 端口资产高级筛选
+const AssertsDataFilterDrawer = () => {
     const pieLevelRef = useRef<VulnerabilityLevelPieRefProps>({
         onReset: () => {},
     });
@@ -56,6 +68,20 @@ const TableOptionsFilterDrawer = () => {
 
     return (
         <div>
+            <div className="flex align-center justify-between">
+                <div>IP统计 </div>
+                <Button
+                    danger
+                    type="link"
+                    className="p-0 h-full"
+                    onClick={onLevelReset}
+                >
+                    重置
+                </Button>
+            </div>
+            <Item name={'host'} initialValue={[]}>
+                <IpTag data={list} />
+            </Item>
             <div className="flex align-center justify-between">
                 <div>
                     存活状态{' '}
@@ -79,6 +105,7 @@ const TableOptionsFilterDrawer = () => {
             >
                 <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
             </Item>
+
             <div className="flex align-center justify-between">
                 <div>风险状态</div>
                 <Button
@@ -98,4 +125,4 @@ const TableOptionsFilterDrawer = () => {
     );
 };
 
-export { TableOptionsFilterDrawer };
+export { AssertsDataFilterDrawer };

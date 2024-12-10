@@ -98,6 +98,7 @@ interface TGetAssertsDataResponse {
     updated_at: number;
     warning: number;
     low?: number;
+    level: string;
 }
 
 // 历史执行记录 报告信息响应数据

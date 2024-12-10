@@ -56,16 +56,16 @@ const getBatchInvokingScript = (params: {
         { params },
     );
 
-// 资产数据 表格数据 /api/asserts/data
+// 资产数据 表格数据
 const getAssertsData = (
     params: TGetAssetsVulnsRequest,
 ): Promise<ResponseData<TableResponseData<TGetAssertsDataResponse>>> =>
     axios.post<never, ResponseData<TableResponseData<TGetAssertsDataResponse>>>(
-        `/asserts/data`,
+        `/assets/data?limit=100`,
         params,
     );
 
-// 获取资产数据 高级筛选存活状态 /api/asserts/data/state_table?task_id=%5b%32%30%32%34%30%37%31%35%5d%2d%5b%37%e6%9c%88%31%35%e6%97%a5%5d%2d%5b%6f%78%53%59%49%33%5d%2d 这个接口是那个表的
+// 获取资产数据 高级筛选存活状态
 const getAssertsDataStateTable = (
     task_id: string,
 ): Promise<ResponseData<TableResponseData<TReportTableResponse>>> =>

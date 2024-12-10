@@ -67,10 +67,12 @@ export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
         data: [],
         pagemeta: genDefaultPagination(pageSize, 1),
     });
+
     const toExcel = useMemoizedFn((query = { limit: pageSize, Ppge: 1 }) => {
         setLoading(true);
         getData(query as any)
             .then((res: resProps) => {
+                // console.log(222, res, query, pageSize);
                 if (res) {
                     const {
                         header,
@@ -84,7 +86,7 @@ export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
                         totalCellNumber < maxCellNumber &&
                         pagemeta.total <= pageSize
                     ) {
-                        // 单元格数量小于最大单元格数量，直接导出
+                        // // 单元格数量小于最大单元格数量，直接导出
                         export_json_to_excel({
                             header: res.header,
                             data: res.exportData,
@@ -162,16 +164,16 @@ export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
             )}
             <Modal
                 title="数据导出"
-                visible={visible}
+                open={visible}
                 onCancel={() => setVisible(false)}
                 footer={null}
             >
-                {/* <p>
-                    共&nbsp;&nbsp;<Tag>{exportDataBatch.current?.length || 0}</Tag>条记录
-                </p> */}
                 <Space wrap>
                     {Array.from({ length: frequency }).map((_, index) => (
-                        <Button onClick={() => inBatchExport(index)}>
+                        <Button
+                            onClick={() => inBatchExport(index)}
+                            key={index}
+                        >
                             第{pagination.pagemeta.page}页
                             {exportNumber.current &&
                                 exportNumber.current * index + 1}

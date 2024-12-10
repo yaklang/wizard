@@ -13,10 +13,8 @@ import {
     ProtColumns,
 } from './compoments/Columns';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
-import { detailHeaderGroupOptions } from './compoments/data';
 import {
     getAssertsData,
-    getAssertsDataStateTable,
     getAssetsProts,
     getAssetsVulns,
     getTaskDetail,
@@ -25,7 +23,11 @@ import {
 import type { RequestFunction } from '@/compoments/WizardTable/types';
 import { useDependentCallback } from '@/hooks/useDependentCallback';
 import { useParams } from 'react-router-dom';
-import { TableOptionsFilterDrawer } from './compoments/TableOptionsFilterDrawer/AssertsTableFilterDrawer';
+import {
+    detailHeaderGroupOptions,
+    exportsTableFn,
+    tableFilterEnum,
+} from './compoments/utils';
 
 const { Group } = Radio;
 
@@ -50,7 +52,7 @@ const TaskDetail: FC = () => {
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
     const [columns, setColumns] = useSafeState<any>([]);
 
-    // 获取基础信息 此处数据需要组合
+    // 获取基础信息
     const { data, runAsync, loading } = useRequest(
         async (id, task_id) => {
             const result = await getTaskDetail(task_id);
@@ -174,12 +176,12 @@ const TaskDetail: FC = () => {
                             ...filter,
                             task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
                         });
-                        const { data: StateTableData } =
-                            await getAssertsDataStateTable(
-                                '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
-                                // id!
-                            );
-                        console.log(StateTableData);
+                        // const { data: StateTableData } =
+                        //     await getAssertsDataStateTable(
+                        //         '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
+                        //         // id!
+                        //     );
+                        // console.log(StateTableData);
                         setTableLoadings(false);
                         setColumns(AssertsDataColumns);
                         return {
@@ -214,28 +216,35 @@ const TaskDetail: FC = () => {
                 page={page}
                 tableHeader={{
                     tableHeaderGroup: (
-                        <Group
-                            optionType="button"
-                            buttonStyle="solid"
-                            options={detailHeaderGroupOptions}
-                            value={headerGroupValue}
-                            // disabled={tableLoading}
-                            onChange={(e) => {
-                                setHeaderGroupValue(e.target.value);
-                                page.onLoad({ task_type: e.target.value });
-                            }}
-                        />
+                        <Spin spinning={tableLoading}>
+                            <Group
+                                optionType="button"
+                                buttonStyle="solid"
+                                options={detailHeaderGroupOptions}
+                                value={headerGroupValue}
+                                onChange={(e) => {
+                                    setHeaderGroupValue(e.target.value);
+                                    page.clear();
+                                    page.onLoad({ task_type: e.target.value });
+                                }}
+                            />
+                        </Spin>
                     ),
                     options: {
                         dowloadFile: {
-                            dowload_request: async () => console.log('下载'),
+                            dowload_request: () =>
+                                exportsTableFn(
+                                    page.getParams(),
+                                    headerGroupValue,
+                                ),
                             fileName: '端口资产',
                             btnProps: {
                                 type: 'primary',
                             },
                         },
                         ProFilterSwitch: {
-                            trigger: <TableOptionsFilterDrawer />,
+                            trigger: tableFilterEnum(headerGroupValue),
+                            // <TableOptionsFilterDrawer />,
                             layout: 'vertical',
                         },
                     },
