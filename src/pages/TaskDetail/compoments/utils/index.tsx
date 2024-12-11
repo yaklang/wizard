@@ -1,4 +1,4 @@
-import { getAssertsData } from '@/apis/taskDetail';
+import { postAssertsData } from '@/apis/taskDetail';
 import { match } from 'ts-pattern';
 import { AssertsDataColumns } from '../Columns';
 import dayjs from 'dayjs';
@@ -10,9 +10,6 @@ import middleImg from '../img/middle.png';
 import lowImg from '../img/low.png';
 import debugImg from '../img/debug.png';
 import { TGetAssertsDataResponse } from '@/apis/taskDetail/types';
-import { AssetsVulnsFilterDrawer } from '../TableOptionsFilterDrawer/AssetsVulnsFilterDrawer';
-import { AssetsProtsFilterDrawer } from '../TableOptionsFilterDrawer/AssetsProtsFilterDrawer';
-import { AssertsDataFilterDrawer } from '../TableOptionsFilterDrawer/AssertsDataFilterDrawer';
 
 const detailHeaderGroupOptions = [
     {
@@ -129,7 +126,7 @@ const exportsTableFn = async (params: any, checked: 1 | 2 | 3) => {
         .with(2, () => console.log(2))
         .with(3, () => {
             return new Promise(async (resolve) => {
-                const data = await getAssertsData({
+                const data = await postAssertsData({
                     task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
                     ...params?.filter,
                     Ppge: 1,
@@ -179,19 +176,9 @@ const exportsTableFn = async (params: any, checked: 1 | 2 | 3) => {
         .exhaustive();
 };
 
-// 枚举 展示table 高级筛选抽屉值
-const tableFilterEnum = (type: 1 | 2 | 3) => {
-    return match(type)
-        .with(1, () => <AssetsProtsFilterDrawer />)
-        .with(2, () => <AssetsVulnsFilterDrawer />)
-        .with(3, () => <AssertsDataFilterDrawer />)
-        .exhaustive();
-};
-
 export {
     exportsTableFn,
     SeverityMapTag,
     survivalStatusList,
     detailHeaderGroupOptions,
-    tableFilterEnum,
 };

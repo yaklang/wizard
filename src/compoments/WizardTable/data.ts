@@ -16,6 +16,7 @@ const initialValue = {
     loading: false,
     proSwitchStatus: false,
     checkedKeys: [],
+    noResetFields: true,
 };
 
 export { initialValue };

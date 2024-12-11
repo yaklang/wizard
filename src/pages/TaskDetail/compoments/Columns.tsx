@@ -111,29 +111,6 @@ const AssetsVulnsColumns: CreateTableProps<TGetAssetsVulnsResponse>['columns'] =
         },
     ];
 
-const data = [
-    {
-        value: '低危',
-        label: '低危',
-    },
-    {
-        value: '中危',
-        label: '中危',
-    },
-    {
-        value: '严重',
-        label: '严重',
-    },
-    {
-        value: '高危',
-        label: '高危',
-    },
-    {
-        value: '信息',
-        label: '信息',
-    },
-];
-
 const AssertsDataColumns: CreateTableProps<TGetAssertsDataResponse>['columns'] =
     [
         {
@@ -145,8 +122,6 @@ const AssertsDataColumns: CreateTableProps<TGetAssertsDataResponse>['columns'] =
         {
             title: '存活状态',
             dataIndex: 'state',
-            columnsHeaderFilterType: 'checkbox',
-            wizardColumnsOptions: data,
             width: 120,
             render: (_, record) => {
                 const target = survivalStatusList.find(

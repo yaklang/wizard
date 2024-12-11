@@ -46,7 +46,7 @@ const getAssetsVulns = (
         },
     );
 
-// 获取报告详情 task_id
+// 获取报告详情
 const getBatchInvokingScript = (params: {
     task_id: string;
     page: number;
@@ -56,13 +56,33 @@ const getBatchInvokingScript = (params: {
         { params },
     );
 
+// 获取报告json
+const getTimelinRuntimeId = (
+    runtime_id: string,
+): Promise<
+    ResponseData<{ type: string; data: { id: string; blocks: any[] } }>
+> =>
+    axios.get<
+        never,
+        ResponseData<{ type: string; data: { id: string; blocks: any[] } }>
+    >(`/timeline/fetch?runtime_id=${runtime_id}`);
+
 // 资产数据 表格数据
-const getAssertsData = (
+const postAssertsData = (
     params: TGetAssetsVulnsRequest,
 ): Promise<ResponseData<TableResponseData<TGetAssertsDataResponse>>> =>
     axios.post<never, ResponseData<TableResponseData<TGetAssertsDataResponse>>>(
         `/assets/data?limit=100`,
         params,
+    );
+
+// 获取 xxx
+const getAssertsDataRiskInfo = (params: {
+    task_id: string;
+}): Promise<ResponseData<TableResponseData<TGetAssertsDataResponse>>> =>
+    axios.get<never, ResponseData<TableResponseData<TGetAssertsDataResponse>>>(
+        `/assets/data/riskInfo`,
+        { params },
     );
 
 // 获取资产数据 高级筛选存活状态
@@ -73,17 +93,21 @@ const getAssertsDataStateTable = (
         `/asserts/data/state_table?task_id=${task_id}`,
     );
 
+// 发送邮箱
 const PostSendEmailReportData = (
     data: Palm.SendSmtp,
 ): Promise<ResponseData<Palm.ActionSucceeded>> =>
     axios.post<never, ResponseData<Palm.ActionSucceeded>>('/send/smtp', data);
+
 export {
     getAssetsProts,
     getAssetsVulns,
     getTaskDetail,
     getBatchInvokingScript,
-    getAssertsData,
+    postAssertsData,
     getAssertsDataStateTable,
     getTaskDetailTop,
     PostSendEmailReportData,
+    getTimelinRuntimeId,
+    getAssertsDataRiskInfo,
 };

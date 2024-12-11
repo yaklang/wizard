@@ -1,13 +1,14 @@
-import { useRef } from 'react';
+import { FC, useEffect, useRef } from 'react';
 
 import { Button, Form, Tooltip } from 'antd';
 
 import { VulnerabilityLevelPie } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPie';
 import { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
 import { VulnerabilityTypePieRefProps } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePieType';
-import { useMemoizedFn } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { IpTag } from './IpTag';
+import { getAssertsDataRiskInfo } from '@/apis/taskDetail';
 
 const { Item } = Form;
 
@@ -46,7 +47,21 @@ const list = [
 ];
 
 // 端口资产高级筛选
-const AssertsDataFilterDrawer = () => {
+const AssertsDataFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
+    const { data: datas, run } = useRequest(
+        async () => {
+            const result = await getAssertsDataRiskInfo({
+                task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
+            });
+            return result;
+        },
+        { manual: true },
+    );
+
+    useEffect(() => {
+        run();
+    }, []);
+
     const pieLevelRef = useRef<VulnerabilityLevelPieRefProps>({
         onReset: () => {},
     });
@@ -98,13 +113,7 @@ const AssertsDataFilterDrawer = () => {
                     重置
                 </Button>
             </div>
-            <Item
-                name={'state'}
-                initialValue={[]}
-                className="border-b-solid border-[#EAECF3] border-b-[1px]"
-            >
-                <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
-            </Item>
+            <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
 
             <div className="flex align-center justify-between">
                 <div>风险状态</div>
@@ -117,10 +126,8 @@ const AssertsDataFilterDrawer = () => {
                     重置
                 </Button>
             </div>
-            <Item name={'level'} initialValue={[]}>
-                {/* <VulnerabilityTypePie ref={pieTypeRef} list={data} /> */}
-                <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
-            </Item>
+            {/* <VulnerabilityTypePie ref={pieTypeRef} list={data} /> */}
+            <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
         </div>
     );
 };

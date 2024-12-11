@@ -74,13 +74,13 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     runAsync(request);
                 }
 
-                dispatch({ loading: false });
+                dispatch({ loading: false, noResetFields: true });
             }
         },
         {
             manual: true,
             onError: () => {
-                dispatch({ loading: false });
+                dispatch({ loading: false, noResetFields: true });
             },
             debounceWait: 300,
         },
@@ -234,6 +234,9 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 total_page: state.pagemeta!.total_page,
             },
             filter: {},
+            getExternal: {},
+            proSwitchStatus: false,
+            noResetFields: false,
         });
     };
 

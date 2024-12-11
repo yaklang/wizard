@@ -14,21 +14,21 @@ import {
 } from './compoments/Columns';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
 import {
-    getAssertsData,
+    postAssertsData,
     getAssetsProts,
     getAssetsVulns,
     getTaskDetail,
     getTaskDetailTop,
+    getAssertsDataRiskInfo,
 } from '@/apis/taskDetail';
 import type { RequestFunction } from '@/compoments/WizardTable/types';
 import { useDependentCallback } from '@/hooks/useDependentCallback';
 import { useParams } from 'react-router-dom';
-import {
-    detailHeaderGroupOptions,
-    exportsTableFn,
-    tableFilterEnum,
-} from './compoments/utils';
-import { randomString } from '@/utils';
+import { detailHeaderGroupOptions, exportsTableFn } from './compoments/utils';
+
+import { AssetsVulnsFilterDrawer } from './compoments/TableOptionsFilterDrawer/AssetsVulnsFilterDrawer';
+import { AssetsProtsFilterDrawer } from './compoments/TableOptionsFilterDrawer/AssetsProtsFilterDrawer';
+import { AssertsDataFilterDrawer } from './compoments/TableOptionsFilterDrawer/AssertsDataFilterDrawer';
 
 const { Group } = Radio;
 
@@ -172,7 +172,7 @@ const TaskDetail: FC = () => {
                 .with(3, async () => {
                     try {
                         setTableLoadings(true);
-                        const { data } = await getAssertsData({
+                        const { data } = await postAssertsData({
                             ...params,
                             ...filter,
                             task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
@@ -187,7 +187,6 @@ const TaskDetail: FC = () => {
                         setColumns(AssertsDataColumns);
                         return {
                             data,
-                            // count:
                         };
                     } catch {
                         setTableLoadings(false);
@@ -207,12 +206,21 @@ const TaskDetail: FC = () => {
         ); // 占位符
     }
 
+    // 枚举 展示table 高级筛选抽屉值
+    const tableFilterEnum = (type: 1 | 2 | 3) => {
+        return match(type)
+            .with(1, () => <AssetsProtsFilterDrawer />)
+            .with(2, () => <AssetsVulnsFilterDrawer />)
+            .with(3, () => <AssertsDataFilterDrawer task_id={task_id!} />)
+            .exhaustive();
+    };
+
     return (
         <div className="flex align-start h-full">
             <TaskDetailSider id={id} data={data} />
 
             <WizardTable
-                rowKey={`updated_at${randomString(10)}`}
+                rowKey={'id'}
                 columns={columns}
                 page={page}
                 tableHeader={{
@@ -245,7 +253,6 @@ const TaskDetail: FC = () => {
                         },
                         ProFilterSwitch: {
                             trigger: tableFilterEnum(headerGroupValue),
-                            // <TableOptionsFilterDrawer />,
                             layout: 'vertical',
                         },
                     },

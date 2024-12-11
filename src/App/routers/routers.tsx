@@ -99,7 +99,14 @@ const routers: RouteObjectRootMy[] = [
                 name: '节点配置',
                 key: 'node',
                 icon: <NodeConfigIcon />,
-                element: <NodeConfig />,
+                children: [
+                    {
+                        path: 'install',
+                        name: '节点安装',
+                        key: 'node-intsall',
+                        element: <NodeConfig />,
+                    },
+                ],
             },
             {
                 path: 'system-management',

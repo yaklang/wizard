@@ -15,4 +15,18 @@ const getssetsProts = (
 const deleteProts = (params: any): Promise<ResponseData<boolean>> =>
     axios.delete<never, ResponseData<boolean>>(`/timeline/items`, { params });
 
-export { getssetsProts, deleteProts };
+const getTimelinId = (
+    id: number,
+): Promise<
+    ResponseData<{
+        data: { type: string; data: { id: string; blocks: any[] } };
+    }>
+> =>
+    axios.get<
+        never,
+        ResponseData<{
+            data: { type: string; data: { id: string; blocks: any[] } };
+        }>
+    >(`/timeline/fetch?id=${id}`);
+
+export { getssetsProts, deleteProts, getTimelinId };

@@ -90,7 +90,7 @@ const CommonTasksColumns = (
             title: '执行节点',
             dataIndex: 'node_ids',
             columnsHeaderFilterType: 'checkbox',
-            wizardColumnsOptions: taskNodeData ?? [{ label: 0, value: 0 }],
+            wizardColumnsOptions: taskNodeData,
             width: 240,
             render: (_, record) => (
                 <div className="text-clip-2">{record?.scanner?.join('、')}</div>

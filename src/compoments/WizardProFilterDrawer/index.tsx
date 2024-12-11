@@ -51,7 +51,8 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
             filterDispatch?.({
                 getExternal: { ...fieldsValue },
             });
-        }, [state?.filter]);
+            !state?.noResetFields && form.resetFields();
+        }, [state?.filter, state?.noResetFields]);
 
         return (
             state && (

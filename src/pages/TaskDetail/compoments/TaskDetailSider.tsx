@@ -10,7 +10,7 @@ import '../index.scss';
 import dayjs from 'dayjs';
 import { randomString } from '@/utils';
 import { ViewReportDrawer } from './ViewReportDrawer';
-import { getBatchInvokingScript } from '@/apis/taskDetail';
+import { getBatchInvokingScript, getTimelinRuntimeId } from '@/apis/taskDetail';
 import { TDetailDatailOptions } from '../TaskDetail';
 
 const { Paragraph } = Typography;
@@ -166,7 +166,9 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
                                             }
                                         </Tag>
                                     </div>
-                                    <ViewReportDrawer runtime_id='7d021a26-46c7-43bb-a2d6-cd51d8fd1238"' />
+                                    <ViewReportDrawer
+                                        runtime_id={it.runtime_id}
+                                    />
                                 </div>
                             ))
                         ) : (
