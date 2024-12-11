@@ -4,7 +4,16 @@ import { CloseOutlined } from '@ant-design/icons';
 
 import HeaderBg from './images/headerBg.png';
 import { useRequest, useSafeState } from 'ahooks';
-import { Button, Form, Input, message, Radio, Select, Typography } from 'antd';
+import {
+    Button,
+    Form,
+    Input,
+    message,
+    Radio,
+    Select,
+    Spin,
+    Typography,
+} from 'antd';
 import { getFileExists } from '@/apis/NodeConfigApi';
 const { Link } = Typography;
 
@@ -16,13 +25,14 @@ const NodeConfig: FC = () => {
     const [runCode, setRunCode] = useSafeState<string>();
     const location = useRef<any>(window.location);
 
-    const { loading, run } = useRequest(getFileExists, { manual: true });
+    const { loading, runAsync } = useRequest(getFileExists, { manual: true });
 
     const headClose = () => {
         setHeaderStatus(false);
     };
 
     const headSumbit = async () => {
+        setRunCode(undefined);
         const data = await form.validateFields();
         const { point_type, node_name } = data;
         const isHost: boolean = point_type === 'host';
@@ -37,14 +47,27 @@ const NodeConfig: FC = () => {
             `;
 
         try {
-            await run(isHost ? 'yak' : 'docker-compose');
-            setRunCode(str);
+            runAsync(isHost ? 'yak' : 'docker-compose').then(() => {
+                setRunCode(str);
+            });
         } catch {
             message.error(
                 isHost ? '主机节点未找到' : 'docker compose文件未找到',
             );
         }
     };
+
+    const headCopy = () => {
+        navigator.clipboard
+            .writeText(runCode!)
+            .then(() => {
+                message.success('复制成功');
+            })
+            .catch(() => {
+                message.info('复制失败，请重试');
+            });
+    };
+
     return (
         <div className="p-4">
             {headerStatus && (
@@ -137,20 +160,19 @@ const NodeConfig: FC = () => {
                     </div>
 
                     {runCode && (
-                        <div className="mt-2">
-                            <div className="flex justify-between">
-                                <div>请以root权限执行以下命令</div>
-                                <Link
-                                    copyable={{
-                                        text: runCode,
-                                        icon: ['点击复制命令', '点击复制命令'],
-                                    }}
-                                />
+                        <Spin spinning={loading}>
+                            <div className="mt-2">
+                                <div className="flex justify-between">
+                                    <div>请以root权限执行以下命令</div>
+                                    <Button type="link" onClick={headCopy}>
+                                        点击复制命令
+                                    </Button>
+                                </div>
+                                <div className="w-full p-2 rounded bg-[#f3f5f8]">
+                                    {runCode}
+                                </div>
                             </div>
-                            <div className="w-full p-2 rounded bg-[#f3f5f8]">
-                                {runCode}
-                            </div>
-                        </div>
+                        </Spin>
                     )}
                 </div>
             </Form>
