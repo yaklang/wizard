@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { FC, useRef } from 'react';
 
 import { Button, Form, Tooltip } from 'antd';
 
@@ -35,7 +35,8 @@ const data = [
 ];
 
 // 端口资产高级筛选
-const AssetsVulnsFilterDrawer = () => {
+const AssetsVulnsFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
+    console.log(task_id);
     const pieLevelRef = useRef<VulnerabilityLevelPieRefProps>({
         onReset: () => {},
     });

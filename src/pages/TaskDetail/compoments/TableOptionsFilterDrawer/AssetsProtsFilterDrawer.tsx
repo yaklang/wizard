@@ -1,102 +1,107 @@
-import { useRef } from 'react';
+import { FC, useMemo } from 'react';
 
-import { Button, Form, Tooltip } from 'antd';
-
-import { VulnerabilityLevelPie } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPie';
-import { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
-// import { VulnerabilityTypePie } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePie';
-import { VulnerabilityTypePieRefProps } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePieType';
-import { useMemoizedFn } from 'ahooks';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { getAssetsProtsFilter } from '@/apis/taskDetail';
+import { useRequest } from 'ahooks';
+import { Button, Collapse, Empty, Form } from 'antd';
+import { AssetsProtsGroupTag } from './AssetsProtsGroupTag';
+import {
+    AssetsProtsFilterDataList,
+    sortDataByList,
+    targetTitle,
+    updateAssetsProtsFilterDataList,
+} from './data';
+import { match, P } from 'ts-pattern';
 
 const { Item } = Form;
 
-const data = [
-    {
-        Verbose: '低危',
-        Total: 28,
-    },
-    {
-        Verbose: '中危',
-        Total: 90,
-    },
-    {
-        Verbose: '严重',
-        Total: 15,
-    },
-    {
-        Verbose: '高危',
-        Total: 36,
-    },
-    {
-        Verbose: '信息',
-        Total: 80,
-    },
-];
-
 // 端口资产高级筛选
-const AssetsProtsFilterDrawer = () => {
-    const pieLevelRef = useRef<VulnerabilityLevelPieRefProps>({
-        onReset: () => {},
-    });
-    const pieTypeRef = useRef<VulnerabilityTypePieRefProps>({
-        onReset: () => {},
+const AssetsProtsFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
+    const { data } = useRequest(async () => {
+        const { data } = await getAssetsProtsFilter({
+            task_id: '[20240715]-[7月15日]-[oxSYI3]-',
+        });
+        const list = data?.list ?? [];
+
+        // 调用函数更新数据
+        const updatedData = updateAssetsProtsFilterDataList(
+            list,
+            AssetsProtsFilterDataList,
+        );
+
+        const translateKeys = Object.keys(targetTitle);
+        const sortedData = sortDataByList(translateKeys, updatedData);
+
+        const resultData = {
+            items: sortedData,
+            keys: Object.keys(sortedData),
+        };
+
+        return resultData;
     });
 
-    const onLevelReset = useMemoizedFn((e) => {
-        e.stopPropagation();
-        pieLevelRef.current.onReset();
-    });
+    const CollapseItems = useMemo(() => {
+        return match(data)
+            .with(
+                P.when(
+                    (val) => Array.isArray(val?.keys) && val.keys.length > 0,
+                ),
+                (value) => {
+                    return (
+                        <Collapse
+                            bordered={true}
+                            ghost
+                            items={value?.keys.map((it) => {
+                                return {
+                                    key: it,
+                                    style: {
+                                        borderBottom: '1px solid #EAECF3',
+                                        borderRadius: '0px',
+                                        marginBottom: '8px',
+                                    },
+                                    extra: (
+                                        <Button
+                                            color="danger"
+                                            variant="link"
+                                            className="p-0 h-[22px]"
+                                        >
+                                            重置
+                                        </Button>
+                                    ),
+                                    label: targetTitle[
+                                        it as
+                                            | 'group'
+                                            | 'sever'
+                                            | 'data'
+                                            | 'webSever'
+                                            | 'fingerprint'
+                                    ],
+                                    children: (
+                                        <div>
+                                            <Item
+                                                name={
+                                                    it === 'group'
+                                                        ? 'tags'
+                                                        : 'services'
+                                                }
+                                                initialValue={[]}
+                                            >
+                                                <AssetsProtsGroupTag
+                                                    data={value.items[it]}
+                                                />
+                                            </Item>
+                                        </div>
+                                    ),
+                                };
+                            })}
+                            defaultActiveKey={value?.keys}
+                        />
+                    );
+                },
+            )
+            .otherwise(() => <Empty />);
+    }, [data]);
 
-    const onPieTypeReset = useMemoizedFn((e) => {
-        e.stopPropagation();
-        pieTypeRef.current.onReset();
-    });
-
-    // console.log('form', form.getFieldsValue());
-
-    return (
-        <div>
-            <div className="flex align-center justify-between">
-                <div>
-                    存活状态{' '}
-                    <Tooltip title="手动选择所有漏洞类型后，点击重置即可查看所有数据">
-                        <ExclamationCircleOutlined />
-                    </Tooltip>
-                </div>
-                <Button
-                    danger
-                    type="link"
-                    className="p-0 h-full"
-                    onClick={onLevelReset}
-                >
-                    重置
-                </Button>
-            </div>
-            <Item
-                name={'state'}
-                initialValue={[]}
-                className="border-b-solid border-[#EAECF3] border-b-[1px]"
-            >
-                <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
-            </Item>
-            <div className="flex align-center justify-between">
-                <div>风险状态</div>
-                <Button
-                    danger
-                    type="link"
-                    className="p-0 h-full"
-                    onClick={onPieTypeReset}
-                >
-                    重置
-                </Button>
-            </div>
-            <Item name={'level'} initialValue={[]}>
-                {/* <VulnerabilityTypePie ref={pieTypeRef} list={data} /> */}
-                <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
-            </Item>
-        </div>
-    );
+    return CollapseItems;
 };
 
 export { AssetsProtsFilterDrawer };

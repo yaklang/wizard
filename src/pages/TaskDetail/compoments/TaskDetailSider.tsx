@@ -10,7 +10,10 @@ import '../index.scss';
 import dayjs from 'dayjs';
 import { randomString } from '@/utils';
 import { ViewReportDrawer } from './ViewReportDrawer';
-import { getBatchInvokingScript, getTimelinRuntimeId } from '@/apis/taskDetail';
+import {
+    getBatchInvokingScript,
+    // getTimelinRuntimeId
+} from '@/apis/taskDetail';
 import { TDetailDatailOptions } from '../TaskDetail';
 
 const { Paragraph } = Typography;

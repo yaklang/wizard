@@ -15,11 +15,11 @@ import {
 import { TaskDetailSider } from './compoments/TaskDetailSider';
 import {
     postAssertsData,
-    getAssetsProts,
-    getAssetsVulns,
+    postAssetsProts,
+    postAssetsVulns,
     getTaskDetail,
     getTaskDetailTop,
-    getAssertsDataRiskInfo,
+    // getAssertsDataRiskInfo,
 } from '@/apis/taskDetail';
 import type { RequestFunction } from '@/compoments/WizardTable/types';
 import { useDependentCallback } from '@/hooks/useDependentCallback';
@@ -138,10 +138,10 @@ const TaskDetail: FC = () => {
                 .with(1, async () => {
                     try {
                         setTableLoadings(true);
-                        const { data } = await getAssetsProts({
+                        const { data } = await postAssetsProts({
                             ...params,
                             ...filter,
-                            taskid: id,
+                            task_id: task_id,
                         });
                         setColumns(ProtColumns);
                         setTableLoadings(false);
@@ -155,7 +155,7 @@ const TaskDetail: FC = () => {
                 .with(2, async () => {
                     try {
                         setTableLoadings(true);
-                        const { data } = await getAssetsVulns({
+                        const { data } = await postAssetsVulns({
                             ...params,
                             ...filter,
                             task_id,
@@ -177,12 +177,6 @@ const TaskDetail: FC = () => {
                             ...filter,
                             task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
                         });
-                        // const { data: StateTableData } =
-                        //     await getAssertsDataStateTable(
-                        //         '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
-                        //         // id!
-                        //     );
-                        // console.log(StateTableData);
                         setTableLoadings(false);
                         setColumns(AssertsDataColumns);
                         return {
@@ -209,8 +203,8 @@ const TaskDetail: FC = () => {
     // 枚举 展示table 高级筛选抽屉值
     const tableFilterEnum = (type: 1 | 2 | 3) => {
         return match(type)
-            .with(1, () => <AssetsProtsFilterDrawer />)
-            .with(2, () => <AssetsVulnsFilterDrawer />)
+            .with(1, () => <AssetsProtsFilterDrawer task_id={task_id!} />)
+            .with(2, () => <AssetsVulnsFilterDrawer task_id={task_id!} />)
             .with(3, () => <AssertsDataFilterDrawer task_id={task_id!} />)
             .exhaustive();
     };

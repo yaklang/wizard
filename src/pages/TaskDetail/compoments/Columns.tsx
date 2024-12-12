@@ -46,7 +46,7 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
         title: 'Title',
         dataIndex: 'task_name',
         columnsHeaderFilterType: 'input',
-        // width: 180,
+        width: 180,
     },
     {
         title: '更新时间',
@@ -63,19 +63,20 @@ const AssetsVulnsColumns: CreateTableProps<TGetAssetsVulnsResponse>['columns'] =
         {
             title: '序号',
             dataIndex: 'id',
-            width: 120,
+            width: 80,
         },
         {
             title: '标题',
             dataIndex: 'title',
             columnsHeaderFilterType: 'input',
+            width: 320,
         },
         {
             title: '类型',
             dataIndex: 'risk_type_verbose',
             columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: scriptTypeOption,
-            width: 240,
+            width: 120,
         },
         {
             title: '等级',
@@ -97,7 +98,7 @@ const AssetsVulnsColumns: CreateTableProps<TGetAssetsVulnsResponse>['columns'] =
             title: 'IP',
             dataIndex: 'ip_addr',
             columnsHeaderFilterType: 'input',
-            width: 240,
+            width: 180,
         },
         {
             title: 'Token',
@@ -107,6 +108,7 @@ const AssetsVulnsColumns: CreateTableProps<TGetAssetsVulnsResponse>['columns'] =
         {
             title: '操作',
             width: 70,
+            fixed: 'right',
             render: (_, render) => <AssetsVulnsDetailOperate render={render} />,
         },
     ];

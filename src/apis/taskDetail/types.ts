@@ -20,7 +20,7 @@ interface TGetAssetsProtsRequest {
     services?: string[];
     state?: string;
     tags?: string[];
-    taskid?: string;
+    task_id?: string;
     Ppge?: number;
 }
 

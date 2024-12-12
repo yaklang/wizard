@@ -25,25 +25,26 @@ const getTaskDetailTop = (id: number): Promise<ResponseData<any>> =>
     );
 
 // 获取端口资产 表格数据
-const getAssetsProts = (
-    params: TGetAssetsProtsRequest,
+const postAssetsProts = (
+    data: TGetAssetsProtsRequest,
 ): Promise<ResponseData<TableResponseData<TGetAssetsProtsResponse>>> =>
-    axios.get<never, ResponseData<TableResponseData<TGetAssetsProtsResponse>>>(
+    axios.post<never, ResponseData<TableResponseData<TGetAssetsProtsResponse>>>(
         `/assets/ports`,
-        {
-            params,
-        },
+        data,
     );
 
+// 获取端口资产 高级筛选信息
+const getAssetsProtsFilter = (params: any) =>
+    // axios.get("/assets/vulns", {params})
+    axios.get(`/assets/ports`, { params });
+
 // 获取漏洞与风险 表格数据
-const getAssetsVulns = (
-    params: TGetAssetsVulnsRequest,
+const postAssetsVulns = (
+    data: TGetAssetsVulnsRequest,
 ): Promise<ResponseData<TableResponseData<TGetAssetsVulnsResponse>>> =>
-    axios.get<never, ResponseData<TableResponseData<TGetAssetsVulnsResponse>>>(
+    axios.post<never, ResponseData<TableResponseData<TGetAssetsVulnsResponse>>>(
         `/assets/vulns`,
-        {
-            params,
-        },
+        data,
     );
 
 // 获取报告详情
@@ -100,8 +101,9 @@ const PostSendEmailReportData = (
     axios.post<never, ResponseData<Palm.ActionSucceeded>>('/send/smtp', data);
 
 export {
-    getAssetsProts,
-    getAssetsVulns,
+    postAssetsProts,
+    getAssetsProtsFilter,
+    postAssetsVulns,
     getTaskDetail,
     getBatchInvokingScript,
     postAssertsData,

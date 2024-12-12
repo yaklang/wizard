@@ -90,6 +90,7 @@ const ReportManage: FC = () => {
         {
             title: '报告名称',
             dataIndex: 'report_title',
+            width: 200,
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,

@@ -2,7 +2,7 @@ import { FC } from 'react';
 
 import { WizardTable } from '@/compoments';
 
-import { getAssetsProts } from '@/apis/taskDetail';
+import { postAssetsProts } from '@/apis/taskDetail';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
 import { Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
@@ -76,7 +76,7 @@ const PortAssets: FC = () => {
                 },
             }}
             request={async (params, filter) => {
-                const { data } = await getAssetsProts({
+                const { data } = await postAssetsProts({
                     ...params,
                     ...filter,
                 });

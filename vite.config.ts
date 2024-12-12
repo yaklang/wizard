@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => {
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, 'src'),
+                './cptable': 'cptable', // 指向已安装的模块
             },
             extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },

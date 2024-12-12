@@ -44,14 +44,14 @@ interface PaginationProps {
     limit: number;
 }
 
-const maxCellNumber = 100000; // 最大单元格10w
+const maxCellNumber = 10000; // 最大单元格10w
 
 export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
     const {
         btnProps,
         getData,
         fileName = '端口资产',
-        pageSize = 100000,
+        pageSize = 10000,
         showButton = true,
         text,
         // openModal = false,
@@ -72,7 +72,6 @@ export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
         setLoading(true);
         getData(query as any)
             .then((res: resProps) => {
-                // console.log(222, res, query, pageSize);
                 if (res) {
                     const {
                         header,

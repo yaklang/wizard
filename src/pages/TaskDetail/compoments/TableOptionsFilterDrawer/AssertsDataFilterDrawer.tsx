@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useRef } from 'react';
 
 import { Button, Form, Tooltip } from 'antd';
 
@@ -48,7 +48,7 @@ const list = [
 
 // 端口资产高级筛选
 const AssertsDataFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
-    const { data: datas, run } = useRequest(
+    const { data: datas } = useRequest(
         async () => {
             const result = await getAssertsDataRiskInfo({
                 task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
@@ -57,10 +57,7 @@ const AssertsDataFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
         },
         { manual: true },
     );
-
-    useEffect(() => {
-        run();
-    }, []);
+    console.log(task_id, datas);
 
     const pieLevelRef = useRef<VulnerabilityLevelPieRefProps>({
         onReset: () => {},
@@ -78,8 +75,6 @@ const AssertsDataFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
         e.stopPropagation();
         pieTypeRef.current.onReset();
     });
-
-    // console.log('form', form.getFieldsValue());
 
     return (
         <div>
@@ -126,7 +121,6 @@ const AssertsDataFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
                     重置
                 </Button>
             </div>
-            {/* <VulnerabilityTypePie ref={pieTypeRef} list={data} /> */}
             <VulnerabilityLevelPie ref={pieLevelRef} list={data} />
         </div>
     );

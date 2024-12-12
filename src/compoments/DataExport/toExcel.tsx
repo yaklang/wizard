@@ -2,7 +2,6 @@
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
-import * as XLSXStyle from 'xlsx-style';
 
 function sheet_from_array_of_arrays(data, optsSingleCellSetting) {
     var ws = {};
@@ -49,7 +48,7 @@ function sheet_from_array_of_arrays(data, optsSingleCellSetting) {
             ws[cell_ref] = cell;
         }
     }
-    if (range.s.c < 10000000) ws['!ref'] = XLSX.utils.encode_range(range);
+    if (range.s.c < 30000) ws['!ref'] = XLSX.utils.encode_range(range);
     return ws;
 }
 
@@ -90,6 +89,7 @@ export function export_json_to_excel({
     data.unshift(header);
 
     var ws_name = 'SheetJS';
+    console.log(data, optsSingleCellSetting, 'data, optsSingleCellSetting');
     var wb: XLSX.WorkBook = {
             SheetNames: [],
             Sheets: {},
@@ -133,11 +133,24 @@ export function export_json_to_excel({
     wb.SheetNames.push(ws_name);
     wb.Sheets[ws_name] = ws;
 
-    var wbout = XLSX.write(wb, {
+    // 创建工作簿并导出
+    const wbout = XLSX.write(wb, {
         bookType: bookType || 'xlsx',
         bookSST: false,
         type: 'binary',
     });
+
+    // 转换为二进制数组
+    function s2ab(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i < s.length; i++) {
+            view[i] = s.charCodeAt(i) & 0xff;
+        }
+        return buf;
+    }
+
+    // 保存文件
     saveAs(
         new Blob([s2ab(wbout)], {
             type: 'application/octet-stream',

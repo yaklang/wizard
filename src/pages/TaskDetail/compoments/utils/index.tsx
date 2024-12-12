@@ -1,6 +1,10 @@
-import { postAssertsData } from '@/apis/taskDetail';
+import { postAssertsData, postAssetsProts } from '@/apis/taskDetail';
 import { match } from 'ts-pattern';
-import { AssertsDataColumns } from '../Columns';
+import {
+    AssertsDataColumns,
+    // AssetsVulnsColumns,
+    ProtColumns,
+} from '../Columns';
 import dayjs from 'dayjs';
 
 import infoImg from '../img/info.png';
@@ -102,37 +106,49 @@ const formatTimestamp = (t: number) => {
 const exportsTableFn = async (params: any, checked: 1 | 2 | 3) => {
     return match(checked)
         .with(1, () => {
-            console.log(11);
-            // return new Promise(async (resolve) => {
-            //     const { data } = await getAssetsProts({
-            //         ...params?.filter,
-            //         page: -1,
-            //     });
-            //     const columnsTitle =
-            //         ProtColumns?.map((it) => it.title) ?? [];
-            //     const columnsDataIndex =
-            //         ProtColumns?.map((it) => it.dataIndex) ?? [];
-            //     const exportData = formatJson(
-            //         columnsDataIndex,
-            //         data?.data ?? [],
-            //     );
-            //     resolve({
-            //         columnsTitle,
-            //         exportData,
-            //         response: data,
-            //     });
-            // });
+            return new Promise(async (resolve) => {
+                const { data } = await postAssetsProts({
+                    task_id: 237,
+                    ...params?.filter,
+                    Ppge: 1,
+                    limit: -1,
+                });
+                const columnsTitle = ProtColumns?.map((it) => it.title) ?? [];
+                const columnsDataIndex =
+                    ProtColumns?.map((it) => it.dataIndex) ?? [];
+
+                const exportData = data?.list.map((item: any) => {
+                    return columnsDataIndex.map((key: any) => {
+                        if (key === 'updated_at') {
+                            return formatTimestamp(item[key]);
+                        }
+                        // else if (key === 'fingerprint') {
+                        //     return '-';
+                        // }
+                        else {
+                            return item[key];
+                        }
+                    });
+                });
+
+                resolve({
+                    header: columnsTitle,
+                    exportData,
+                    response: data,
+                    pageSize: 300,
+                });
+            });
         })
         .with(2, () => console.log(2))
         .with(3, () => {
             return new Promise(async (resolve) => {
-                const data = await postAssertsData({
+                const { data } = await postAssertsData({
                     task_id: '[重构SYN-20240718]-[7月19日]-[WxPbzt]-',
                     ...params?.filter,
                     Ppge: 1,
                     page: -1,
                 });
-                const list = data?.data?.list ?? [];
+                const list = data?.list ?? [];
                 const columnsTitle =
                     AssertsDataColumns?.map((it) =>
                         it.dataIndex === 'id'
@@ -169,7 +185,7 @@ const exportsTableFn = async (params: any, checked: 1 | 2 | 3) => {
                 resolve({
                     header: columnsTitle,
                     exportData,
-                    response: data?.data,
+                    response: data,
                 });
             });
         })

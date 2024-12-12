@@ -5,11 +5,9 @@ import { TReportRequest, TReportResonse } from './types';
 
 // 获取报告管理 表格数据
 const getssetsProts = (
-    params: TReportRequest,
+    data: TReportRequest,
 ): Promise<ResponseData<TReportResonse>> =>
-    axios.get<never, ResponseData<TReportResonse>>(`/report/items`, {
-        params,
-    });
+    axios.post<never, ResponseData<TReportResonse>>(`/report/items`, data);
 
 // 删除报告管理
 const deleteProts = (params: any): Promise<ResponseData<boolean>> =>

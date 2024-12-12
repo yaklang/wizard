@@ -4,18 +4,8 @@ import { CloseOutlined } from '@ant-design/icons';
 
 import HeaderBg from './images/headerBg.png';
 import { useRequest, useSafeState } from 'ahooks';
-import {
-    Button,
-    Form,
-    Input,
-    message,
-    Radio,
-    Select,
-    Spin,
-    Typography,
-} from 'antd';
+import { Button, Form, Input, message, Radio, Select, Spin } from 'antd';
 import { getFileExists } from '@/apis/NodeConfigApi';
-const { Link } = Typography;
 
 const { Item } = Form;
 
