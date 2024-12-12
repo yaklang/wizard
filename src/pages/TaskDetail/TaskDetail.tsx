@@ -203,7 +203,9 @@ const TaskDetail: FC = () => {
     // 枚举 展示table 高级筛选抽屉值
     const tableFilterEnum = (type: 1 | 2 | 3) => {
         return match(type)
-            .with(1, () => <AssetsProtsFilterDrawer task_id={task_id!} />)
+            .with(1, () => (
+                <AssetsProtsFilterDrawer task_id={task_id!} page={page} />
+            ))
             .with(2, () => <AssetsVulnsFilterDrawer task_id={task_id!} />)
             .with(3, () => <AssertsDataFilterDrawer task_id={task_id!} />)
             .exhaustive();

@@ -240,6 +240,16 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         });
     };
 
+    // 更改高级筛选项
+    page.editFilter = (args) => {
+        dispatch({
+            filter: {
+                ...state.filter,
+                ...args,
+            },
+        });
+    };
+
     page.localRefrech = (args) => {
         match(args)
             .with({ operate: 'edit' }, ({ oldObj, newObj }) => {

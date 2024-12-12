@@ -32,6 +32,7 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
         };
 
         const headFieldsChange = () => {
+            console.log(111);
             const fieldsValue = form.getFieldsValue();
             filterDispatch &&
                 filterDispatch({
@@ -47,8 +48,14 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
 
         useUpdateEffect(() => {
             const fieldsValue = form.getFieldsValue();
-            form.setFieldsValue(state?.filter);
+            console.log(state?.filter, 'state?.filter');
             filterDispatch?.({
+                params: {
+                    page: 1,
+                    limit: state!.params!.limit,
+                    total: state!.pagemeta!.total,
+                    total_page: state!.pagemeta!.total_page,
+                },
                 getExternal: { ...fieldsValue },
             });
             !state?.noResetFields && form.resetFields();

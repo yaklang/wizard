@@ -11,12 +11,17 @@ import {
     updateAssetsProtsFilterDataList,
 } from './data';
 import { match, P } from 'ts-pattern';
+import { UsePageRef } from '@/hooks/usePage';
 
 const { Item } = Form;
 
 // 端口资产高级筛选
-const AssetsProtsFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
+const AssetsProtsFilterDrawer: FC<{ task_id: string; page: UsePageRef }> = ({
+    task_id,
+    page,
+}) => {
     const { data } = useRequest(async () => {
+        console.log(task_id, 'id');
         const { data } = await getAssetsProtsFilter({
             task_id: '[20240715]-[7月15日]-[oxSYI3]-',
         });
@@ -51,6 +56,9 @@ const AssetsProtsFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
                             bordered={true}
                             ghost
                             items={value?.keys.map((it) => {
+                                const type =
+                                    it === 'group' ? 'tags' : 'services';
+
                                 return {
                                     key: it,
                                     style: {
@@ -63,6 +71,34 @@ const AssetsProtsFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
                                             color="danger"
                                             variant="link"
                                             className="p-0 h-[22px]"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const targetData =
+                                                    data?.items[it];
+                                                const getTableParams =
+                                                    page.getParams()?.filter;
+
+                                                const filterCheckedList =
+                                                    type === 'tags'
+                                                        ? []
+                                                        : getTableParams?.services?.filter(
+                                                              (key?: string) =>
+                                                                  !targetData
+                                                                      ?.map(
+                                                                          (
+                                                                              item,
+                                                                          ) =>
+                                                                              item.value,
+                                                                      )
+                                                                      .includes(
+                                                                          key,
+                                                                      ),
+                                                          );
+                                                page.editFilter({
+                                                    tags: [],
+                                                    // services: filterCheckedList,
+                                                });
+                                            }}
                                         >
                                             重置
                                         </Button>
@@ -77,14 +113,7 @@ const AssetsProtsFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
                                     ],
                                     children: (
                                         <div>
-                                            <Item
-                                                name={
-                                                    it === 'group'
-                                                        ? 'tags'
-                                                        : 'services'
-                                                }
-                                                initialValue={[]}
-                                            >
+                                            <Item name={type} initialValue={[]}>
                                                 <AssetsProtsGroupTag
                                                     data={value.items[it]}
                                                 />

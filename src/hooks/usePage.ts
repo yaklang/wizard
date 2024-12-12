@@ -5,6 +5,7 @@ interface UsePageRef {
     getParams: () => any;
     clear: (...arg: any[]) => void;
     refresh: () => void;
+    editFilter: (...arg: any[]) => void;
     localRefrech: <T extends Record<string, any>>(
         args:
             | { operate: 'edit'; oldObj: T; newObj: T }
@@ -19,6 +20,7 @@ const usePage = () => {
         clear: () => {},
         refresh: () => {},
         localRefrech: () => {},
+        editFilter: () => {},
     });
     return [page.current];
 };
