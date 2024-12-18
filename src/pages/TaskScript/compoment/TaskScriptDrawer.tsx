@@ -226,14 +226,14 @@ const TaskScriptDrawer = forwardRef<
                                                             presetProtsGroupOptions
                                                         }
                                                         onChange={(e) => {
-                                                            const portsValue =
-                                                                e.map(
+                                                            const portsValue = e
+                                                                .map(
                                                                     (it) =>
                                                                         PresetPorts[
                                                                             it as keyof typeof PresetPorts
                                                                         ],
-                                                                );
-                                                            // .join();
+                                                                )
+                                                                .join();
                                                             setFieldValue(
                                                                 [
                                                                     'prompt_args',
