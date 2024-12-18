@@ -32,7 +32,7 @@ const CreateTaskScriptCard: FC<TCreateTaskScriptCard> = ({
 
             const target_script_type = scriptTypeOption.find(
                 (it) => it.value === items.script_type,
-            )?.label;
+            )?.value;
 
             const resuteItems = {
                 ...items,

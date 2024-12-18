@@ -35,7 +35,7 @@ const CreateTaskScriptModal = forwardRef<
                 modal={model1}
                 title="选择脚本"
             >
-                <div className="pb-2 px-6 overflow-auto max-h-[75vh]">
+                <div className="pb-2 px-6 overflow-auto h-[75vh]">
                     <div className="grid grid-cols-3 gap-4">
                         {scriptData?.map((items) => (
                             <CreateTaskScriptCard

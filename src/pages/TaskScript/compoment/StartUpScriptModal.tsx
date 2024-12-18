@@ -142,9 +142,10 @@ const StartUpScriptModal = forwardRef<
         async open(items, scriptGroupList) {
             await runAsync()
                 .then(() => {
+                    console.log(items, 'items');
                     const targetSetFormData = {
                         task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
-                        script_type: items?.script_type,
+                        // script_type: items?.script_type,
 
                         ...items,
                         execution_date:
