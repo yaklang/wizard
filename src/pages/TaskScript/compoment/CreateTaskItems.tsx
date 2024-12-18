@@ -37,7 +37,7 @@ type TScriptGrounpList = Array<{ value: string; label: string }>;
 
 type TCreateTaskItemsProps = (
     title: string,
-    scriptTypeValue: '端口与漏洞扫描' | '敏感信息',
+    scriptTypeValue: 'portAndVulScan' | 'weakinfo',
     scriptGroupList: TScriptGrounpList,
     scannerDataList?: TScannerDataList,
 ) => ItemType[] | any;
@@ -351,18 +351,18 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         {({ setFieldValue }) => {
                             return (
                                 <Item
-                                    className={`${scriptTypeValue === '端口与漏洞扫描' ? 'ml-14' : 'ml-18'}`}
+                                    className={`${scriptTypeValue === 'portAndVulScan' ? 'ml-14' : 'ml-18'}`}
                                     label={
                                         <div className="max-w-full">
                                             {scriptTypeValue ===
-                                            '端口与漏洞扫描'
+                                            'portAndVulScan'
                                                 ? '扫描目标'
                                                 : '关键词'}
                                         </div>
                                     }
                                     name={[
                                         'params',
-                                        scriptTypeValue === '端口与漏洞扫描'
+                                        scriptTypeValue === 'portAndVulScan'
                                             ? 'target'
                                             : 'keyword',
                                     ]}
@@ -385,7 +385,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                         [
                                                             'params',
                                                             scriptTypeValue ===
-                                                            '端口与漏洞扫描'
+                                                            'portAndVulScan'
                                                                 ? 'target'
                                                                 : 'keyword',
                                                         ],
@@ -418,7 +418,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                 [
                                                     'params',
                                                     scriptTypeValue ===
-                                                    '端口与漏洞扫描'
+                                                    'portAndVulScan'
                                                         ? 'target'
                                                         : 'keyword',
                                                 ],
@@ -430,7 +430,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             );
                         }}
                     </Item>
-                    {scriptTypeValue === '端口与漏洞扫描' && (
+                    {scriptTypeValue === 'portAndVulScan' && (
                         <Item noStyle dependencies={[]}>
                             {({ setFieldValue }) => {
                                 return (
@@ -465,7 +465,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             }}
                         </Item>
                     )}
-                    {scriptTypeValue === '端口与漏洞扫描' && (
+                    {scriptTypeValue === 'portAndVulScan' && (
                         <Item noStyle dependencies={[]}>
                             {({ setFieldValue }) => (
                                 <Item
@@ -517,7 +517,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             )}
                         </Item>
                     )}
-                    {scriptTypeValue === '端口与漏洞扫描' && (
+                    {scriptTypeValue === 'portAndVulScan' && (
                         <Item
                             label={
                                 <span>
@@ -537,7 +537,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             <Switch />
                         </Item>
                     )}
-                    {scriptTypeValue === '端口与漏洞扫描' && (
+                    {scriptTypeValue === 'portAndVulScan' && (
                         <Item
                             label={
                                 <span>
@@ -656,7 +656,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             );
                         }}
                     </Item>
-                    {scriptTypeValue === '端口与漏洞扫描' && (
+                    {scriptTypeValue === 'portAndVulScan' && (
                         <Item
                             shouldUpdate={(prevValues, curValues) => {
                                 const preScannerStr = Array.isArray(

@@ -22,6 +22,7 @@ import SystemManagement from '@/pages/SystemManagement';
 import { PortAssets } from '@/pages/DataService/PortAssets';
 import { AssetsVulns } from '@/pages/DataService/AssetsVulns';
 import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage';
+import { CveLoophole } from '@/pages/DataService/CveLoophole';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -105,6 +106,12 @@ const routers: RouteObjectRootMy[] = [
                         name: '敏感信息',
                         key: 'sensitive-message',
                         element: <SensitiveMessage />,
+                    },
+                    {
+                        path: 'cve-loophole',
+                        name: 'CVE漏洞库',
+                        key: 'cve-loophole',
+                        element: <CveLoophole />,
                     },
                 ],
             },

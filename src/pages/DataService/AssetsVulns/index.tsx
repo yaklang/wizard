@@ -3,10 +3,7 @@ import { FC, useMemo } from 'react';
 import { WizardTable } from '@/compoments';
 
 import { getAssetsValueFilter, postAssetsVulns } from '@/apis/taskDetail';
-import {
-    AssetsVulnsColumns,
-    ProtColumns,
-} from '@/pages/TaskDetail/compoments/Columns';
+import { AssetsVulnsColumns } from '@/pages/TaskDetail/compoments/Columns';
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
@@ -62,7 +59,7 @@ const AssetsVulns: FC = () => {
         const result = [
             ...columns.slice(0, 1),
             ...taskNameColumns,
-            ...ProtColumns.slice(1),
+            ...columns.slice(1),
         ];
         return result;
     }, [data]);

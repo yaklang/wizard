@@ -1,4 +1,4 @@
-import { WizardModal } from '@/compoments';
+import { WizardDrawer } from '@/compoments';
 import ReportTemplate from '@/compoments/ReportTemplate';
 import {
     TReportTemplateProps,
@@ -18,13 +18,13 @@ import {
 import html2pdf from 'html2pdf.js';
 import { opt } from '@/pages/TaskDetail/compoments/ScriptDetailButton';
 
-const PreviewReportModal = forwardRef<
+const PreviewReportDrawer = forwardRef<
     UseModalRefType,
     {
         title: string;
     }
 >(({ title }, ref) => {
-    const [model] = WizardModal.useModal();
+    const [drawer] = WizardDrawer.useDrawer();
 
     const [width, setWidth] = useState<number>(800);
     const divRef = useRef<HTMLDivElement>(null);
@@ -39,7 +39,7 @@ const PreviewReportModal = forwardRef<
 
     useImperativeHandle(ref, () => ({
         open(block) {
-            model.open();
+            drawer.open();
             setBlocks(block);
         },
     }));
@@ -78,56 +78,50 @@ const PreviewReportModal = forwardRef<
     };
 
     return (
-        <WizardModal
-            footer={
-                <>
-                    <Button
-                        key="link"
-                        onClick={() => {
-                            model.close();
-                        }}
-                    >
-                        关闭
-                    </Button>
-                </>
-            }
-            width={850}
-            modal={model}
+        <WizardDrawer
+            drawer={drawer}
+            width={'75%'}
             title={title}
+            footer={
+                <Button
+                    key="link"
+                    onClick={() => {
+                        drawer.close();
+                    }}
+                >
+                    关闭
+                </Button>
+            }
         >
-            <div
-                style={{ height: '60vh', overflowY: 'auto', padding: '0 24px' }}
-            >
-                <div className="w-full flex justify-end">
-                    <Button
-                        type="link"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            downloadPdf();
-                        }}
-                    >
-                        下载PDF报告
-                    </Button>
-                    <Button
-                        type="link"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            EmailModalRef.current?.open();
-                        }}
-                    >
-                        发送报告到邮箱
-                    </Button>
-                </div>
-                <ReportTemplate blocks={blocks} width={width} divRef={divRef} />
-                <EmailMoadl
-                    ref={EmailModalRef}
-                    title="发送报告到邮箱"
-                    cover={cover}
-                    divRef={divRef}
-                />
+            <div className="w-full flex justify-end">
+                <Button
+                    type="link"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        downloadPdf();
+                    }}
+                >
+                    下载PDF报告
+                </Button>
+                <Button
+                    type="link"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        EmailModalRef.current?.open();
+                    }}
+                >
+                    发送报告到邮箱
+                </Button>
             </div>
-        </WizardModal>
+            <ReportTemplate blocks={blocks} width={width} divRef={divRef} />
+            <EmailMoadl
+                ref={EmailModalRef}
+                title="发送报告到邮箱"
+                cover={cover}
+                divRef={divRef}
+            />
+        </WizardDrawer>
     );
 });
 
-export { PreviewReportModal };
+export { PreviewReportDrawer };

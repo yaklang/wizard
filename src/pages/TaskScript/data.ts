@@ -46,11 +46,14 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
         params: {
             ...values.params,
             plugins: values.params?.plugins?.ScriptName?.ids?.join(','),
-            'enable-brute': `${values?.params?.['enable-brute']}`,
-            'enbale-cve-baseline': `${values?.params?.['enbale-cve-baseline']}`,
-            'preset-protes': values?.params?.['preset-protes']
-                ? `${values?.params?.['preset-protes']?.join()}`
-                : undefined,
+            'enable-brute':
+                typeof values?.params?.['enable-brute'] === 'boolean'
+                    ? `${values?.params?.['enable-brute']}`
+                    : undefined,
+            'enbale-cve-baseline':
+                typeof values?.params?.['enbale-cve-baseline'] === 'boolean'
+                    ? `${values?.params?.['enbale-cve-baseline']}`
+                    : undefined,
         },
         param_files: values?.param_files
             ? {
@@ -70,9 +73,6 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
         task_type: 'batch-invoking-script',
         enable_sched: values?.['sched_type'] !== 1 ? true : false,
         timestamp: undefined,
-        script_type: scriptTypeOption.find(
-            (it) => it.label === values?.script_type,
-        )?.value,
     };
 };
 

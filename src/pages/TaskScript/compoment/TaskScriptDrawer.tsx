@@ -78,7 +78,7 @@ const TaskScriptDrawer = forwardRef<
             loading={loading}
             drawer={drawer}
             title={title}
-            width={'60%'}
+            width={'75%'}
             onClose={() => {
                 form.resetFields();
             }}

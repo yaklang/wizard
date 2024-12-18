@@ -81,7 +81,8 @@ const WizardTableFilter: FC<{
                 {props?.options?.trigger}
 
                 {proFilterSwitch?.trigger && !filterState?.proSwitchStatus && (
-                    <div>
+                    <div className="flex gap-2 justify-center items-center ml-2">
+                        <div className="color-[#85899E]">高级筛选</div>
                         <Switch onChange={headSwitchChange} />
                     </div>
                 )}

@@ -12,7 +12,7 @@ import { UsePageRef } from '@/hooks/usePage';
 import { TDeleteValues } from '../ReportManage';
 import { ExportButton } from '@/compoments';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { PreviewReportModal } from './PreviewReportModal';
+import { PreviewReportDrawer } from './PreviewReportDrawer';
 
 const ColumnsOperateRender: FC<{
     render: ReportItem;
@@ -122,7 +122,7 @@ const ColumnsOperateRender: FC<{
                 <TableDeleteOutlined style={{ marginLeft: '12px' }} />
             </Popover>
 
-            <PreviewReportModal ref={PreviewReportRef} title="报告详情" />
+            <PreviewReportDrawer ref={PreviewReportRef} title="报告详情" />
         </div>
     );
 };

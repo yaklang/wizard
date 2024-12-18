@@ -21,4 +21,16 @@ const postAddUser = (
 ): Promise<ResponseData<TAddUserResponse>> =>
     axios.post<never, ResponseData<TAddUserResponse>>('/user', data);
 
-export { getUserList, postAddUser };
+// 重置密码
+const postUserReset = (data: {
+    username: string;
+}): Promise<ResponseData<{ password: string; username: string }>> =>
+    axios.post<never, ResponseData<{ password: string; username: string }>>(
+        `/user/reset?username=${data.username}`,
+    );
+
+// 添加用户
+const deleteUser = (username: string): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>(`/user?username=${username}`);
+
+export { getUserList, postAddUser, postUserReset, deleteUser };

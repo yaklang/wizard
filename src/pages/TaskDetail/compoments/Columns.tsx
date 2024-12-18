@@ -84,11 +84,6 @@ const AssetsVulnsColumns = (filterData: {
     transformList: any[];
 }): CreateTableProps<TGetAssetsVulnsResponse>['columns'] => {
     return [
-        // {
-        //     title: '序号',
-        //     dataIndex: 'id',
-        //     width: 80,
-        // },
         {
             title: '标题',
             dataIndex: 'title',

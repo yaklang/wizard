@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { message, Spin, Table } from 'antd';
+import { Button, message, Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
 import { useRequest, useSafeState } from 'ahooks';
 
@@ -37,7 +37,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     const preFilter = useRef(undefined); // 跟踪上次的 filter, 触发请求
     const manualReq = useRef(false);
     // 表格容器的 ref，用来控制滚动
-    const tableRef = useRef<HTMLDivElement>(null);
+    const tableContainerRef = useRef<HTMLDivElement>(null);
 
     const [state, dispatch] = useReducer(reducer, initialValue);
     const { dataSource, params, filter } = state;
@@ -78,6 +78,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 }
 
                 dispatch({ loading: false, noResetFields: true });
+                setIsBottom(false);
             }
         },
         {
@@ -106,7 +107,8 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         [params, filter],
     );
 
-    const [wizardScrollHeight, wizardScrollWidth] = useListenWidth(tableRef);
+    const [wizardScrollHeight, wizardScrollWidth] =
+        useListenWidth(tableContainerRef);
     const [isBottom, setIsBottom] = useSafeState(false);
 
     // 表格容器的 state, 用来保存计算得到的可滚动高度和表格高度
@@ -115,10 +117,11 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     // 动态计算表格高度
     useEffect(() => {
         const tableFilterDomHeight =
-            tableRef.current?.children[0].getBoundingClientRect().height ?? 0;
+            tableContainerRef.current?.children[0].getBoundingClientRect()
+                .height ?? 0;
         const antTableHeader =
-            tableRef?.current &&
-            tableRef.current.querySelector('.ant-table-header');
+            tableContainerRef?.current &&
+            tableContainerRef.current.querySelector('.ant-table-header');
         const antTableHeaderHeight =
             antTableHeader?.getBoundingClientRect().height ?? 0;
 
@@ -136,14 +139,15 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         const pagemetaStatus =
             (pagemeta?.page ?? 0) * (pagemeta?.limit ?? 0) >=
             (pagemeta?.total ?? 1);
+
         if (
             dataSource &&
             dataSource.length > 0 &&
-            tableRef.current &&
+            tableContainerRef.current &&
             !pagemetaStatus
         ) {
             // 获取表格 DOM 节点
-            const tableElement = tableRef.current.querySelector(
+            const tableElement = tableContainerRef.current.querySelector(
                 '#table-container > .ant-table-wrapper',
             );
             if (tableElement && !state.loading) {
@@ -198,29 +202,17 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         requestTable(request);
     }, [requestTable]);
 
-    // 回到顶部，并清空数据方法
-    const handClearFilter = () => {
-        if (tableRef.current) {
-            // 滚动条回到顶部
-            tableRef.current.scrollTop = 0;
-
-            dispatch({
-                dataSource: [], // 清空数据源
-            });
-        }
-    };
-
     // 对外提供方法
     // 刷新
     page.refresh = async () => {
-        handClearFilter();
+        handleScrollToFirstRow();
         runAsync(request, true);
     };
 
     // 手动触发
-    page.onLoad = (arg) => {
-        handClearFilter();
-        runAsync(request, true, arg);
+    page.onLoad = async (arg) => {
+        handleScrollToFirstRow();
+        await runAsync(request, false, arg);
     };
 
     // 获取表格参数
@@ -230,7 +222,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 清除页面选中项
     page.clear = () => {
-        handClearFilter();
+        handleScrollToFirstRow();
         dispatch({
             params: {
                 page: 1,
@@ -247,6 +239,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 更改高级筛选项
     page.editFilter = (args) => {
+        handleScrollToFirstRow();
         dispatch({
             filter: {
                 ...state.filter,
@@ -312,6 +305,27 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             .exhaustive();
     };
 
+    const tableRef = useRef<any>(null);
+
+    // 回到顶部，并清空数据方法
+    const handleScrollToFirstRow = () => {
+        if (tableRef.current) {
+            // 调用 scrollTo 方法，传递 (0, 0) 来滚动到顶部
+            tableRef.current.scrollTo(0, 0);
+            dispatch({
+                params: {
+                    page: 1,
+                    limit: state.params!.limit,
+                    total: state.pagemeta!.total,
+                    total_page: state.pagemeta!.total_page,
+                },
+                dataSource: [], // 清空数据源
+            });
+
+            runAsync(request, true);
+        }
+    };
+
     // 底部loading状态
     const bottomLoading = useMemo(() => {
         const pagemeta = state.pagemeta;
@@ -321,16 +335,15 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             (pagemeta?.total ?? 1);
 
         const width =
-            (tableRef.current?.getBoundingClientRect().width ?? 0) - 108;
+            (tableContainerRef.current?.getBoundingClientRect().width ?? 0) -
+            108;
 
         return (
             <div
-                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none relative bottom-14`}
+                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none relative bottom-14 pt-2`}
                 style={{
-                    width: dataSource?.length
-                        ? wizardScrollWidth - 40
-                        : wizardScrollWidth - 33,
-                    height: dataSource?.length ? '48px' : '56px',
+                    width: wizardScrollWidth - 32,
+                    height: '48px',
                 }}
             >
                 {pagemetaStatus &&
@@ -367,7 +380,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
             <div
                 id="table-container"
-                ref={tableRef}
+                ref={tableContainerRef}
                 className={`transition-all duration-500 w-full p-4 bg-[#fff] relative`}
                 style={{
                     width: `${
@@ -384,7 +397,9 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 />
 
                 <Table
+                    id="table"
                     {...props}
+                    ref={tableRef}
                     dataSource={dataSource}
                     columns={extendTableProps(
                         dispatch,
@@ -396,12 +411,16 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     pagination={false}
                     scroll={{
                         x: wizardScrollHeight,
-                        y: height - 1,
+                        y: isBottom || state.loading ? height - 48 : height,
+                        scrollToFirstRowOnChange: true,
                     }}
                     onScroll={throttledTableOnScrollFn}
                     loading={state.loading && dataSource!.length === 0}
+                    virtual
                 />
-                {bottomLoading}
+                {(isBottom || state.loading) && dataSource?.length
+                    ? bottomLoading
+                    : null}
             </div>
 
             {/* 右侧抽屉 */}
