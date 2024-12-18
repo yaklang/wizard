@@ -26,7 +26,7 @@ import { UsePageRef } from '@/hooks/usePage';
 import dayjs from 'dayjs';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { scriptTypeOption } from '@/pages/TaskScript/data';
+// import { scriptTypeOption } from '@/pages/TaskScript/data';
 
 type TCommonTasksColumnsRenderProps = {
     record: TaskListRequest;
