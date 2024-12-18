@@ -30,6 +30,16 @@
 }
 
 .cve-list-product-warning {
+    border: 1px solid #ffe5c6;
+    color: #ffb660;
+
+    .cve-list-severity {
+        border-right: 1px solid #ffe5c6;
+        background-color: rgba(255, 213, 131, 0.1);
+    }
+}
+
+.cve-list-product-info {
     border: 1px solid #fbc6a1;
     color: #f28b44;
 
@@ -38,6 +48,7 @@
         background-color: #fbe7d9;
     }
 }
+
 
 .cve-list-product-danger {
     border: 1px solid #f3c2bf;

@@ -9,9 +9,30 @@ import { WizardTable } from '@/compoments';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
 import { YakitTag } from '@/compoments/YakitTag/YakitTag';
 import styles from './CVETable.module.scss';
+import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
+import { CveLoopholeFilterDrawer } from './compoments/CveLoopholeFilterDrawer';
+import { Input, Select, Space } from 'antd';
+import { useSafeState } from 'ahooks';
+
+const options = [
+    {
+        value: 'CVE',
+        label: 'CVE',
+        text: 'CVE编号或关键字搜索',
+    },
+    {
+        value: 'CWE',
+        label: 'CWE',
+        text: 'CWE编号搜索',
+    },
+];
 
 const CveLoophole: FC = () => {
     const [page] = WizardTable.usePage();
+    const [search, setSearch] = useSafeState({
+        key: 'CVE',
+        value: '',
+    });
 
     const columns: CreateTableProps<TCveQueryResponse>['columns'] = [
         {
@@ -51,47 +72,46 @@ const CveLoophole: FC = () => {
             title: '漏洞级别',
             width: 120,
             render: (value, record) => {
-                console.log(value, 'value');
-                let color = 'success';
-                if (value === 'HIGH') {
-                    color = 'serious';
-                }
-                if (value === '高危') {
-                    color = 'danger';
-                }
-                if (value === '中危') {
-                    color = 'warning';
-                }
-                return !value ? (
-                    '-'
-                ) : (
-                    <div
-                        className={classNames(
-                            styles['cve-list-product-success'],
-                            {
-                                [styles['cve-list-product-warning']]:
-                                    color === 'warning',
-                                [styles['cve-list-product-danger']]:
-                                    color === 'danger',
-                                [styles['cve-list-product-serious']]:
-                                    color === 'serious',
-                            },
-                        )}
-                    >
+                if (value) {
+                    const toLowerCaseValue = value.toLowerCase();
+                    const targetItem = SeverityMapTag.find((item) =>
+                        item.key.includes(toLowerCaseValue),
+                    );
+                    return (
                         <div
-                            className={classNames(styles['cve-list-severity'])}
-                        >
-                            {value}
-                        </div>
-                        <span
                             className={classNames(
-                                styles['cve-list-baseCVSSv2Score'],
+                                styles['cve-list-product-success'],
+                                {
+                                    [styles['cve-list-product-warning']]:
+                                        targetItem?.tag === 'warning',
+                                    [styles['cve-list-product-info']]:
+                                        targetItem?.tag === 'info',
+                                    [styles['cve-list-product-danger']]:
+                                        targetItem?.tag === 'danger',
+                                    [styles['cve-list-product-serious']]:
+                                        targetItem?.tag === 'serious',
+                                },
                             )}
                         >
-                            {record.exploitability_score ?? 0}
-                        </span>
-                    </div>
-                );
+                            <div
+                                className={classNames(
+                                    styles['cve-list-severity'],
+                                )}
+                            >
+                                {targetItem?.name}
+                            </div>
+                            <span
+                                className={classNames(
+                                    styles['cve-list-baseCVSSv2Score'],
+                                )}
+                            >
+                                {record.exploitability_score ?? 0}
+                            </span>
+                        </div>
+                    );
+                } else {
+                    return '-';
+                }
             },
         },
         {
@@ -116,10 +136,34 @@ const CveLoophole: FC = () => {
             rowKey={'id'}
             columns={columns}
             tableHeader={{
-                title: '端口资产列表',
+                title: 'CVE 数据库管理',
                 options: {
+                    trigger: (
+                        <div>
+                            <Space.Compact>
+                                <Select
+                                    defaultValue={search.key}
+                                    value={search.key}
+                                    options={options}
+                                    onChange={(e) =>
+                                        setSearch((cur) => ({ ...cur, key: e }))
+                                    }
+                                />
+                                <Input.Search
+                                    placeholder={
+                                        options.find(
+                                            (it) => it.value === search.key,
+                                        )?.text
+                                    }
+                                    onSearch={(value) =>
+                                        setSearch((cur) => ({ ...cur, value }))
+                                    }
+                                />
+                            </Space.Compact>
+                        </div>
+                    ),
                     ProFilterSwitch: {
-                        trigger: <div>asd</div>,
+                        trigger: <CveLoopholeFilterDrawer page={page} />,
                         layout: 'vertical',
                     },
                 },
@@ -128,7 +172,7 @@ const CveLoophole: FC = () => {
                 const { data } = await postCveQuery({
                     ...params,
                     ...filter,
-                    cve: ['CVE-2010-0213'],
+                    // cve: ['CVE-2010-0213'],
                 });
 
                 return {
