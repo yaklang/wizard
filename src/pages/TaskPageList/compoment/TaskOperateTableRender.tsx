@@ -182,11 +182,11 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                         : undefined,
                     params: {
                         ...data.params,
-                        'preset-protes': data?.params?.['preset-protes']
-                            ? (data?.params['preset-protes'])
-                                  .split(', ')
-                                  .map((item) => item.trim())
-                            : [],
+                        // 'preset-protes': data?.params?.['preset-protes']
+                        //     ? (data?.params['preset-protes'])
+                        //           .split(', ')
+                        //           .map((item) => item.trim())
+                        //     : [],
                     },
                 };
                 itemsRef.current = transformModalFormdata;
@@ -608,11 +608,11 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                         : undefined,
                     params: {
                         ...data.params,
-                        'preset-protes': data?.params?.['preset-protes']
-                            ? (data?.params['preset-protes'])
-                                  .split(', ')
-                                  .map((item) => item.trim())
-                            : [],
+                        // 'preset-protes': data?.params?.['preset-protes']
+                        //     ? (data?.params['preset-protes'])
+                        //           .split(', ')
+                        //           .map((item) => item.trim())
+                        //     : [],
                     },
                 };
                 itemsRef.current = transformModalFormdata;

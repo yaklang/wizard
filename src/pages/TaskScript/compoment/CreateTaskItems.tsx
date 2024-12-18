@@ -445,14 +445,13 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         <Checkbox.Group
                                             options={presetProtsGroupOptions}
                                             onChange={(e) => {
-                                                const portsValue = e
-                                                    .map(
-                                                        (it) =>
-                                                            PresetPorts[
-                                                                it as keyof typeof PresetPorts
-                                                            ],
-                                                    )
-                                                    .join();
+                                                const portsValue = e.map(
+                                                    (it) =>
+                                                        PresetPorts[
+                                                            it as keyof typeof PresetPorts
+                                                        ],
+                                                );
+                                                // .join();
                                                 setFieldValue(
                                                     ['params', 'ports'],
                                                     portsValue,

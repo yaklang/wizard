@@ -48,9 +48,9 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
             plugins: values.params?.plugins?.ScriptName?.ids?.join(','),
             'enable-brute': `${values?.params?.['enable-brute']}`,
             'enbale-cve-baseline': `${values?.params?.['enbale-cve-baseline']}`,
-            'preset-protes': values?.params?.['preset-protes']
-                ? `${values?.params?.['preset-protes']?.join()}`
-                : undefined,
+            // 'preset-protes': values?.params?.['preset-protes']
+            //     ? `${values?.params?.['preset-protes']?.join()}`
+            //     : undefined,
         },
         param_files: values?.param_files
             ? {
