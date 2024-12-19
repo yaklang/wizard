@@ -78,6 +78,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 }
 
                 dispatch({ loading: false, noResetFields: true });
+                setIsBottom(false);
             }
         },
         {
@@ -111,6 +112,8 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 表格容器的 state, 用来保存计算得到的可滚动高度和表格高度
     const [height, setHeight] = useSafeState(0);
+    const [scrollToFirstRowStatus, setScrollToFirstRowStatus] =
+        useSafeState(false);
 
     // 动态计算表格高度
     useEffect(() => {
@@ -136,6 +139,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         const pagemetaStatus =
             (pagemeta?.page ?? 0) * (pagemeta?.limit ?? 0) >=
             (pagemeta?.total ?? 1);
+
         if (
             dataSource &&
             dataSource.length > 0 &&
@@ -200,14 +204,28 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 回到顶部，并清空数据方法
     const handClearFilter = () => {
-        if (tableRef.current) {
-            // 滚动条回到顶部
-            tableRef.current.scrollTop = 0;
+        console.log(111);
+        //- 获取table的dom节点
+        let parentDom = document.getElementById('table');
 
-            dispatch({
-                dataSource: [], // 清空数据源
-            });
-        }
+        //- 获取table下ant-table-body的dom节点
+        // let childDom =
+        //     parentDom &&
+        //     parentDom.getElementsByClassName('ant-table-tbody-virtual');
+
+        //- 滚动条置顶
+        // childDom[0].scrollTop = 0;
+
+        // const tableNode = wizardTableRef.current?.table?.dom;
+        // if (tableRef.current) {
+        //     // 滚动条回到顶部
+        //     tableRef.current.scrollTop = 0;
+        //     dispatch({
+        //         dataSource: [], // 清空数据源
+        //     });
+
+        //     runAsync(request, true);
+        // }
     };
 
     // 对外提供方法
@@ -218,9 +236,9 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     };
 
     // 手动触发
-    page.onLoad = (arg) => {
+    page.onLoad = async (arg) => {
         handClearFilter();
-        runAsync(request, true, arg);
+        await runAsync(request, false, arg);
     };
 
     // 获取表格参数
@@ -247,6 +265,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     // 更改高级筛选项
     page.editFilter = (args) => {
+        handClearFilter();
         dispatch({
             filter: {
                 ...state.filter,
@@ -325,12 +344,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
         return (
             <div
-                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none relative bottom-14`}
+                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none relative bottom-14 pt-2`}
                 style={{
-                    width: dataSource?.length
-                        ? wizardScrollWidth - 40
-                        : wizardScrollWidth - 33,
-                    height: dataSource?.length ? '48px' : '56px',
+                    width: wizardScrollWidth - 32,
+                    height: '48px',
                 }}
             >
                 {pagemetaStatus &&
@@ -384,6 +401,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 />
 
                 <Table
+                    id="table"
                     {...props}
                     dataSource={dataSource}
                     columns={extendTableProps(
@@ -396,12 +414,16 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     pagination={false}
                     scroll={{
                         x: wizardScrollHeight,
-                        y: height - 1,
+                        y: isBottom || state.loading ? height - 48 : height,
+                        scrollToFirstRowOnChange: true,
                     }}
                     onScroll={throttledTableOnScrollFn}
                     loading={state.loading && dataSource!.length === 0}
+                    virtual
                 />
-                {bottomLoading}
+                {(isBottom || state.loading) && dataSource?.length
+                    ? bottomLoading
+                    : null}
             </div>
 
             {/* 右侧抽屉 */}

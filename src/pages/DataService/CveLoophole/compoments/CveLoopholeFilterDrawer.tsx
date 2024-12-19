@@ -1,8 +1,8 @@
 import { FC } from 'react';
-import { Button, Form } from 'antd';
+import { Button, Form, Radio } from 'antd';
 
 import { UsePageRef } from '@/hooks/usePage';
-import { difficultyList, levelList, routeList } from '../data';
+import { difficultyList, levelList, orderList, routeList } from '../data';
 import { FilterTag } from './FilterTag';
 
 const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
@@ -28,6 +28,28 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
                     重置
                 </Button>
             </div>
+            <div className="flex align-center gap-2">
+                <div className="leading-8">披露时间</div>
+                <Item name={'order'} initialValue={'desc'}>
+                    <Radio.Group
+                        options={orderList}
+                        optionType="button"
+                        buttonStyle="solid"
+                    />
+                </Item>
+            </div>
+
+            <div className="flex align-center gap-2">
+                <div className="leading-8">更新时间</div>
+                <Item name={'order'} initialValue={'desc'}>
+                    <Radio.Group
+                        options={orderList}
+                        optionType="button"
+                        buttonStyle="solid"
+                    />
+                </Item>
+            </div>
+
             <div className="flex align-center gap-2">
                 <div className="leading-6">利用路径</div>
                 <Item name={'AccessVector'} initialValue={[]}>

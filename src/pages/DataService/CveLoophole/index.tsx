@@ -11,17 +11,18 @@ import { YakitTag } from '@/compoments/YakitTag/YakitTag';
 import styles from './CVETable.module.scss';
 import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
 import { CveLoopholeFilterDrawer } from './compoments/CveLoopholeFilterDrawer';
-import { Input, Select, Space } from 'antd';
+import { Button, Input, Popover, Select, Space } from 'antd';
 import { useSafeState } from 'ahooks';
+import { SyncOutlined } from '@ant-design/icons';
 
 const options = [
     {
-        value: 'CVE',
+        value: 'cve',
         label: 'CVE',
         text: 'CVE编号或关键字搜索',
     },
     {
-        value: 'CWE',
+        value: 'cwe',
         label: 'CWE',
         text: 'CWE编号搜索',
     },
@@ -30,7 +31,7 @@ const options = [
 const CveLoophole: FC = () => {
     const [page] = WizardTable.usePage();
     const [search, setSearch] = useSafeState({
-        key: 'CVE',
+        key: 'cve',
         value: '',
     });
 
@@ -133,13 +134,13 @@ const CveLoophole: FC = () => {
     return (
         <WizardTable
             page={page}
-            rowKey={'id'}
+            rowKey={'cve'}
             columns={columns}
             tableHeader={{
                 title: 'CVE 数据库管理',
                 options: {
                     trigger: (
-                        <div>
+                        <div className="flex items-center justify-center gap-4">
                             <Space.Compact>
                                 <Select
                                     defaultValue={search.key}
@@ -155,11 +156,45 @@ const CveLoophole: FC = () => {
                                             (it) => it.value === search.key,
                                         )?.text
                                     }
-                                    onSearch={(value) =>
-                                        setSearch((cur) => ({ ...cur, value }))
-                                    }
+                                    onSearch={async (value) => {
+                                        const uselessKey = options.filter(
+                                            (it) => it.value !== search.key,
+                                        )[0].value;
+
+                                        await page.onLoad({
+                                            [search.key]: value,
+                                            [uselessKey]: undefined,
+                                        });
+                                        console.log(
+                                            {
+                                                [search.key]: value,
+                                                [uselessKey]: undefined,
+                                            },
+                                            'uuu',
+                                        );
+
+                                        setSearch((cur) => ({ ...cur, value }));
+                                    }}
                                 />
                             </Space.Compact>
+                            <Popover
+                                className="p-0"
+                                content={
+                                    <div className="w-36">
+                                        <div className="mb-2 py-1 px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer">
+                                            只更新最新数据
+                                        </div>
+                                        <div className="px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer">
+                                            全量更新
+                                        </div>
+                                    </div>
+                                }
+                                trigger="click"
+                            >
+                                <Button type="primary" className="p-2">
+                                    <SyncOutlined /> 数据库更新
+                                </Button>
+                            </Popover>
                         </div>
                     ),
                     ProFilterSwitch: {

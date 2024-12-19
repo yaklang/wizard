@@ -18,4 +18,15 @@ const levelList = [
     { value: 'LOW', label: '低危' },
 ];
 
-export { difficultyList, routeList, levelList };
+const orderList = [
+    {
+        value: 'desc',
+        label: '顺序',
+    },
+    {
+        value: 'asc',
+        label: '正序',
+    },
+];
+
+export { difficultyList, routeList, levelList, orderList };

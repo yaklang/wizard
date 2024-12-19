@@ -1,14 +1,14 @@
 interface TCveQueryRequest {
     cpe?: string[];
     CPEVersion?: { [key: string]: any };
-    cve?: { [key: string]: any };
+    cve?: string;
     CVEExploitabilityScore?: { [key: string]: any };
     CVEImpactScore?: { [key: string]: any };
     CVELastModifiedTime?: { [key: string]: any };
     CVEPublishedTime?: { [key: string]: any };
     CVESeverity?: { [key: string]: any };
     cvssV2Scope?: { [key: string]: any };
-    cwe?: { [key: string]: any };
+    cwe?: string;
     keyword?: string[];
     Order?: { [key: string]: any };
     limit: number;
