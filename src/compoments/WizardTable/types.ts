@@ -42,16 +42,19 @@ type ExtendedColumnType<T> = ColumnType<T> & {
               columnsHeaderFilterType?: 'input'; // 输入框，不需要 wizardColumnsOptions
               wizardColumnsOptions?: never;
               rangePickSetting?: never;
+              placeholder?: string;
           }
         | {
               columnsHeaderFilterType?: 'radio'; // 单选框，必需 wizardColumnsOptions
               wizardColumnsOptions: WizardColumnRadioOptions[];
               rangePickSetting?: never;
+              placeholder?: string;
           }
         | {
               columnsHeaderFilterType?: 'checkbox'; // 组合框，必需 wizardColumnsOptions
               wizardColumnsOptions: WizardColumnRadioOptions[];
               rangePickSetting?: never;
+              placeholder?: string;
           }
         | {
               columnsHeaderFilterType?: 'rangePicker'; // 组合框，必需 wizardColumnsOptions
@@ -60,6 +63,7 @@ type ExtendedColumnType<T> = ColumnType<T> & {
                   format?: string;
                   showTime?: string;
               };
+              placeholder?: string;
           }
     );
 

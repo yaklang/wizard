@@ -23,6 +23,7 @@ import { PortAssets } from '@/pages/DataService/PortAssets';
 import { AssetsVulns } from '@/pages/DataService/AssetsVulns';
 import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage';
 import { CveLoophole } from '@/pages/DataService/CveLoophole';
+import NodeManagePage from '@/pages/NodeManage';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -126,6 +127,12 @@ const routers: RouteObjectRootMy[] = [
                         name: '节点安装',
                         key: 'node-intsall',
                         element: <NodeConfig />,
+                    },
+                    {
+                        path: 'manage',
+                        name: '节点管理',
+                        key: 'node-manage',
+                        element: <NodeManagePage />,
                     },
                 ],
             },

@@ -282,6 +282,7 @@ const extendTableProps = (
             title,
             rangePickSetting,
             dataIndex: selectKeys,
+            placeholder,
         } = column;
 
         // table 勾选组件渲染
@@ -479,7 +480,9 @@ const extendTableProps = (
                                     {match(wizardTableType)
                                         .with('input', () => (
                                             <Input
-                                                placeholder="请输入"
+                                                placeholder={
+                                                    placeholder ?? '请输入'
+                                                }
                                                 value={search[selectKeys]}
                                                 onChange={(e) => {
                                                     setSearch((val) => {
