@@ -225,12 +225,12 @@ const CreateTaskItems: TCreateTaskItemsProps = (
             .exhaustive();
     });
 
-    const [copyScriptGroupList, setCopyScriptGroupLis] =
+    const [copyScriptGroupList, setCopyScriptGroupList] =
         useSafeState<TScriptGrounpList>([]);
     const scriptGroupListRef = useRef<TScriptGrounpList>();
 
     useEffect(() => {
-        setCopyScriptGroupLis(scriptGroupList);
+        setCopyScriptGroupList(scriptGroupList);
         scriptGroupListRef.current = scriptGroupList ?? [];
     }, [scriptGroupList]);
 
@@ -266,18 +266,31 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             placeholder="请选择..."
                             showSearch
                             optionFilterProp="label"
+                            onBlur={() => {
+                                const targetScriptGroup =
+                                    scriptGroupListRef.current?.filter(
+                                        (item) => item.label,
+                                    ) ?? [];
+                                setCopyScriptGroupList(targetScriptGroup);
+                            }}
                             onSearch={(value) => {
                                 setTimeout(() => {
-                                    setCopyScriptGroupLis((list) =>
-                                        list.findIndex(
-                                            (it) => it.value === value,
-                                        ) === -1
-                                            ? list.concat({
-                                                  label: `${value}`,
-                                                  value,
-                                              })
-                                            : list,
-                                    );
+                                    setCopyScriptGroupList((list) => {
+                                        const concatList =
+                                            list.findIndex(
+                                                (it) => it.value === value,
+                                            ) === -1
+                                                ? list.concat({
+                                                      label: `${value}`,
+                                                      value,
+                                                  })
+                                                : list;
+                                        const resultGroupList =
+                                            concatList?.filter(
+                                                (item) => item.label,
+                                            ) ?? [];
+                                        return resultGroupList;
+                                    });
                                 }, 500);
                             }}
                             onSelect={(_, options) => {
@@ -293,7 +306,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         ) === index,
                                 );
                                 scriptGroupListRef.current = resultList;
-                                setCopyScriptGroupLis(resultList);
+                                setCopyScriptGroupList(resultList);
                             }}
                             options={copyScriptGroupList ?? scriptGroupList}
                         />

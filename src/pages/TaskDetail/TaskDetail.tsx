@@ -54,6 +54,12 @@ export type TDetailDatailOptions = Array<{
         | 'risk_num';
 }>;
 
+enum exprotFileName {
+    '端口资产' = 1,
+    '漏洞与风险',
+    '资产数据',
+}
+
 const TaskDetail: FC = () => {
     const [page] = WizardTable.usePage();
     const { id, task_id } = useParams(); // 获取路径参数
@@ -288,7 +294,10 @@ const TaskDetail: FC = () => {
                     ),
                     options: {
                         dowloadFile: {
-                            fileName: '端口资产 (' + dayjs().unix() + ').csv',
+                            fileName:
+                                `${exprotFileName[headerGroupValue]} (` +
+                                dayjs().unix() +
+                                ').csv',
                             params: {
                                 typ: ExportRequestKey?.[headerGroupValue],
                                 data: {

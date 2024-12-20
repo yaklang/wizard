@@ -1,3 +1,14 @@
+const ExecutionOrderOptions = [
+    {
+        label: '披露时间',
+        value: 'published_time',
+    },
+    {
+        label: '更新时间',
+        value: 'last_modified_time',
+    },
+];
+
 const difficultyList = [
     { value: 'HIGH', label: '困难' },
     { value: 'MEDIUM', label: '一般' },
@@ -29,4 +40,10 @@ const orderList = [
     },
 ];
 
-export { difficultyList, routeList, levelList, orderList };
+export {
+    difficultyList,
+    routeList,
+    levelList,
+    orderList,
+    ExecutionOrderOptions,
+};

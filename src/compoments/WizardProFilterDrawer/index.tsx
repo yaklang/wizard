@@ -11,6 +11,7 @@ interface TWizardProFilterDrawerProps {
     tableHeight: number;
     wizardScrollHeight: number;
     layout?: FormLayout;
+    handleScrollToFirstRow: () => void;
 }
 
 const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
@@ -21,6 +22,7 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
         tableHeight,
         wizardScrollHeight,
         layout = 'vertical',
+        handleScrollToFirstRow,
     }) => {
         const [form] = Form.useForm();
 
@@ -33,6 +35,7 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
 
         const headFieldsChange = () => {
             const fieldsValue = form.getFieldsValue();
+            handleScrollToFirstRow();
             filterDispatch &&
                 filterDispatch({
                     filter: { ...state?.filter, ...fieldsValue },

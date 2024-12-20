@@ -45,7 +45,7 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
     },
     {
         title: '端口',
-        dataIndex: 'ports',
+        dataIndex: 'port',
         columnsHeaderFilterType: 'input',
         width: 120,
         render: (_, render) =>
@@ -54,12 +54,12 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
     {
         title: '协议',
         dataIndex: 'proto',
-        columnsHeaderFilterType: 'input',
         width: 120,
         render: (value) => (value ? <Tag color="success">{value}</Tag> : '-'),
     },
     {
         title: '服务指纹',
+        columnsHeaderFilterType: 'input',
         dataIndex: 'service_type',
         width: 180,
     },

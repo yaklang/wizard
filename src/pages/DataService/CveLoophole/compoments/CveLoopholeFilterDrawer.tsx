@@ -1,18 +1,30 @@
 import { FC } from 'react';
-import { Button, Form, Radio } from 'antd';
+import { Button, Form, Radio, Select } from 'antd';
 
 import { UsePageRef } from '@/hooks/usePage';
-import { difficultyList, levelList, orderList, routeList } from '../data';
+import {
+    difficultyList,
+    ExecutionOrderOptions,
+    levelList,
+    orderList,
+    routeList,
+} from '../data';
 import { FilterTag } from './FilterTag';
+import { useSafeState } from 'ahooks';
 
 const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
     const { Item } = Form;
+    const [executionOrderValue, setExecutionOrderValue] = useSafeState<
+        'CVEPublishedTime' | 'CVELastModifiedTime'
+    >();
 
     const headReset = () => {
         page.editFilter({
-            AccessVector: [],
-            AccessComplexity: [],
-            Severity: [],
+            order: undefined,
+            order_by: undefined,
+            access_vector: [],
+            access_complexity: [],
+            CVESeverity: [],
         });
     };
     return (
@@ -28,43 +40,54 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
                     重置
                 </Button>
             </div>
+
             <div className="flex align-center gap-2">
-                <div className="leading-8">披露时间</div>
-                <Item name={'order'} initialValue={'desc'}>
+                <div className="leading-6">排序时间</div>
+                <Item name={'order'}>
                     <Radio.Group
-                        options={orderList}
-                        optionType="button"
-                        buttonStyle="solid"
+                        options={ExecutionOrderOptions}
+                        onChange={(e) => {
+                            setExecutionOrderValue((value) => {
+                                value &&
+                                    page.editFilter({
+                                        [value]: undefined,
+                                        [e.target.value]: undefined,
+                                    });
+                                return e.target.value;
+                            });
+                        }}
                     />
                 </Item>
             </div>
 
-            <div className="flex align-center gap-2">
-                <div className="leading-8">更新时间</div>
-                <Item name={'order'} initialValue={'desc'}>
-                    <Radio.Group
-                        options={orderList}
-                        optionType="button"
-                        buttonStyle="solid"
-                    />
-                </Item>
-            </div>
+            {executionOrderValue ? (
+                <div className="flex align-center gap-2 mb-4 w-full">
+                    <div className="leading-9">执行顺序</div>
+                    <Item name={'order_by'} noStyle>
+                        <Select
+                            options={orderList}
+                            placeholder="请选择"
+                            className="w-46"
+                        />
+                    </Item>
+                </div>
+            ) : null}
 
             <div className="flex align-center gap-2">
                 <div className="leading-6">利用路径</div>
-                <Item name={'AccessVector'} initialValue={[]}>
+                <Item name={'access_vector'} initialValue={[]}>
                     <FilterTag data={routeList} />
                 </Item>
             </div>
             <div className="flex align-center gap-2">
                 <div>利用难度</div>
-                <Item name={'AccessComplexity'} initialValue={[]}>
+                <Item name={'access_complexity'} initialValue={[]}>
                     <FilterTag data={difficultyList} />
                 </Item>
             </div>
             <div className="flex align-center gap-2">
                 <div>漏洞级别</div>
-                <Item name={'Severity'} initialValue={[]}>
+                <Item name={'CVESeverity'} initialValue={[]}>
                     <FilterTag data={levelList} />
                 </Item>
             </div>

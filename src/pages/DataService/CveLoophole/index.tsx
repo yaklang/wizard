@@ -161,18 +161,10 @@ const CveLoophole: FC = () => {
                                             (it) => it.value !== search.key,
                                         )[0].value;
 
-                                        await page.onLoad({
+                                        await page.editFilter({
                                             [search.key]: value,
                                             [uselessKey]: undefined,
                                         });
-                                        console.log(
-                                            {
-                                                [search.key]: value,
-                                                [uselessKey]: undefined,
-                                            },
-                                            'uuu',
-                                        );
-
                                         setSearch((cur) => ({ ...cur, value }));
                                     }}
                                 />
@@ -207,7 +199,6 @@ const CveLoophole: FC = () => {
                 const { data } = await postCveQuery({
                     ...params,
                     ...filter,
-                    // cve: ['CVE-2010-0213'],
                 });
 
                 return {

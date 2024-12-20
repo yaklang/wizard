@@ -186,6 +186,8 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                         //     : [],
                     },
                 };
+
+                console.log(transformModalFormdata, 'transformModalFormdata');
                 itemsRef.current = transformModalFormdata;
                 runAsyncGroup();
             });

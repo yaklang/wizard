@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { Button, message, Spin, Table } from 'antd';
+import { message, Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
 import { useRequest, useSafeState } from 'ahooks';
 
@@ -212,7 +212,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     // 手动触发
     page.onLoad = async (arg) => {
         handleScrollToFirstRow();
-        await runAsync(request, false, arg);
+        await runAsync(request, true, arg);
     };
 
     // 获取表格参数
@@ -321,8 +321,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 },
                 dataSource: [], // 清空数据源
             });
-
-            runAsync(request, true);
         }
     };
 
@@ -437,6 +435,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     trigger={tableHeader?.options?.ProFilterSwitch?.trigger}
                     layout={tableHeader?.options?.ProFilterSwitch?.layout}
                     wizardScrollHeight={wizardScrollHeight}
+                    handleScrollToFirstRow={handleScrollToFirstRow}
                 />
             </div>
         </div>

@@ -22,7 +22,7 @@ const NetworkError = () => {
             <div className="color-[#31343F] text-sm font-semibold">
                 请检查网络连接
             </div>
-            <div>连网后才可访问 Yakit 插件商店</div>
+            <div>联网后才可访问</div>
             <Button color="primary" variant="outlined" onClick={headClean}>
                 <SyncOutlined />
                 刷新页面
