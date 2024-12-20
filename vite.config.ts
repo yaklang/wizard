@@ -40,16 +40,3 @@ export default defineConfig(({ mode }) => {
 });
 
 // $r2}#TqJn$5dQYB]^0(J
-
-// rewrite: (path) => path,
-// .replace(/^\/api/, ''),
-// bypass: (req, res, options) => {
-//     const proxyUrl =
-//         new URL(
-//             options?.rewrite(req.url) || '',
-//             options.target as string,
-//         ).href || '';
-//     console.log(proxyUrl, 'xxx');
-//     req.headers['x-req-proxyUrl'] = proxyUrl;
-//     res.setHeader('x-res-proxyUrl', proxyUrl);
-// },

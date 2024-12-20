@@ -29,6 +29,10 @@ export const getTaskList = (
         data,
     );
 
+// 将新增 / 编辑 操作告知后端
+const getTaskStream = (task_id: number): Promise<ResponseData<boolean>> =>
+    axios.get<never, ResponseData<boolean>>(`/task/stream?task_id=${task_id}`);
+
 // 获取任务组
 const getScriptTaskGroup = (): Promise<
     ResponseData<TableResponseData<TaskGrounpResponse>>
@@ -132,8 +136,8 @@ const postRpcQueryYakPlugins = (
 // 创建 脚本任务
 const postTaskStart = (
     data: TPostTaskStartRequest,
-): Promise<ResponseData<boolean>> =>
-    axios.put<never, ResponseData<boolean>>(
+): Promise<ResponseData<TaskListRequest>> =>
+    axios.put<never, ResponseData<TaskListRequest>>(
         '/task/start/batch-invoking-script/run',
         data,
     );
@@ -221,4 +225,5 @@ export {
     postStorageTaskScript,
     deleteScriptTask,
     getStroageDetail,
+    getTaskStream,
 };

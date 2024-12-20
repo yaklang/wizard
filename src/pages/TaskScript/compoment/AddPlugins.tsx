@@ -144,7 +144,7 @@ const AddPlugins: FC<TAddPlugins> = memo(
                                             <div>Total</div>
                                             <div className="color-[#4A94F8]">
                                                 {value?.ScriptName?.ids
-                                                    .length ?? 0}
+                                                    ?.length ?? 0}
                                             </div>
                                             |<div>Selected</div>
                                             <div className="color-[#4A94F8]">
@@ -184,8 +184,8 @@ const AddPlugins: FC<TAddPlugins> = memo(
                     disabled={isDisabled}
                 >
                     <PlusOutlined />{' '}
-                    {value?.ScriptName && value?.ScriptName?.ids.length > 0
-                        ? `已添加${value.ScriptName?.ids.length}个插件`
+                    {value?.ScriptName && value?.ScriptName?.ids?.length > 0
+                        ? `已添加${value.ScriptName?.ids?.length}个插件`
                         : '添加插件'}
                 </Button>
             </Popover>

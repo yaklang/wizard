@@ -11,6 +11,7 @@ interface UsePageRef {
             | { operate: 'edit'; oldObj: T; newObj: T }
             | { operate: 'delete'; oldObj: T },
     ) => void;
+    getDataSource: () => any[];
 }
 
 const usePage = () => {
@@ -21,6 +22,7 @@ const usePage = () => {
         refresh: () => {},
         localRefrech: () => {},
         editFilter: () => {},
+        getDataSource: () => [],
     });
     return [page.current];
 };

@@ -1,5 +1,5 @@
 import axios from '@/utils/axios';
-import { ResponseData, TableRequestParams } from '@/utils/commonTypes';
+import { ResponseData, TableResponseData } from '@/utils/commonTypes';
 
 import {
     TReportRequest,
@@ -42,10 +42,10 @@ const getReportTaskGroups = (): Promise<
 
 const getSensitiveMessagePage = (
     params: TSensitiveMessageReqeust,
-): Promise<ResponseData<TableRequestParams<TSensitiveMessageResponse[]>>> =>
+): Promise<ResponseData<TableResponseData<TSensitiveMessageResponse[]>>> =>
     axios.get<
         never,
-        ResponseData<TableRequestParams<TSensitiveMessageResponse[]>>
+        ResponseData<TableResponseData<TSensitiveMessageResponse[]>>
     >('/assets/sensitive-info', { params });
 
 export {

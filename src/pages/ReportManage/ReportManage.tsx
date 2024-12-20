@@ -88,7 +88,7 @@ const ReportManage: FC = () => {
         {
             title: '报告名称',
             dataIndex: 'report_title',
-            width: 200,
+            // width: 200,
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,
@@ -96,18 +96,18 @@ const ReportManage: FC = () => {
         {
             title: '任务名',
             dataIndex: 'source',
-            width: 320,
+            // width: 320,
         },
         {
             title: '任务组',
             dataIndex: 'source_task_group',
             columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: data ?? [],
-            width: 160,
+            // width: 100,
         },
         {
             title: '生成时间',
-            width: 320,
+            // width: 280,
             dataIndex: 'start_time',
             columnsHeaderFilterType: 'rangePicker',
             render: (value, record) => (

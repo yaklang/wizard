@@ -33,6 +33,7 @@
     "dayjs": "^1.11.13",
     "echarts": "^5.5.1",
     "eslint-import-resolver-alias": "^1.1.2",
+    "event-source-polyfill": "^1.0.4",
     "file-saver": "^2.0.5",
     "github-markdown-css": "^4.0.0",
     "highlight.js": "^11.10.0",
@@ -52,11 +53,10 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
     "ts-pattern": "^5.4.0",
-    "xlsx": "^0.18.5",
-    "xlsx-style": "^0.8.13",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
+    "@types/event-source-polyfill": "^1.0.5",
     "@types/lodash": "^4.17.10",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",

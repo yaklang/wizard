@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import {
     getNodeList,
     getRunScriptTask,
+    getTaskStream,
     postEditScriptTask,
     postTaskStart,
 } from '@/apis/task';
@@ -44,6 +45,11 @@ const StartUpScriptModal = forwardRef<
         Record<'headerGroupValue' | 'id', number>
     >({ id: 0, headerGroupValue: 0 });
 
+    const { run: TaskStearmRun } = useRequest(getTaskStream, {
+        manual: true,
+        onError: () => message.error('加入实时更新失败'),
+    });
+
     // 获取节点 请求
     const { data: scannerDataList, runAsync } = useRequest(
         async () => {
@@ -71,9 +77,10 @@ const StartUpScriptModal = forwardRef<
         async (resultData) => await postTaskStart(resultData),
         {
             manual: true,
-            onSuccess: async () => {
+            onSuccess: async ({ data }) => {
                 message.success('创建成功');
                 await pageLoad?.({ task_type: taskTypeRef.current });
+                await TaskStearmRun(data.id);
                 refreshAsync && (await refreshAsync());
                 model?.close();
             },
@@ -129,6 +136,7 @@ const StartUpScriptModal = forwardRef<
                 });
                 refreshAsync && (await refreshAsync());
                 message.success('修改成功');
+                await TaskStearmRun(values.id);
                 model?.close();
             },
             onError: (err) => {
@@ -144,7 +152,6 @@ const StartUpScriptModal = forwardRef<
                 .then(() => {
                     const targetSetFormData = {
                         task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
-                        // script_type: items?.script_type,
 
                         ...items,
                         execution_date:
@@ -187,14 +194,21 @@ const StartUpScriptModal = forwardRef<
     }));
 
     const onOk = async () => {
-        const values = await form.validateFields();
-        taskTypeRef.current = values.sched_type;
+        try {
+            const values = await form.validateFields();
+            taskTypeRef.current = values.sched_type;
 
-        const resultData = transformFormData(values);
+            const resultData = transformFormData(values);
 
-        pageLoad && (await AddTaskRunAsync(resultData));
+            pageLoad && (await AddTaskRunAsync(resultData));
 
-        localRefrech && record && EditTaskRunAsync(resultData);
+            localRefrech && record && EditTaskRunAsync(resultData);
+        } catch (err: any) {
+            const errorFields = err?.errorFields
+                ?.map((it: any) => it?.errors?.join(','))
+                ?.join(',');
+            message.error(errorFields);
+        }
     };
 
     return (
@@ -228,7 +242,7 @@ const StartUpScriptModal = forwardRef<
             <div className="pb-2 px-6 overflow-auto max-h-[65vh]">
                 <Form form={form} layout="horizontal">
                     <Collapse
-                        defaultActiveKey={['1', '2', '3']}
+                        defaultActiveKey={['1', '2', '3', '4']}
                         bordered={true}
                         ghost
                         items={CreateTaskItems(

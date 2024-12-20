@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { message, Spin, Table } from 'antd';
+import { Empty, message, Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
-import { useRequest, useSafeState } from 'ahooks';
+import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
 import useListenWidth from '@/hooks/useListenHeight';
 
@@ -31,7 +31,7 @@ const reducer = <T extends TRecudeInitiakValue>(state: T, payload: T): T => ({
 const WizardTable = <T extends AnyObject = AnyObject>(
     props: TWizardTableProps<T>,
 ) => {
-    const { tableHeader, request, page } = props;
+    const { tableHeader, request, page, empotyNode } = props;
 
     const lastPage = useRef(0); // 跟踪上次的 page，防止重复请求
     const preFilter = useRef(undefined); // 跟踪上次的 filter, 触发请求
@@ -167,6 +167,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         }
     }, [height, dataSource]);
 
+    useUpdateEffect(() => {
+        handleScrollToFirstRow();
+    }, [filter]);
+
     // 表格滚动函数
     const throttledTableOnScrollFn = throttle((e: any) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -221,9 +225,9 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     };
 
     // 清除页面选中项
-    page.clear = () => {
+    page.clear = async () => {
         handleScrollToFirstRow();
-        dispatch({
+        await dispatch({
             params: {
                 page: 1,
                 limit: state.params!.limit,
@@ -246,6 +250,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                 ...args,
             },
         });
+    };
+
+    page.getDataSource = () => {
+        return dataSource ?? [];
     };
 
     page.localRefrech = (args) => {
@@ -319,7 +327,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     total: state.pagemeta!.total,
                     total_page: state.pagemeta!.total_page,
                 },
-                dataSource: [], // 清空数据源
             });
         }
     };
@@ -338,7 +345,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
         return (
             <div
-                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none relative bottom-14 pt-2`}
+                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none border-r-none relative bottom-14`}
                 style={{
                     width: wizardScrollWidth - 32,
                     height: '48px',
@@ -393,9 +400,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                         filterState: state,
                     }}
                 />
-
                 <Table
-                    id="table"
                     {...props}
                     ref={tableRef}
                     dataSource={dataSource}
@@ -409,12 +414,15 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     pagination={false}
                     scroll={{
                         x: wizardScrollHeight,
-                        y: isBottom || state.loading ? height - 48 : height,
+                        y: dataSource!.length === 0 ? 300 : height - 60,
                         scrollToFirstRowOnChange: true,
                     }}
                     onScroll={throttledTableOnScrollFn}
                     loading={state.loading && dataSource!.length === 0}
                     virtual
+                    locale={{
+                        emptyText: empotyNode ?? <Empty />,
+                    }}
                 />
                 {(isBottom || state.loading) && dataSource?.length
                     ? bottomLoading

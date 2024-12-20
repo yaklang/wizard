@@ -2,6 +2,7 @@ import axios from '@/utils/axios';
 import { ResponseData } from '@/utils/commonTypes';
 import {
     GetCaptchaRequest,
+    GetLicenseResponse,
     PostRequestAuth,
     PostResponseAuth,
     PostResponseVerifyCaptcha,
@@ -23,4 +24,12 @@ const postLogin = (
 ): Promise<ResponseData<PostRequestAuth>> =>
     axios.post<never, ResponseData<PostRequestAuth>>('/auth', data);
 
-export { getCaptcha, postVerifyCaptcha, postLogin };
+const getLicense = (): Promise<ResponseData<GetLicenseResponse>> =>
+    axios.get<never, ResponseData<GetLicenseResponse>>('/license');
+
+const postLicense = (data: {
+    license: string;
+}): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>('/license', data);
+
+export { getCaptcha, postVerifyCaptcha, postLogin, getLicense, postLicense };

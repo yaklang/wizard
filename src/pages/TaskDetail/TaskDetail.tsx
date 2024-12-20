@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useEffect } from 'react';
 
-import { Radio, Spin } from 'antd';
+import { Empty, Radio, Spin } from 'antd';
 import { match } from 'ts-pattern';
 import { useRequest, useSafeState } from 'ahooks';
 
@@ -23,7 +23,7 @@ import {
 } from '@/apis/taskDetail';
 import type { RequestFunction } from '@/compoments/WizardTable/types';
 import { useDependentCallback } from '@/hooks/useDependentCallback';
-import { useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { detailHeaderGroupOptions, SeverityMapTag } from './compoments/utils';
 
 import { AssetsVulnsFilterDrawer } from './compoments/TableOptionsFilterDrawer/AssetsVulnsFilterDrawer';
@@ -31,6 +31,7 @@ import { AssetsProtsFilterDrawer } from './compoments/TableOptionsFilterDrawer/A
 import { AssertsDataFilterDrawer } from './compoments/TableOptionsFilterDrawer/AssertsDataFilterDrawer';
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
+import { SensitiveMessage } from '../DataService/SensitiveMessage';
 
 const { Group } = Radio;
 
@@ -62,7 +63,10 @@ enum exprotFileName {
 
 const TaskDetail: FC = () => {
     const [page] = WizardTable.usePage();
-    const { id, task_id } = useParams(); // 获取路径参数
+    const location = useLocation();
+    const {
+        record: { id, task_id, script_type },
+    } = location.state || {}; // 获取传递的 record 数据
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
     const [columns, setColumns] = useSafeState<any>([]);
@@ -271,66 +275,73 @@ const TaskDetail: FC = () => {
     return (
         <div className="flex align-start h-full">
             <TaskDetailSider id={task_id} data={data} />
-
-            <WizardTable
-                rowKey={'id'}
-                columns={columns}
-                page={page}
-                tableHeader={{
-                    tableHeaderGroup: (
-                        <Spin spinning={tableLoading}>
-                            <Group
-                                optionType="button"
-                                buttonStyle="solid"
-                                options={detailHeaderGroupOptions}
-                                value={headerGroupValue}
-                                onChange={(e) => {
-                                    setHeaderGroupValue(e.target.value);
-                                    page.clear();
-                                    page.onLoad({ task_type: e.target.value });
-                                }}
-                            />
-                        </Spin>
-                    ),
-                    options: {
-                        dowloadFile: {
-                            fileName:
-                                `${exprotFileName[headerGroupValue]} (` +
-                                dayjs().unix() +
-                                ').csv',
-                            params: {
-                                typ: ExportRequestKey?.[headerGroupValue],
-                                data: {
-                                    ...page.getParams()?.filter,
-                                    limit: -1,
-                                    task_id,
+            {script_type === 'portAndVulScan' ? (
+                <WizardTable
+                    rowKey={'id'}
+                    columns={columns}
+                    page={page}
+                    tableHeader={{
+                        tableHeaderGroup: (
+                            <Spin spinning={tableLoading}>
+                                <Group
+                                    optionType="button"
+                                    buttonStyle="solid"
+                                    options={detailHeaderGroupOptions}
+                                    value={headerGroupValue}
+                                    onChange={(e) => {
+                                        setHeaderGroupValue(e.target.value);
+                                        page.clear();
+                                        page.onLoad({
+                                            task_type: e.target.value,
+                                        });
+                                    }}
+                                />
+                            </Spin>
+                        ),
+                        options: {
+                            dowloadFile: {
+                                fileName:
+                                    `${exprotFileName[headerGroupValue]} (` +
+                                    dayjs().unix() +
+                                    ').csv',
+                                params: {
+                                    typ: ExportRequestKey?.[headerGroupValue],
+                                    data: {
+                                        ...page.getParams()?.filter,
+                                        limit: -1,
+                                        task_id,
+                                    },
                                 },
+                                url: '/assets/export/report',
+                                method: 'post',
+                                type: 'primary',
+                                title: (
+                                    <div>
+                                        <UploadOutlined />
+                                        <span className="ml-2">导出 Excel</span>
+                                    </div>
+                                ),
                             },
-                            url: '/assets/export/report',
-                            method: 'post',
-                            type: 'primary',
-                            title: (
-                                <div>
-                                    <UploadOutlined />
-                                    <span className="ml-2">导出 Excel</span>
-                                </div>
-                            ),
+                            ProFilterSwitch: {
+                                trigger: tableFilterEnum(headerGroupValue),
+                                layout: 'vertical',
+                            },
                         },
-                        ProFilterSwitch: {
-                            trigger: tableFilterEnum(headerGroupValue),
-                            layout: 'vertical',
-                        },
-                    },
-                }}
-                request={async (params, filter) => {
-                    const { data } = await requestCallback(params, filter);
+                    }}
+                    request={async (params, filter) => {
+                        const { data } = await requestCallback(params, filter);
 
-                    return {
-                        list: data?.list ?? [],
-                        pagemeta: data?.pagemeta,
-                    };
-                }}
-            />
+                        return {
+                            list: data?.list ?? [],
+                            pagemeta: data?.pagemeta,
+                        };
+                    }}
+                />
+            ) : script_type === 'weakinfo' ? (
+                <SensitiveMessage task_id={task_id} />
+            ) : (
+                <Empty className="w-full h-full flex items-center justify-center flex-col" />
+            )}
         </div>
     );
 };

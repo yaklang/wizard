@@ -26,9 +26,14 @@ interface PostRequestAuth {
     };
 }
 
+interface GetLicenseResponse {
+    license: string;
+    org: string;
+}
 export type {
     GetCaptchaRequest,
     PostResponseVerifyCaptcha,
     PostResponseAuth,
     PostRequestAuth,
+    GetLicenseResponse,
 };

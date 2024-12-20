@@ -113,7 +113,7 @@ const extendTableProps = (
             }, {} as TSelectedRowKeys) ?? {};
         setSelectedRowKeys(rowSelectionValues);
         selectedRef.current = rowSelectionValues;
-    }, [columns]);
+    }, [columns, state.dataSource]);
 
     // table header 关闭监听事件
     useUpdateEffect(() => {
@@ -196,7 +196,7 @@ const extendTableProps = (
         return {
             ids: addSelectedRowKeys,
             isAll:
-                addSelectedRowKeys.length === state.pagemeta?.total
+                addSelectedRowKeys.length === state.dataSource?.length
                     ? true
                     : false,
         };
@@ -282,6 +282,7 @@ const extendTableProps = (
             title,
             rangePickSetting,
             dataIndex: selectKeys,
+            placeholder,
         } = column;
 
         // table 勾选组件渲染
@@ -479,7 +480,9 @@ const extendTableProps = (
                                     {match(wizardTableType)
                                         .with('input', () => (
                                             <Input
-                                                placeholder="请输入"
+                                                placeholder={
+                                                    placeholder ?? '请输入'
+                                                }
                                                 value={search[selectKeys]}
                                                 onChange={(e) => {
                                                     setSearch((val) => {

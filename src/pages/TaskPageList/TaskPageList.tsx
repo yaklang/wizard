@@ -1,4 +1,4 @@
-import { useRef, type FC } from 'react';
+import { useEffect, useRef, type FC } from 'react';
 import { Button, message, Radio, Spin } from 'antd';
 
 import { WizardTable } from '@/compoments';
@@ -19,16 +19,42 @@ import TaskSelectdProject from '@/assets/task/taskSelectdProject.png';
 
 import { CommonTasksColumns } from './compoment/Columns';
 import { ListSiderContext } from './compoment/ListSiderContext';
-import { TaskGrounpResponse } from '@/apis/task/types';
+import { TaskGrounpResponse, TaskListRequest } from '@/apis/task/types';
 
 import { options, siderTaskGrounpAllList } from './utils/data';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CreateTaskScriptModal } from './compoment/CreateTaskScriptModal';
+import { useEventSource } from '@/hooks';
 
 const { Group } = Radio;
 
 const TaskPageList: FC = () => {
     const [page] = WizardTable.usePage();
+
+    const { disconnect } = useEventSource<{
+        message: any;
+    }>('events?stream_type=status_updates', {
+        onsuccess: (data) => {
+            const { message } = data;
+            const dataSource = page.getDataSource();
+            const targetItem =
+                dataSource.findIndex(
+                    (it: TaskListRequest) => it.id === message?.id,
+                ) !== -1
+                    ? dataSource.find((it) => it.id === message?.id)
+                    : false;
+            targetItem &&
+                page.localRefrech({
+                    operate: 'edit',
+                    oldObj: targetItem,
+                    newObj: message,
+                });
+        },
+        onerror: (error) => {
+            message.error('连接超时，重连中');
+            console.error('SSE error:', error);
+        },
+    });
 
     const openCreateTaskModalRef = useRef<UseModalRefType>(null);
 
@@ -41,6 +67,14 @@ const TaskPageList: FC = () => {
         Record<string, { ids: any[]; isAll: boolean }>
     >({});
 
+    const [createTaskModalVisible, setCreateTaskModalVisible] = useSafeState<{
+        header: boolean;
+        table: boolean;
+    }>({
+        header: false,
+        table: false,
+    });
+
     const { loading, run } = useRequest(
         async () => {
             await deleteScriptTask({
@@ -52,7 +86,13 @@ const TaskPageList: FC = () => {
             onSuccess: async () => {
                 page.localRefrech({
                     operate: 'delete',
-                    oldObj: { id: deleteValues?.task_name },
+                    oldObj: { id: deleteValues?.task_name?.ids },
+                });
+                setDeleteValues({
+                    task_name: {
+                        ids: [],
+                        isAll: false,
+                    },
                 });
                 message.success('删除成功');
             },
@@ -127,7 +167,7 @@ const TaskPageList: FC = () => {
     );
 
     // 获取脚本列表
-    const { loading: scriptLoading, run: scriptRun } = useRequest(
+    const { run: scriptRun } = useRequest(
         async () => {
             const result = await getAnalysisScript();
             const {
@@ -137,7 +177,18 @@ const TaskPageList: FC = () => {
         },
         {
             manual: true,
+            onError: () => {
+                setCreateTaskModalVisible(() => ({
+                    header: false,
+                    table: false,
+                }));
+            },
+
             onSuccess: (value) => {
+                setCreateTaskModalVisible(() => ({
+                    header: false,
+                    table: false,
+                }));
                 openCreateTaskModalRef.current?.open(value);
             },
         },
@@ -160,13 +211,19 @@ const TaskPageList: FC = () => {
     };
 
     // 打开创建任务弹窗
-    const headCreatedScript = async () => {
-        await scriptRun();
+    const headCreatedScript = () => {
+        scriptRun();
     };
 
     useUpdateEffect(() => {
         page.onLoad({ task_groups: taskGroupKey });
     }, [taskGroupKey]);
+
+    useEffect(() => {
+        return () => {
+            disconnect();
+        };
+    }, []);
 
     return (
         <div className="flex align-start h-full">
@@ -202,7 +259,6 @@ const TaskPageList: FC = () => {
                     />
                 </Spin>
             </div>
-
             <WizardTable
                 rowKey={'id'}
                 columns={CommonTasksColumns(
@@ -239,7 +295,6 @@ const TaskPageList: FC = () => {
                                             : true
                                     }
                                     onClick={async () => {
-                                        console.log(page.getParams());
                                         run();
                                     }}
                                     loading={loading}
@@ -248,8 +303,14 @@ const TaskPageList: FC = () => {
                                 </Button>
                                 <Button
                                     type="primary"
-                                    onClick={headCreatedScript}
-                                    loading={scriptLoading}
+                                    onClick={() => {
+                                        setCreateTaskModalVisible((value) => ({
+                                            ...value,
+                                            header: true,
+                                        }));
+                                        headCreatedScript();
+                                    }}
+                                    loading={createTaskModalVisible.header}
                                 >
                                     <PlusOutlined />
                                     创建任务
@@ -258,6 +319,24 @@ const TaskPageList: FC = () => {
                         ),
                     },
                 }}
+                empotyNode={
+                    <div className="h-48 flex items-center justify-center flex-col gap-4">
+                        <div>暂无数据，您可以点击</div>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setCreateTaskModalVisible((value) => ({
+                                    ...value,
+                                    table: true,
+                                }));
+                                headCreatedScript();
+                            }}
+                            loading={createTaskModalVisible.table}
+                        >
+                            一键创建任务
+                        </Button>
+                    </div>
+                }
                 request={async (params, filter) => {
                     const { data } = await getTaskList({
                         dto: {
@@ -276,7 +355,7 @@ const TaskPageList: FC = () => {
                         filter?.task_type ? filter.task_type : val,
                     );
                     return {
-                        list: data?.list,
+                        list: data?.list ?? [],
                         pagemeta: data?.pagemeta,
                     };
                 }}

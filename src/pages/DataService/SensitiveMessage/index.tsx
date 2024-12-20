@@ -28,7 +28,7 @@ const sensitiveInfoStatus = [
     },
 ];
 
-const SensitiveMessage: FC = () => {
+const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
     const [page] = WizardTable.usePage();
     const columns: CreateTableProps<TSensitiveMessageResponse>['columns'] = [
         {
@@ -129,10 +129,11 @@ const SensitiveMessage: FC = () => {
                 const { data } = await getSensitiveMessagePage({
                     ...params,
                     ...filter,
+                    task_id,
                 });
 
                 return {
-                    list: data?.data ?? [],
+                    list: data?.list ?? [],
                     pagemeta: data?.pagemeta,
                 };
             }}

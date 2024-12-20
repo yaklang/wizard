@@ -111,7 +111,7 @@ const WizardDrawer: DrawerType = ({
                 </div>
             }
         >
-            <div>{children}</div>
+            <div className="w-full h-full overflow-auto">{children}</div>
         </AntdDrawer>
     );
 };

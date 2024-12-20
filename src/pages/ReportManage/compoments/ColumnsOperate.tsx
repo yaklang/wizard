@@ -62,7 +62,7 @@ const ColumnsOperateRender: FC<{
     };
 
     return (
-        <div className="flex gap-2 items-center justify-center">
+        <div className="flex gap-2 items-center justify-center min-w-30">
             <FileOutlinedIcon
                 style={{ width: '32px', borderRight: '1px solid #EAECF3' }}
                 onClick={() => handPreviewReport()}

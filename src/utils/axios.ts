@@ -6,9 +6,9 @@ import useLoginStore from '@/App/store/loginStore';
 // 请求头标识
 // export const REQUEST_SOURCE = 'management';
 
-const successCode = 200; // 成功
-const noAuthCode = 401; // 登陆过期
-const roleLoseEfficacy = 20001; // 权限实效  目前可以暂时不用
+export const successCode = 200; // 成功
+export const noAuthCode = 401; // 登陆过期
+export const roleLoseEfficacy = 20001; // 权限实效  目前可以暂时不用
 
 const axios = Axios.create({
     headers: {

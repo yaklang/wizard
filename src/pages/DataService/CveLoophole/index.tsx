@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useRef } from 'react';
 
 import dayjs from 'dayjs';
 import classNames from 'classnames';
@@ -14,6 +14,8 @@ import { CveLoopholeFilterDrawer } from './compoments/CveLoopholeFilterDrawer';
 import { Button, Input, Popover, Select, Space } from 'antd';
 import { useSafeState } from 'ahooks';
 import { SyncOutlined } from '@ant-design/icons';
+import { CveUpdateModal } from './compoments/CveUpdateModal';
+import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 
 const options = [
     {
@@ -30,10 +32,13 @@ const options = [
 
 const CveLoophole: FC = () => {
     const [page] = WizardTable.usePage();
+    const CveUpdateModalRef = useRef<UseModalRefType>(null);
     const [search, setSearch] = useSafeState({
         key: 'cve',
         value: '',
     });
+
+    const [open, setOpen] = useSafeState(false);
 
     const columns: CreateTableProps<TCveQueryResponse>['columns'] = [
         {
@@ -132,81 +137,114 @@ const CveLoophole: FC = () => {
     ];
 
     return (
-        <WizardTable
-            page={page}
-            rowKey={'cve'}
-            columns={columns}
-            tableHeader={{
-                title: 'CVE 数据库管理',
-                options: {
-                    trigger: (
-                        <div className="flex items-center justify-center gap-4">
-                            <Space.Compact>
-                                <Select
-                                    defaultValue={search.key}
-                                    value={search.key}
-                                    options={options}
-                                    onChange={(e) =>
-                                        setSearch((cur) => ({ ...cur, key: e }))
-                                    }
-                                />
-                                <Input.Search
-                                    placeholder={
-                                        options.find(
-                                            (it) => it.value === search.key,
-                                        )?.text
-                                    }
-                                    onSearch={async (value) => {
-                                        const uselessKey = options.filter(
-                                            (it) => it.value !== search.key,
-                                        )[0].value;
+        <div className="h-full">
+            <WizardTable
+                page={page}
+                rowKey={'cve'}
+                columns={columns}
+                tableHeader={{
+                    title: 'CVE 数据库管理',
+                    options: {
+                        trigger: (
+                            <div className="flex items-center justify-center gap-4">
+                                <Space.Compact>
+                                    <Select
+                                        defaultValue={search.key}
+                                        value={search.key}
+                                        options={options}
+                                        onChange={(e) =>
+                                            setSearch((cur) => ({
+                                                ...cur,
+                                                key: e,
+                                            }))
+                                        }
+                                    />
+                                    <Input.Search
+                                        placeholder={
+                                            options.find(
+                                                (it) => it.value === search.key,
+                                            )?.text
+                                        }
+                                        onSearch={async (value) => {
+                                            const uselessKey = options.filter(
+                                                (it) => it.value !== search.key,
+                                            )[0].value;
 
-                                        await page.editFilter({
-                                            [search.key]: value,
-                                            [uselessKey]: undefined,
-                                        });
-                                        setSearch((cur) => ({ ...cur, value }));
-                                    }}
-                                />
-                            </Space.Compact>
-                            <Popover
-                                className="p-0"
-                                content={
-                                    <div className="w-36">
-                                        <div className="mb-2 py-1 px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer">
-                                            只更新最新数据
+                                            await page.editFilter({
+                                                [search.key]: value,
+                                                [uselessKey]: undefined,
+                                            });
+                                            setSearch((cur) => ({
+                                                ...cur,
+                                                value,
+                                            }));
+                                        }}
+                                    />
+                                </Space.Compact>
+                                <Popover
+                                    className="p-0"
+                                    open={open}
+                                    onOpenChange={(newOpen) => setOpen(newOpen)}
+                                    content={
+                                        <div className="w-36">
+                                            <div
+                                                className="mb-2 py-1 px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer"
+                                                onClick={() => {
+                                                    CveUpdateModalRef.current?.open(
+                                                        {
+                                                            title: 'CVE 差量最新数据更新',
+                                                            type: 'lack',
+                                                        },
+                                                    );
+                                                    setOpen(false);
+                                                }}
+                                            >
+                                                只更新最新数据
+                                            </div>
+                                            <div
+                                                className="px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer"
+                                                onClick={() => {
+                                                    CveUpdateModalRef.current?.open(
+                                                        {
+                                                            title: 'CVE 数据库更新',
+                                                            type: 'global',
+                                                        },
+                                                    );
+                                                    setOpen(false);
+                                                }}
+                                            >
+                                                全量更新
+                                            </div>
                                         </div>
-                                        <div className="px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer">
-                                            全量更新
-                                        </div>
-                                    </div>
-                                }
-                                trigger="click"
-                            >
-                                <Button type="primary" className="p-2">
-                                    <SyncOutlined /> 数据库更新
-                                </Button>
-                            </Popover>
-                        </div>
-                    ),
-                    ProFilterSwitch: {
-                        trigger: <CveLoopholeFilterDrawer page={page} />,
-                        layout: 'vertical',
+                                    }
+                                    trigger="click"
+                                >
+                                    <Button type="primary" className="p-2">
+                                        <SyncOutlined /> 数据库更新
+                                    </Button>
+                                </Popover>
+                            </div>
+                        ),
+                        ProFilterSwitch: {
+                            trigger: <CveLoopholeFilterDrawer page={page} />,
+                            layout: 'vertical',
+                        },
                     },
-                },
-            }}
-            request={async (params, filter) => {
-                const { data } = await postCveQuery({
-                    ...params,
-                    ...filter,
-                });
+                }}
+                request={async (params, filter) => {
+                    const { data } = await postCveQuery({
+                        ...params,
+                        ...filter,
+                    });
 
-                return {
-                    list: data?.list ?? [],
-                    pagemeta: data?.pagemeta,
-                };
-            }}
-        />
+                    return {
+                        list: data?.list ?? [],
+                        pagemeta: data?.pagemeta,
+                    };
+                }}
+            />
+            <CveUpdateModal ref={CveUpdateModalRef} refresh={page.refresh} />
+        </div>
     );
 };
 

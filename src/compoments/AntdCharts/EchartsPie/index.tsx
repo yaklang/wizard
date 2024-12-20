@@ -396,6 +396,7 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
             }
             setSelectList(newSelect);
         });
+
         return (
             <div
                 className={classNames(

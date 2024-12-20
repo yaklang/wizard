@@ -35,9 +35,9 @@ const CreateUserModal = forwardRef<
 
     const { run, loading } = useRequest(postAddUser, {
         manual: true,
-        onSuccess: (values) => {
-            console.log(values, 'aaa');
-        },
+        // onSuccess: (values) => {
+        //     console.log(values, 'aaa');
+        // },
     });
 
     const onOk = async () => {
@@ -48,6 +48,7 @@ const CreateUserModal = forwardRef<
                     await run({ ...formData });
                     refresh();
                     message.success('创建成功');
+                    model.close();
                 })
                 .with('编辑用户', async () => {
                     await run({ ...formData });
@@ -57,6 +58,7 @@ const CreateUserModal = forwardRef<
                         oldObj: record,
                     });
                     message.success('编辑成功');
+                    model.close();
                 })
                 .with('重置密码', () => {
                     model.close();

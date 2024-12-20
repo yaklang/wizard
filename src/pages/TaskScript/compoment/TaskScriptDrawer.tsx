@@ -102,11 +102,6 @@ const TaskScriptDrawer = forwardRef<
                 <Item
                     label={'脚本类型'}
                     name={'script_type'}
-                    rules={
-                        !title.includes('创建')
-                            ? [{ required: true, message: '请选择脚本类型' }]
-                            : undefined
-                    }
                     initialValue={'portAndVulScan'}
                 >
                     <Select
@@ -131,17 +126,6 @@ const TaskScriptDrawer = forwardRef<
                                     scriptType === 'portAndVulScan'
                                         ? ['prompt_args', 'target']
                                         : ['prompt_args', 'keyword']
-                                }
-                                rules={
-                                    !title.includes('创建')
-                                        ? [
-                                              {
-                                                  required: true,
-                                                  message:
-                                                      '请输入或上传扫描目标',
-                                              },
-                                          ]
-                                        : undefined
                                 }
                                 extra={
                                     <div className="flex items-center font-normal text-xs color-[#85899E]">
@@ -266,18 +250,6 @@ const TaskScriptDrawer = forwardRef<
                                                         </Popover>
                                                     </span>
                                                 }
-                                                rules={
-                                                    !title.includes('创建')
-                                                        ? [
-                                                              {
-                                                                  message:
-                                                                      '请输入扫描端口',
-                                                                  required:
-                                                                      true,
-                                                              },
-                                                          ]
-                                                        : undefined
-                                                }
                                             >
                                                 <Input.TextArea
                                                     placeholder="请输入扫描端口"
@@ -361,8 +333,15 @@ const TaskScriptDrawer = forwardRef<
                     }}
                 </Item>
 
-                <Item name={'script'} label="分布式脚本内容">
-                    <WizardAceEditor />
+                <Item
+                    name={'script'}
+                    label="分布式脚本内容"
+                    style={{ height: '100%' }}
+                    rules={[
+                        { required: true, message: '请输入分布式脚本内容' },
+                    ]}
+                >
+                    <WizardAceEditor maxLines={Infinity} />
                 </Item>
             </Form>
         </WizardDrawer>

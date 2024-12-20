@@ -1,5 +1,5 @@
 import { FC, useMemo, useRef } from 'react';
-import { Button, message, Popover, Spin } from 'antd';
+import { Button, message, Modal, Popover, Spin } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 import { useRequest, useSafeState } from 'ahooks';
@@ -20,6 +20,7 @@ import {
     getTaskRun,
     getTaskStartEditDispaly,
     getTaskStop,
+    getTaskStream,
 } from '@/apis/task';
 import { match, P } from 'ts-pattern';
 import { UsePageRef } from '@/hooks/usePage';
@@ -32,6 +33,17 @@ type TCommonTasksColumnsRenderProps = {
     record: TaskListRequest;
     localRefrech: UsePageRef['localRefrech'];
     headerGroupValue: 1 | 2 | 3;
+    setDeleteValues?: React.Dispatch<
+        React.SetStateAction<
+            Record<
+                string,
+                {
+                    ids: any[];
+                    isAll: boolean;
+                }
+            >
+        >
+    >;
 };
 
 // 任务列表 普通任务 / 定时任务操作项
@@ -39,6 +51,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     record,
     localRefrech,
     headerGroupValue,
+    setDeleteValues,
 }) => {
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
     const itemsRef = useRef<any>(null);
@@ -47,6 +60,11 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         delete: false,
     });
     const { status } = record;
+
+    const { run: TaskStearmRun } = useRequest(getTaskStream, {
+        manual: true,
+        onError: () => message.error('加入实时更新失败'),
+    });
 
     // 获取 启动脚本任务 任务组参数
     const { run: runAsyncGroup } = useRequest(
@@ -92,6 +110,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                     newObj: value,
                     oldObj: record,
                 });
+                TaskStearmRun(value.id);
                 message.success('执行成功');
                 setOpen((val) => ({ ...val, action: false }));
             },
@@ -125,6 +144,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                     newObj: value,
                     oldObj: record,
                 });
+                TaskStearmRun(value.id);
                 message.success('取消执行成功');
                 setOpen((val) => ({ ...val, action: false }));
             },
@@ -134,6 +154,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
         },
     );
+
     // 取消执行操作
     const headTaskStop = async () => {
         if (record.id) {
@@ -159,6 +180,18 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         if (record.id) {
             await deleteRunAsync(record.id);
             localRefrech({ operate: 'delete', oldObj: { id: record.id } });
+            setDeleteValues &&
+                setDeleteValues((values) => {
+                    const ids = values?.['task_name']?.ids?.filter(
+                        (ids) => ids !== record.id,
+                    );
+                    return {
+                        task_name: {
+                            ids,
+                            isAll: false,
+                        },
+                    };
+                });
             message.success('删除成功');
             setOpen((val) => ({ ...val, delete: false }));
         } else {
@@ -167,27 +200,22 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     };
 
     // 编辑任务
-    const onEdit = async () => {
+    const onEdit = async (status: 'edit' | 'execute') => {
         if (record?.id) {
             await getTaskStartEditDispaly(record.id).then(({ data }) => {
                 const transformModalFormdata = {
                     ...data,
                     id: record.id,
                     headerGroupValue,
-                    execution_date: data?.params?.execution_date
-                        ? dayjs.unix(data?.params?.execution_date)
-                        : undefined,
+                    start_timestamp:
+                        data?.start_timestamp && status === 'edit'
+                            ? data?.start_timestamp
+                            : undefined,
                     params: {
                         ...data.params,
-                        // 'preset-protes': data?.params?.['preset-protes']
-                        //     ? (data?.params['preset-protes'])
-                        //           .split(', ')
-                        //           .map((item) => item.trim())
-                        //     : [],
                     },
                 };
 
-                console.log(transformModalFormdata, 'transformModalFormdata');
                 itemsRef.current = transformModalFormdata;
                 runAsyncGroup();
             });
@@ -200,7 +228,10 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         return (
             <div className="flex">
                 <span className="w-7 mr-2">{''}</span>
-                <span className="cursor-pointer mr-2" onClick={onEdit}>
+                <span
+                    className="cursor-pointer mr-2"
+                    onClick={() => onEdit('edit')}
+                >
                     <TableFormOutlined />
                 </span>
 
@@ -366,7 +397,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                     <div>
                                         <InfoCircleOutlined color="#faad14" />
                                         <span className="ml-1 font-400">
-                                            停用该任务？
+                                            取消该任务？
                                         </span>
                                     </div>
                                 }
@@ -384,13 +415,51 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                             </Popover>
                         ) : (
                             headerGroupValue === 2 && (
-                                <span className="w-7 mr-2">{''}</span>
+                                <div
+                                    className="mr-2 cursor-pointer"
+                                    onClick={() => {
+                                        Modal.info({
+                                            title: '提示',
+                                            footer: () => {
+                                                return (
+                                                    <div>
+                                                        <Button
+                                                            onClick={() =>
+                                                                Modal.destroyAll()
+                                                            }
+                                                        >
+                                                            取消
+                                                        </Button>
+                                                        <Button
+                                                            type="primary"
+                                                            onClick={() => {
+                                                                Modal.destroyAll();
+                                                                onEdit(
+                                                                    'execute',
+                                                                );
+                                                            }}
+                                                        >
+                                                            确定
+                                                        </Button>
+                                                    </div>
+                                                );
+                                            },
+                                            content: (
+                                                <div>
+                                                    需要再次执行该定时任务，请点击确定修改执行时间
+                                                </div>
+                                            ),
+                                        });
+                                    }}
+                                >
+                                    <PlayCircleOutlined />
+                                </div>
                             )
                         )}
 
                         <span
                             className={`cursor-pointer mr-2`}
-                            onClick={onEdit}
+                            onClick={() => onEdit('edit')}
                         >
                             <TableFormOutlined />
                         </span>
@@ -462,6 +531,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     record,
     localRefrech,
     headerGroupValue,
+    setDeleteValues,
 }) => {
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
     const [open, setOpen] = useSafeState({
@@ -508,6 +578,18 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         if (record.id) {
             await deleteRunAsync(record.id);
             localRefrech({ operate: 'delete', oldObj: { id: record.id } });
+            setDeleteValues &&
+                setDeleteValues((values) => {
+                    const ids = values?.['task_name']?.ids?.filter(
+                        (ids) => ids !== record.id,
+                    );
+                    return {
+                        task_name: {
+                            ids,
+                            isAll: false,
+                        },
+                    };
+                });
             message.success('删除成功');
             setOpen((val) => ({ ...val, delete: false }));
         } else {

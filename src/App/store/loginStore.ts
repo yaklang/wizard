@@ -4,14 +4,14 @@ import { create } from 'zustand';
 
 interface LoginStore {
     userInfo: Partial<PostRequestAuth['user_info']>;
-    token: string;
+    token?: string;
     login: (param: any) => Promise<void>;
     outLogin: () => Promise<void>;
 }
 
 const useLoginStore = create<LoginStore>()((set) => ({
     userInfo: JSON?.parse(String(localStorage?.getItem('userInfo'))) || {},
-    token: localStorage.getItem('token') || '',
+    token: localStorage.getItem('token') || undefined,
     login: async (param) => {
         await postLogin(param).then((res) => {
             const { data } = res;

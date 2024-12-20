@@ -38,7 +38,7 @@ const SystemManagement: FC = () => {
             title: '操作',
             dataIndex: 'report_id',
             fixed: 'right',
-            width: 120,
+            width: 140,
             render: (_, record) => {
                 return (
                     <div className="flex items-center justify-center gap-2">
@@ -53,24 +53,16 @@ const SystemManagement: FC = () => {
                                 onClick={() => {
                                     setModalTitle('重置密码');
                                     if (record.username) {
-                                        if (record.username === 'root') {
-                                            message.info(
-                                                '无法重置超级管理员root的帐户密码',
-                                            );
-                                        } else {
-                                            postUserReset({
-                                                username: record.username,
-                                            }).then((res) => {
-                                                const { data } = res;
-                                                CreateUserModalRef.current?.open(
-                                                    {
-                                                        ...record,
-                                                        ...data,
-                                                        type: 'reset',
-                                                    },
-                                                );
+                                        postUserReset({
+                                            username: record.username,
+                                        }).then((res) => {
+                                            const { data } = res;
+                                            CreateUserModalRef.current?.open({
+                                                ...record,
+                                                ...data,
+                                                type: 'reset',
                                             });
-                                        }
+                                        });
                                     } else {
                                         message.info(
                                             '获取用户名失败，请刷新页面重试',

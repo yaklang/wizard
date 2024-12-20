@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 
 import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
@@ -15,11 +15,11 @@ import './index.scss';
 import App from './App.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-        <HashRouter>
-            <ConfigProvider locale={locale}>
-                <App />
-            </ConfigProvider>
-        </HashRouter>
-    </React.StrictMode>,
+    // <React.StrictMode>
+    <HashRouter>
+        <ConfigProvider locale={locale}>
+            <App />
+        </ConfigProvider>
+    </HashRouter>,
+    // </React.StrictMode>,
 );

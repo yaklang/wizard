@@ -1,8 +1,8 @@
 import type { MenuProps } from 'antd';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Spin } from 'antd';
 import { useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useSafeState } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 
 import routers from './routers/routers';
 import { useNetworkStatus, usePermissionsSlice } from '@/hooks';
@@ -13,6 +13,7 @@ import { SiderClose, SiderOpen } from '@/assets/compoments';
 import { UserCard } from './UserCard';
 import { findFullPath, findPathNodes, processMenu } from '@/utils';
 import { LeftOutlined } from '@ant-design/icons';
+import { getLicense } from '@/apis/login';
 
 const { Header, Content, Sider } = Layout;
 
@@ -27,6 +28,12 @@ const AppLayout = () => {
     >([]);
 
     const { permissionsSlice } = usePermissionsSlice();
+
+    const { data: license, loading } = useRequest(async () => {
+        const { data } = await getLicense();
+        const { license } = data;
+        return license?.length > 0 ? license : undefined;
+    });
 
     // 路由重定向
     useEffect(() => {
@@ -67,7 +74,19 @@ const AppLayout = () => {
         !status && navigate('/network-err', { replace: true });
     }, [status]);
 
-    return (
+    useEffect(() => {
+        license && navigate('/license', { state: { license } });
+    }, [license]);
+
+    return loading ? (
+        <Spin spinning={loading} tip="加载 license" size="large">
+            <div
+                style={{
+                    height: '100vh',
+                }}
+            />
+        </Spin>
+    ) : (
         <Layout hasSider className="h-full text-[14px]">
             <Sider
                 className="overflow-auto h-full left-0 top-0 bottom-0 "

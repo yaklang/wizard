@@ -19,6 +19,7 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
     >();
 
     const headReset = () => {
+        setExecutionOrderValue(undefined);
         page.editFilter({
             order: undefined,
             order_by: undefined,
@@ -47,14 +48,11 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
                     <Radio.Group
                         options={ExecutionOrderOptions}
                         onChange={(e) => {
-                            setExecutionOrderValue((value) => {
-                                value &&
-                                    page.editFilter({
-                                        [value]: undefined,
-                                        [e.target.value]: undefined,
-                                    });
-                                return e.target.value;
+                            page.editFilter({
+                                order_by: undefined,
+                                order: e.target.value,
                             });
+                            setExecutionOrderValue(e.target.value);
                         }}
                     />
                 </Item>

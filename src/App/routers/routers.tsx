@@ -23,6 +23,8 @@ import { PortAssets } from '@/pages/DataService/PortAssets';
 import { AssetsVulns } from '@/pages/DataService/AssetsVulns';
 import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage';
 import { CveLoophole } from '@/pages/DataService/CveLoophole';
+import NodeManagePage from '@/pages/NodeManage';
+import License from '@/pages/License';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -59,7 +61,7 @@ const routers: RouteObjectRootMy[] = [
                                 element: <TaskPageList />,
                             },
                             {
-                                path: 'detail/:id/:task_id',
+                                path: 'detail',
                                 key: 'task_detail',
                                 element: <TaskDetail />,
                                 name: '任务详情',
@@ -127,6 +129,12 @@ const routers: RouteObjectRootMy[] = [
                         key: 'node-intsall',
                         element: <NodeConfig />,
                     },
+                    {
+                        path: 'manage',
+                        name: '节点管理',
+                        key: 'node-manage',
+                        element: <NodeManagePage />,
+                    },
                 ],
             },
             {
@@ -142,6 +150,11 @@ const routers: RouteObjectRootMy[] = [
         path: '/login',
         element: <Login />,
     },
+    {
+        path: '/license',
+        element: <License />,
+    },
+
     {
         path: '/network-err',
         element: <NetworkError />,

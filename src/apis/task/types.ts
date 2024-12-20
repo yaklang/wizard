@@ -22,7 +22,6 @@ type TaskListResponse = Partial<{
 // 任务列表相应数据
 type TaskListRequest = Partial<{
     created_at: number;
-    id: number;
     scanner: string[];
     task_group: string;
     task_id: string;
@@ -32,7 +31,7 @@ type TaskListRequest = Partial<{
     end_at: number;
     start_timestamp: number;
     end_timestamp: number;
-}>;
+}> & { id: number };
 
 // 任务分组相应数据
 interface TaskGrounpResponse {
@@ -96,6 +95,7 @@ type TPromptArgs = Partial<{
     interval_seconds: string;
     interval_seconds_type: number;
     execution_date: number;
+    start_timestamp: number;
 }>;
 
 type TPostTaskStartRequest = Partial<{
