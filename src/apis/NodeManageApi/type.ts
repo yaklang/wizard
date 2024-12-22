@@ -14,4 +14,10 @@ interface QueryPalmNodeParams {
     runtime_task_list?: string[];
 }
 
-export type { QueryPalmNodeParams };
+interface TPostNodesDownloadDataRunRequest {
+    server_ip: string;
+    nodes_id: Array<string>;
+    file_data: Record<'home', Array<string>>;
+}
+
+export type { QueryPalmNodeParams, TPostNodesDownloadDataRunRequest };

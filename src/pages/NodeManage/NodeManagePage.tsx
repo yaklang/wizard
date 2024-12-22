@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useRef } from 'react';
 
 import { WizardTable } from '@/compoments';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
@@ -11,7 +11,7 @@ import { Palm } from '@/gen/schema';
 import LogIcon from './Icon/LogIcon';
 import NetWorkIcon from './Icon/NetWorkIcon';
 import PerformanceIcon from './Icon/PerformanceIcon';
-import OmitIcon from './Icon/OmitIcon';
+import { MoreNode } from './compoments/MoreNode';
 
 const intervalText = (value: number) => {
     if (value < 60) return `${value}秒`;
@@ -69,7 +69,8 @@ const NodeManagePage: FC = () => {
             dataIndex: 'id',
             title: '操作',
             width: 190,
-            render: () => {
+            fixed: 'right',
+            render: (_, record) => {
                 return (
                     <div className="flex items-center justify-center gap-2">
                         <LogIcon
@@ -90,11 +91,7 @@ const NodeManagePage: FC = () => {
                                 borderRight: '1px solid #EAECF3',
                             }}
                         />
-                        <OmitIcon
-                            style={{
-                                width: '32px',
-                            }}
-                        />
+                        <MoreNode record={record} page={page} />
                     </div>
                 );
             },
