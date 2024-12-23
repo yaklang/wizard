@@ -23,6 +23,7 @@ interface TReportResonse {
 }
 
 interface TSensitiveMessageReqeust {
+    task_id?: string;
     form_runtime_id?: string;
     from_task_id?: string;
     keyword?: string;

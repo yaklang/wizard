@@ -90,6 +90,10 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 localRefrech({
                     operate: 'edit',
                     newObj: value,
+                    // newObj: {
+                    //     ...value,
+                    //     status: 'running' as any,
+                    // },
                     oldObj: record,
                 });
                 message.success('执行成功');
@@ -122,6 +126,10 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             onSuccess: async (value) => {
                 localRefrech({
                     operate: 'edit',
+                    // newObj: {
+                    //     ...value,
+                    //     status: 'cancel' as any,
+                    // },
                     newObj: value,
                     oldObj: record,
                 });
@@ -134,6 +142,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
         },
     );
+
     // 取消执行操作
     const headTaskStop = async () => {
         if (record.id) {
@@ -187,7 +196,6 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                     },
                 };
 
-                console.log(transformModalFormdata, 'transformModalFormdata');
                 itemsRef.current = transformModalFormdata;
                 runAsyncGroup();
             });
@@ -366,7 +374,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                     <div>
                                         <InfoCircleOutlined color="#faad14" />
                                         <span className="ml-1 font-400">
-                                            停用该任务？
+                                            取消该任务？
                                         </span>
                                     </div>
                                 }

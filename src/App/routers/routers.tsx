@@ -60,7 +60,7 @@ const routers: RouteObjectRootMy[] = [
                                 element: <TaskPageList />,
                             },
                             {
-                                path: 'detail/:id/:task_id',
+                                path: 'detail',
                                 key: 'task_detail',
                                 element: <TaskDetail />,
                                 name: '任务详情',

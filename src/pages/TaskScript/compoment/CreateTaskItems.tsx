@@ -443,133 +443,6 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             );
                         }}
                     </Item>
-                    {scriptTypeValue === 'portAndVulScan' && (
-                        <Item noStyle dependencies={[]}>
-                            {({ setFieldValue }) => {
-                                return (
-                                    <Item
-                                        name={['params', 'preset-protes']}
-                                        label={
-                                            <div className="min-w-[124px] max-w-full">
-                                                预设端口
-                                            </div>
-                                        }
-                                    >
-                                        <Checkbox.Group
-                                            options={presetProtsGroupOptions}
-                                            onChange={(e) => {
-                                                const portsValue = e
-                                                    .map(
-                                                        (it) =>
-                                                            PresetPorts[
-                                                                it as keyof typeof PresetPorts
-                                                            ],
-                                                    )
-                                                    .join();
-                                                setFieldValue(
-                                                    ['params', 'ports'],
-                                                    portsValue,
-                                                );
-                                                return e;
-                                            }}
-                                        />
-                                    </Item>
-                                );
-                            }}
-                        </Item>
-                    )}
-                    {scriptTypeValue === 'portAndVulScan' && (
-                        <Item noStyle dependencies={[]}>
-                            {({ setFieldValue }) => (
-                                <Item
-                                    name={['params', 'ports']}
-                                    label={
-                                        <span>
-                                            扫描端口
-                                            <Popover
-                                                content={
-                                                    '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
-                                                }
-                                                trigger="hover"
-                                            >
-                                                <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                            </Popover>
-                                        </span>
-                                    }
-                                    rules={[
-                                        {
-                                            message: '请输入扫描端口',
-                                            required: true,
-                                        },
-                                    ]}
-                                    className="ml-9"
-                                >
-                                    <Input.TextArea
-                                        placeholder="请输入扫描端口"
-                                        style={{ width: '100%' }}
-                                        rows={4}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const keys = Object.keys(
-                                                PresetPorts,
-                                            ) as PresetKey[];
-                                            const match = keys.filter((key) =>
-                                                value.includes(
-                                                    PresetPorts[key],
-                                                ),
-                                            );
-
-                                            setFieldValue(
-                                                ['params', 'preset-protes'],
-                                                match,
-                                            );
-                                            return value;
-                                        }}
-                                    />
-                                </Item>
-                            )}
-                        </Item>
-                    )}
-                    {scriptTypeValue === 'portAndVulScan' && (
-                        <Item
-                            label={
-                                <span>
-                                    弱口令
-                                    <Popover
-                                        content={'是否启用弱口令检测'}
-                                        trigger="hover"
-                                    >
-                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                    </Popover>
-                                </span>
-                            }
-                            name={['params', 'enable-brute']}
-                            className="ml-[62px]"
-                            initialValue={false}
-                        >
-                            <Switch />
-                        </Item>
-                    )}
-                    {scriptTypeValue === 'portAndVulScan' && (
-                        <Item
-                            label={
-                                <span>
-                                    CVE基线检查
-                                    <Popover
-                                        content={'是否启用CVE基线检查'}
-                                        trigger="hover"
-                                    >
-                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                    </Popover>
-                                </span>
-                            }
-                            name={['params', 'enbale-cve-baseline']}
-                            className="ml-5"
-                            initialValue={false}
-                        >
-                            <Switch />
-                        </Item>
-                    )}
                     <Item
                         name={['params', 'execution_node']}
                         label={<div className="min-w-[124px]">执行节点</div>}
@@ -738,8 +611,6 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         'param_files',
                                         ['params', 'keyword'],
                                         ['params', 'target'],
-                                        ['params', 'preset-protes'],
-                                        ['params', 'ports'],
                                     ];
                                     twoItemKeys.forEach((val) => {
                                         setFieldValue(val, undefined);
@@ -752,15 +623,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                     ]);
                                     setFieldValue(
                                         ['params', 'execution_node'],
-                                        1,
-                                    );
-                                    setFieldValue(
-                                        ['params', 'enable-brute'],
-                                        false,
-                                    );
-                                    setFieldValue(
-                                        ['params', 'enbale-cve-baseline'],
-                                        false,
+                                        '1',
                                     );
                                 }}
                             >
@@ -834,6 +697,187 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             return schedulingTypeFn(formType);
                         }}
                     </Item>
+                </div>
+            ),
+        },
+
+        {
+            key: '4',
+            label: '高级参数',
+            style: {
+                borderBottom: '1px solid #EAECF3',
+                borderRadius: '0px',
+                marginBottom: '8px',
+            },
+            extra: (
+                <Item noStyle dependencies={[]}>
+                    {({ setFieldValue }) => {
+                        return (
+                            <Button
+                                color="danger"
+                                variant="link"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const twoItemKeys = [
+                                        ['params', 'preset-protes'],
+                                        ['params', 'ports'],
+                                    ];
+                                    twoItemKeys.forEach((val) => {
+                                        setFieldValue(val, undefined);
+                                    });
+                                    setFieldValue(
+                                        ['params', 'enable-brute'],
+                                        false,
+                                    );
+                                    setFieldValue(
+                                        ['params', 'enbale-cve-baseline'],
+                                        false,
+                                    );
+                                }}
+                            >
+                                重置
+                            </Button>
+                        );
+                    }}
+                </Item>
+            ),
+            children: (
+                <div>
+                    {scriptTypeValue === 'portAndVulScan' && (
+                        <Item noStyle dependencies={[]}>
+                            {/* TODO 若需字段联动  dependencies 需添加监听项 */}
+                            {({ setFieldValue }) => {
+                                return (
+                                    <Item
+                                        name={['params', 'preset-protes']}
+                                        label={
+                                            <div className="min-w-[124px] max-w-full">
+                                                预设端口
+                                            </div>
+                                        }
+                                    >
+                                        <Checkbox.Group
+                                            options={presetProtsGroupOptions}
+                                            onChange={(e) => {
+                                                const portsValue = e
+                                                    .map(
+                                                        (it) =>
+                                                            PresetPorts[
+                                                                it as keyof typeof PresetPorts
+                                                            ],
+                                                    )
+                                                    .join();
+                                                setFieldValue(
+                                                    ['params', 'ports'],
+                                                    portsValue,
+                                                );
+                                                return e;
+                                            }}
+                                        />
+                                    </Item>
+                                );
+                            }}
+                        </Item>
+                    )}
+                    {scriptTypeValue === 'portAndVulScan' && (
+                        <Item
+                            noStyle
+                            dependencies={[['params', 'preset-protes']]}
+                        >
+                            {({ setFieldValue }) => {
+                                return (
+                                    <Item
+                                        name={['params', 'ports']}
+                                        initialValue={PresetPorts.fast}
+                                        label={
+                                            <span>
+                                                扫描端口
+                                                <Popover
+                                                    content={
+                                                        '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
+                                                    }
+                                                    trigger="hover"
+                                                >
+                                                    <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                </Popover>
+                                            </span>
+                                        }
+                                        rules={[
+                                            {
+                                                message: '请输入扫描端口',
+                                                required: true,
+                                            },
+                                        ]}
+                                        className="ml-9"
+                                    >
+                                        <Input.TextArea
+                                            placeholder="请输入扫描端口"
+                                            style={{ width: '100%' }}
+                                            rows={4}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                const keys = Object.keys(
+                                                    PresetPorts,
+                                                ) as PresetKey[];
+                                                const match = keys.filter(
+                                                    (key) =>
+                                                        value.includes(
+                                                            PresetPorts[key],
+                                                        ),
+                                                );
+
+                                                setFieldValue(
+                                                    ['params', 'preset-protes'],
+                                                    match,
+                                                );
+                                                return value;
+                                            }}
+                                        />
+                                    </Item>
+                                );
+                            }}
+                        </Item>
+                    )}
+                    {scriptTypeValue === 'portAndVulScan' && (
+                        <Item
+                            label={
+                                <span>
+                                    弱口令
+                                    <Popover
+                                        content={'是否启用弱口令检测'}
+                                        trigger="hover"
+                                    >
+                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                    </Popover>
+                                </span>
+                            }
+                            name={['params', 'enable-brute']}
+                            className="ml-[62px]"
+                            initialValue={false}
+                        >
+                            <Switch />
+                        </Item>
+                    )}
+                    {scriptTypeValue === 'portAndVulScan' && (
+                        <Item
+                            label={
+                                <span>
+                                    CVE基线检查
+                                    <Popover
+                                        content={'是否启用CVE基线检查'}
+                                        trigger="hover"
+                                    >
+                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                    </Popover>
+                                </span>
+                            }
+                            name={['params', 'enbale-cve-baseline']}
+                            className="ml-5"
+                            initialValue={false}
+                        >
+                            <Switch />
+                        </Item>
+                    )}
                 </div>
             ),
         },

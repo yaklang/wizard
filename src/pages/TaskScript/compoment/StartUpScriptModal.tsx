@@ -14,7 +14,7 @@ import {
 import { TaskListRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import { UsePageRef } from '@/hooks/usePage';
-import { transformFormData } from '../data';
+import { PresetPorts, transformFormData } from '../data';
 
 export type TScannerDataList = {
     name?: string;
@@ -144,7 +144,6 @@ const StartUpScriptModal = forwardRef<
                 .then(() => {
                     const targetSetFormData = {
                         task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
-                        // script_type: items?.script_type,
 
                         ...items,
                         execution_date:
@@ -228,7 +227,7 @@ const StartUpScriptModal = forwardRef<
             <div className="pb-2 px-6 overflow-auto max-h-[65vh]">
                 <Form form={form} layout="horizontal">
                     <Collapse
-                        defaultActiveKey={['1', '2', '3']}
+                        defaultActiveKey={['1', '2', '3', '4']}
                         bordered={true}
                         ghost
                         items={CreateTaskItems(

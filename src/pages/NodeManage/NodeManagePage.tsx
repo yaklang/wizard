@@ -1,12 +1,12 @@
-import { FC, useRef } from 'react';
+import { FC } from 'react';
 
 import { WizardTable } from '@/compoments';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
-import { Button, Modal, Tag } from 'antd';
+import { Button, message, Modal, Tag } from 'antd';
 import dayjs from 'dayjs';
-import { getNodeManage } from '@/apis/NodeManageApi';
+import { deleteNodeManage, getNodeManage } from '@/apis/NodeManageApi';
 import { TDeleteValues } from '../ReportManage/ReportManage';
-import { useSafeState } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 import { Palm } from '@/gen/schema';
 import LogIcon from './Icon/LogIcon';
 import NetWorkIcon from './Icon/NetWorkIcon';
@@ -25,6 +25,10 @@ const NodeManagePage: FC = () => {
     const [modal, contextHolder] = Modal.useModal();
 
     const [deleteValues, setDeleteValues] = useSafeState<TDeleteValues>();
+
+    const { run, loading: DeleteLoading } = useRequest(deleteNodeManage, {
+        manual: true,
+    });
 
     const columns: CreateTableProps<Palm.Node>['columns'] = [
         {
@@ -108,34 +112,42 @@ const NodeManagePage: FC = () => {
                 </div>
             ),
             okButtonProps: {
-                // loading: DeleteLoading,
+                loading: DeleteLoading,
             },
             okText: '确定',
             cancelText: '取消',
             async onOk() {
-                const isAll = deleteValues?.['report_title'].isAll;
-                const idsStr = deleteValues?.['report_title'].ids.join(',');
+                const isAll = deleteValues?.['external_ip'].isAll;
+                const idsStr = deleteValues?.['external_ip'].ids.join(',');
                 const tableParams = page.getParams();
+                console.log(
+                    idsStr,
+                    isAll,
+                    deleteValues?.['external_ip'].ids,
+                    'all',
+                );
                 if (isAll) {
-                    // await run({ ...tableParams.filter });
-                    // page.refresh();
-                    // message.success('批量删除成功');
+                    await run({ ...tableParams.filter });
+                    page.refresh();
+                    message.success('批量删除成功');
+                    return true;
                 }
                 if (idsStr && isAll === false) {
-                    // await run({ id: idsStr });
-                    // setDeleteValues((values) => ({
-                    //     report_title: {
-                    //         ...values!.report_title,
-                    //         ids: [],
-                    //     },
-                    // }));
-                    // page.localRefrech({
-                    //     operate: 'delete',
-                    //     oldObj: {
-                    //         report_id: deleteValues?.['report_title'].ids,
-                    //     },
-                    // });
-                    // message.success('批量删除成功');
+                    await run({ node_ids: idsStr });
+                    setDeleteValues((values) => ({
+                        external_ip: {
+                            ...values!.external_ip,
+                            ids: [],
+                        },
+                    }));
+                    page.localRefrech({
+                        operate: 'delete',
+                        oldObj: {
+                            id: deleteValues?.['external_ip'].ids,
+                        },
+                    });
+                    message.success('批量删除成功');
+                    return true;
                 }
             },
         });
@@ -156,7 +168,7 @@ const NodeManagePage: FC = () => {
                                     danger
                                     onClick={headDeleteMultiple}
                                     disabled={
-                                        deleteValues?.['external_ip'].ids
+                                        deleteValues?.['external_ip']?.ids
                                             ?.length
                                             ? false
                                             : true

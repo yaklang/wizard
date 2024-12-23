@@ -57,7 +57,9 @@ const CommonTasksColumns = (
 
     // 前往详情页面
     const handGoDetail = (record: TaskListRequest) => {
-        navigate(`detail/${record.id}/${record.task_id}`);
+        navigate(`detail`, {
+            state: { record },
+        });
     };
     // 任务列表可通用的 cloumns 字段
     const columns: CreateTableProps<TaskListRequest>['columns'] = [

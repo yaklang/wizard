@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { message, Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
-import { useRequest, useSafeState } from 'ahooks';
+import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
 import useListenWidth from '@/hooks/useListenHeight';
 
@@ -167,6 +167,10 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         }
     }, [height, dataSource]);
 
+    useUpdateEffect(() => {
+        handleScrollToFirstRow();
+    }, [filter]);
+
     // 表格滚动函数
     const throttledTableOnScrollFn = throttle((e: any) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -319,7 +323,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     total: state.pagemeta!.total,
                     total_page: state.pagemeta!.total_page,
                 },
-                dataSource: [], // 清空数据源
             });
         }
     };
@@ -338,7 +341,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
         return (
             <div
-                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none relative bottom-14 pt-2`}
+                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none border-r-none relative bottom-14`}
                 style={{
                     width: wizardScrollWidth - 32,
                     height: '48px',
@@ -409,7 +412,8 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     pagination={false}
                     scroll={{
                         x: wizardScrollHeight,
-                        y: isBottom || state.loading ? height - 48 : height,
+                        // y: isBottom || state.loading ? height - 60 : height,
+                        y: height - 60,
                         scrollToFirstRowOnChange: true,
                     }}
                     onScroll={throttledTableOnScrollFn}

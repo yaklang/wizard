@@ -1,7 +1,6 @@
 interface QueryPalmNodeParams {
     page?: number;
     limit?: number;
-
     network?: string;
     node_type?: string;
     order?: string;

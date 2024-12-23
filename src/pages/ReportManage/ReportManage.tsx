@@ -123,7 +123,7 @@ const ReportManage: FC = () => {
             title: '操作',
             dataIndex: 'report_id',
             fixed: 'right',
-            width: 160,
+            width: 90,
             render: (_, render) => {
                 return (
                     <ColumnsOperateRender

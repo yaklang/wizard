@@ -19,6 +19,7 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
     >();
 
     const headReset = () => {
+        setExecutionOrderValue(undefined);
         page.editFilter({
             order: undefined,
             order_by: undefined,

@@ -14,6 +14,14 @@ const getNodeManage = (
         params,
     });
 
+// 删除节点
+const deleteNodeManage = (
+    params: QueryPalmNodeParams & { node_ids?: string },
+): Promise<ResponseData<TableResponseData<Palm.Node[]>>> =>
+    axios.delete<never, ResponseData<TableResponseData<Palm.Node[]>>>(`/node`, {
+        params,
+    });
+
 // 编辑节点
 const postUpdateLocation = (data: {
     location: string;
@@ -31,4 +39,9 @@ const postNodesDownloadDataRun = (
         data,
     );
 
-export { getNodeManage, postUpdateLocation, postNodesDownloadDataRun };
+export {
+    getNodeManage,
+    postUpdateLocation,
+    postNodesDownloadDataRun,
+    deleteNodeManage,
+};
