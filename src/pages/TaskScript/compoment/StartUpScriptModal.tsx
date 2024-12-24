@@ -14,7 +14,7 @@ import {
 import { TaskListRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import { UsePageRef } from '@/hooks/usePage';
-import { PresetPorts, transformFormData } from '../data';
+import { transformFormData } from '../data';
 
 export type TScannerDataList = {
     name?: string;

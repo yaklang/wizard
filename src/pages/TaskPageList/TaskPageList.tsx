@@ -1,4 +1,4 @@
-import { useRef, type FC } from 'react';
+import { useEffect, useRef, type FC } from 'react';
 import { Button, message, Radio, Spin } from 'antd';
 
 import { WizardTable } from '@/compoments';
@@ -24,6 +24,7 @@ import { TaskGrounpResponse } from '@/apis/task/types';
 import { options, siderTaskGrounpAllList } from './utils/data';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CreateTaskScriptModal } from './compoment/CreateTaskScriptModal';
+import { useEventSource } from '@/hooks';
 
 const { Group } = Radio;
 
@@ -40,6 +41,14 @@ const TaskPageList: FC = () => {
     const [deleteValues, setDeleteValues] = useSafeState<
         Record<string, { ids: any[]; isAll: boolean }>
     >({});
+
+    const [createTaskModalVisible, setCreateTaskModalVisible] = useSafeState<{
+        header: boolean;
+        table: boolean;
+    }>({
+        header: false,
+        table: false,
+    });
 
     const { loading, run } = useRequest(
         async () => {
@@ -127,7 +136,7 @@ const TaskPageList: FC = () => {
     );
 
     // 获取脚本列表
-    const { loading: scriptLoading, run: scriptRun } = useRequest(
+    const { run: scriptRun } = useRequest(
         async () => {
             const result = await getAnalysisScript();
             const {
@@ -137,7 +146,18 @@ const TaskPageList: FC = () => {
         },
         {
             manual: true,
+            onError: () => {
+                setCreateTaskModalVisible(() => ({
+                    header: false,
+                    table: false,
+                }));
+            },
+
             onSuccess: (value) => {
+                setCreateTaskModalVisible(() => ({
+                    header: false,
+                    table: false,
+                }));
                 openCreateTaskModalRef.current?.open(value);
             },
         },
@@ -167,6 +187,9 @@ const TaskPageList: FC = () => {
     useUpdateEffect(() => {
         page.onLoad({ task_groups: taskGroupKey });
     }, [taskGroupKey]);
+
+    useEventSource('/events?stream_type=node_logs');
+    // console.log(eventSource, 'eventSource');
 
     return (
         <div className="flex align-start h-full">
@@ -202,7 +225,6 @@ const TaskPageList: FC = () => {
                     />
                 </Spin>
             </div>
-
             <WizardTable
                 rowKey={'id'}
                 columns={CommonTasksColumns(
@@ -239,7 +261,6 @@ const TaskPageList: FC = () => {
                                             : true
                                     }
                                     onClick={async () => {
-                                        console.log(page.getParams());
                                         run();
                                     }}
                                     loading={loading}
@@ -248,8 +269,14 @@ const TaskPageList: FC = () => {
                                 </Button>
                                 <Button
                                     type="primary"
-                                    onClick={headCreatedScript}
-                                    loading={scriptLoading}
+                                    onClick={() => {
+                                        setCreateTaskModalVisible((value) => ({
+                                            ...value,
+                                            header: true,
+                                        }));
+                                        headCreatedScript();
+                                    }}
+                                    loading={createTaskModalVisible.header}
                                 >
                                     <PlusOutlined />
                                     创建任务
@@ -258,6 +285,24 @@ const TaskPageList: FC = () => {
                         ),
                     },
                 }}
+                empotyNode={
+                    <div className="h-48 flex items-center justify-center flex-col gap-4">
+                        <div>暂无数据，您可以点击</div>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setCreateTaskModalVisible((value) => ({
+                                    ...value,
+                                    table: true,
+                                }));
+                                headCreatedScript();
+                            }}
+                            loading={createTaskModalVisible.table}
+                        >
+                            一键创建任务
+                        </Button>
+                    </div>
+                }
                 request={async (params, filter) => {
                     const { data } = await getTaskList({
                         dto: {

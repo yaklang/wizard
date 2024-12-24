@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { message, Spin, Table } from 'antd';
+import { Empty, message, Spin, Table } from 'antd';
 import { AnyObject } from 'antd/es/_util/type';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
@@ -31,7 +31,7 @@ const reducer = <T extends TRecudeInitiakValue>(state: T, payload: T): T => ({
 const WizardTable = <T extends AnyObject = AnyObject>(
     props: TWizardTableProps<T>,
 ) => {
-    const { tableHeader, request, page } = props;
+    const { tableHeader, request, page, empotyNode } = props;
 
     const lastPage = useRef(0); // 跟踪上次的 page，防止重复请求
     const preFilter = useRef(undefined); // 跟踪上次的 filter, 触发请求
@@ -396,9 +396,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                         filterState: state,
                     }}
                 />
-
                 <Table
-                    id="table"
                     {...props}
                     ref={tableRef}
                     dataSource={dataSource}
@@ -412,13 +410,15 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     pagination={false}
                     scroll={{
                         x: wizardScrollHeight,
-                        // y: isBottom || state.loading ? height - 60 : height,
-                        y: height - 60,
+                        y: dataSource!.length === 0 ? 300 : height - 60,
                         scrollToFirstRowOnChange: true,
                     }}
                     onScroll={throttledTableOnScrollFn}
                     loading={state.loading && dataSource!.length === 0}
                     virtual
+                    locale={{
+                        emptyText: empotyNode ?? <Empty />,
+                    }}
                 />
                 {(isBottom || state.loading) && dataSource?.length
                     ? bottomLoading

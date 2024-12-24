@@ -95,7 +95,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                         setTaskScriptList((val) => [
                             {
                                 ...data,
-                                script_name: `Copy ${data?.script_name ?? ''}`,
+                                // script_name: `Copy ${data?.script_name ?? ''}`,
                                 isCopy: true,
                             },
                             ...val,
@@ -125,7 +125,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     const headCopy = async (script_name?: string) => {
         if (script_name) {
             setStatus('copy');
-            setCopyInputValue(`Copy ${script_name ?? ''}`);
+            // setCopyInputValue(`Copy ${script_name ?? ''}`);
             await detailRun(script_name);
         } else {
             message.info('系统错误，请刷新页面重试');
@@ -160,6 +160,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                     : { ...item };
             }),
         );
+        setCopyInputValue('');
     };
 
     const openTipsConfirm = (inputValue: string) => {

@@ -337,7 +337,7 @@ const TaskDetail: FC = () => {
                         };
                     }}
                 />
-            ) : script_type === 'portAndVulScan' ? (
+            ) : script_type === 'weakinfo' ? (
                 <SensitiveMessage task_id={task_id} />
             ) : (
                 <Empty className="w-full h-full flex items-center justify-center flex-col" />

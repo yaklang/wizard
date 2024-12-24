@@ -136,6 +136,7 @@ interface TWizardTableProps<T = AnyObject> extends CreateTableProps<T> {
         filterDispatch?: Dispatch<TRecudeInitiakValue>;
         filterState?: TRecudeInitiakValue;
     };
+    empotyNode?: ReactNode;
     request: RequestFunction;
     page: UsePageRef;
 }

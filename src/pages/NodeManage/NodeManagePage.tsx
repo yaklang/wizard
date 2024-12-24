@@ -1,8 +1,8 @@
-import { FC } from 'react';
+import { FC, useRef } from 'react';
 
 import { WizardTable } from '@/compoments';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
-import { Button, message, Modal, Tag } from 'antd';
+import { Button, message, Modal, Popover, Tag } from 'antd';
 import dayjs from 'dayjs';
 import { deleteNodeManage, getNodeManage } from '@/apis/NodeManageApi';
 import { TDeleteValues } from '../ReportManage/ReportManage';
@@ -12,6 +12,8 @@ import LogIcon from './Icon/LogIcon';
 import NetWorkIcon from './Icon/NetWorkIcon';
 import PerformanceIcon from './Icon/PerformanceIcon';
 import { MoreNode } from './compoments/MoreNode';
+import { PerformanceTestingDrawer } from './compoments/PerformanceTestingDrawer';
+import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 
 const intervalText = (value: number) => {
     if (value < 60) return `${value}秒`;
@@ -23,6 +25,9 @@ const intervalText = (value: number) => {
 const NodeManagePage: FC = () => {
     const [page] = WizardTable.usePage();
     const [modal, contextHolder] = Modal.useModal();
+    const [open, setOpen] = useSafeState(false);
+
+    const PerformanceTestingDrawerRef = useRef<UseDrawerRefType>(null);
 
     const [deleteValues, setDeleteValues] = useSafeState<TDeleteValues>();
 
@@ -94,6 +99,9 @@ const NodeManagePage: FC = () => {
                                 width: '32px',
                                 borderRight: '1px solid #EAECF3',
                             }}
+                            onClick={() => {
+                                PerformanceTestingDrawerRef.current?.open();
+                            }}
                         />
                         <MoreNode record={record} page={page} />
                     </div>
@@ -164,18 +172,32 @@ const NodeManagePage: FC = () => {
                     options: {
                         trigger: (
                             <div className="flex gap-2">
-                                <Button
-                                    danger
-                                    onClick={headDeleteMultiple}
-                                    disabled={
-                                        deleteValues?.['external_ip']?.ids
-                                            ?.length
-                                            ? false
-                                            : true
+                                <Popover
+                                    open={open}
+                                    onOpenChange={(newOpen) => setOpen(newOpen)}
+                                    trigger={'click'}
+                                    content={
+                                        <Button
+                                            danger
+                                            type="link"
+                                            onClick={headDeleteMultiple}
+                                        >
+                                            批量删除
+                                        </Button>
                                     }
                                 >
-                                    批量删除
-                                </Button>
+                                    <Button
+                                        type="primary"
+                                        disabled={
+                                            deleteValues?.['external_ip']?.ids
+                                                ?.length
+                                                ? false
+                                                : true
+                                        }
+                                    >
+                                        批量操作
+                                    </Button>
+                                </Popover>
                             </div>
                         ),
                     },
@@ -192,6 +214,7 @@ const NodeManagePage: FC = () => {
                 }}
             />
             {contextHolder}
+            <PerformanceTestingDrawer ref={PerformanceTestingDrawerRef} />
         </>
     );
 };
