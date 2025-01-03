@@ -76,14 +76,14 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
         };
 
         eventSourceRef.current = es;
-    }, [url, store.token, options]);
+    }, [url, store.token]);
 
     const disconnect = useCallback(() => {
         if (eventSourceRef.current) {
+            interruptedRef.current = false; // 设置中断标志
+            setLoading(true); // 停止加载
             eventSourceRef.current.close();
             eventSourceRef.current = null;
-            interruptedRef.current = true; // 设置中断标志
-            setLoading(false); // 停止加载
         }
     }, []);
 
