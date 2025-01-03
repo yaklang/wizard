@@ -341,7 +341,10 @@ const TaskScriptDrawer = forwardRef<
                         { required: true, message: '请输入分布式脚本内容' },
                     ]}
                 >
-                    <WizardAceEditor maxLines={Infinity} />
+                    <WizardAceEditor
+                        maxLines={Infinity}
+                        style={{ minHeight: '500px' }}
+                    />
                 </Item>
             </Form>
         </WizardDrawer>
