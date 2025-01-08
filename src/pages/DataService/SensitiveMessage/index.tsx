@@ -94,6 +94,8 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
             title: '发现时间',
             dataIndex: 'created_at',
             width: 240,
+            render: (val) =>
+                val ? dayjs.unix(val).format('YYYY-MM-DD HH:mm') : '-',
         },
     ];
     return (

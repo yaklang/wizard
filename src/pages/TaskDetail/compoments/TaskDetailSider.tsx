@@ -45,6 +45,7 @@ const list = [
 const info = (item: Record<'label' | 'value', string | number>) => {
     Modal.info({
         title: item.label,
+        width: '50%',
         content: (
             <Paragraph
                 copyable={{
