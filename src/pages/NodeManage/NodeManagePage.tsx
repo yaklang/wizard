@@ -2,7 +2,7 @@ import { FC, useRef } from 'react';
 
 import { WizardTable } from '@/compoments';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
-import { Button, message, Modal, Popover, Tag } from 'antd';
+import { Button, message, Modal, Popover, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import { deleteNodeManage, getNodeManage } from '@/apis/NodeManageApi';
 import { TDeleteValues } from '../ReportManage/ReportManage';
@@ -82,17 +82,23 @@ const NodeManagePage: FC = () => {
             render: (_, record) => {
                 return (
                     <div className="flex items-center justify-center gap-2">
-                        <LogIconNode />
-                        <NetWorkIconNode node_ids={[record.node_id]} />
-                        <PerformanceIcon
-                            style={{
-                                width: '32px',
-                                borderRight: '1px solid #EAECF3',
-                            }}
-                            onClick={() => {
-                                PerformanceTestingDrawerRef.current?.open();
-                            }}
-                        />
+                        <Tooltip title="日志">
+                            <LogIconNode />
+                        </Tooltip>
+                        <Tooltip title="网络探测">
+                            <NetWorkIconNode node_ids={[record.node_id]} />
+                        </Tooltip>
+                        <Tooltip title="性能检测">
+                            <PerformanceIcon
+                                style={{
+                                    width: '32px',
+                                    borderRight: '1px solid #EAECF3',
+                                }}
+                                onClick={() => {
+                                    PerformanceTestingDrawerRef.current?.open();
+                                }}
+                            />
+                        </Tooltip>
                         <MoreNode record={record} page={page} />
                     </div>
                 );

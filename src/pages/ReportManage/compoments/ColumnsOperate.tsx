@@ -4,7 +4,7 @@ import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import { ReportItem } from '@/apis/reportManage/types';
 import { DownloadOutlinedIcon } from '@/assets/report/DownloadOutlinedIcon';
 import { FileOutlinedIcon } from '@/assets/report/FileOutlinedIcon';
-import { Button, message, Popover } from 'antd';
+import { Button, message, Popover, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { deleteProts, getTimelinId } from '@/apis/reportManage';
@@ -63,26 +63,30 @@ const ColumnsOperateRender: FC<{
 
     return (
         <div className="flex gap-2 items-center justify-center min-w-30">
-            <FileOutlinedIcon
-                style={{ width: '32px', borderRight: '1px solid #EAECF3' }}
-                onClick={() => handPreviewReport()}
-            />
-            <ExportButton
-                type="link"
-                params={{ id: render?.report_id }}
-                fileName={render?.report_title + '.zip'}
-                method={'get'}
-                url="/timeline/download"
-                className="p-0"
-                title={
-                    <DownloadOutlinedIcon
-                        style={{
-                            width: '32px',
-                            borderRight: '1px solid #EAECF3',
-                        }}
-                    />
-                }
-            />
+            <Tooltip title="查看报告">
+                <FileOutlinedIcon
+                    style={{ width: '32px', borderRight: '1px solid #EAECF3' }}
+                    onClick={() => handPreviewReport()}
+                />
+            </Tooltip>
+            <Tooltip title="下载">
+                <ExportButton
+                    type="link"
+                    params={{ id: render?.report_id }}
+                    fileName={render?.report_title + '.zip'}
+                    method={'get'}
+                    url="/timeline/download"
+                    className="p-0"
+                    title={
+                        <DownloadOutlinedIcon
+                            style={{
+                                width: '32px',
+                                borderRight: '1px solid #EAECF3',
+                            }}
+                        />
+                    }
+                />
+            </Tooltip>
 
             <Popover
                 open={open}

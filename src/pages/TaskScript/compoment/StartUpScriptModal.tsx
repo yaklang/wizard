@@ -242,7 +242,7 @@ const StartUpScriptModal = forwardRef<
             <div className="pb-2 px-6 overflow-auto max-h-[65vh]">
                 <Form form={form} layout="horizontal">
                     <Collapse
-                        defaultActiveKey={['1', '2', '3', '4']}
+                        defaultActiveKey={['1', '2']}
                         bordered={true}
                         ghost
                         items={CreateTaskItems(

@@ -3,6 +3,7 @@ import { Button, Form, Input, message } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRequest } from 'ahooks';
 import { postLicense } from '@/apis/login';
+import { copyToClipboard } from '@/utils';
 
 const { Item } = Form;
 
@@ -32,8 +33,7 @@ const License: FC = () => {
 
     const headCopy = () => {
         const fetch_license = form.getFieldValue('fetch_license');
-        navigator.clipboard
-            .writeText(fetch_license)
+        copyToClipboard(fetch_license)
             .then(() => {
                 message.success('复制成功');
             })

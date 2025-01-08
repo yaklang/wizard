@@ -13,6 +13,7 @@ import type { YakitTagColor } from '@/compoments/YakitTag/YakitTagType';
 import { AssetsVulnsDetailOperate } from './AssetsVulnsDetailOperate';
 import { SeverityMapTag, survivalStatusList } from './utils';
 import CopyOutlined from './utils/CopyOutlined';
+import { copyToClipboard } from '@/utils';
 
 // 端口资产 columns
 const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
@@ -28,8 +29,7 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
                     <CopyOutlined
                         style={{ minWidth: 16 }}
                         onClick={() => {
-                            navigator.clipboard
-                                .writeText(value!)
+                            copyToClipboard(value)
                                 .then(() => {
                                     message.success('复制成功');
                                 })
