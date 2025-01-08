@@ -279,9 +279,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                     placement="left"
                     trigger="click"
                 >
-                    <span className="cursor-pointer">
-                        <TableDeleteOutlined />
-                    </span>
+                    <TableDeleteOutlined />
                 </Popover>
             </div>
         );

@@ -6,6 +6,7 @@ import HeaderBg from './images/headerBg.png';
 import { useRequest, useSafeState } from 'ahooks';
 import { Button, Form, Input, message, Radio, Select, Spin } from 'antd';
 import { getFileExists } from '@/apis/NodeConfigApi';
+import { copyToClipboard } from '@/utils';
 
 const { Item } = Form;
 
@@ -48,8 +49,9 @@ const NodeConfig: FC = () => {
     };
 
     const headCopy = () => {
-        navigator.clipboard
-            .writeText(runCode!)
+        // navigator.clipboard
+        //     .writeText(runCode!)
+        copyToClipboard(runCode!)
             .then(() => {
                 message.success('复制成功');
             })

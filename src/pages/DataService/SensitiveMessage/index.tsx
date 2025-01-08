@@ -9,6 +9,7 @@ import { WizardTable } from '@/compoments';
 import { CreateTableProps } from '@/compoments/WizardTable/types';
 import { message, Tag } from 'antd';
 import CopyOutlined from '@/pages/TaskDetail/compoments/utils/CopyOutlined';
+import { copyToClipboard } from '@/utils';
 
 const sensitiveInfoStatus = [
     {
@@ -47,8 +48,7 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
                         <CopyOutlined
                             style={{ minWidth: 16 }}
                             onClick={() => {
-                                navigator.clipboard
-                                    .writeText(value!)
+                                copyToClipboard(value)
                                     .then(() => {
                                         message.success('复制成功');
                                     })

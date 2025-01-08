@@ -308,6 +308,32 @@ const findFullPath = (
     return [currentPath];
 };
 
+const copyToClipboard = async (text: string): Promise<void> => {
+    if (navigator?.clipboard?.writeText) {
+        try {
+            await navigator.clipboard.writeText(text);
+            console.log('Text copied to clipboard!');
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    } else {
+        // Fallback: 使用输入框手动选中复制
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed'; // 避免页面滚动
+        textArea.style.left = '-9999px'; // 隐藏
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            console.log('Fallback: Text copied to clipboard!');
+        } catch (err) {
+            console.error('Fallback failed: ', err);
+        }
+        document.body.removeChild(textArea);
+    }
+};
+
 // 根据路径筛选并生成相应的节点信息
 const findPathNodes = (
     targetPath: string,
@@ -408,5 +434,6 @@ export {
     deepEqual,
     findPathNodes,
     generateUniqueId,
+    copyToClipboard,
     createRules,
 };
