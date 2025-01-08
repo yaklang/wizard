@@ -1,5 +1,5 @@
 import { FC, useMemo, useRef } from 'react';
-import { Button, message, Modal, Popover, Spin } from 'antd';
+import { Button, message, Modal, Popover, Spin, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 import { useRequest, useSafeState } from 'ahooks';
@@ -228,12 +228,15 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         return (
             <div className="flex">
                 <span className="w-7 mr-2">{''}</span>
-                <span
-                    className="cursor-pointer mr-2"
-                    onClick={() => onEdit('edit')}
-                >
-                    <TableFormOutlined />
-                </span>
+
+                <Tooltip title="编辑">
+                    <span
+                        className="cursor-pointer mr-2"
+                        onClick={() => onEdit('edit')}
+                    >
+                        <TableFormOutlined />
+                    </span>
+                </Tooltip>
 
                 <Popover
                     open={open.delete}
@@ -310,162 +313,173 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                             status === 'cancel' ||
                             status === 'waiting') &&
                         headerGroupValue === 1 ? (
-                            <Popover
-                                open={open.action}
-                                content={
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            color="default"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={() =>
-                                                setOpen((val) => ({
-                                                    ...val,
-                                                    action: false,
-                                                }))
-                                            }
-                                        >
-                                            取消
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={headImplement}
-                                            loading={loading}
-                                        >
-                                            确定
-                                        </Button>
+                            <Tooltip title="执行">
+                                <Popover
+                                    open={open.action}
+                                    content={
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                color="default"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={() =>
+                                                    setOpen((val) => ({
+                                                        ...val,
+                                                        action: false,
+                                                    }))
+                                                }
+                                            >
+                                                取消
+                                            </Button>
+                                            <Button
+                                                type="primary"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={headImplement}
+                                                loading={loading}
+                                            >
+                                                确定
+                                            </Button>
+                                        </div>
+                                    }
+                                    title={
+                                        <div>
+                                            <InfoCircleOutlined color="#faad14" />
+                                            <span className="ml-1 font-400">
+                                                立即执行该任务？
+                                            </span>
+                                        </div>
+                                    }
+                                    trigger="click"
+                                    onOpenChange={(newOpen) =>
+                                        setOpen((val) => ({
+                                            ...val,
+                                            action: newOpen,
+                                        }))
+                                    }
+                                >
+                                    <div className="mr-2 cursor-pointer">
+                                        <PlayCircleOutlined />
                                     </div>
-                                }
-                                title={
-                                    <div>
-                                        <InfoCircleOutlined color="#faad14" />
-                                        <span className="ml-1 font-400">
-                                            立即执行该任务？
-                                        </span>
-                                    </div>
-                                }
-                                trigger="click"
-                                onOpenChange={(newOpen) =>
-                                    setOpen((val) => ({
-                                        ...val,
-                                        action: newOpen,
-                                    }))
-                                }
-                            >
-                                <div className="mr-2 cursor-pointer">
-                                    <PlayCircleOutlined />
-                                </div>
-                            </Popover>
+                                </Popover>
+                            </Tooltip>
                         ) : null}
                         {status === 'running' ? (
-                            <Popover
-                                content={
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            color="default"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={() =>
-                                                setOpen((val) => ({
-                                                    ...val,
-                                                    action: false,
-                                                }))
-                                            }
-                                        >
-                                            取消
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={headTaskStop}
-                                            loading={stopRunning}
-                                        >
-                                            确定
-                                        </Button>
+                            <Tooltip title="取消执行">
+                                <Popover
+                                    content={
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                color="default"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={() =>
+                                                    setOpen((val) => ({
+                                                        ...val,
+                                                        action: false,
+                                                    }))
+                                                }
+                                            >
+                                                取消
+                                            </Button>
+                                            <Button
+                                                type="primary"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={headTaskStop}
+                                                loading={stopRunning}
+                                            >
+                                                确定
+                                            </Button>
+                                        </div>
+                                    }
+                                    title={
+                                        <div>
+                                            <InfoCircleOutlined color="#faad14" />
+                                            <span className="ml-1 font-400">
+                                                取消该任务？
+                                            </span>
+                                        </div>
+                                    }
+                                    trigger="click"
+                                    onOpenChange={(newOpen) =>
+                                        setOpen((val) => ({
+                                            ...val,
+                                            action: newOpen,
+                                        }))
+                                    }
+                                >
+                                    <div className="mr-2 cursor-pointer">
+                                        <StopUsingIcon />
                                     </div>
-                                }
-                                title={
-                                    <div>
-                                        <InfoCircleOutlined color="#faad14" />
-                                        <span className="ml-1 font-400">
-                                            取消该任务？
-                                        </span>
-                                    </div>
-                                }
-                                trigger="click"
-                                onOpenChange={(newOpen) =>
-                                    setOpen((val) => ({
-                                        ...val,
-                                        action: newOpen,
-                                    }))
-                                }
-                            >
-                                <div className="mr-2 cursor-pointer">
-                                    <StopUsingIcon />
-                                </div>
-                            </Popover>
+                                </Popover>
+                            </Tooltip>
                         ) : (
                             headerGroupValue === 2 && (
-                                <div
-                                    className="mr-2 cursor-pointer"
-                                    onClick={() => {
-                                        Modal.info({
-                                            title: '提示',
-                                            footer: () => {
-                                                return (
+                                <Tooltip title="执行">
+                                    <div
+                                        className="mr-2 cursor-pointer"
+                                        onClick={() => {
+                                            Modal.info({
+                                                title: '提示',
+                                                footer: () => {
+                                                    return (
+                                                        <div>
+                                                            <Button
+                                                                onClick={() =>
+                                                                    Modal.destroyAll()
+                                                                }
+                                                            >
+                                                                取消
+                                                            </Button>
+                                                            <Button
+                                                                type="primary"
+                                                                onClick={() => {
+                                                                    Modal.destroyAll();
+                                                                    onEdit(
+                                                                        'execute',
+                                                                    );
+                                                                }}
+                                                            >
+                                                                确定
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                },
+                                                content: (
                                                     <div>
-                                                        <Button
-                                                            onClick={() =>
-                                                                Modal.destroyAll()
-                                                            }
-                                                        >
-                                                            取消
-                                                        </Button>
-                                                        <Button
-                                                            type="primary"
-                                                            onClick={() => {
-                                                                Modal.destroyAll();
-                                                                onEdit(
-                                                                    'execute',
-                                                                );
-                                                            }}
-                                                        >
-                                                            确定
-                                                        </Button>
+                                                        需要再次执行该定时任务，请点击确定修改执行时间
                                                     </div>
-                                                );
-                                            },
-                                            content: (
-                                                <div>
-                                                    需要再次执行该定时任务，请点击确定修改执行时间
-                                                </div>
-                                            ),
-                                        });
-                                    }}
-                                >
-                                    <PlayCircleOutlined />
-                                </div>
+                                                ),
+                                            });
+                                        }}
+                                    >
+                                        <PlayCircleOutlined />
+                                    </div>
+                                </Tooltip>
                             )
                         )}
 
-                        <span
-                            className={`cursor-pointer mr-2`}
-                            onClick={() => onEdit('edit')}
-                        >
-                            <TableFormOutlined />
-                        </span>
+                        <Tooltip title="编辑">
+                            <span
+                                className={`cursor-pointer mr-2`}
+                                onClick={() => onEdit('edit')}
+                            >
+                                <TableFormOutlined />
+                            </span>
+                        </Tooltip>
 
                         <Popover
                             open={open.delete}
                             onOpenChange={(newOpen) =>
-                                setOpen((val) => ({ ...val, delete: newOpen }))
+                                setOpen((val) => ({
+                                    ...val,
+                                    delete: newOpen,
+                                }))
                             }
                             content={
                                 <div className="flex justify-end gap-2">
@@ -703,11 +717,14 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         return (
             <div className="flex">
                 {/* 编辑操作 */}
-                <Spin spinning={loading}>
-                    <span className="cursor-pointer mr-2" onClick={onEdit}>
-                        <TableFormOutlined />
-                    </span>
-                </Spin>
+
+                <Tooltip title="编辑">
+                    <Spin spinning={loading}>
+                        <span className="cursor-pointer mr-2" onClick={onEdit}>
+                            <TableFormOutlined />
+                        </span>
+                    </Spin>
+                </Tooltip>
 
                 <Popover
                     open={open.delete}
@@ -782,108 +799,112 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 .with(P.string, (value) => (
                     <div className="flex">
                         {value === 'disabled' && (
-                            <Popover
-                                open={open.action}
-                                content={
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            color="default"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={() =>
-                                                setOpen((val) => ({
-                                                    ...val,
-                                                    action: false,
-                                                }))
-                                            }
-                                        >
-                                            取消
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={headImplement}
-                                            loading={starLoading}
-                                        >
-                                            确定
-                                        </Button>
+                            <Tooltip title="执行">
+                                <Popover
+                                    open={open.action}
+                                    content={
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                color="default"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={() =>
+                                                    setOpen((val) => ({
+                                                        ...val,
+                                                        action: false,
+                                                    }))
+                                                }
+                                            >
+                                                取消
+                                            </Button>
+                                            <Button
+                                                type="primary"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={headImplement}
+                                                loading={starLoading}
+                                            >
+                                                确定
+                                            </Button>
+                                        </div>
+                                    }
+                                    title={
+                                        <div>
+                                            <InfoCircleOutlined color="#faad14" />
+                                            <span className="ml-1 font-400">
+                                                立即执行该任务？
+                                            </span>
+                                        </div>
+                                    }
+                                    trigger="click"
+                                    onOpenChange={(newOpen) =>
+                                        setOpen((val) => ({
+                                            ...val,
+                                            action: newOpen,
+                                        }))
+                                    }
+                                >
+                                    <div className="mr-2 cursor-pointer">
+                                        <PlayCircleOutlined />
                                     </div>
-                                }
-                                title={
-                                    <div>
-                                        <InfoCircleOutlined color="#faad14" />
-                                        <span className="ml-1 font-400">
-                                            立即执行该任务？
-                                        </span>
-                                    </div>
-                                }
-                                trigger="click"
-                                onOpenChange={(newOpen) =>
-                                    setOpen((val) => ({
-                                        ...val,
-                                        action: newOpen,
-                                    }))
-                                }
-                            >
-                                <div className="mr-2 cursor-pointer">
-                                    <PlayCircleOutlined />
-                                </div>
-                            </Popover>
+                                </Popover>
+                            </Tooltip>
                         )}
                         {value === 'enabled' && (
-                            <Popover
-                                open={open.action}
-                                content={
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            color="default"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={() =>
-                                                setOpen((val) => ({
-                                                    ...val,
-                                                    action: false,
-                                                }))
-                                            }
-                                        >
-                                            取消
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            style={{
-                                                fontSize: '12px',
-                                            }}
-                                            onClick={headTaskStop}
-                                            loading={stopRunning}
-                                        >
-                                            确定
-                                        </Button>
+                            <Tooltip title="停用">
+                                <Popover
+                                    open={open.action}
+                                    content={
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                color="default"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={() =>
+                                                    setOpen((val) => ({
+                                                        ...val,
+                                                        action: false,
+                                                    }))
+                                                }
+                                            >
+                                                取消
+                                            </Button>
+                                            <Button
+                                                type="primary"
+                                                style={{
+                                                    fontSize: '12px',
+                                                }}
+                                                onClick={headTaskStop}
+                                                loading={stopRunning}
+                                            >
+                                                确定
+                                            </Button>
+                                        </div>
+                                    }
+                                    title={
+                                        <div>
+                                            <InfoCircleOutlined color="#faad14" />
+                                            <span className="ml-1 font-400">
+                                                停用该任务？
+                                            </span>
+                                        </div>
+                                    }
+                                    trigger="click"
+                                    onOpenChange={(newOpen) =>
+                                        setOpen((val) => ({
+                                            ...val,
+                                            action: newOpen,
+                                        }))
+                                    }
+                                >
+                                    <div className="mr-2 cursor-pointer">
+                                        <StopUsingIcon />
                                     </div>
-                                }
-                                title={
-                                    <div>
-                                        <InfoCircleOutlined color="#faad14" />
-                                        <span className="ml-1 font-400">
-                                            停用该任务？
-                                        </span>
-                                    </div>
-                                }
-                                trigger="click"
-                                onOpenChange={(newOpen) =>
-                                    setOpen((val) => ({
-                                        ...val,
-                                        action: newOpen,
-                                    }))
-                                }
-                            >
-                                <div className="mr-2 cursor-pointer">
-                                    <StopUsingIcon />
-                                </div>
-                            </Popover>
+                                </Popover>
+                            </Tooltip>
                         )}
                         {!['disabled', 'enabled'].includes(value) && (
                             <div className="w-7 mr-2">{''}</div>
