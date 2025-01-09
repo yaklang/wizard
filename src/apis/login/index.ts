@@ -32,4 +32,14 @@ const postLicense = (data: {
 }): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>('/license', data);
 
-export { getCaptcha, postVerifyCaptcha, postLogin, getLicense, postLicense };
+const getLoginout = (): Promise<ResponseData<boolean>> =>
+    axios.get('/auth/loginout');
+
+export {
+    getCaptcha,
+    postVerifyCaptcha,
+    postLogin,
+    getLicense,
+    postLicense,
+    getLoginout,
+};

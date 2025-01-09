@@ -4,22 +4,26 @@ import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { WizardAceEditor, WizardDrawer } from '@/compoments';
 import { useEventSource } from '@/hooks';
 import { useSafeState } from 'ahooks';
-import { message } from 'antd';
+import { message, Tooltip } from 'antd';
 import LogIcon from '../Icon/LogIcon';
 
 const LogIconNode: FC = () => {
     const ViewLogDrawerRef = useRef<UseDrawerRefType>(null);
     return (
         <div>
-            <LogIcon
-                style={{
-                    width: '32px',
-                    borderRight: '1px solid #EAECF3',
-                }}
-                onClick={() => {
-                    ViewLogDrawerRef.current?.open();
-                }}
-            />
+            <Tooltip title="日志">
+                <div>
+                    <LogIcon
+                        style={{
+                            width: '32px',
+                            borderRight: '1px solid #EAECF3',
+                        }}
+                        onClick={() => {
+                            ViewLogDrawerRef.current?.open();
+                        }}
+                    />
+                </div>
+            </Tooltip>
             <ViewLogDrawer ref={ViewLogDrawerRef} />
         </div>
     );

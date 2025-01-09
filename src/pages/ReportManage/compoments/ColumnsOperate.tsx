@@ -64,29 +64,34 @@ const ColumnsOperateRender: FC<{
     return (
         <div className="flex gap-2 items-center justify-center min-w-30">
             <Tooltip title="查看报告">
-                <FileOutlinedIcon
-                    style={{ width: '32px', borderRight: '1px solid #EAECF3' }}
-                    onClick={() => handPreviewReport()}
-                />
+                <div className="flex items-center justify-center">
+                    <FileOutlinedIcon
+                        style={{
+                            width: '32px',
+                            borderRight: '1px solid #EAECF3',
+                        }}
+                        onClick={() => handPreviewReport()}
+                    />
+                </div>
             </Tooltip>
-            <Tooltip title="下载">
-                <ExportButton
-                    type="link"
-                    params={{ id: render?.report_id }}
-                    fileName={render?.report_title + '.zip'}
-                    method={'get'}
-                    url="/timeline/download"
-                    className="p-0"
-                    title={
+            <ExportButton
+                type="link"
+                params={{ id: render?.report_id }}
+                fileName={render?.report_title + '.zip'}
+                method={'get'}
+                url="/timeline/download"
+                className="p-0"
+                title={
+                    <Tooltip title="下载">
                         <DownloadOutlinedIcon
                             style={{
                                 width: '32px',
                                 borderRight: '1px solid #EAECF3',
                             }}
                         />
-                    }
-                />
-            </Tooltip>
+                    </Tooltip>
+                }
+            />
 
             <Popover
                 open={open}

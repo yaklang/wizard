@@ -63,11 +63,13 @@ const MoreNode: FC<{ record: Palm.Node; page: UsePageRef }> = ({
                     </div>
                 }
             >
-                <OmitIcon
-                    style={{
-                        width: '24px',
-                    }}
-                />
+                <div className="flex items-center justify-center cursor-pointer">
+                    <OmitIcon
+                        style={{
+                            width: '24px',
+                        }}
+                    />
+                </div>
             </Popover>
             <EditNodeModal ref={EditNodeModalRef} page={page} />
             <InsterNodeDataModal ref={InsterNodeDataModalRef} page={page} />
