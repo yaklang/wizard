@@ -82,22 +82,20 @@ const NodeManagePage: FC = () => {
             render: (_, record) => {
                 return (
                     <div className="flex items-center justify-center gap-2">
-                        <Tooltip title="日志">
-                            <LogIconNode />
-                        </Tooltip>
-                        <Tooltip title="网络探测">
-                            <NetWorkIconNode node_ids={[record.node_id]} />
-                        </Tooltip>
+                        <LogIconNode />
+                        <NetWorkIconNode node_ids={[record.node_id]} />
                         <Tooltip title="性能检测">
-                            <PerformanceIcon
-                                style={{
-                                    width: '32px',
-                                    borderRight: '1px solid #EAECF3',
-                                }}
-                                onClick={() => {
-                                    PerformanceTestingDrawerRef.current?.open();
-                                }}
-                            />
+                            <div>
+                                <PerformanceIcon
+                                    style={{
+                                        width: '32px',
+                                        borderRight: '1px solid #EAECF3',
+                                    }}
+                                    onClick={() => {
+                                        PerformanceTestingDrawerRef.current?.open();
+                                    }}
+                                />
+                            </div>
                         </Tooltip>
                         <MoreNode record={record} page={page} />
                     </div>
@@ -124,12 +122,6 @@ const NodeManagePage: FC = () => {
                 const isAll = checkedValues?.['external_ip'].isAll;
                 const idsStr = checkedValues?.['external_ip'].ids.join(',');
                 const tableParams = page.getParams();
-                console.log(
-                    idsStr,
-                    isAll,
-                    checkedValues?.['external_ip'].ids,
-                    'all',
-                );
                 if (isAll) {
                     await run({ ...tableParams.filter });
                     page.refresh();

@@ -1,6 +1,6 @@
 import type { MenuProps } from 'antd';
 import { Layout, Menu, Spin } from 'antd';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useRequest, useSafeState } from 'ahooks';
 
@@ -14,6 +14,7 @@ import { UserCard } from './UserCard';
 import { findFullPath, findPathNodes, processMenu } from '@/utils';
 import { LeftOutlined } from '@ant-design/icons';
 import { getLicense } from '@/apis/login';
+import useLoginStore from './store/loginStore';
 
 const { Header, Content, Sider } = Layout;
 
@@ -21,6 +22,7 @@ const AppLayout = () => {
     const locations = useLocation();
     const navigate = useNavigate();
     const { status } = useNetworkStatus();
+    const store = useLoginStore.getState();
 
     const [collapsed, setCollapsed] = useSafeState(false);
     const [headerTitle, setHeaderTitle] = useSafeState<
@@ -78,6 +80,76 @@ const AppLayout = () => {
         license && navigate('/license', { state: { license } });
     }, [license]);
 
+    const timeoutRef = useRef<number | null>(null);
+    const STORAGE_KEY = 'lastActiveTime'; // 存储时间的 key
+    const IDLE_TIMEOUT = 1000 * 60 * 30; // 30分钟
+
+    // 触发事件的逻辑
+    const triggerEvent = () => {
+        localStorage.removeItem(STORAGE_KEY); // 事件触发后清除时间记录
+        store.outLogin();
+    };
+
+    // 重置定时器
+    const resetTimer = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        const now = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY, now); // 将当前时间存储到 localStorage
+
+        timeoutRef.current = window.setTimeout(() => {
+            triggerEvent();
+        }, IDLE_TIMEOUT); // 30分钟后触发
+    };
+
+    // 页面加载时检测是否超时
+    const checkIdleTime = () => {
+        const lastActiveTime = localStorage.getItem(STORAGE_KEY);
+        if (lastActiveTime) {
+            const lastActiveTimestamp = new Date(lastActiveTime).getTime();
+            const currentTimestamp = Date.now();
+
+            const elapsed = currentTimestamp - lastActiveTimestamp;
+            if (elapsed >= IDLE_TIMEOUT) {
+                // 已经过了 30 分钟，立即触发事件
+                triggerEvent();
+            } else {
+                // 未超过 1 分钟，继续倒计时剩余时间
+                timeoutRef.current = window.setTimeout(() => {
+                    triggerEvent();
+                }, IDLE_TIMEOUT - elapsed);
+            }
+        } else {
+            // 如果没有存储时间，初始化定时器
+            resetTimer();
+        }
+    };
+
+    useEffect(() => {
+        // 监听用户操作事件
+        const handleUserAction = () => resetTimer();
+
+        window.addEventListener('mousemove', handleUserAction);
+        window.addEventListener('keydown', handleUserAction);
+        window.addEventListener('click', handleUserAction);
+        window.addEventListener('scroll', handleUserAction);
+
+        // 检测页面加载时的空闲时间
+        checkIdleTime();
+
+        return () => {
+            // 清理事件监听和定时器
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            window.removeEventListener('mousemove', handleUserAction);
+            window.removeEventListener('keydown', handleUserAction);
+            window.removeEventListener('click', handleUserAction);
+            window.removeEventListener('scroll', handleUserAction);
+        };
+    }, []);
     return loading ? (
         <Spin spinning={loading} tip="加载 license" size="large">
             <div

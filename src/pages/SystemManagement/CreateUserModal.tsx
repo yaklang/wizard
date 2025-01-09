@@ -3,7 +3,7 @@ import { WizardModal } from '@/compoments';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { UsePageRef } from '@/hooks/usePage';
 import { useRequest, useSafeState } from 'ahooks';
-import { Button, Form, Input, message } from 'antd';
+import { Button, Form, Input, message, Modal, Typography } from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
 import { match } from 'ts-pattern';
 
@@ -33,7 +33,7 @@ const CreateUserModal = forwardRef<
         },
     }));
 
-    const { run, loading } = useRequest(postAddUser, {
+    const { runAsync, loading } = useRequest(postAddUser, {
         manual: true,
         // onSuccess: (values) => {
         //     console.log(values, 'aaa');
@@ -45,13 +45,39 @@ const CreateUserModal = forwardRef<
             const formData = await form.validateFields();
             match(title)
                 .with('创建用户', async () => {
-                    await run({ ...formData });
-                    refresh();
-                    message.success('创建成功');
-                    model.close();
+                    runAsync({ ...formData, role: ['super-admin'] }).then(
+                        (res) => {
+                            refresh();
+                            message.success('创建成功');
+                            model.close();
+                            Modal.success({
+                                content: (
+                                    <div>
+                                        账号：{res.data.username}
+                                        <br />
+                                        <div className="flex items-center">
+                                            <div className="mb-[1rem]">
+                                                密码：
+                                            </div>
+                                            <Typography.Paragraph
+                                                copyable={{
+                                                    tooltips: [
+                                                        '复制',
+                                                        '复制成功',
+                                                    ],
+                                                }}
+                                            >
+                                                {res.data.password}
+                                            </Typography.Paragraph>
+                                        </div>
+                                    </div>
+                                ),
+                            });
+                        },
+                    );
                 })
                 .with('编辑用户', async () => {
-                    await run({ ...formData });
+                    await runAsync({ ...formData });
                     localRefrech({
                         operate: 'edit',
                         newObj: formData,

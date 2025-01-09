@@ -25,7 +25,7 @@ import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage';
 import { CveLoophole } from '@/pages/DataService/CveLoophole';
 import NodeManagePage from '@/pages/NodeManage';
 import License from '@/pages/License';
-import MessageCollect from '@/pages/MessageCollect';
+// import MessageCollect from '@/pages/MessageCollect';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {

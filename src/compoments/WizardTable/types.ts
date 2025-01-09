@@ -10,7 +10,12 @@ import type { FormLayout } from 'antd/es/form/Form';
 import { ExportProps } from '../ExportButton/types';
 
 // 定义 wizardColumnsType 的字符串字面量类型
-type WizardColumnsType = 'input' | 'radio' | 'checkbox' | 'rangePicker';
+type WizardColumnsType =
+    | 'input'
+    | 'radio'
+    | 'checkbox'
+    | 'rangePicker'
+    | 'orderby';
 
 // 定义 wizardColumnsOptions 的类型
 interface WizardColumnRadioOptions {
@@ -63,6 +68,12 @@ type ExtendedColumnType<T> = ColumnType<T> & {
                   format?: string;
                   showTime?: string;
               };
+              placeholder?: string;
+          }
+        | {
+              columnsHeaderFilterType?: 'orderby'; // 排序
+              wizardColumnsOptions: WizardColumnRadioOptions[];
+              rangePickSetting?: never;
               placeholder?: string;
           }
     );
