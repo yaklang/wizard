@@ -110,12 +110,12 @@ const routers: RouteObjectRootMy[] = [
                         key: 'sensitive-message',
                         element: <SensitiveMessage />,
                     },
-                    {
-                        path: 'message-collect',
-                        name: '信息收集',
-                        key: 'message-collect',
-                        element: <MessageCollect />,
-                    },
+                    // {
+                    //     path: 'message-collect',
+                    //     name: '信息收集',
+                    //     key: 'message-collect',
+                    //     element: <MessageCollect />,
+                    // },
                     {
                         path: 'cve-loophole',
                         name: 'CVE漏洞库',
