@@ -1,7 +1,7 @@
 import { FC, useEffect } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 
-import { Collapse, Modal, Progress, Spin, Tag, Typography } from 'antd';
+import { Collapse, Modal, Spin, Tag, Typography } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 
 import { SiderClose, SiderOpen } from '@/assets/compoments';
@@ -23,12 +23,12 @@ interface TTaskDetailSiderProps {
     data?: TDetailDatailOptions;
 }
 
-const taskList = [
-    {
-        name: '子任务一',
-        completion_degree: 30,
-    },
-];
+// const taskList = [
+//     {
+//         name: '子任务一',
+//         completion_degree: 30,
+//     },
+// ];
 
 const list = [
     {
@@ -97,34 +97,34 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
     }, []);
 
     const detailCollapseItems = [
-        {
-            key: '1',
-            label: <div className="whitespace-nowrap">本次任务进度</div>,
-            style: {
-                borderBottom: '1px solid #EAECF3',
-                borderRadius: '0px',
-                padding: '8px 16px',
-            },
-            children: (
-                <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
-                    {taskList.map((it) => (
-                        <div
-                            key={it.name}
-                            className="flex justify-between align-center"
-                        >
-                            <div className="whitespace-nowrap">{it.name}</div>
-                            <div className="whitespace-nowrap w-1/2">
-                                <Progress
-                                    percent={it.completion_degree}
-                                    status="active"
-                                    type="line"
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ),
-        },
+        // {
+        //     key: '1',
+        //     label: <div className="whitespace-nowrap">本次任务进度</div>,
+        //     style: {
+        //         borderBottom: '1px solid #EAECF3',
+        //         borderRadius: '0px',
+        //         padding: '8px 16px',
+        //     },
+        //     children: (
+        //         <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
+        //             {taskList.map((it) => (
+        //                 <div
+        //                     key={it.name}
+        //                     className="flex justify-between align-center"
+        //                 >
+        //                     <div className="whitespace-nowrap">{it.name}</div>
+        //                     <div className="whitespace-nowrap w-1/2">
+        //                         <Progress
+        //                             percent={it.completion_degree}
+        //                             status="active"
+        //                             type="line"
+        //                         />
+        //                     </div>
+        //                 </div>
+        //             ))}
+        //         </div>
+        //     ),
+        // },
         {
             key: '2',
             label: <div className="whitespace-nowrap">历史执行记录</div>,

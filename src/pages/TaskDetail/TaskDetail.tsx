@@ -191,6 +191,7 @@ const TaskDetail: FC = () => {
                         const { data } = await postAssetsProts({
                             ...params,
                             ...filter,
+                            order_by: filter?.order ? 'updated_at' : undefined,
                             task_id: task_id,
                         });
                         setColumns(ProtColumns);

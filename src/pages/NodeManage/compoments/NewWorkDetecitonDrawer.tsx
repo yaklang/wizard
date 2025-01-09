@@ -3,7 +3,7 @@ import { FC, forwardRef, ReactNode, useImperativeHandle, useRef } from 'react';
 import { WizardDrawer, WizardTable } from '@/compoments';
 import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import NetWorkIcon from '../Icon/NetWorkIcon';
-import { Button, Input } from 'antd';
+import { Button, Input, Tooltip } from 'antd';
 import { postHostAliveDetectionRun } from '@/apis/NodeManageApi';
 import { useSafeState } from 'ahooks';
 
@@ -11,15 +11,19 @@ const NetWorkIconNode: FC<{ node_ids: Array<string> }> = ({ node_ids }) => {
     const newWorkDetecitonDrawerRef = useRef<UseDrawerRefType>(null);
     return (
         <div>
-            <NetWorkIcon
-                onClick={() =>
-                    newWorkDetecitonDrawerRef.current?.open(node_ids)
-                }
-                style={{
-                    width: '32px',
-                    borderRight: '1px solid #EAECF3',
-                }}
-            />
+            <Tooltip title="网络探测">
+                <div>
+                    <NetWorkIcon
+                        onClick={() =>
+                            newWorkDetecitonDrawerRef.current?.open(node_ids)
+                        }
+                        style={{
+                            width: '32px',
+                            borderRight: '1px solid #EAECF3',
+                        }}
+                    />
+                </div>
+            </Tooltip>
             <NewWorkDetecitonDrawer ref={newWorkDetecitonDrawerRef} />
         </div>
     );

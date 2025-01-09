@@ -71,10 +71,23 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
     },
     {
         title: '更新时间',
-        dataIndex: 'updated_at',
+        dataIndex: 'order',
+        columnsHeaderFilterType: 'orderby',
+        wizardColumnsOptions: [
+            {
+                label: '顺序',
+                value: 'desc',
+            },
+            {
+                label: '倒序',
+                value: 'asc',
+            },
+        ],
         width: 260,
-        render: (value) =>
-            value ? dayjs.unix(value).format('YYYY-MM-DD HH:ss') : '-',
+        render: (_, record) =>
+            record?.updated_at
+                ? dayjs.unix(record?.updated_at).format('YYYY-MM-DD HH:ss')
+                : '-',
     },
 ];
 

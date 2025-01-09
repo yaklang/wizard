@@ -253,6 +253,11 @@ const extendTableProps = (
                         className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
                     />
                 ))
+                .with('orderby', () => (
+                    <VerticalAlignMiddleHeaderFilter
+                        className={`color-[${colorStatus ? '#1677ff' : '#B4BBCA'}]`}
+                    />
+                ))
                 .with(P.nullish, () => null)
                 .exhaustive();
         },
@@ -592,6 +597,43 @@ const extendTableProps = (
                                                 }}
                                             />
                                         ))
+                                        .with('orderby', () =>
+                                            Array.isArray(
+                                                wizardColumnsOptions,
+                                            ) &&
+                                            wizardColumnsOptions?.length > 0 ? (
+                                                <Radio.Group
+                                                    style={{
+                                                        marginBottom: 8,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        minWidth: 108,
+                                                        flexWrap: 'nowrap',
+                                                        gap: 8,
+                                                        maxHeight: 118,
+                                                        overflowY: 'auto',
+                                                    }}
+                                                    value={search[selectKeys]}
+                                                    options={
+                                                        wizardColumnsOptions
+                                                    }
+                                                    onChange={(e) => {
+                                                        const value =
+                                                            e.target.value;
+
+                                                        setSearch(
+                                                            (searchValue) => ({
+                                                                ...searchValue,
+                                                                [selectKeys]:
+                                                                    value,
+                                                            }),
+                                                        );
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Empty className="max-w-27" />
+                                            ),
+                                        )
                                         .with(P.nullish, () => null)
                                         .exhaustive()}
                                 </div>

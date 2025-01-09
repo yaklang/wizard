@@ -4,7 +4,7 @@ import { FC } from 'react';
 const OmitIcon: FC<TIcon> = (props) => {
     return (
         <svg
-            width="12"
+            width="16"
             height="4"
             viewBox="0 0 12 4"
             fill="none"
