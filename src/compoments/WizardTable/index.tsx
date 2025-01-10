@@ -41,7 +41,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
     const [state, dispatch] = useReducer(reducer, initialValue);
     const { dataSource, params, filter } = state;
-
     const { runAsync } = useRequest(
         async (requests, reset?: boolean, arg?: any) => {
             dispatch({ loading: true });

@@ -37,7 +37,7 @@ const TaskScript: FC = () => {
     };
 
     return (
-        <div className="p-4 h-full">
+        <div className="p-4">
             <Spin spinning={scriptLoading}>
                 <div className="flex justify-end gap-2 mb-4">
                     <Input

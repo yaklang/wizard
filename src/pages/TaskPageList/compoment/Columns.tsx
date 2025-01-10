@@ -13,6 +13,7 @@ import { useRequest } from 'ahooks';
 import { getBatchInvokingScriptTaskNode } from '@/apis/task';
 import { taskListStatus } from '../utils/data';
 import type { UsePageRef } from '@/hooks/usePage';
+import { Progress } from 'antd';
 
 interface TColumns {
     columnsRender: CreateTableProps<TaskListRequest>['columns'];
@@ -121,7 +122,20 @@ const CommonTasksColumns = (
             wizardColumnsOptions: taskListStatus.filter(
                 (it) => !['disabled', 'finished', 'enabled'].includes(it.value),
             ),
-            render: (_, record) => TaskStatus(record?.status),
+            render: (_, record) => (
+                <div className="flex items-center justify-center">
+                    {TaskStatus(record?.status)}
+                    {typeof record?.progress === 'number' &&
+                        record?.progress !== 1 && (
+                            <Progress
+                                percent={parseFloat(
+                                    (record?.progress * 100).toFixed(2),
+                                )}
+                                className="w-24"
+                            />
+                        )}
+                </div>
+            ),
         },
     ];
 

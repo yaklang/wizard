@@ -79,6 +79,14 @@ li {
     overflow: hidden;
 }
 
+.text-clips {
+    overflow: hidden;
+    white-space: nowrap; /* 单行省略，优先 */
+    text-overflow: ellipsis;
+    // width: 100%; /* 确保内容被限制 */
+    word-break: keep-all; /* 避免单词断开 */
+}
+
 .text-clip2 {
     word-break: break-all;
     text-overflow: ellipsis;
