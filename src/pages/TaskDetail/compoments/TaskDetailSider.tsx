@@ -1,7 +1,16 @@
 import { FC, useEffect } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 
-import { Collapse, Modal, Spin, Tag, Typography } from 'antd';
+import {
+    Collapse,
+    Empty,
+    Modal,
+    Progress,
+    Spin,
+    Tag,
+    Tooltip,
+    Typography,
+} from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 
 import { SiderClose, SiderOpen } from '@/assets/compoments';
@@ -15,6 +24,8 @@ import {
     // getTimelinRuntimeId
 } from '@/apis/taskDetail';
 import { TDetailDatailOptions } from '../TaskDetail';
+import { getFetchProcess } from '@/apis/task';
+// import { TFetchProcessResponse } from '@/apis/task/types';
 
 const { Paragraph } = Typography;
 
@@ -90,41 +101,65 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
         { manual: true },
     );
 
+    const { data: TaskProcessList, runAsync: TaskProcessRunAsync } = useRequest(
+        async (id) => {
+            const { data } = await getFetchProcess(id);
+            const { list } = data;
+            return list?.map((it) => ({
+                name: it?.subtask,
+                process: it?.progress * 100,
+            }));
+        },
+        { manual: true },
+    );
+
     useEffect(() => {
         if (id) {
             runAsync(id);
+            TaskProcessRunAsync(id);
         }
     }, []);
 
     const detailCollapseItems = [
-        // {
-        //     key: '1',
-        //     label: <div className="whitespace-nowrap">本次任务进度</div>,
-        //     style: {
-        //         borderBottom: '1px solid #EAECF3',
-        //         borderRadius: '0px',
-        //         padding: '8px 16px',
-        //     },
-        //     children: (
-        //         <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
-        //             {taskList.map((it) => (
-        //                 <div
-        //                     key={it.name}
-        //                     className="flex justify-between align-center"
-        //                 >
-        //                     <div className="whitespace-nowrap">{it.name}</div>
-        //                     <div className="whitespace-nowrap w-1/2">
-        //                         <Progress
-        //                             percent={it.completion_degree}
-        //                             status="active"
-        //                             type="line"
-        //                         />
-        //                     </div>
-        //                 </div>
-        //             ))}
-        //         </div>
-        //     ),
-        // },
+        {
+            key: '1',
+            label: <div className="whitespace-nowrap">本次任务进度</div>,
+            style: {
+                borderBottom: '1px solid #EAECF3',
+                borderRadius: '0px',
+                padding: '8px 16px',
+            },
+            children: (
+                <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
+                    {TaskProcessList && TaskProcessList?.length > 0 ? (
+                        TaskProcessList.map((it) => (
+                            <div
+                                key={it.name}
+                                className="flex items-center justify-center gap-2 w-52"
+                            >
+                                <Tooltip title={it.name}>
+                                    <div className="text-clips w-1/2 cursor-pointer">
+                                        {it.name}
+                                    </div>
+                                </Tooltip>
+                                <div className="whitespace-nowrap w-1/2">
+                                    <Progress
+                                        percent={it.process}
+                                        status="active"
+                                        type="line"
+                                    />
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <Empty
+                            description="暂无进度信息"
+                            imageStyle={{ height: '48px' }}
+                        />
+                    )}
+                </div>
+            ),
+        },
         {
             key: '2',
             label: <div className="whitespace-nowrap">历史执行记录</div>,
@@ -225,22 +260,24 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
                                 key={it.label}
                                 className="flex justify-between align-center mt-4"
                             >
-                                <div className="whitespace-nowrap">
+                                <div className="whitespace-nowrap w-1/2">
                                     {it.label}
                                 </div>
-                                <div className="w-25 text-clip text-right">
-                                    {it.value}
+                                <div className="flex gap-1">
+                                    <div className="w-25 text-clips text-right">
+                                        {it.value}
+                                    </div>
+                                    {it.label === '任务ID' ||
+                                    it.label === '目标' ||
+                                    it.label === '端口' ? (
+                                        <span
+                                            className="color-[#1677ff] cursor-pointer whitespace-nowrap"
+                                            onClick={() => info(it)}
+                                        >
+                                            查看
+                                        </span>
+                                    ) : null}
                                 </div>
-                                {it.label === '任务ID' ||
-                                it.label === '目标' ||
-                                it.label === '端口' ? (
-                                    <span
-                                        className="color-[#1677ff] cursor-pointer"
-                                        onClick={() => info(it)}
-                                    >
-                                        查看
-                                    </span>
-                                ) : null}
                             </div>
                         ))}
                     </div>

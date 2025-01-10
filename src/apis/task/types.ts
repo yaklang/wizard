@@ -31,6 +31,7 @@ type TaskListRequest = Partial<{
     end_at: number;
     start_timestamp: number;
     end_timestamp: number;
+    progress?: number;
 }> & { id: number };
 
 // 任务分组相应数据
@@ -168,6 +169,13 @@ type TGetStroageDetailRequest = {
     prompt_args: Pick<TPostStorageTaskScriptResponse, 'params'>;
 } & Omit<TPostStorageTaskScriptResponse, 'params'>;
 
+type TFetchProcessResponse = {
+    list: {
+        progress: number;
+        subtask: string;
+    }[];
+};
+
 export type {
     TaskGrounpResponse,
     TTaskGroupResponse,
@@ -182,6 +190,7 @@ export type {
     TPostRpcQueryYakPluginsRequestTable,
     TPostStorageTaskScriptResponse,
     TGetStroageDetailRequest,
+    TFetchProcessResponse,
 };
 
 export { TTaskListStatus };

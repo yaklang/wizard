@@ -140,7 +140,7 @@ const CveLoophole: FC = () => {
         <div className="h-full">
             <WizardTable
                 page={page}
-                rowKey={'cve'}
+                rowKey={'key'}
                 columns={columns}
                 tableHeader={{
                     title: 'CVE 数据库管理',
