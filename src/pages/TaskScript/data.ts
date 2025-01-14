@@ -23,7 +23,7 @@ const PresetPorts = {
 const scriptTypeOption = [
     { label: '端口与漏洞扫描', value: 'portAndVulScan' },
     { label: '敏感信息', value: 'weakinfo' },
-    { label: '信息收集', value: '111' },
+    { label: '信息收集', value: 'xinxishouji' },
 ];
 
 // 预设端口多选数据
