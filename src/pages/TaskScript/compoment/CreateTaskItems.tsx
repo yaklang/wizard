@@ -26,9 +26,9 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 
 import { ChunkUpload } from '@/compoments';
 import { TScannerDataList } from './StartUpScriptModal';
-import { useMemoizedFn, useSafeState } from 'ahooks';
+import { useMemoizedFn } from 'ahooks';
 import dayjs, { Dayjs } from 'dayjs';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { ItemType } from 'antd/es/menu/interface';
 import { AddSelectSearch } from './AddSelectSearch';
 
