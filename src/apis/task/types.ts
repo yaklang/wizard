@@ -54,6 +54,7 @@ type TGetAnalysisScriptReponse = Partial<{
     script_type: string;
     tags: string[];
     script_name: string;
+    target: string[];
 }>;
 
 type TNodeListRequest = Partial<{

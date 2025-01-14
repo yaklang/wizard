@@ -169,6 +169,12 @@ const StartUpScriptModal = forwardRef<
                                 : undefined,
                         params: {
                             ...items.params,
+                            target:
+                                // 此处的 ip_list 字段 因为信息收集界面需要
+                                items?.ip_list?.length > 0
+                                    ? items.ip_list.join(',')
+                                    : items.params?.target ||
+                                      items.params?.keyword,
                             plugins: items.params?.plugins
                                 ? {
                                       ScriptName: {

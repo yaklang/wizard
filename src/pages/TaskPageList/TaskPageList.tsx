@@ -191,6 +191,7 @@ const TaskPageList: FC = () => {
                     header: false,
                     table: false,
                 }));
+
                 openCreateTaskModalRef.current?.open(value);
             },
         },

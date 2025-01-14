@@ -30,6 +30,7 @@ import { useMemoizedFn, useSafeState } from 'ahooks';
 import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useMemo, useRef } from 'react';
 import { ItemType } from 'antd/es/menu/interface';
+import { AddSelectSearch } from './AddSelectSearch';
 
 type PresetKey = keyof typeof PresetPorts;
 
@@ -225,14 +226,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
             .exhaustive();
     });
 
-    const [copyScriptGroupList, setCopyScriptGroupList] =
-        useSafeState<TScriptGrounpList>([]);
     const scriptGroupListRef = useRef<TScriptGrounpList>();
-
-    useEffect(() => {
-        setCopyScriptGroupList(scriptGroupList);
-        scriptGroupListRef.current = scriptGroupList ?? [];
-    }, [scriptGroupList]);
 
     const collapseChildren = [
         {
@@ -263,53 +257,9 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             },
                         ]}
                     >
-                        <Select
-                            placeholder="请选择..."
-                            showSearch
-                            optionFilterProp="label"
-                            onBlur={() => {
-                                const targetScriptGroup =
-                                    scriptGroupListRef.current?.filter(
-                                        (item) => item.label,
-                                    ) ?? [];
-                                setCopyScriptGroupList(targetScriptGroup);
-                            }}
-                            onSearch={(value) => {
-                                setTimeout(() => {
-                                    setCopyScriptGroupList((list) => {
-                                        const concatList =
-                                            list.findIndex(
-                                                (it) => it.value === value,
-                                            ) === -1
-                                                ? list.concat({
-                                                      label: `${value}`,
-                                                      value,
-                                                  })
-                                                : list;
-                                        const resultGroupList =
-                                            concatList?.filter(
-                                                (item) => item.label,
-                                            ) ?? [];
-                                        return resultGroupList;
-                                    });
-                                }, 500);
-                            }}
-                            onSelect={(_, options) => {
-                                const addList =
-                                    scriptGroupListRef.current!.concat({
-                                        label: options.value,
-                                        value: options.value,
-                                    });
-                                const resultList = addList.filter(
-                                    (item, index, self) =>
-                                        self.findIndex(
-                                            (obj) => obj.value === item.value,
-                                        ) === index,
-                                );
-                                scriptGroupListRef.current = resultList;
-                                setCopyScriptGroupList(resultList);
-                            }}
-                            options={copyScriptGroupList ?? scriptGroupList}
+                        <AddSelectSearch
+                            scriptGroupListRef={scriptGroupListRef}
+                            scriptGroupList={scriptGroupList}
                         />
                     </Item>
                     <Item

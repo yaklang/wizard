@@ -1,22 +1,43 @@
 import { WizardTable } from '@/compoments';
 
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
-import { useSafeState } from 'ahooks';
-import { Button } from 'antd';
+import { useRequest, useSafeState } from 'ahooks';
+import { Button, Tooltip } from 'antd';
 import { TDeleteValues } from '../ReportManage/ReportManage';
 import VulnerabilityScanningIcon from '@/assets/compoments/VulnerabilityScanningIcon';
 import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import { tableHeaderCheckedptions } from './data';
 import { useRef } from 'react';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { StartUpScriptModal } from '../TaskScript/compoment/StartUpScriptModal';
+import { CreateTaskScriptModal } from '../TaskPageList/compoment/CreateTaskScriptModal';
+import { getAnalysisScript } from '@/apis/task';
 
 const MessageCollect = () => {
     const [page] = WizardTable.usePage();
 
     const [checkedValue, setCheckedValue] = useSafeState<TDeleteValues>();
 
-    const StartUpScriptModalRef = useRef<UseModalRefType>(null);
+    const openCreateTaskModalRef = useRef<UseModalRefType>(null);
+    const ipListRef = useRef<string[]>([]);
+
+    const { run, loading } = useRequest(
+        async () => {
+            const result = await getAnalysisScript();
+            const {
+                data: { list },
+            } = result;
+            const targetData = list
+                .filter((items) => items.script_type === 'portAndVulScan')
+                .map((value) => ({ ...value, ip_list: ipListRef.current }));
+            return targetData;
+        },
+        {
+            manual: true,
+            onSuccess: (values) => {
+                openCreateTaskModalRef.current?.open(values);
+            },
+        },
+    );
 
     const columns: CreateTableProps<any>['columns'] = [
         {
@@ -82,8 +103,14 @@ const MessageCollect = () => {
             render: () => {
                 return (
                     <div className="flex items-center justify-center gap-4">
-                        <VulnerabilityScanningIcon />
-                        <TableDeleteOutlined />
+                        <Tooltip title="漏洞扫描">
+                            <div>
+                                <VulnerabilityScanningIcon />
+                            </div>
+                        </Tooltip>
+                        <div>
+                            <TableDeleteOutlined />
+                        </div>
                     </div>
                 );
             },
@@ -98,12 +125,10 @@ const MessageCollect = () => {
         const ipList = dataSource
             .map((item) => (idsList?.includes(item.id) ? item.ip : undefined))
             .filter((list) => list);
+        ipListRef.current = ipList;
         if (isAll) {
         } else {
-            StartUpScriptModalRef.current?.open({
-                params: { target: ipList?.join(',') },
-                script_type: 'portAndVulScan',
-            });
+            run();
         }
     };
 
@@ -138,6 +163,7 @@ const MessageCollect = () => {
                                 </Button>
                                 <Button
                                     type="primary"
+                                    loading={loading}
                                     onClick={() => headVulnerabilityScanning()}
                                     disabled={
                                         checkedValue?.name &&
@@ -198,9 +224,10 @@ const MessageCollect = () => {
                     };
                 }}
             />
-            <StartUpScriptModal
-                ref={StartUpScriptModalRef}
-                title={'编辑任务'}
+
+            <CreateTaskScriptModal
+                ref={openCreateTaskModalRef}
+                pageLoad={page.onLoad}
             />
         </>
     );
