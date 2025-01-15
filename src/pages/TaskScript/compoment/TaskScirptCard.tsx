@@ -23,9 +23,8 @@ import {
 import { WizardModal } from '@/compoments';
 import { StartUpScriptModal } from './StartUpScriptModal';
 import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
-import { TaskScriptDrawer } from './TaskScriptDrawer';
 import { ExclamationCircleFilled } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 const { confirm } = Modal;
 
@@ -44,6 +43,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     taskScriptList,
     refreshAsync,
 }) => {
+    const navigate = useNavigate();
     const itemsRef = useRef();
     const inputRef = useRef<InputRef>(null);
     const [model1] = WizardModal.useModal();
@@ -54,7 +54,6 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     const [detailData, setDetailData] =
         useSafeState<TGetStroageDetailRequest>();
 
-    const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
 
     // 获取 启动脚本任务 任务组参数
@@ -95,15 +94,19 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                         setTaskScriptList((val) => [
                             {
                                 ...data,
-                                // script_name: `Copy ${data?.script_name ?? ''}`,
                                 isCopy: true,
                             },
                             ...val,
                         ]);
                         setDetailData(data);
                     })
-                    .with('edit', () => {
-                        taskScriptDrawerRef.current?.open(data);
+                    .with('edit', (type) => {
+                        navigate('modify-task-script', {
+                            state: {
+                                type,
+                                ...data,
+                            },
+                        });
                     })
                     .with(P.nullish, () => message.error('错误'))
                     .exhaustive();
@@ -279,11 +282,6 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                 ref={StartUpScriptModalRef}
                 title="创建任务"
                 pageLoad={refreshAsync}
-            />
-            <TaskScriptDrawer
-                ref={taskScriptDrawerRef}
-                title="编辑分布式任务脚本"
-                TaskScriptRefresh={refreshAsync}
             />
         </>
     );

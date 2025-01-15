@@ -2,11 +2,11 @@ import { FC, useEffect, useRef, useState } from 'react';
 
 import AceEditor, { IAceEditorProps } from 'react-ace';
 
-// import 'ace-builds/src-noconflict/mode-golang';
-// import 'ace-builds/src-noconflict/theme-github';
-// import 'ace-builds/src-noconflict/ext-language_tools';
 import 'ace-builds/src-noconflict/mode-golang';
-import 'ace-builds/src-noconflict/theme-monokai';
+import 'ace-builds/src-noconflict/theme-github';
+// import 'ace-builds/src-noconflict/ext-language_tools';
+// import 'ace-builds/src-noconflict/mode-golang';
+// import 'ace-builds/src-noconflict/theme-monokai';
 
 import { Empty, Spin } from 'antd';
 
@@ -68,8 +68,8 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
             ref={editorRef}
             width="100%"
             mode="golang"
-            // theme="github"
-            theme="monokai"
+            theme="github"
+            // theme="monokai"
             onChange={onChange}
             value={value}
             showGutter={true}

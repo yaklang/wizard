@@ -25,6 +25,7 @@ import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage';
 import { CveLoophole } from '@/pages/DataService/CveLoophole';
 import NodeManagePage from '@/pages/NodeManage';
 import License from '@/pages/License';
+import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
 // import MessageCollect from '@/pages/MessageCollect';
 
 // 继承路由接口，增加name字段
@@ -73,9 +74,22 @@ const routers: RouteObjectRootMy[] = [
                     },
                     {
                         path: 'task-script',
-                        element: <TaskScript />,
                         name: '脚本列表',
                         key: 'task-script',
+                        children: [
+                            {
+                                index: true,
+                                element: <TaskScript />,
+                            },
+                            {
+                                path: 'modify-task-script',
+                                key: 'modify-task-script',
+                                element: <ModifyTaskScript />,
+                                name: '分布式任务脚本',
+                                hidden: true,
+                                parentpath: '/task-script/task-script',
+                            },
+                        ],
                     },
                 ],
             },
