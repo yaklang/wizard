@@ -5,7 +5,7 @@ import { noAuthCode } from '@/utils/axios';
 import { message } from 'antd';
 
 interface SSEHooksError {
-    message: string;
+    msg: string;
     code: number;
     type: string;
 }
@@ -66,7 +66,7 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
                 es.close();
             } else {
                 options?.onerror?.({
-                    message: statusText,
+                    msg: statusText,
                     code,
                     type: e.type,
                 });

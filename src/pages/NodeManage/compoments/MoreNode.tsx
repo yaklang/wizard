@@ -2,7 +2,7 @@ import { FC, useRef } from 'react';
 import OmitIcon from '../Icon/OmitIcon';
 import {
     FormOutlined,
-    LineChartOutlined,
+    // LineChartOutlined,
     SyncOutlined,
 } from '@ant-design/icons';
 import { Button, Popover } from 'antd';

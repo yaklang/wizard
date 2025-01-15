@@ -10,7 +10,7 @@ import type {
     TaskGrounpResponse,
     TaskListRequest,
     TaskListResponse,
-    TFetchProcessResponse,
+    // TFetchProcessResponse,
     TGetAnalysisScriptReponse,
     TGetStroageDetailRequest,
     TNodeListRequest,

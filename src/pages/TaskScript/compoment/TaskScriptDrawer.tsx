@@ -50,16 +50,6 @@ const TaskScriptDrawer = forwardRef<
         },
     });
 
-    useImperativeHandle(ref, () => ({
-        async open(items) {
-            form.setFieldsValue({
-                ...items,
-                name: items?.script_name,
-            });
-            drawer.open();
-        },
-    }));
-
     const onSubmit = async () => {
         const formValue = await form.validateFields();
         const transformFormValue = {
@@ -72,6 +62,16 @@ const TaskScriptDrawer = forwardRef<
         };
         run(transformFormValue, !title.includes('创建'));
     };
+
+    useImperativeHandle(ref, () => ({
+        async open(items) {
+            form.setFieldsValue({
+                ...items,
+                name: items?.script_name,
+            });
+            drawer.open();
+        },
+    }));
 
     return (
         <WizardDrawer
