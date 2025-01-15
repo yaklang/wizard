@@ -1,16 +1,14 @@
-import { FC, useRef } from 'react';
+import { FC } from 'react';
 
 import { useRequest, useSafeState } from 'ahooks';
 import { getAnalysisScript } from '@/apis/task';
 import { Button, Input, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
-import { TaskScriptDrawer } from './compoment/TaskScriptDrawer';
 import { TaskScriptCard, TTaskScriptCard } from './compoment/TaskScirptCard';
-// import { EmptyBox } from '@/compoments';
+import { useNavigate } from 'react-router-dom';
 
 const TaskScript: FC = () => {
-    const taskScriptDrawerRef = useRef<UseDrawerRefType>(null);
+    const navigate = useNavigate();
 
     const [searchName, setSearchName] = useSafeState('');
     const [taskScriptList, setTaskScriptList] = useSafeState<
@@ -49,7 +47,13 @@ const TaskScript: FC = () => {
                     />
                     <Button
                         type="primary"
-                        onClick={() => taskScriptDrawerRef.current?.open()}
+                        onClick={() =>
+                            navigate('modify-task-script', {
+                                state: {
+                                    type: 'add',
+                                },
+                            })
+                        }
                     >
                         <PlusOutlined />
                         创建脚本
@@ -68,11 +72,6 @@ const TaskScript: FC = () => {
                     })}
                 </div>
             </Spin>
-            <TaskScriptDrawer
-                ref={taskScriptDrawerRef}
-                title="创建分布式任务脚本"
-                TaskScriptRefresh={refreshAsync}
-            />
         </div>
     );
 };

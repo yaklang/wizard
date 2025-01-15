@@ -136,3 +136,16 @@ li {
 .ant-spin-nested-loading >div>.ant-spin{
     max-height: none;
 }
+
+#WIZARD_ACE_EDITOR{
+    .ace_scroller{
+        background-color: #e8e8e8;
+        .ace_content{
+            .ace_layer{
+                .ace_active-line{
+                    background-color: rgb(254 255 96 / 39%);
+                }
+            }
+        }
+    }
+}
