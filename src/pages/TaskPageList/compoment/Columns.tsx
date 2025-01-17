@@ -122,20 +122,23 @@ const CommonTasksColumns = (
             wizardColumnsOptions: taskListStatus.filter(
                 (it) => !['disabled', 'finished', 'enabled'].includes(it.value),
             ),
-            render: (_, record) => (
-                <div className="flex items-center justify-center">
-                    {TaskStatus(record?.status)}
-                    {typeof record?.progress === 'number' &&
-                        record?.progress !== 1 && (
-                            <Progress
-                                percent={parseFloat(
-                                    (record?.progress * 100).toFixed(2),
-                                )}
-                                className="w-24"
-                            />
-                        )}
-                </div>
-            ),
+            render: (_, record) => {
+                return (
+                    <div className="flex items-center justify-center">
+                        {TaskStatus(record?.status)}
+                        {typeof record?.progress === 'number' &&
+                            record?.progress !== 1 &&
+                            record?.status === 'running' && (
+                                <Progress
+                                    percent={parseFloat(
+                                        (record?.progress * 100).toFixed(2),
+                                    )}
+                                    className="w-24"
+                                />
+                            )}
+                    </div>
+                );
+            },
         },
     ];
 

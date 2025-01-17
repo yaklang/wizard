@@ -34,14 +34,14 @@ const ViewLogDrawer = forwardRef<UseDrawerRefType>((_, ref): ReactNode => {
     const [value, setValue] = useSafeState('');
 
     const { disconnect, connect, loading } = useEventSource<{
-        message: string;
+        msg: { data: string };
     }>('events?stream_type=node_logs', {
         manual: true,
         onsuccess: (data) => {
-            setValue((prev) => prev + data?.message + '\n');
+            setValue((prev) => prev + data?.msg?.data + '\n');
         },
         onerror: (error) => {
-            message.error(`连接失败: ${error.message}`);
+            message.error(`连接失败: ${error.msg}`);
         },
     });
 

@@ -41,14 +41,14 @@ const MoreNode: FC<{ record: Palm.Node; page: UsePageRef }> = ({
                         >
                             编辑节点
                         </Button>
-                        <Button
+                        {/* <Button
                             color="primary"
                             variant="text"
                             className="flex justify-start"
                             icon={<LineChartOutlined />}
                         >
                             单节点任务
-                        </Button>
+                        </Button> */}
                         <Button
                             color="primary"
                             variant="text"

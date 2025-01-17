@@ -34,6 +34,12 @@ export const getTaskList = (
 const getTaskStream = (task_id: number): Promise<ResponseData<boolean>> =>
     axios.get<never, ResponseData<boolean>>(`/task/stream?task_id=${task_id}`);
 
+// 将需要监听的任务详情进度 告知后端
+const getSubtaskSteam = (task_id: string): Promise<ResponseData<boolean>> =>
+    axios.get<never, ResponseData<boolean>>(
+        `/task/subtask/stream?task_id=${task_id}`,
+    );
+
 // 获取任务组
 const getScriptTaskGroup = (): Promise<
     ResponseData<TableResponseData<TaskGrounpResponse>>
@@ -179,14 +185,6 @@ const getRunScriptTask = (params: {
         { params },
     );
 
-// 获取任务详情进度
-const getFetchProcess = (
-    task_id: string,
-): Promise<ResponseData<TFetchProcessResponse>> =>
-    axios.get<never, ResponseData<TFetchProcessResponse>>(
-        `/task/start/batch-invoking-script/runtimes/fetch/process?taskId=${task_id}`,
-    );
-
 // 删除 脚本
 const deleteAnalysisScript = (
     script_name: string,
@@ -235,5 +233,5 @@ export {
     deleteScriptTask,
     getStroageDetail,
     getTaskStream,
-    getFetchProcess,
+    getSubtaskSteam,
 };
