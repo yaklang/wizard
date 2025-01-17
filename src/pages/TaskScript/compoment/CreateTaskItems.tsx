@@ -238,6 +238,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
         {
             key: '1',
             label: '基本信息',
+            forceRender: true,
             style: {
                 borderBottom: '1px solid #EAECF3',
                 borderRadius: '0px',
@@ -352,6 +353,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
         {
             key: '2',
             label: '设置参数',
+            forceRender: true,
             style: {
                 borderBottom: '1px solid #EAECF3',
                 borderRadius: '0px',
@@ -637,6 +639,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
         {
             key: '3',
             label: '设置调度',
+            forceRender: true,
             style: {
                 borderBottom: '1px solid #EAECF3',
                 borderRadius: '0px',
@@ -704,6 +707,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
         {
             key: '4',
             label: '高级参数',
+            forceRender: true,
             style: {
                 borderBottom: '1px solid #EAECF3',
                 borderRadius: '0px',

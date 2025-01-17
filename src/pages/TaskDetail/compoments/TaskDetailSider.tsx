@@ -1,9 +1,10 @@
 import { FC, useEffect } from 'react';
-import { useRequest, useSafeState } from 'ahooks';
+import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
 import {
     Collapse,
     Empty,
+    message,
     Modal,
     Progress,
     Spin,
@@ -24,7 +25,8 @@ import {
     // getTimelinRuntimeId
 } from '@/apis/taskDetail';
 import { TDetailDatailOptions } from '../TaskDetail';
-import { getFetchProcess } from '@/apis/task';
+import { getSubtaskSteam } from '@/apis/task';
+import { useEventSource } from '@/hooks';
 // import { TFetchProcessResponse } from '@/apis/task/types';
 
 const { Paragraph } = Typography;
@@ -101,23 +103,51 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
         { manual: true },
     );
 
-    const { data: TaskProcessList, runAsync: TaskProcessRunAsync } = useRequest(
-        async (id) => {
-            const { data } = await getFetchProcess(id);
-            const { list } = data;
-            return list?.map((it) => ({
-                name: it?.subtask,
-                process: it?.progress * 100,
-            }));
+    const { run } = useRequest(getSubtaskSteam, { manual: true });
+
+    const [taskProcess, setTaskProcess] = useSafeState<{
+        name: string;
+        process: number;
+    }>();
+
+    const {
+        connect,
+        disconnect,
+        loading: sseLoading,
+    } = useEventSource<{
+        msg: { progress?: number };
+    }>('events?stream_type=subtask_progress', {
+        onsuccess: async (data) => {
+            const { msg } = data;
+            const progress = msg?.progress ? msg?.progress * 100 : 0;
+            setTaskProcess({
+                name: id!,
+                process: parseInt(progress.toFixed(2), 10),
+            });
         },
-        { manual: true },
-    );
+        onerror: (error) => {
+            message.error('连接超时，重连中');
+            console.error('SSE error:', error);
+        },
+        manual: true,
+    });
+
+    useUpdateEffect(() => {
+        if (id) {
+            if (!sseLoading) {
+                run(id);
+            }
+        } else {
+            message.error('获取任务ID失败，请重新进入详情页面');
+        }
+    }, [sseLoading]);
 
     useEffect(() => {
         if (id) {
             runAsync(id);
-            TaskProcessRunAsync(id);
+            connect();
         }
+        return () => disconnect();
     }, []);
 
     const detailCollapseItems = [
@@ -131,32 +161,29 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
             },
             children: (
                 <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
-                    {TaskProcessList && TaskProcessList?.length > 0 ? (
-                        TaskProcessList.map((it) => (
-                            <div
-                                key={it.name}
-                                className="flex items-center justify-center gap-2 w-52"
-                            >
-                                <Tooltip title={it.name}>
+                    <Spin spinning={sseLoading}>
+                        {taskProcess ? (
+                            <div className="flex items-center justify-center gap-2 w-52">
+                                <Tooltip title={taskProcess.name}>
                                     <div className="text-clips w-1/2 cursor-pointer">
-                                        {it.name}
+                                        {taskProcess.name}
                                     </div>
                                 </Tooltip>
                                 <div className="whitespace-nowrap w-1/2">
                                     <Progress
-                                        percent={it.process}
+                                        percent={taskProcess.process}
                                         status="active"
                                         type="line"
                                     />
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        <Empty
-                            description="暂无进度信息"
-                            imageStyle={{ height: '48px' }}
-                        />
-                    )}
+                        ) : (
+                            <Empty
+                                description="暂无进度信息"
+                                imageStyle={{ height: '48px' }}
+                            />
+                        )}
+                    </Spin>
                 </div>
             ),
         },

@@ -47,14 +47,12 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
             if (editor) {
                 const lastLine = editor.session.getLength() - 1;
                 // 使用 setTimeout 和 requestAnimationFrame 结合，防止浏览器卡死
-                requestAnimationFrame(() => {
-                    editor.scrollToLine(lastLine, false, true, () => {
-                        setIsAtBottom(true);
-                    });
+                editor.scrollToLine(lastLine, false, true, () => {
+                    setIsAtBottom(true);
                 });
             }
         }
-    }, [value]);
+    }, [value, isAtBottom]);
 
     return typeof loading !== 'undefined' && !loading ? (
         <div className="w-full h-full flex items-center justify-center">
