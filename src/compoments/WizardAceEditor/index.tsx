@@ -11,6 +11,7 @@ import 'ace-builds/src-noconflict/theme-github';
 import { Empty, Spin } from 'antd';
 
 type TWizardAceEditor = IAceEditorProps & {
+    scrollStatus?: boolean;
     value?: string;
     onChange?: any;
     loading?: boolean;
@@ -20,10 +21,11 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
     value,
     onChange,
     loading,
+    scrollStatus,
     ...props
 }) => {
     const editorRef = useRef<any>(null);
-    const [isAtBottom, setIsAtBottom] = useState(true);
+    const [isAtBottom, setIsAtBottom] = useState(scrollStatus);
 
     // 检查用户是否在底部
     const handleScroll = () => {
@@ -33,7 +35,7 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
         const lastVisibleLine = editor.renderer.getLastVisibleRow();
         const totalLines = editor.session.getLength(); // 总行数
 
-        if (lastVisibleLine + 1 >= totalLines) {
+        if (lastVisibleLine + 2 >= totalLines) {
             setIsAtBottom(true);
         } else {
             setIsAtBottom(false);
@@ -46,7 +48,6 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
             const editor = editorRef.current?.editor;
             if (editor) {
                 const lastLine = editor.session.getLength() - 1;
-                // 使用 setTimeout 和 requestAnimationFrame 结合，防止浏览器卡死
                 editor.scrollToLine(lastLine, false, true, () => {
                     setIsAtBottom(true);
                 });

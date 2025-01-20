@@ -17,7 +17,7 @@ const getTaskDetail = (
     form_runtime_id: string,
 ): Promise<ResponseData<TTaskDetail>> =>
     axios.get<never, ResponseData<TTaskDetail>>(
-        `/task/detail?form_runtime_id=${form_runtime_id}`,
+        `/task/detail?task_id=${form_runtime_id}`,
     );
 
 const getTaskDetailTop = (id: number): Promise<ResponseData<any>> =>

@@ -69,6 +69,7 @@ const ViewLogDrawer = forwardRef<UseDrawerRefType>((_, ref): ReactNode => {
                 style={{ height: '100%' }}
                 readOnly={true}
                 loading={!loading}
+                scrollStatus={true}
             />
         </WizardDrawer>
     );

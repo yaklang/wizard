@@ -64,9 +64,8 @@ enum exprotFileName {
 const TaskDetail: FC = () => {
     const [page] = WizardTable.usePage();
     const location = useLocation();
-    const {
-        record: { id, task_id, script_type },
-    } = location.state || {}; // 获取传递的 record 数据
+
+    const { record } = location.state || {}; // 获取传递的 record 数据
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
     const [columns, setColumns] = useSafeState<any>([]);
@@ -133,7 +132,9 @@ const TaskDetail: FC = () => {
 
     const { runAsync: assetsVulnsFilterrunAsync } = useRequest(
         async () => {
-            const { data } = await getAssetsValueFilter({ task_id: task_id! });
+            const { data } = await getAssetsValueFilter({
+                task_id: record?.task_id!,
+            });
             const { list, severity } = data;
             // 映射漏洞等级 字段
             const transformSeverityList = severity?.map((it) => {
@@ -168,7 +169,7 @@ const TaskDetail: FC = () => {
 
     useEffect(() => {
         // 请求数据并等待完成
-        runAsync(id!, task_id!)
+        runAsync(record?.id, record?.task_id!)
             .then(() => {
                 setIsReady(true); // 数据加载完成，允许渲染
             })
@@ -192,7 +193,7 @@ const TaskDetail: FC = () => {
                             ...params,
                             ...filter,
                             order_by: filter?.order ? 'updated_at' : undefined,
-                            task_id: task_id,
+                            task_id: record?.task_id,
                         });
                         setColumns(ProtColumns);
                         setTableLoadings(false);
@@ -209,7 +210,7 @@ const TaskDetail: FC = () => {
                         const { data } = await postAssetsVulns({
                             ...params,
                             ...filter,
-                            task_id,
+                            task_id: record?.task_id,
                         });
                         await assetsVulnsFilterrunAsync()
                             .then((filterData) => {
@@ -235,7 +236,7 @@ const TaskDetail: FC = () => {
                         const { data } = await postAssertsData({
                             ...params,
                             ...filter,
-                            task_id,
+                            task_id: record?.task_id,
                         });
                         setTableLoadings(false);
                         setColumns(AssertsDataColumns);
@@ -264,19 +265,27 @@ const TaskDetail: FC = () => {
     const tableFilterEnum = (type: 1 | 2 | 3) => {
         return match(type)
             .with(1, () => (
-                <AssetsProtsFilterDrawer task_id={task_id!} page={page} />
+                <AssetsProtsFilterDrawer
+                    task_id={record?.task_id}
+                    page={page}
+                />
             ))
             .with(2, () => (
-                <AssetsVulnsFilterDrawer task_id={task_id!} page={page} />
+                <AssetsVulnsFilterDrawer
+                    task_id={record?.task_id!}
+                    page={page}
+                />
             ))
-            .with(3, () => <AssertsDataFilterDrawer task_id={task_id!} />)
+            .with(3, () => (
+                <AssertsDataFilterDrawer task_id={record?.task_id} />
+            ))
             .exhaustive();
     };
 
     return (
         <div className="flex align-start h-full">
-            <TaskDetailSider id={task_id} data={data} />
-            {script_type === 'portAndVulScan' ? (
+            <TaskDetailSider id={record?.task_id} data={data} />
+            {record?.script_type === 'portAndVulScan' ? (
                 <WizardTable
                     rowKey={'id'}
                     columns={columns}
@@ -310,7 +319,7 @@ const TaskDetail: FC = () => {
                                     data: {
                                         ...page.getParams()?.filter,
                                         limit: -1,
-                                        task_id,
+                                        task_id: record?.task_id,
                                     },
                                 },
                                 url: '/assets/export/report',
@@ -338,8 +347,8 @@ const TaskDetail: FC = () => {
                         };
                     }}
                 />
-            ) : script_type === 'weakinfo' ? (
-                <SensitiveMessage task_id={task_id} />
+            ) : record?.script_type === 'weakinfo' ? (
+                <SensitiveMessage task_id={record?.task_id} />
             ) : (
                 <Empty className="w-full h-full flex items-center justify-center flex-col" />
             )}
