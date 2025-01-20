@@ -50,29 +50,31 @@ const SystemManagement: FC = () => {
                             }}
                         >
                             <Tooltip title="重置密码">
-                                <Outline
-                                    onClick={() => {
-                                        setModalTitle('重置密码');
-                                        if (record.username) {
-                                            postUserReset({
-                                                username: record.username,
-                                            }).then((res) => {
-                                                const { data } = res;
-                                                CreateUserModalRef.current?.open(
-                                                    {
-                                                        ...record,
-                                                        ...data,
-                                                        type: 'reset',
-                                                    },
+                                <div>
+                                    <Outline
+                                        onClick={() => {
+                                            setModalTitle('重置密码');
+                                            if (record.username) {
+                                                postUserReset({
+                                                    username: record.username,
+                                                }).then((res) => {
+                                                    const { data } = res;
+                                                    CreateUserModalRef.current?.open(
+                                                        {
+                                                            ...record,
+                                                            ...data,
+                                                            type: 'reset',
+                                                        },
+                                                    );
+                                                });
+                                            } else {
+                                                message.info(
+                                                    '获取用户名失败，请刷新页面重试',
                                                 );
-                                            });
-                                        } else {
-                                            message.info(
-                                                '获取用户名失败，请刷新页面重试',
-                                            );
-                                        }
-                                    }}
-                                />
+                                            }
+                                        }}
+                                    />
+                                </div>
                             </Tooltip>
                         </div>
                         <TableFormOutlined
