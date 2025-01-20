@@ -19,7 +19,7 @@ const PortAssets: FC = () => {
                 title: '任务名',
                 dataIndex: 'task_id',
                 columnsHeaderFilterType: 'input',
-                width: 180,
+                width: 240,
             },
         ];
 

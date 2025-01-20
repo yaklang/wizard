@@ -6,6 +6,7 @@ import { useRequest, useSafeState } from 'ahooks';
 import { Button, Form, Input, message, Modal, Typography } from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
 import { match } from 'ts-pattern';
+import { User } from '@/apis/SystemManagementApi/types';
 
 const { Item } = Form;
 const layout = {
@@ -23,7 +24,7 @@ const CreateUserModal = forwardRef<
 >(({ title, refresh, localRefrech }, ref) => {
     const [model] = WizardModal.useModal();
     const [form] = Form.useForm();
-    const [record, setRecord] = useSafeState();
+    const [record, setRecord] = useSafeState<User>();
 
     useImperativeHandle(ref, () => ({
         open(record) {
@@ -77,7 +78,7 @@ const CreateUserModal = forwardRef<
                     );
                 })
                 .with('编辑用户', async () => {
-                    await runAsync({ ...formData });
+                    await runAsync({ ...formData, role: record?.role });
                     localRefrech({
                         operate: 'edit',
                         newObj: formData,
