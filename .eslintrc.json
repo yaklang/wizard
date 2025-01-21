@@ -21,12 +21,13 @@
       ]
     }
   },
-  "extends": [
-    "alloy",
-    "alloy/react",
-    "alloy/typescript",
-    "prettier"
-  ],
+  // "extends": [
+  //   "alloy",
+  //   "alloy/react",
+  //   "alloy/typescript",
+  //   "prettier",
+  //   "eslint-config-alloy"
+  // ],
   "plugins": [
     "prettier"
   ],
