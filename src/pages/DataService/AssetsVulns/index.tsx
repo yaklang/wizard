@@ -1,4 +1,5 @@
-import { FC, useMemo } from 'react';
+import type { FC } from 'react';
+import { useMemo } from 'react';
 
 import { WizardTable } from '@/compoments';
 
@@ -67,7 +68,7 @@ const AssetsVulns: FC = () => {
     return (
         <WizardTable
             page={page}
-            rowKey={'id'}
+            rowKey="id"
             columns={columns}
             tableHeader={{
                 title: '漏洞与风险列表',

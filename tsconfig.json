@@ -29,7 +29,7 @@
     }
   },
   "include": [
-    "src/**/*",
+    "src",
     "uno.config.ts"
   ],
   "references": [
