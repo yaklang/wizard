@@ -1,10 +1,11 @@
 {
   "root": true,
   "parserOptions": {
+    "sourceType": "module",
     "project": [
       "./tsconfig.json",
       "./tsconfig.node.json",
-      "./uno.config.ts",
+      "./uno.config.ts"
     ]
   },
   "settings": {
@@ -30,8 +31,18 @@
     "prettier"
   ],
   "env": {
-    "browser": true
+    "browser": true,
+    "node": true
   },
+  "overrides": [
+    {
+      "files": ["*.cjs"],
+      "parserOptions": {
+        "sourceType": "script",
+        "ecmaVersion": 2020
+      }
+    }
+  ],
   "globals": {},
   "rules": {
     "prettier/prettier": "error",
