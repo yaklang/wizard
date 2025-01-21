@@ -1,14 +1,34 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import NoLoginPermissionImage from '@/assets/compoments/NoLoginPermission.png';
 import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useRequest } from 'ahooks';
+import { getLicense } from '@/apis/login';
 
 const NoLoginPermission: FC = () => {
     const navigate = useNavigate();
 
     const headLogin = () => {
-        navigate('/login', { replace: true });
+        runAsync();
     };
+
+    const { runAsync } = useRequest(
+        async () => {
+            const { data } = await getLicense();
+            const { license } = data;
+            return license?.length > 0 ? license : undefined;
+        },
+        {
+            manual: true,
+            onSuccess: (license) => {
+                if (license) {
+                    return navigate('/license', { state: { license } });
+                } else {
+                    navigate('/login', { replace: true });
+                }
+            },
+        },
+    );
     return (
         <div className="w-full h-full flex items-center justify-center flex-col gap-4">
             <img src={NoLoginPermissionImage} className="w-80" />

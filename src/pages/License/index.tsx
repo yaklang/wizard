@@ -1,4 +1,5 @@
-import { FC, useEffect } from 'react';
+import type { FC } from 'react';
+import { useEffect } from 'react';
 import { Button, Form, Input, message } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRequest } from 'ahooks';
@@ -26,7 +27,7 @@ const License: FC = () => {
 
     useEffect(() => {
         const { license } = location.state || {}; // 获取传递的 record 数据
-        !license
+        license
             ? form.setFieldsValue({ fetch_license: license })
             : navigate('/'); // 设置表单数据
     }, []);

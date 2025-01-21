@@ -7,7 +7,7 @@ import permissionsSliceFn from '@/App/store/powerStore';
 import { LoginIcon } from '@/assets/menu';
 import login_logo from '@/assets/compoments/login_logo.png';
 import login_background from '@/assets/login/login_background.png';
-import { getCaptcha, postVerifyCaptcha } from '@/apis/login';
+import { getCaptcha, getLicense, postVerifyCaptcha } from '@/apis/login';
 interface FieldType {
     username: string;
     password: string;
@@ -24,6 +24,26 @@ const Login = () => {
 
     const { login, token } = useLoginStore((state) => state);
     const { updatePower } = permissionsSliceFn();
+
+    const { runAsync } = useRequest(
+        async () => {
+            const { data } = await getLicense();
+            const { license } = data;
+            return license?.length > 0 ? license : undefined;
+        },
+        {
+            manual: true,
+            onSuccess: (license) => {
+                if (license) {
+                    return navigate('/license', { state: { license } });
+                }
+                if (token) {
+                    return navigate('/');
+                }
+                run();
+            },
+        },
+    );
 
     // 获取验证码
     const { data, run, loading } = useRequest(
@@ -50,13 +70,18 @@ const Login = () => {
     });
 
     useEffect(() => {
-        // 登录限制，如果有token，并且token未过期，就不能打开login页
-        if (token) {
-            navigate('/');
-        } else {
-            run();
-        }
+        runAsync();
     }, []);
+
+    // useEffect(() => {
+    //     // 登录限制，如果有token，并且token未过期，就不能打开login页
+    //     if (token) {
+    //         navigate('/');
+    //     }
+    //     else {
+    //         run();
+    //     }
+    // }, []);
 
     const loginFn = async (values: FieldType) => {
         try {
@@ -105,7 +130,7 @@ const Login = () => {
                         <img src={login_logo} className="w-10 h-10" />
                         <div className="font-YouSheBiaoTiHei text-[25px] font-normal color=[#31343F]">
                             分布式平台
-                            <div></div>
+                            <div />
                         </div>
                     </div>
                 </div>
@@ -188,7 +213,7 @@ const Login = () => {
                                     <Spin
                                         spinning={loading}
                                         className="translate-y-1"
-                                    ></Spin>
+                                    />
                                 )}
                             </div>
                         </div>
