@@ -2,6 +2,7 @@
   "root": true,
   "parserOptions": {
     "sourceType": "module",
+    "ecmaVersion": 2020,
     "project": [
       "./tsconfig.json",
       "./tsconfig.node.json",
@@ -21,13 +22,12 @@
       ]
     }
   },
-  // "extends": [
-  //   "alloy",
-  //   "alloy/react",
-  //   "alloy/typescript",
-  //   "prettier",
-  //   "eslint-config-alloy"
-  // ],
+  "extends": [
+    "alloy",
+    "alloy/react",
+    "alloy/typescript",
+    "prettier"
+  ],
   "plugins": [
     "prettier"
   ],
@@ -39,7 +39,7 @@
     {
       "files": ["*.cjs"],
       "parserOptions": {
-        "sourceType": "script",
+        "sourceType": "module",
         "ecmaVersion": 2020
       }
     }
@@ -47,6 +47,9 @@
   "globals": {},
   "rules": {
     "prettier/prettier": "error",
+     // 关闭参数类型限制
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-explicit-any": "off", // 允许使用 any 类型
     "react/jsx-filename-extension": [
       1,
       {

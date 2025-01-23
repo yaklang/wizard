@@ -40,13 +40,16 @@ interface TaskGrounpResponse {
     task_ids: null | Array<number>;
 }
 
-type TTaskGroupResponse = {
+interface TTaskGroupResponse {
     group_name: string;
     new_group_name?: string;
-};
+}
 
 // 执行/取消 普通和定时任务请求参数
-type StopOnRunTsakResponse = { task_id: number; task_type: number };
+interface StopOnRunTsakResponse {
+    task_id: number;
+    task_type: number;
+}
 
 type TGetAnalysisScriptReponse = Partial<{
     description: string;
@@ -111,12 +114,12 @@ type TPostTaskStartRequest = Partial<{
     end_timestamp: number;
 }>;
 
-type Pagination = {
+interface Pagination {
     page: number;
     limit: number;
     order_by: string;
     order: string;
-};
+}
 
 type TPostRpcQueryYakPluginsParams = Partial<{
     pagination: Pagination;
@@ -134,7 +137,7 @@ type TPostRpcQueryYakPluginsRequest = Partial<{
     Type: string;
 }>;
 
-type TPostRpcQueryYakPluginsRequestTable<T> = {
+interface TPostRpcQueryYakPluginsRequestTable<T> {
     list: T;
     groups: string[];
     pagemeta: {
@@ -145,10 +148,10 @@ type TPostRpcQueryYakPluginsRequestTable<T> = {
         order: string;
         order_by: string;
     };
-};
+}
 
 // 添加/编辑任务模版请求参数
-type TPostStorageTaskScriptResponse = {
+interface TPostStorageTaskScriptResponse {
     script_name: string;
     description: string;
     script_type: string;
@@ -162,19 +165,19 @@ type TPostStorageTaskScriptResponse = {
         'enbale-cve-baseline': boolean;
     };
     script: string;
-};
+}
 
 // 获取 脚本 详情
 type TGetStroageDetailRequest = {
     prompt_args: Pick<TPostStorageTaskScriptResponse, 'params'>;
 } & Omit<TPostStorageTaskScriptResponse, 'params'>;
 
-type TFetchProcessResponse = {
+interface TFetchProcessResponse {
     list: {
         progress: number;
         subtask: string;
     }[];
-};
+}
 
 export type {
     TaskGrounpResponse,
