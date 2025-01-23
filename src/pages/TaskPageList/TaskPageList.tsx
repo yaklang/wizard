@@ -19,10 +19,10 @@ import TaskSelectdProject from '@/assets/task/taskSelectdProject.png';
 
 import { CommonTasksColumns } from './compoment/Columns';
 import { ListSiderContext } from './compoment/ListSiderContext';
-import { TaskGrounpResponse, TaskListRequest } from '@/apis/task/types';
+import type { TaskGrounpResponse, TaskListRequest } from '@/apis/task/types';
 
 import { options, siderTaskGrounpAllList } from './utils/data';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CreateTaskScriptModal } from './compoment/CreateTaskScriptModal';
 import { useEventSource } from '@/hooks';
 
@@ -263,7 +263,7 @@ const TaskPageList: FC = () => {
                 </Spin>
             </div>
             <WizardTable
-                rowKey={'id'}
+                rowKey="id"
                 columns={CommonTasksColumns(
                     headerGroupValue,
                     page,

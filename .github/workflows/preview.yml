@@ -1,8 +1,8 @@
 name: Build Preview Frontend
 
 on:
-  push:
-    branches: [ main ]
+    push:
+        branches: [main]
 
 jobs:
     build_and_pack_frontend:
@@ -10,8 +10,8 @@ jobs:
         steps:
             - name: Install required packages
               run: |
-                sudo apt-get update
-                sudo apt-get install -y zip unzip
+                  sudo apt-get update
+                  sudo apt-get install -y zip unzip
 
             - name: Checkout
               uses: actions/checkout@v3
@@ -19,12 +19,12 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v3
               with:
-                node-version: '22.7'
-      
+                  node-version: '22.7'
+
             - name: Setup pnpm
               uses: pnpm/action-setup@v2
               with:
-                version: 9.9.0
+                  version: 9.9.0
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
@@ -34,14 +34,14 @@ jobs:
 
             - name: Get date and commit hash
               run: |
-                echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
-                echo "COMMIT_HASH=${{github.sha}}" >> $GITHUB_ENV
+                  echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+                  echo "COMMIT_HASH=${{github.sha}}" >> $GITHUB_ENV
 
             - name: Truncate commit hash
               run: |
-                HASH=${{ env.COMMIT_HASH }}
-                TRUNCATED_HASH=${HASH:0:8}
-                echo "TRUNCATED_HASH=${TRUNCATED_HASH}" >> $GITHUB_ENV
+                  HASH=${{ env.COMMIT_HASH }}
+                  TRUNCATED_HASH=${HASH:0:8}
+                  echo "TRUNCATED_HASH=${TRUNCATED_HASH}" >> $GITHUB_ENV
 
             - name: Zip dist directory
               run: zip -r preview-dist.zip ./dist
@@ -49,88 +49,87 @@ jobs:
             - name: Upload Artifacts
               uses: actions/upload-artifact@v3
               with:
-                name: preview-dist.zip
-                path: ./preview-dist.zip
-
+                  name: preview-dist.zip
+                  path: ./preview-dist.zip
 
     release:
-      needs:
-        - build_and_pack_frontend
-      runs-on: ubuntu-latest
-      steps:
-        - name: Check out code
-          uses: actions/checkout@v2
+        needs:
+            - build_and_pack_frontend
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v2
 
-        - name: Download From Artifacts
-          uses: actions/download-artifact@v3
-          with:
-            name: preview-dist.zip
+            - name: Download From Artifacts
+              uses: actions/download-artifact@v3
+              with:
+                  name: preview-dist.zip
 
-        - name: Set release name
-          run: |
-            DATE=$(date +"%Y%m%d")
-            SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
-            echo "RELEASE_NAME=v${DATE}-${SHORT_COMMIT_HASH}" >> $GITHUB_ENV
+            - name: Set release name
+              run: |
+                  DATE=$(date +"%Y%m%d")
+                  SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
+                  echo "RELEASE_NAME=v${DATE}-${SHORT_COMMIT_HASH}" >> $GITHUB_ENV
 
-        - name: Create release
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          with:
-            tag_name: ${{ env.RELEASE_NAME }}
-            release_name: Release Preview ${{ env.RELEASE_NAME }}
-            draft: false
-            prerelease: false
+            - name: Create release
+              id: create_release
+              uses: actions/create-release@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+              with:
+                  tag_name: ${{ env.RELEASE_NAME }}
+                  release_name: Release Preview ${{ env.RELEASE_NAME }}
+                  draft: false
+                  prerelease: false
 
-        - name: Upload release asset
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: preview-dist.zip
-            asset_name: preview-dist.zip
-            asset_content_type: application/zip
+            - name: Upload release asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: preview-dist.zip
+                  asset_name: preview-dist.zip
+                  asset_content_type: application/zip
 
     deploy_to_server:
-      needs:
-        - build_and_pack_frontend
-      runs-on: ubuntu-latest
-      steps:
-        - name: Download From Artifacts
-          uses: actions/download-artifact@v3
-          with:
-            name: preview-dist.zip
+        needs:
+            - build_and_pack_frontend
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download From Artifacts
+              uses: actions/download-artifact@v3
+              with:
+                  name: preview-dist.zip
 
-        - name: Backup existing files
-          uses: appleboy/ssh-action@master
-          with:
-            host: legion-4g.yaklang.io
-            username: root
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            script: |
-              cd /root/
-              if [ -d "preview-dist.zip" ]; then
-                mv preview-dist.zip preview-dist.zip.$(date +"%Y%m%d").bak
-              fi
+            - name: Backup existing files
+              uses: appleboy/ssh-action@master
+              with:
+                  host: legion-4g.yaklang.io
+                  username: root
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  script: |
+                      cd /root/
+                      if [ -d "preview-dist.zip" ]; then
+                        mv preview-dist.zip preview-dist.zip.$(date +"%Y%m%d").bak
+                      fi
 
-        - name: Upload dist files
-          uses: appleboy/scp-action@master
-          with:
-            host: legion-4g.yaklang.io
-            username: root
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            source: preview-dist.zip
-            target: /root/
+            - name: Upload dist files
+              uses: appleboy/scp-action@master
+              with:
+                  host: legion-4g.yaklang.io
+                  username: root
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  source: preview-dist.zip
+                  target: /root/
 
-        - name: Deploy
-          uses: appleboy/ssh-action@master
-          with:
-            host: legion-4g.yaklang.io
-            username: root
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            script: |
-              cd /root/
-              unzip -o preview-dist.zip
-              rm preview-dist.zip
+            - name: Deploy
+              uses: appleboy/ssh-action@master
+              with:
+                  host: legion-4g.yaklang.io
+                  username: root
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  script: |
+                      cd /root/
+                      unzip -o preview-dist.zip
+                      rm preview-dist.zip

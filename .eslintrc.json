@@ -1,69 +1,52 @@
 {
-  "root": true,
-  "parserOptions": {
-    "sourceType": "module",
-    "ecmaVersion": 2020,
-    "project": [
-      "./tsconfig.json",
-      "./tsconfig.node.json",
-      "./uno.config.ts"
-    ]
-  },
-  "settings": {
-    "react": {
-      "version": "detect"
-    },
-    "import/resolver": {
-      "alias": [
-        [
-          "@",
-          "./src"
-        ]
-      ]
-    }
-  },
-  "extends": [
-    "alloy",
-    "alloy/react",
-    "alloy/typescript",
-    "prettier"
-  ],
-  "plugins": [
-    "prettier"
-  ],
-  "env": {
-    "browser": true,
-    "node": true
-  },
-  "overrides": [
-    {
-      "files": ["*.cjs"],
-      "parserOptions": {
+    "root": true,
+    "parserOptions": {
         "sourceType": "module",
-        "ecmaVersion": 2020
-      }
-    }
-  ],
-  "globals": {},
-  "rules": {
-    "prettier/prettier": "error",
-     // 关闭参数类型限制
-    "@typescript-eslint/explicit-function-return-type": "off",
-    "@typescript-eslint/no-explicit-any": "off", // 允许使用 any 类型
-    "react/jsx-filename-extension": [
-      1,
-      {
-        "extensions": [
-          ".tsx"
+        "ecmaVersion": 2020,
+        "project": [
+            "./tsconfig.json",
+            "./tsconfig.node.json",
+            "./uno.config.ts"
         ]
-      }
+    },
+    "settings": {
+        "react": {
+            "version": "detect"
+        },
+        "import/resolver": {
+            "alias": [["@", "./src"]]
+        }
+    },
+    "extends": ["alloy", "alloy/react", "alloy/typescript", "prettier"],
+    "plugins": ["prettier"],
+    "env": {
+        "browser": true,
+        "node": true
+    },
+    "overrides": [
+        {
+            "files": ["*.cjs"],
+            "parserOptions": {
+                "sourceType": "module",
+                "ecmaVersion": 2020
+            }
+        }
     ],
-    "react/react-in-jsx-scope": "off", // For React 17+
-    "semi": "off",
-    "comma-dangle": "off"
-  },
-  "ignorePatterns": [
-    "dist",
-    "node_modules"
-  ]
+    "globals": {},
+    "rules": {
+        "prettier/prettier": "error",
+        // 关闭参数类型限制
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-explicit-any": "off", // 允许使用 any 类型
+        "react/jsx-filename-extension": [
+            1,
+            {
+                "extensions": [".tsx"]
+            }
+        ],
+        "react/react-in-jsx-scope": "off", // For React 17+
+        "semi": "off",
+        "comma-dangle": "off"
+    },
+    "ignorePatterns": ["dist", "node_modules"]
 }

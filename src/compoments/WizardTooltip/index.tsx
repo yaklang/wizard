@@ -8,21 +8,24 @@ import type { TooltipPropsWithOverlay } from 'antd/es/tooltip';
  * */
 
 interface TooltipUokoProps extends TooltipPropsWithOverlay {
-  enable?: boolean;
+    enable?: boolean;
 }
 
 const Tooltip: FC<TooltipUokoProps> = (props) => {
-  const { enable = true, children, ...reset } = props;
-  return (
-    <div>
-      {enable ? (
-        <TooltipUoko getPopupContainer={(e) => e.parentNode as HTMLElement} {...reset}>
-          {children}
-        </TooltipUoko>
-      ) : (
-        <div>{children}</div>
-      )}
-    </div>
-  );
+    const { enable = true, children, ...reset } = props;
+    return (
+        <div>
+            {enable ? (
+                <TooltipUoko
+                    getPopupContainer={(e) => e.parentNode as HTMLElement}
+                    {...reset}
+                >
+                    {children}
+                </TooltipUoko>
+            ) : (
+                <div>{children}</div>
+            )}
+        </div>
+    );
 };
 export default Tooltip;

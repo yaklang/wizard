@@ -2,7 +2,7 @@ import {
     // getLoginout,
     postLogin,
 } from '@/apis/login';
-import { PostRequestAuth } from '@/apis/login/types';
+import type { PostRequestAuth } from '@/apis/login/types';
 import { create } from 'zustand';
 
 interface LoginStore {

@@ -2,22 +2,22 @@ import permissionsSliceFn from '@/App/store/powerStore';
 import { useEffect } from 'react';
 
 interface UsePermissionsSliceProps {
-  permissionsSlice: string[];
-  clearPower: () => void;
+    permissionsSlice: string[];
+    clearPower: () => void;
 }
 
 const usePermissionsSlice = (): UsePermissionsSliceProps => {
-  const { updatePower, permissionsSlice, clearPower } = permissionsSliceFn();
+    const { updatePower, permissionsSlice, clearPower } = permissionsSliceFn();
 
-  const promiseUpdatePower = async () => {
-    await updatePower();
-  };
+    const promiseUpdatePower = async () => {
+        await updatePower();
+    };
 
-  useEffect(() => {
-    promiseUpdatePower();
-  }, []);
+    useEffect(() => {
+        promiseUpdatePower();
+    }, []);
 
-  return { permissionsSlice, clearPower };
+    return { permissionsSlice, clearPower };
 };
 
 export default usePermissionsSlice;
