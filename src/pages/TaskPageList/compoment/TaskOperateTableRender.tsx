@@ -1,15 +1,16 @@
-import { FC, useMemo, useRef } from 'react';
+import type { FC } from 'react';
+import { useMemo, useRef } from 'react';
 import { Button, message, Modal, Popover, Spin, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
-import { useRequest, useSafeState } from 'ahooks';
+import { useMemoizedFn, useRequest, useSafeState } from 'ahooks';
 
 import PlayCircleOutlined from '@/assets/task/TablePlayCircleOutlined';
 import TableFormOutlined from '@/assets/task/TableFormOutlined';
 import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import {
-    StopOnRunTsakResponse,
-    TaskListRequest,
+    type StopOnRunTsakResponse,
+    type TaskListRequest,
     TTaskListStatus,
 } from '@/apis/task/types';
 
@@ -23,13 +24,13 @@ import {
     getTaskStream,
 } from '@/apis/task';
 import { match, P } from 'ts-pattern';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 import dayjs from 'dayjs';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 // import { scriptTypeOption } from '@/pages/TaskScript/data';
 
-type TCommonTasksColumnsRenderProps = {
+interface TCommonTasksColumnsRenderProps {
     record: TaskListRequest;
     localRefrech: UsePageRef['localRefrech'];
     headerGroupValue: 1 | 2 | 3;
@@ -44,7 +45,7 @@ type TCommonTasksColumnsRenderProps = {
             >
         >
     >;
-};
+}
 
 // 任务列表 普通任务 / 定时任务操作项
 const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
@@ -227,7 +228,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
     const remainingOperate = useMemo(() => {
         return (
             <div className="flex">
-                <span className="w-7 mr-2">{''}</span>
+                <span className="w-7 mr-2" />
 
                 <Tooltip title="编辑">
                     <span
@@ -287,6 +288,23 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             </div>
         );
     }, [status, open]);
+
+    const executeMemoized = useMemoizedFn(() => {
+        return (
+            <div>
+                <Button onClick={() => Modal.destroyAll()}>取消</Button>
+                <Button
+                    type="primary"
+                    onClick={() => {
+                        Modal.destroyAll();
+                        onEdit('execute');
+                    }}
+                >
+                    确定
+                </Button>
+            </div>
+        );
+    });
 
     return (
         <>
@@ -376,12 +394,12 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                                 style={{
                                                     fontSize: '12px',
                                                 }}
-                                                onClick={() =>
+                                                onClick={() => {
                                                     setOpen((val) => ({
                                                         ...val,
                                                         action: false,
-                                                    }))
-                                                }
+                                                    }));
+                                                }}
                                             >
                                                 取消
                                             </Button>
@@ -406,6 +424,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                         </div>
                                     }
                                     trigger="click"
+                                    open={open.action}
                                     onOpenChange={(newOpen) =>
                                         setOpen((val) => ({
                                             ...val,
@@ -426,30 +445,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                         onClick={() => {
                                             Modal.info({
                                                 title: '提示',
-                                                footer: () => {
-                                                    return (
-                                                        <div>
-                                                            <Button
-                                                                onClick={() =>
-                                                                    Modal.destroyAll()
-                                                                }
-                                                            >
-                                                                取消
-                                                            </Button>
-                                                            <Button
-                                                                type="primary"
-                                                                onClick={() => {
-                                                                    Modal.destroyAll();
-                                                                    onEdit(
-                                                                        'execute',
-                                                                    );
-                                                                }}
-                                                            >
-                                                                确定
-                                                            </Button>
-                                                        </div>
-                                                    );
-                                                },
+                                                footer: () => executeMemoized(),
                                                 content: (
                                                     <div>
                                                         需要再次执行该定时任务，请点击确定修改执行时间
@@ -466,7 +462,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 
                         <Tooltip title="编辑">
                             <span
-                                className={`cursor-pointer mr-2`}
+                                className="cursor-pointer mr-2"
                                 onClick={() => onEdit('edit')}
                             >
                                 <TableFormOutlined />
@@ -530,7 +526,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 .exhaustive()}
             <StartUpScriptModal
                 ref={StartUpScriptModalRef}
-                title={'编辑任务'}
+                title="编辑任务"
                 localRefrech={localRefrech}
                 record={record}
             />
@@ -809,12 +805,12 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                                 style={{
                                                     fontSize: '12px',
                                                 }}
-                                                onClick={() =>
+                                                onClick={() => {
                                                     setOpen((val) => ({
                                                         ...val,
                                                         action: false,
-                                                    }))
-                                                }
+                                                    }));
+                                                }}
                                             >
                                                 取消
                                             </Button>
@@ -863,12 +859,12 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                                                 style={{
                                                     fontSize: '12px',
                                                 }}
-                                                onClick={() =>
+                                                onClick={() => {
                                                     setOpen((val) => ({
                                                         ...val,
                                                         action: false,
-                                                    }))
-                                                }
+                                                    }));
+                                                }}
                                             >
                                                 取消
                                             </Button>
@@ -907,21 +903,21 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                             </Tooltip>
                         )}
                         {!['disabled', 'enabled'].includes(value) && (
-                            <div className="w-7 mr-2">{''}</div>
+                            <div className="w-7 mr-2" />
                         )}
                         {executionOperateOpearte}
                     </div>
                 ))
                 .with(P.nullish, () => (
                     <div className="flex">
-                        <div className="w-7 mr-2">{''}</div>
+                        <div className="w-7 mr-2" />
                         {executionOperateOpearte}
                     </div>
                 ))
                 .exhaustive()}
             <StartUpScriptModal
                 ref={StartUpScriptModalRef}
-                title={'编辑任务'}
+                title="编辑任务"
                 localRefrech={localRefrech}
                 record={record}
             />

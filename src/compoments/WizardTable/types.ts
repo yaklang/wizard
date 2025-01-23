@@ -7,7 +7,7 @@ import type { UsePageRef } from '@/hooks/usePage';
 import type { initialValue } from './data';
 import type { AnyObject } from 'antd/es/_util/type';
 import type { FormLayout } from 'antd/es/form/Form';
-import { ExportProps } from '../ExportButton/types';
+import type { ExportProps } from '../ExportButton/types';
 
 // 定义 wizardColumnsType 的字符串字面量类型
 type WizardColumnsType =

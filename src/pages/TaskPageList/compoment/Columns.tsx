@@ -41,6 +41,7 @@ const CommonTasksColumns = (
             >
         >
     >,
+    // eslint-disable-next-line max-params
 ): CreateTableProps<TaskListRequest>['columns'] => {
     const navigate = useNavigate();
 
@@ -71,6 +72,11 @@ const CommonTasksColumns = (
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             width: 480,
             render: (_, record) => (
                 <div
@@ -85,6 +91,11 @@ const CommonTasksColumns = (
             title: '任务组',
             dataIndex: 'task_groups',
             width: 240,
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             render: (_, record) => (
                 <div className="p-0 text-clip">{record.task_group}</div>
             ),
@@ -95,6 +106,11 @@ const CommonTasksColumns = (
             columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: taskNodeData,
             width: 240,
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             render: (_, record) => (
                 <div className="text-clip-2">{record?.scanner?.join('、')}</div>
             ),
@@ -107,6 +123,11 @@ const CommonTasksColumns = (
             title: '创建时间',
             width: 240,
             dataIndex: 'created_at',
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             render: (value) =>
                 value && dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss'),
         },
@@ -122,6 +143,11 @@ const CommonTasksColumns = (
             wizardColumnsOptions: taskListStatus.filter(
                 (it) => !['disabled', 'finished', 'enabled'].includes(it.value),
             ),
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             render: (_, record) => {
                 return (
                     <div className="flex items-center justify-center">
@@ -166,6 +192,11 @@ const CommonTasksColumns = (
             title: '执行时间',
             width: 240,
             dataIndex: 'start_timestamp',
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             render: (value) =>
                 value && dayjs.unix(value).format('YYYY-MM-DD HH:mm'),
         },
@@ -177,6 +208,11 @@ const CommonTasksColumns = (
             title: '执行时间段',
             width: 320,
             dataIndex: 'start_timestamp',
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             render: (value, record) => (
                 <>
                     {value ? dayjs.unix(value).format('YYYY-MM-DD HH:mm') : '-'}
@@ -198,6 +234,11 @@ const CommonTasksColumns = (
             wizardColumnsOptions: taskListStatus.filter((it) =>
                 ['disabled', 'finished', 'enabled'].includes(it.value),
             ),
+            onCell: (record) => ({
+                onClick: () => {
+                    handGoDetail(record);
+                },
+            }),
             render: (_, record) => TaskStatus(record?.status),
         },
     ];
