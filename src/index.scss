@@ -1,8 +1,8 @@
 @font-face {
-  font-family: 'YouSheBiaoTiHei';
-  src: url('./assets/fonts/YouSheBiaoTiHei.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+    font-family: 'YouSheBiaoTiHei';
+    src: url('./assets/fonts/YouSheBiaoTiHei.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
 }
 
 html,
@@ -104,18 +104,18 @@ li {
     -webkit-line-clamp: 3; //显示的行
 }
 
-.ant-form{
-    .ant-form-item{
+.ant-form {
+    .ant-form-item {
         margin-bottom: 16px;
-        .ant-form-item-control-input{
+        .ant-form-item-control-input {
             min-height: 0px;
         }
     }
 }
 
-.ant-layout-sider{
-    .ant-layout-sider-children{
-        background-color: #F0F1F3;
+.ant-layout-sider {
+    .ant-layout-sider-children {
+        background-color: #f0f1f3;
     }
 }
 
@@ -123,34 +123,34 @@ li {
     top: 6px;
 }
 
-.ant-collapse-header{
+.ant-collapse-header {
     padding: 0px !important;
 }
 
-.ant-upload-select{ 
+.ant-upload-select {
     width: 100%;
 }
 
-.markdown-body{
+.markdown-body {
     background-color: #fff;
 }
 
 /* 强制让横向滚动条始终出现 */
-.ant-table-tbody-virtual{
+.ant-table-tbody-virtual {
     padding-bottom: 60px;
     border-right: 1px solid #f0f0f0;
 }
 
-.ant-spin-nested-loading >div>.ant-spin{
+.ant-spin-nested-loading > div > .ant-spin {
     max-height: none;
 }
 
-#WIZARD_ACE_EDITOR{
-    .ace_scroller{
+#WIZARD_ACE_EDITOR {
+    .ace_scroller {
         background-color: #e8e8e8;
-        .ace_content{
-            .ace_layer{
-                .ace_active-line{
+        .ace_content {
+            .ace_layer {
+                .ace_active-line {
                     background-color: rgb(254 255 96 / 39%);
                 }
             }

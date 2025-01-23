@@ -1,6 +1,6 @@
-import { RouteObject } from 'react-router-dom';
+import type { RouteObject } from 'react-router-dom';
 import AppLayout from '../AppLayout';
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import AuthRoute from './AuthRoute';
 import Login from '@/pages/Login';
 import {

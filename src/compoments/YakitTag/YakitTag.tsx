@@ -1,6 +1,6 @@
 import { Tag } from 'antd';
 import React from 'react';
-import { YakitTagProps } from './YakitTagType';
+import type { YakitTagProps } from './YakitTagType';
 import styles from './YakitTag.module.scss';
 import classNames from 'classnames';
 
@@ -26,7 +26,6 @@ export const YakitTag: React.FC<YakitTagProps> = (props) => {
         disable,
         className,
         enableCopy,
-        iconColor,
         copyText,
         ...restProps
     } = props;

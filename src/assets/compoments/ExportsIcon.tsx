@@ -7,7 +7,7 @@ const ExportsIcon = () => {
             viewBox="0 0 16 16"
             fill="none"
             style={{
-                transform: "translateY(2px)",
+                transform: 'translateY(2px)',
             }}
         >
             <path

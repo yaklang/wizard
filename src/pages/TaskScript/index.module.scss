@@ -1,5 +1,5 @@
 .wizard-card {
-    border: 1px solid #EAECF3;
+    border: 1px solid #eaecf3;
     border-radius: 8px;
     padding-top: 12px;
     overflow: hidden;
@@ -8,20 +8,20 @@
     flex-direction: column;
     justify-content: space-between;
     transition: all 0.3s ease; /* 添加动画 */
-    .card-header{
+    .card-header {
         margin: 4px;
-        border-bottom: 1px solid #EAECF3;
+        border-bottom: 1px solid #eaecf3;
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 0px 0 12px 8px;
-        .card-header-text{
+        .card-header-text {
             font-size: 14px;
             font-weight: 600;
-            color: #31343F;
-        margin-right: 8px;
+            color: #31343f;
+            margin-right: 8px;
         }
-        .card-header-icon{
+        .card-header-icon {
             min-width: 110px;
             display: flex;
             align-items: center;
@@ -34,51 +34,51 @@
         display: flex;
         flex-direction: column;
         margin-bottom: 8px;
-        .content-tags{
+        .content-tags {
             max-height: 44px;
             min-height: 20px;
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
-            .tag{
+            .tag {
                 height: 20px;
                 margin: 0px;
                 cursor: default;
                 display: flex;
                 justify-content: space-between;
-                .tag-icon{
-                    &:hover{
-                        color: #4A94F8
+                .tag-icon {
+                    &:hover {
+                        color: #4a94f8;
                     }
                 }
             }
-            .tag-length{
+            .tag-length {
                 cursor: pointer;
-                color: #4A94F8;
-                &:hover{
-                    background-color: #4A94F81A;
-                    border: 1px solid #4A94F8
+                color: #4a94f8;
+                &:hover {
+                    background-color: #4a94f81a;
+                    border: 1px solid #4a94f8;
                 }
             }
-            .add-tag{
-                border: 1px dashed #B4BBCA;
+            .add-tag {
+                border: 1px dashed #b4bbca;
                 height: 20px;
                 cursor: pointer;
                 &:hover {
-                    border: 1px dashed #4A94F8;
-                    color: #4A94F8
+                    border: 1px dashed #4a94f8;
+                    color: #4a94f8;
                 }
             }
         }
-        .content-describe{
+        .content-describe {
             max-height: 32px;
             margin-top: 10px;
             font-weight: 400;
             font-size: 12px;
-            color: #B4BBCA;
+            color: #b4bbca;
         }
     }
-    .card-footer{
+    .card-footer {
         display: flex;
         width: 100%;
         padding: 6px 12px;
@@ -86,16 +86,16 @@
         justify-content: center;
         font-size: 14px;
         font-weight: 600;
-        color: #4A94F8;
-        background-color: #4A94F81A;
+        color: #4a94f8;
+        background-color: #4a94f81a;
         cursor: pointer;
-        &:hover{
-            background-color: #4A94F8;
-            color: #FFF;
+        &:hover {
+            background-color: #4a94f8;
+            color: #fff;
             transition: all 0.5s ease; /* 添加动画 */
         }
     }
     &:hover {
-        border: 1px solid #4A94F8;
+        border: 1px solid #4a94f8;
     }
 }

@@ -1,7 +1,7 @@
-import type { FC } from "react";
-import { useRef, useEffect, memo } from "react";
+import type { FC } from 'react';
+import { useRef, useEffect, memo } from 'react';
 
-import { useUpdateEffect } from "ahooks";
+import { useUpdateEffect } from 'ahooks';
 
 interface CaptchaProps {
     onChange: (captchaText: string) => void;
@@ -9,7 +9,7 @@ interface CaptchaProps {
     onGenerateCaptcha?: (fn: () => void) => void;
 }
 
-const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 /**
  *
@@ -21,11 +21,11 @@ const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const WizardCaptcha: FC<CaptchaProps> = memo(
     ({ onChange, value, onGenerateCaptcha }) => {
         const canvasRef = useRef<HTMLCanvasElement | null>(null);
-        const captchaTextRef = useRef<string>("");
+        const captchaTextRef = useRef<string>('');
 
         // 随机生成验证码的函数
         const generateCaptcha = () => {
-            let captchaText = "";
+            let captchaText = '';
             for (let i = 0; i < 4; i++) {
                 captchaText += chars[Math.floor(Math.random() * chars.length)]; // 从 chars 中随机选择字符b
             }
@@ -43,7 +43,7 @@ const WizardCaptcha: FC<CaptchaProps> = memo(
         const drawCaptcha = (captchaText: string) => {
             const canvas = canvasRef.current;
             if (canvas) {
-                const ctx = canvas.getContext("2d");
+                const ctx = canvas.getContext('2d');
 
                 // 获取设备像素比（高分辨率屏幕支持）
                 const dpr = window.devicePixelRatio || 1;
@@ -65,12 +65,12 @@ const WizardCaptcha: FC<CaptchaProps> = memo(
                 ctx?.clearRect(0, 0, width, height);
 
                 // 设置背景颜色
-                ctx!.fillStyle = "#fff"; // 背景色
+                ctx!.fillStyle = '#fff'; // 背景色
                 ctx!.fillRect(0, 0, width, height);
 
                 // 设置文本样式
-                ctx!.font = "600 20px YouSheBiaoTiHei"; // 字体大小和字体类型
-                ctx!.fillStyle = "#4A94F8"; // 字体颜色
+                ctx!.font = '600 20px YouSheBiaoTiHei'; // 字体大小和字体类型
+                ctx!.fillStyle = '#4A94F8'; // 字体颜色
 
                 // 绘制验证码文本
                 for (let i = 0; i < captchaText.length; i++) {

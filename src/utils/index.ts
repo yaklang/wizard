@@ -1,7 +1,7 @@
-import { RouteObjectRootMy } from '@/App/routers/routers';
-import { ReactNode } from 'react';
-import { RuleObject } from 'antd/lib/form';
-import { Dayjs } from 'dayjs';
+import type { RouteObjectRootMy } from '@/App/routers/routers';
+import type { ReactNode } from 'react';
+import type { RuleObject } from 'antd/lib/form';
+import type { Dayjs } from 'dayjs';
 
 // 计算表格总宽度
 export function getColumnsWidth(columns: any[]) {
@@ -229,7 +229,7 @@ const createFlatTreeWithId = (parentId: any) => (tree: any) =>
         ...defaultTo([], tree.children).map(createFlatTreeWithId(tree.id)),
     );
 
-type ResultItem = {
+interface ResultItem {
     key: string;
     label: string;
     icon?: ReactNode;
@@ -237,7 +237,7 @@ type ResultItem = {
     onClick?: ({ key }: { key: string }) => void;
     children?: ResultItem[];
     hidden: boolean;
-};
+}
 
 // routelist 节点key转换
 const processMenu = (
@@ -292,8 +292,8 @@ const getPathArray = (fullPath: string): string[] => {
 
 const findFullPath = (
     menu: RouteObjectRootMy,
-    parentPath: string = '',
-    depth: number = 1, // 控制递归深度
+    parentPath = '',
+    depth = 1, // 控制递归深度
 ): string[] => {
     const currentPath = `${parentPath}/${menu.path}`; // 拼接路径
 
@@ -338,9 +338,9 @@ const copyToClipboard = async (text: string): Promise<void> => {
 const findPathNodes = (
     targetPath: string,
     routes: RouteObjectRootMy[],
-    parentPath: string = '',
+    parentPath = '',
 ): { name: string; path: string }[] | null => {
-    targetPath = targetPath.replace(/^\/+|\/+$/g, '');
+    const targetPaths = targetPath.replace(/^\/+|\/+$/g, '');
 
     for (const route of routes) {
         // 拼接当前路径
@@ -353,14 +353,14 @@ const findPathNodes = (
         const pathRegex = new RegExp(
             `^${currentPath.replace(/:\w+/g, '[^/]+')}$`,
         );
-        if (pathRegex.test(targetPath)) {
+        if (pathRegex.test(targetPaths)) {
             // 找到目标路径时，返回当前路径的所有祖先节点和目标节点
             return [{ name: route.name ?? '', path: currentPath }];
         }
 
         if (route.children) {
             const childResult = findPathNodes(
-                targetPath,
+                targetPaths,
                 route.children,
                 currentPath,
             );
@@ -380,8 +380,8 @@ const findPathNodes = (
 export const randomString = (length: number) => {
     let chars =
         '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    var result = '';
-    for (var i = length; i > 0; --i)
+    let result = '';
+    for (let i = length; i > 0; --i)
         result += chars[Math.floor(Math.random() * chars.length)];
     return result;
 };
@@ -399,7 +399,7 @@ const createRules = ({
 }: {
     required?: boolean;
     requiredMessage?: string;
-    validateStartTime?: (value: [Dayjs | null, Dayjs | null]) => string | void;
+    validateStartTime?: (value: [Dayjs | null, Dayjs | null]) => any;
 }): RuleObject[] => {
     const rules: RuleObject[] = [];
 

@@ -1,16 +1,16 @@
 import { useRef } from 'react';
 
 export interface UseModalRefType {
-  open: (...args: any[]) => void;
-  close?: () => void;
+    open: (...args: any[]) => void;
+    close?: () => void;
 }
 
 const useModal = () => {
-  const modal = useRef<UseModalRefType>({
-    open: () => {},
-    close: () => {},
-  });
+    const modal = useRef<UseModalRefType>({
+        open: () => {},
+        close: () => {},
+    });
 
-  return [modal.current];
+    return [modal.current];
 };
 export default useModal;
