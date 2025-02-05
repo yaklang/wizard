@@ -1,11 +1,9 @@
-import { FC, useRef } from 'react';
+import { type FC, useRef } from 'react';
 
 import { match, P } from 'ts-pattern';
 
-import {
-    TGetStroageDetailRequest,
-    type TGetAnalysisScriptReponse,
-} from '@/apis/task/types';
+import type { TGetStroageDetailRequest } from '@/apis/task/types';
+import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 
 import styles from '../index.module.scss';
 
@@ -13,7 +11,8 @@ import FormOutlined from './svg/FormOutlined';
 import CopyOutlined from './svg/CopyOutlined';
 import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
-import { Input, InputRef, message, Modal, Spin } from 'antd';
+import type { InputRef } from 'antd';
+import { Input, message, Modal, Spin } from 'antd';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 import {
     getScriptTaskGroup,
@@ -22,20 +21,20 @@ import {
 } from '@/apis/task';
 import { WizardModal } from '@/compoments';
 import { StartUpScriptModal } from './StartUpScriptModal';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 const { confirm } = Modal;
 
-export type TTaskScriptCard = {
+export interface TTaskScriptCard {
     items: { isCopy?: boolean } & TGetAnalysisScriptReponse;
     setTaskScriptList: React.Dispatch<
         React.SetStateAction<TTaskScriptCard['items'][]>
     >;
     taskScriptList: TTaskScriptCard['items'][];
     refreshAsync: () => Promise<Partial<TGetAnalysisScriptReponse>[]>;
-};
+}
 
 const TaskScriptCard: FC<TTaskScriptCard> = ({
     items,

@@ -1,4 +1,4 @@
-import { TTaskListStatus } from '@/apis/task/types';
+import type { TTaskListStatus } from '@/apis/task/types';
 import TaskSelectdAll from '@/assets/task/taskSelectdAll.png';
 import TaskSiderAll from '@/assets/task/taskSiderAll.png';
 

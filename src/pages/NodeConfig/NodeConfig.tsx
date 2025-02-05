@@ -1,4 +1,5 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 
 import { CloseOutlined } from '@ant-design/icons';
 
@@ -97,7 +98,7 @@ const NodeConfig: FC = () => {
                     <Item
                         name="node_name"
                         label="节点名称"
-                        initialValue={'node'}
+                        initialValue="node"
                         rules={[
                             { required: true, message: '节点名称不能为空' },
                             { max: 50, message: '节点名称最多输入50个字' },
@@ -106,10 +107,10 @@ const NodeConfig: FC = () => {
                         <Input placeholder="请输入节点名称" />
                     </Item>
                     <Item
-                        name={'point_type'}
+                        name="point_type"
                         label="节点类型"
                         rules={[{ required: true, message: '请选择节点类型' }]}
-                        initialValue={'host'}
+                        initialValue="host"
                     >
                         <Radio.Group
                             options={[
@@ -120,9 +121,9 @@ const NodeConfig: FC = () => {
                         />
                     </Item>
                     <Item
-                        name={'goarch'}
+                        name="goarch"
                         label="节点CPU架构"
-                        initialValue={'amd64'}
+                        initialValue="amd64"
                         rules={[
                             { required: true, message: '请选择节点CPU架构' },
                         ]}
@@ -132,9 +133,9 @@ const NodeConfig: FC = () => {
                         />
                     </Item>
                     <Item
-                        name={'radio_group1'}
+                        name="radio_group1"
                         label="运行权限"
-                        initialValue={'Root'}
+                        initialValue="Root"
                         rules={[{ required: true, message: '请选择运行权限' }]}
                     >
                         <Radio.Group

@@ -1,12 +1,12 @@
 import { postAddUser } from '@/apis/SystemManagementApi';
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UsePageRef } from '@/hooks/usePage';
 import { useRequest, useSafeState } from 'ahooks';
 import { Button, Form, Input, message, Modal, Typography } from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
 import { match } from 'ts-pattern';
-import { User } from '@/apis/SystemManagementApi/types';
+import type { User } from '@/apis/SystemManagementApi/types';
 
 const { Item } = Form;
 const layout = {
@@ -127,7 +127,7 @@ const CreateUserModal = forwardRef<
             <div className="pt-2 px-6">
                 <Form form={form} layout="horizontal" {...layout}>
                     <Item
-                        name={'username'}
+                        name="username"
                         label="用户名"
                         rules={[{ required: true, message: '用户名不能为空' }]}
                     >
@@ -137,12 +137,12 @@ const CreateUserModal = forwardRef<
                         />
                     </Item>
                     {title === '重置密码' ? (
-                        <Item name={'password'} label="密码">
+                        <Item name="password" label="密码">
                             <Input placeholder="请输入" disabled />
                         </Item>
                     ) : (
                         <Item
-                            name={'email'}
+                            name="email"
                             label="邮箱"
                             rules={[
                                 { required: true, message: '邮箱不能为空' },

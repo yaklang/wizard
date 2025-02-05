@@ -1,4 +1,4 @@
-import { TTaskListStatus } from '@/apis/task/types';
+import type { TTaskListStatus } from '@/apis/task/types';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Tag } from 'antd';
 import { match, P } from 'ts-pattern';

@@ -1,8 +1,8 @@
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { Button, Checkbox, Col, Form, message, Row } from 'antd';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 import { useRequest } from 'ahooks';
 import { postNodesDownloadDataRun } from '@/apis/NodeManageApi';
 
@@ -70,7 +70,7 @@ const InsterNodeDataModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
                 }
                 width={550}
                 modal={model}
-                title={'更新节点数据'}
+                title="更新节点数据"
                 afterClose={() => {
                     cancel();
                     form.resetFields();
@@ -84,7 +84,7 @@ const InsterNodeDataModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
                             name="node_id"
                         />
                         <Item
-                            name={'home'}
+                            name="home"
                             label="选择文件，更新当前节点数据"
                             rules={[{ required: true, message: '请选择' }]}
                         >

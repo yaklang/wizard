@@ -3,10 +3,10 @@ import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { useSafeState } from 'ahooks';
 
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 
-import { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { CreateTaskScriptCard } from './CreateTaskScriptCard';
 
 const CreateTaskScriptModal = forwardRef<
@@ -31,7 +31,7 @@ const CreateTaskScriptModal = forwardRef<
         <>
             <WizardModal
                 footer={null}
-                width={'55%'}
+                width="55%"
                 modal={model1}
                 title="选择脚本"
             >
@@ -51,7 +51,7 @@ const CreateTaskScriptModal = forwardRef<
             {/* 添加任务 */}
             <StartUpScriptModal
                 ref={StartUpScriptModalRef}
-                title={'创建任务'}
+                title="创建任务"
                 pageLoad={pageLoad}
                 refreshAsync={refreshAsync}
             />

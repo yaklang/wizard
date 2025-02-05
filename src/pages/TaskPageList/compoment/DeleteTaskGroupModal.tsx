@@ -1,6 +1,7 @@
 import { deleteTaskGroup } from '@/apis/task';
-import { FormInstance, Form, Radio, Select, Space } from 'antd';
-import { FC } from 'react';
+import type { FormInstance } from 'antd';
+import { Form, Radio, Select, Space } from 'antd';
+import type { FC } from 'react';
 
 const { Item } = Form;
 
@@ -22,6 +23,7 @@ const DeleteTaskGroupConfig = (
     groupTaskList: Array<Record<string, string>>,
     name: string,
     refreshAsync: <T>() => Promise<T>,
+    // eslint-disable-next-line max-params
 ) => {
     return {
         title: (
@@ -49,6 +51,7 @@ const DeleteTaskGroupConfig = (
                 form.resetFields();
             } catch (err) {
                 console.error(err, 'err');
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject();
             }
         },

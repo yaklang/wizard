@@ -3,12 +3,12 @@ import { WizardTable } from '@/compoments';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { useRequest, useSafeState } from 'ahooks';
 import { Button, Tooltip } from 'antd';
-import { TDeleteValues } from '../ReportManage/ReportManage';
+import type { TDeleteValues } from '../ReportManage/ReportManage';
 import VulnerabilityScanningIcon from '@/assets/compoments/VulnerabilityScanningIcon';
 import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import { tableHeaderCheckedptions } from './data';
 import { useRef } from 'react';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CreateTaskScriptModal } from '../TaskPageList/compoment/CreateTaskScriptModal';
 import { getAnalysisScript } from '@/apis/task';
 
@@ -126,10 +126,12 @@ const MessageCollect = () => {
             .map((item) => (idsList?.includes(item.id) ? item.ip : undefined))
             .filter((list) => list);
         ipListRef.current = ipList;
-        if (isAll) {
-        } else {
+        if (!isAll) {
             run();
         }
+        // else {
+
+        // }
     };
 
     // 批量删除
@@ -142,7 +144,7 @@ const MessageCollect = () => {
         <>
             <WizardTable
                 page={page}
-                rowKey={'id'}
+                rowKey="id"
                 columns={columns}
                 tableHeader={{
                     title: '信息收集资产列表',
