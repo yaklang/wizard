@@ -1,9 +1,9 @@
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { Button, Form, Input, message } from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
-import { UsePageRef } from '@/hooks/usePage';
-import { Palm } from '@/gen/schema';
+import type { UsePageRef } from '@/hooks/usePage';
+import type { Palm } from '@/gen/schema';
 import { useRequest, useSafeState } from 'ahooks';
 import { postUpdateLocation } from '@/apis/NodeManageApi';
 
@@ -75,13 +75,13 @@ const EditNodeModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
                 }
                 width={550}
                 modal={model}
-                title={'编辑节点'}
+                title="编辑节点"
                 afterClose={() => form.resetFields()}
             >
                 <div className="pt-2 px-6">
                     <Form form={form} layout="horizontal">
                         <Item
-                            name={'nickname'}
+                            name="nickname"
                             label="节点名称"
                             rules={[
                                 { required: true, message: '节点名称不能为空' },
@@ -90,7 +90,7 @@ const EditNodeModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
                             <Input placeholder="请输入节点名称" />
                         </Item>
                         <Item
-                            name={'location'}
+                            name="location"
                             label="所在地区"
                             rules={[
                                 { required: true, message: '请输入所在地区' },

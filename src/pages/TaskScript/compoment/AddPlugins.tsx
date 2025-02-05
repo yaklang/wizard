@@ -1,10 +1,11 @@
-import { FC, memo, useRef } from 'react';
+import type { FC } from 'react';
+import { memo, useRef } from 'react';
 
 import { Button, Popover } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useSafeState, useUpdateEffect } from 'ahooks';
 import { WizardTable } from '@/compoments';
-import {
+import type {
     CreateTableProps,
     RequestFunction,
 } from '@/compoments/WizardTable/types';
@@ -160,7 +161,7 @@ const AddPlugins: FC<TAddPlugins> = memo(
                                     },
                                 },
                             }}
-                            rowKey={'ScriptName'}
+                            rowKey="ScriptName"
                             columns={columns}
                             request={async (params, filter) =>
                                 AddPluginTableRequest(

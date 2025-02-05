@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { CheckOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { type TScannerDataList } from './StartUpScriptModal';
+import type { TScannerDataList } from './StartUpScriptModal';
 
 interface TNodeCard {
     list: TScannerDataList;

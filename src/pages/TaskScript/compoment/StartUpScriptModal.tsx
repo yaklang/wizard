@@ -1,5 +1,4 @@
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { Button, Collapse, Form, message } from 'antd';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
@@ -12,10 +11,11 @@ import {
     postEditScriptTask,
     postTaskStart,
 } from '@/apis/task';
-import { TaskListRequest } from '@/apis/task/types';
+import type { TaskListRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 import { transformFormData } from '../data';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 
 export type TScannerDataList = {
     name?: string;

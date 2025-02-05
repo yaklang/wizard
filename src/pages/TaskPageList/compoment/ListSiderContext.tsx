@@ -1,11 +1,13 @@
-import React, { Dispatch, FC, useRef } from 'react';
+import type { Dispatch, FC } from 'react';
+import React, { useRef } from 'react';
 import styles from '../task.module.scss';
 
 import DeleteOutlined from '@/assets/task/DeleteOutlined';
 import FormOutlined from '@/assets/task/FormOutlined';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 import { match, P } from 'ts-pattern';
-import { Input, InputRef, message, Modal, Spin } from 'antd';
+import type { InputRef } from 'antd';
+import { Input, message, Modal, Spin } from 'antd';
 import { postTaskGrounp } from '@/apis/task';
 import { useForm } from 'antd/es/form/Form';
 import { DeleteTaskGroupConfig } from './DeleteTaskGroupModal';
@@ -216,9 +218,7 @@ const ListSiderContext: FC<TListSiderContext> = ({
                                     }
                                     alt="icon"
                                 />
-                                <div
-                                    className={`flex items-center justify-center text-clip`}
-                                >
+                                <div className="flex items-center justify-center text-clip">
                                     {item.name}
                                 </div>
                             </div>

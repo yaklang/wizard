@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
 import { match, P } from 'ts-pattern';
 
@@ -8,7 +8,7 @@ import { Button, message, Popover } from 'antd';
 import { useRequest, useSafeState } from 'ahooks';
 
 import DeleteOutlined from './svg/DeleteOutlined';
-import { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { deleteAnalysisScript } from '@/apis/task';
 
 const DeletePopover: FC<{
