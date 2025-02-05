@@ -47,7 +47,7 @@ jobs:
               run: zip -r preview-dist.zip ./dist
 
             - name: Upload Artifacts
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: preview-dist.zip
                   path: ./preview-dist.zip
@@ -61,7 +61,7 @@ jobs:
               uses: actions/checkout@v2
 
             - name: Download From Artifacts
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v4
               with:
                   name: preview-dist.zip
 
@@ -98,7 +98,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Download From Artifacts
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v4
               with:
                   name: preview-dist.zip
 
