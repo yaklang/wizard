@@ -1,4 +1,5 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 import { Button, message, Popover, Tooltip } from 'antd';
 
 import {
@@ -6,17 +7,17 @@ import {
     getUserList,
     postUserReset,
 } from '@/apis/SystemManagementApi';
-import { User, UserRequest } from '@/apis/SystemManagementApi/types';
+import type { User, UserRequest } from '@/apis/SystemManagementApi/types';
 import { WizardTable } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { CreateUserModal } from './CreateUserModal';
 import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import TableFormOutlined from '@/assets/task/TableFormOutlined';
 import Outline from './Outline';
 import { useRequest, useSafeState } from 'ahooks';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 
 const SystemManagement: FC = () => {
     const [page] = WizardTable.usePage();
@@ -131,6 +132,7 @@ const SystemManagement: FC = () => {
                     },
                 }}
                 request={async (params, filter) => {
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     const request = {
                         ...params,
                         ...filter,

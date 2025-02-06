@@ -1,4 +1,5 @@
-import { forwardRef, ReactNode, useImperativeHandle } from 'react';
+import type { ReactNode } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import {
     Button,
     Checkbox,
@@ -10,9 +11,9 @@ import {
     Switch,
 } from 'antd';
 
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { ChunkUpload, WizardAceEditor, WizardDrawer } from '@/compoments';
-import { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import {
     PresetPorts,
     presetProtsGroupOptions,
@@ -78,7 +79,7 @@ const TaskScriptDrawer = forwardRef<
             loading={loading}
             drawer={drawer}
             title={title}
-            width={'75%'}
+            width="75%"
             onClose={() => {
                 form.resetFields();
             }}
@@ -86,7 +87,7 @@ const TaskScriptDrawer = forwardRef<
         >
             <Form form={form} layout="vertical">
                 <Item
-                    name={'name'}
+                    name="name"
                     label="分布式脚本"
                     rules={[
                         { required: true, message: '请输入分布式脚本名称' },
@@ -95,14 +96,14 @@ const TaskScriptDrawer = forwardRef<
                     <Input placeholder="请输入" allowClear />
                 </Item>
 
-                <Item name={'description'} label="脚本描述">
+                <Item name="description" label="脚本描述">
                     <TextArea rows={2} placeholder="请输入" allowClear />
                 </Item>
 
                 <Item
-                    label={'脚本类型'}
-                    name={'script_type'}
-                    initialValue={'portAndVulScan'}
+                    label="脚本类型"
+                    name="script_type"
+                    initialValue="portAndVulScan"
                 >
                     <Select
                         options={scriptTypeOption}
@@ -111,7 +112,7 @@ const TaskScriptDrawer = forwardRef<
                     />
                 </Item>
 
-                <Item noStyle name={'param_files'} />
+                <Item noStyle name="param_files" />
                 <Item noStyle dependencies={['script_type']}>
                     {({ setFieldValue, getFieldValue }) => {
                         const scriptType = getFieldValue('script_type');
@@ -167,8 +168,8 @@ const TaskScriptDrawer = forwardRef<
                                     url="/material/files"
                                     chunkSize={2}
                                     accept=".txt"
-                                    childrenType={'textArea'}
-                                    encryptionKey={'param_files'}
+                                    childrenType="textArea"
+                                    encryptionKey="param_files"
                                     setFieldValue={setFieldValue}
                                     maxCount={1}
                                     onChange={(fileName) => {
@@ -241,9 +242,7 @@ const TaskScriptDrawer = forwardRef<
                                                     <span>
                                                         扫描端口
                                                         <Popover
-                                                            content={
-                                                                '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
-                                                            }
+                                                            content="当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口"
                                                             trigger="hover"
                                                         >
                                                             <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
@@ -290,9 +289,7 @@ const TaskScriptDrawer = forwardRef<
                                             <span>
                                                 弱口令
                                                 <Popover
-                                                    content={
-                                                        '是否启用弱口令检测'
-                                                    }
+                                                    content="是否启用弱口令检测"
                                                     trigger="hover"
                                                 >
                                                     <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
@@ -310,9 +307,7 @@ const TaskScriptDrawer = forwardRef<
                                             <span>
                                                 CVE基线检查
                                                 <Popover
-                                                    content={
-                                                        '是否启用CVE基线检查'
-                                                    }
+                                                    content="是否启用CVE基线检查"
                                                     trigger="hover"
                                                 >
                                                     <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
@@ -334,7 +329,7 @@ const TaskScriptDrawer = forwardRef<
                 </Item>
 
                 <Item
-                    name={'script'}
+                    name="script"
                     label="分布式脚本内容"
                     style={{ height: '100%' }}
                     rules={[

@@ -1,8 +1,8 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Input, Switch } from 'antd';
 
 import type { TWizardTableProps } from '../WizardTable/types';
-import { AnyObject } from 'antd/es/_util/type';
+import type { AnyObject } from 'antd/es/_util/type';
 import ExportButton from '../ExportButton';
 
 const WizardTableFilter: FC<{

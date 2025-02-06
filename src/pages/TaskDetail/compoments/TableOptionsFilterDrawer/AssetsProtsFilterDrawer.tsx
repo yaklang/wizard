@@ -1,4 +1,6 @@
-import { FC, useMemo } from 'react';
+/* eslint-disable max-nested-callbacks */
+import type { FC } from 'react';
+import { useMemo } from 'react';
 
 import { getAssetsProtsFilter } from '@/apis/taskDetail';
 import { useRequest } from 'ahooks';
@@ -11,7 +13,7 @@ import {
     updateAssetsProtsFilterDataList,
 } from './data';
 import { match, P } from 'ts-pattern';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 
 const { Item } = Form;
 

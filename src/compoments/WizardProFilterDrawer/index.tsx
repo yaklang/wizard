@@ -1,8 +1,9 @@
-import { Dispatch, FC, memo, ReactNode } from 'react';
-import { TRecudeInitiakValue } from '../WizardTable/types';
+import type { Dispatch, FC, ReactNode } from 'react';
+import { memo } from 'react';
+import type { TRecudeInitiakValue } from '../WizardTable/types';
 import { Form, Switch } from 'antd';
 import { useUpdateEffect } from 'ahooks';
-import { FormLayout } from 'antd/es/form/Form';
+import type { FormLayout } from 'antd/es/form/Form';
 
 interface TWizardProFilterDrawerProps {
     status?: TRecudeInitiakValue;
@@ -84,7 +85,7 @@ const WizardProFilterDrawer: FC<TWizardProFilterDrawerProps> = memo(
                         form={form}
                         onFieldsChange={headFieldsChange}
                         layout={layout}
-                        className={`px-4 pt-4 overflow-auto`}
+                        className="px-4 pt-4 overflow-auto"
                         style={{
                             maxHeight: tableHeight + 74 + 'px',
                         }}

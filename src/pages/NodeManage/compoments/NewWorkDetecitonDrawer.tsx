@@ -1,7 +1,8 @@
-import { FC, forwardRef, ReactNode, useImperativeHandle, useRef } from 'react';
+import type { FC, ReactNode } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 
 import { WizardDrawer, WizardTable } from '@/compoments';
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import NetWorkIcon from '../Icon/NetWorkIcon';
 import { Button, Input, Tooltip } from 'antd';
 import { postHostAliveDetectionRun } from '@/apis/NodeManageApi';
@@ -48,8 +49,8 @@ const NewWorkDetecitonDrawer = forwardRef<UseDrawerRefType>(
             <WizardDrawer
                 footer={null}
                 drawer={drawer}
-                title={'网络探测'}
-                width={'75%'}
+                title="网络探测"
+                width="75%"
             >
                 <div>
                     <div className="flex items-center justify-center gap-4 mb-2">

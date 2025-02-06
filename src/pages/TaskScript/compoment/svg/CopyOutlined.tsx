@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
-interface TCopyOutlined extends React.SVGProps<SVGSVGElement> {}
+type TCopyOutlined = React.SVGProps<SVGSVGElement>;
 const CopyOutlined: FC<TCopyOutlined> = (props) => (
     <svg
         width="25"

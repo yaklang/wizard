@@ -1,10 +1,10 @@
 import { WizardDrawer } from '@/compoments';
 import ReportTemplate from '@/compoments/ReportTemplate';
-import {
+import type {
     TReportTemplateProps,
     ReportJsonKindData,
 } from '@/compoments/ReportTemplate/type';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { EmailMoadl } from '@/pages/TaskDetail/compoments/EmialModal';
 import { useSafeState } from 'ahooks';
 import { Button } from 'antd';
@@ -80,7 +80,7 @@ const PreviewReportDrawer = forwardRef<
     return (
         <WizardDrawer
             drawer={drawer}
-            width={'75%'}
+            width="75%"
             title={title}
             footer={
                 <Button

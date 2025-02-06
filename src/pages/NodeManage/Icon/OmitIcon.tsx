@@ -1,5 +1,5 @@
-import { TIcon } from '@/types';
-import { FC } from 'react';
+import type { TIcon } from '@/types';
+import type { FC } from 'react';
 
 const OmitIcon: FC<TIcon> = (props) => {
     return (

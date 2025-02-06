@@ -1,6 +1,6 @@
 import { randomString } from '@/utils';
 import { Checkbox } from 'antd';
-import { FC } from 'react';
+import type { FC } from 'react';
 
 interface TIpTagProps {
     value?: string[];

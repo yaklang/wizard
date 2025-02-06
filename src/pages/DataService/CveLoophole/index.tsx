@@ -1,12 +1,13 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 
 import dayjs from 'dayjs';
 import classNames from 'classnames';
 
 import { postCveQuery } from '@/apis/CveLoopholeApi';
-import { TCveQueryResponse } from '@/apis/CveLoopholeApi/type';
+import type { TCveQueryResponse } from '@/apis/CveLoopholeApi/type';
 import { WizardTable } from '@/compoments';
-import { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { YakitTag } from '@/compoments/YakitTag/YakitTag';
 import styles from './CVETable.module.scss';
 import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
@@ -15,7 +16,7 @@ import { Button, Input, Popover, Select, Space } from 'antd';
 import { useSafeState } from 'ahooks';
 import { SyncOutlined } from '@ant-design/icons';
 import { CveUpdateModal } from './compoments/CveUpdateModal';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 
 const options = [
     {
@@ -140,7 +141,7 @@ const CveLoophole: FC = () => {
         <div className="h-full">
             <WizardTable
                 page={page}
-                rowKey={'key'}
+                rowKey="key"
                 columns={columns}
                 tableHeader={{
                     title: 'CVE 数据库管理',

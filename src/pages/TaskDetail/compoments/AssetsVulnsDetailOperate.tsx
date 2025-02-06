@@ -1,9 +1,10 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 
 import { Button } from 'antd';
 
 import { AssetsVulnsDetailModal } from './AssetsVulnsDetailModal';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 
 const AssetsVulnsDetailOperate: FC<{
     render: any;

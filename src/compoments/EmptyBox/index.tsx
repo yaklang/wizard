@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
 import EmptyImages from '@/assets/compoments/Empty.png';
 

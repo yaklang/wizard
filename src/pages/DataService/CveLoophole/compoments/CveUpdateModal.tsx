@@ -1,5 +1,5 @@
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { SyncOutlined } from '@ant-design/icons';
 import { useSafeState } from 'ahooks';
 import { Button, Input } from 'antd';

@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
-interface TSiderOpen extends React.SVGProps<SVGSVGElement> {}
+type TSiderOpen = React.SVGProps<SVGSVGElement>;
 
 // 导航栏关闭ICON
 const SiderOpen: FC<TSiderOpen> = (props) => {

@@ -1,6 +1,6 @@
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { Palm } from '@/gen/schema';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { Palm } from '@/gen/schema';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { Button, Form, Input, message } from 'antd';
 import html2pdf from 'html2pdf.js';
@@ -88,7 +88,7 @@ const EmailMoadl = forwardRef<
             .toPdf()
             .get('pdf')
             .then(async (pdf: any) => {
-                let totalPages: number = 0;
+                let totalPages = 0;
                 if (
                     ['critical', 'high', 'warning', 'low', 'security'].includes(
                         cover,

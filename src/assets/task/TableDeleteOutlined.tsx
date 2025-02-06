@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
-import { TIcon } from '@/types';
+import type { TIcon } from '@/types';
 
 const TableDeleteOutlined: FC<TIcon> = (props) => (
     <svg

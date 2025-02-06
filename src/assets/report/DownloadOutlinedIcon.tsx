@@ -1,5 +1,5 @@
-import { FC } from 'react';
-import { TIcon } from '@/types';
+import type { FC } from 'react';
+import type { TIcon } from '@/types';
 
 const DownloadOutlinedIcon: FC<TIcon> = (props) => {
     return (

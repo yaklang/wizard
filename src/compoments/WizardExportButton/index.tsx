@@ -3,7 +3,7 @@ import type { FC } from 'react';
 import { Button } from 'antd';
 
 import { ExportsIcon } from '@/assets/compoments';
-import { TWizardExportProps } from '../WizardTable/types';
+import type { TWizardExportProps } from '../WizardTable/types';
 
 /**
  *

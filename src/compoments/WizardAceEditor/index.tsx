@@ -1,6 +1,8 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import type { FC } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import AceEditor, { IAceEditorProps } from 'react-ace';
+import type { IAceEditorProps } from 'react-ace';
+import AceEditor from 'react-ace';
 
 import 'ace-builds/src-noconflict/mode-golang';
 import 'ace-builds/src-noconflict/theme-github';

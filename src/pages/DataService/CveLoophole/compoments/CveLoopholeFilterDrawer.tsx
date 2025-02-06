@@ -1,7 +1,7 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import { Button, Form, Radio, Select } from 'antd';
 
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 import {
     difficultyList,
     ExecutionOrderOptions,
@@ -44,7 +44,7 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
 
             <div className="flex align-center gap-2">
                 <div className="leading-6">排序时间</div>
-                <Item name={'order'}>
+                <Item name="order">
                     <Radio.Group
                         options={ExecutionOrderOptions}
                         onChange={(e) => {
@@ -61,7 +61,7 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
             {executionOrderValue ? (
                 <div className="flex align-center gap-2 mb-4 w-full">
                     <div className="leading-9">执行顺序</div>
-                    <Item name={'order_by'} noStyle>
+                    <Item name="order_by" noStyle>
                         <Select
                             options={orderList}
                             placeholder="请选择"
@@ -73,19 +73,19 @@ const CveLoopholeFilterDrawer: FC<{ page: UsePageRef }> = ({ page }) => {
 
             <div className="flex align-center gap-2">
                 <div className="leading-6">利用路径</div>
-                <Item name={'access_vector'} initialValue={[]}>
+                <Item name="access_vector" initialValue={[]}>
                     <FilterTag data={routeList} />
                 </Item>
             </div>
             <div className="flex align-center gap-2">
                 <div>利用难度</div>
-                <Item name={'access_complexity'} initialValue={[]}>
+                <Item name="access_complexity" initialValue={[]}>
                     <FilterTag data={difficultyList} />
                 </Item>
             </div>
             <div className="flex align-center gap-2">
                 <div>漏洞级别</div>
-                <Item name={'CVESeverity'} initialValue={[]}>
+                <Item name="CVESeverity" initialValue={[]}>
                     <FilterTag data={levelList} />
                 </Item>
             </div>

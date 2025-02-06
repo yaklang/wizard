@@ -1,10 +1,11 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
 import { useRequest, useSafeState } from 'ahooks';
 import { getAnalysisScript } from '@/apis/task';
 import { Button, Input, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { TaskScriptCard, TTaskScriptCard } from './compoment/TaskScirptCard';
+import type { TTaskScriptCard } from './compoment/TaskScirptCard';
+import { TaskScriptCard } from './compoment/TaskScirptCard';
 import { useNavigate } from 'react-router-dom';
 
 const TaskScript: FC = () => {
@@ -63,6 +64,7 @@ const TaskScript: FC = () => {
                     {taskScriptList?.map((items) => {
                         return (
                             <TaskScriptCard
+                                key={items.script_name}
                                 items={items}
                                 setTaskScriptList={setTaskScriptList}
                                 taskScriptList={taskScriptList}

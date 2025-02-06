@@ -1,5 +1,5 @@
-import { ButtonProps } from 'antd';
-import { ReactElement } from 'react';
+import type { ButtonProps } from 'antd';
+import type { ReactElement } from 'react';
 
 // 导出组件 props类型
 export type ExportProps = {

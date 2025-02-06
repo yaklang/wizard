@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { Empty, message, Spin, Table } from 'antd';
-import { AnyObject } from 'antd/es/_util/type';
+import type { AnyObject } from 'antd/es/_util/type';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
 import useListenWidth from '@/hooks/useListenHeight';
@@ -8,7 +8,7 @@ import useListenWidth from '@/hooks/useListenHeight';
 import WizardTableFilter from '../WizardTableFilter';
 
 import { initialValue } from './data';
-import {
+import type {
     RequestFunction,
     TRecudeInitiakValue,
     TWizardTableProps,
@@ -344,7 +344,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
 
         return (
             <div
-                className={`flex items-center justify-center border border-solid border-[#EAECF3] border-t-none border-r-none relative bottom-14`}
+                className="flex items-center justify-center border border-solid border-[#EAECF3] border-t-none border-r-none relative bottom-14"
                 style={{
                     width: wizardScrollWidth - 32,
                     height: '48px',
@@ -355,7 +355,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     !state.loading &&
                     isBottom && (
                         <div
-                            className={`color-[#777] whitespace-nowrap  text-center`}
+                            className="color-[#777] whitespace-nowrap  text-center"
                             style={{
                                 width: width + 'px',
                             }}
@@ -365,7 +365,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     )}
                 {status && (
                     <div
-                        className={`color-[#777] whitespace-nowrap text-center`}
+                        className="color-[#777] whitespace-nowrap text-center"
                         style={{
                             width: width + 'px',
                         }}
@@ -385,7 +385,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             <div
                 id="table-container"
                 ref={tableContainerRef}
-                className={`transition-all duration-500 w-full p-4 bg-[#fff] relative`}
+                className="transition-all duration-500 w-full p-4 bg-[#fff] relative"
                 style={{
                     width: `${
                         state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'

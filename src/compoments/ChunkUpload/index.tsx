@@ -1,8 +1,9 @@
-import React, { isValidElement, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React, { isValidElement } from 'react';
 import { Button, Input, Upload, message } from 'antd';
 import useLoginStore from '@/App/store/loginStore';
 import axios from '@/utils/axios';
-import { UploadProps } from 'antd/lib';
+import type { UploadProps } from 'antd/lib';
 import { match, P } from 'ts-pattern';
 import { generateUniqueId } from '@/utils';
 

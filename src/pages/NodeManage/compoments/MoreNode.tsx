@@ -1,4 +1,5 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 import OmitIcon from '../Icon/OmitIcon';
 import {
     FormOutlined,
@@ -6,10 +7,10 @@ import {
     SyncOutlined,
 } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { EditNodeModal } from './EditNodeModal';
-import { Palm } from '@/gen/schema';
-import { UsePageRef } from '@/hooks/usePage';
+import type { Palm } from '@/gen/schema';
+import type { UsePageRef } from '@/hooks/usePage';
 import { useSafeState } from 'ahooks';
 import { InsterNodeDataModal } from './InsterNodeDataModal';
 
