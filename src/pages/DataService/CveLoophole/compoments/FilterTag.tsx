@@ -1,4 +1,5 @@
-import { FC, memo } from 'react';
+import type { FC } from 'react';
+import { memo } from 'react';
 
 import { randomString } from '@/utils';
 
@@ -14,7 +15,7 @@ const FilterTag: FC<TIpTagProps> = memo(({ value, onChange, data }) => {
             {data.map((it) =>
                 value?.includes(it.value) ? (
                     <div
-                        className={`px-1 rounded cursor-pointer bg-[#4a94f8] text-[#fff]`}
+                        className="px-1 rounded cursor-pointer bg-[#4a94f8] text-[#fff]"
                         key={it.Total + randomString(10)}
                         onClick={() =>
                             onChange?.(
@@ -28,7 +29,7 @@ const FilterTag: FC<TIpTagProps> = memo(({ value, onChange, data }) => {
                     </div>
                 ) : (
                     <div
-                        className={`px-1 rounded cursor-pointer bg-[#f0f1f3] text-[#262626] hover:text-[#4a94f8]`}
+                        className="px-1 rounded cursor-pointer bg-[#f0f1f3] text-[#262626] hover:text-[#4a94f8]"
                         key={it.Total + randomString(10)}
                         onClick={() =>
                             onChange?.(

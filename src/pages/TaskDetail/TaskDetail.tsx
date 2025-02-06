@@ -133,7 +133,7 @@ const TaskDetail: FC = () => {
     const { runAsync: assetsVulnsFilterrunAsync } = useRequest(
         async () => {
             const { data } = await getAssetsValueFilter({
-                task_id: record?.task_id!,
+                task_id: record?.task_id,
             });
             const { list, severity } = data;
             // 映射漏洞等级 字段
@@ -169,7 +169,7 @@ const TaskDetail: FC = () => {
 
     useEffect(() => {
         // 请求数据并等待完成
-        runAsync(record?.id, record?.task_id!)
+        runAsync(record?.id, record?.task_id)
             .then(() => {
                 setIsReady(true); // 数据加载完成，允许渲染
             })
@@ -272,7 +272,7 @@ const TaskDetail: FC = () => {
             ))
             .with(2, () => (
                 <AssetsVulnsFilterDrawer
-                    task_id={record?.task_id!}
+                    task_id={record?.task_id}
                     page={page}
                 />
             ))
@@ -287,7 +287,7 @@ const TaskDetail: FC = () => {
             <TaskDetailSider id={record?.task_id} data={data} />
             {record?.script_type === 'portAndVulScan' ? (
                 <WizardTable
-                    rowKey={'id'}
+                    rowKey="id"
                     columns={columns}
                     page={page}
                     tableHeader={{

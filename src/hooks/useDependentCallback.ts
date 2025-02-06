@@ -1,4 +1,5 @@
-import { DependencyList, useCallback, useRef } from 'react';
+import type { DependencyList } from 'react';
+import { useCallback, useRef } from 'react';
 
 function useDependentCallback<T extends (...args: any[]) => Promise<any>>(
     callback: T,

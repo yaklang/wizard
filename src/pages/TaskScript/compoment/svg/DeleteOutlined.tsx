@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
-interface TDeleteOutlined extends React.SVGProps<SVGSVGElement> {}
+type TDeleteOutlined = React.SVGProps<SVGSVGElement>;
 const DeleteOutlined: FC<TDeleteOutlined> = (props) => (
     <svg
         width="24"

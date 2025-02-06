@@ -1,17 +1,18 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 
 import { WizardTable } from '@/compoments';
-import { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { Button, message, Modal, Popover, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import { deleteNodeManage, getNodeManage } from '@/apis/NodeManageApi';
-import { TDeleteValues } from '../ReportManage/ReportManage';
+import type { TDeleteValues } from '../ReportManage/ReportManage';
 import { useRequest, useSafeState } from 'ahooks';
-import { Palm } from '@/gen/schema';
+import type { Palm } from '@/gen/schema';
 import PerformanceIcon from './Icon/PerformanceIcon';
 import { MoreNode } from './compoments/MoreNode';
 import { PerformanceTestingDrawer } from './compoments/PerformanceTestingDrawer';
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { LogIconNode } from './compoments/ViewLogDrawer';
 import { NetWorkIconNode } from './compoments/NewWorkDetecitonDrawer';
 
@@ -163,7 +164,7 @@ const NodeManagePage: FC = () => {
                                 <Popover
                                     open={open}
                                     onOpenChange={(newOpen) => setOpen(newOpen)}
-                                    trigger={'click'}
+                                    trigger="click"
                                     content={
                                         <Button
                                             danger

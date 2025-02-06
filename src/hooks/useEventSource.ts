@@ -10,11 +10,11 @@ interface SSEHooksError {
     type: string;
 }
 
-export type SSEHookOptions<T> = {
+export interface SSEHookOptions<T> {
     onsuccess?: (data: T) => void;
     onerror?: (e: SSEHooksError) => void;
     manual?: boolean; // 控制是否手动连接
-};
+}
 
 const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
     const store = useLoginStore.getState();

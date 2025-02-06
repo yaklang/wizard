@@ -1,12 +1,13 @@
-import { FC, useMemo, useRef } from 'react';
+import type { FC } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { Button, Form } from 'antd';
 
 import { VulnerabilityLevelPie } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPie';
-import { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
-import { VulnerabilityTypePieRefProps } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePieType';
+import type { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
+import type { VulnerabilityTypePieRefProps } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePieType';
 import { useMemoizedFn, useRequest } from 'ahooks';
-import { UsePageRef } from '@/hooks/usePage';
+import type { UsePageRef } from '@/hooks/usePage';
 import { VulnerabilityTypePie } from '@/compoments/AntdCharts/VulnerabilityTypePie/VulnerabilityTypePie';
 import { getAssetsValueFilter } from '@/apis/taskDetail';
 import { SeverityMapTag } from '../utils';
@@ -74,7 +75,7 @@ const AssetsVulnsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
                     </Button>
                 </div>
                 <Item
-                    name={'severity'}
+                    name="severity"
                     initialValue={[]}
                     className="border-b-solid border-[#EAECF3] border-b-[1px]"
                 >
@@ -94,7 +95,7 @@ const AssetsVulnsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
                         重置
                     </Button>
                 </div>
-                <Item name={'risk_type_verbose'} initialValue={[]}>
+                <Item name="risk_type_verbose" initialValue={[]}>
                     <VulnerabilityTypePie
                         ref={pieTypeRef}
                         list={data?.transformList ?? []}

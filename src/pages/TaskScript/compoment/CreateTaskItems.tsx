@@ -25,11 +25,12 @@ import {
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
 import { ChunkUpload } from '@/compoments';
-import { TScannerDataList } from './StartUpScriptModal';
+import type { TScannerDataList } from './StartUpScriptModal';
 import { useMemoizedFn } from 'ahooks';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
-import { ItemType } from 'antd/es/menu/interface';
+import type { ItemType } from 'antd/es/menu/interface';
 import { AddSelectSearch } from './AddSelectSearch';
 
 type PresetKey = keyof typeof PresetPorts;
@@ -53,13 +54,14 @@ const CreateTaskItems: TCreateTaskItemsProps = (
     scriptTypeValue,
     scriptGroupList,
     scannerDataList,
+    // eslint-disable-next-line max-params
 ) => {
     const starTimeRf = useRef<Dayjs | null>();
 
     // 校验时间
     const validateStartTime = (
         value: [Dayjs | null, Dayjs | null],
-    ): string | void => {
+    ): string | any => {
         if (value && value[0] && value[0].isBefore(dayjs())) {
             return '开始时间不能小于当前时间';
         }
@@ -108,7 +110,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
             .with(2, () => {
                 return (
                     <Item
-                        name={'execution_date'}
+                        name="execution_date"
                         rules={[
                             { required: true, message: '请选择执行时间' },
                             {
@@ -127,13 +129,13 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                 },
                             },
                         ]}
-                        label={'执行时间'}
+                        label="执行时间"
                         className="ml-14"
                     >
                         <DatePicker
                             className="w-full"
                             showTime={{ format: 'YYYY-MM-DD HH:mm' }}
-                            format={'YYYY-MM-DD HH:mm'}
+                            format="YYYY-MM-DD HH:mm"
                             disabledDate={disabledDate} // 禁用日期部分
                             disabledTime={disabledTime} // 禁用时间部分到分钟
                         />
@@ -149,12 +151,12 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                     第一次是否执行
                                 </div>
                             }
-                            name={'first'}
+                            name="first"
                         >
                             <Switch />
                         </Item>
                         <Item
-                            name={'timestamp'}
+                            name="timestamp"
                             label="设定周期时间范围"
                             rules={createRules({
                                 required: true,
@@ -184,7 +186,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         >
                             <Compact block={true}>
                                 <Item
-                                    name={'interval_time'}
+                                    name="interval_time"
                                     noStyle
                                     rules={[
                                         {
@@ -199,7 +201,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                     />
                                 </Item>
                                 <Item
-                                    name={'interval_type'}
+                                    name="interval_type"
                                     noStyle
                                     initialValue={1}
                                     rules={[
@@ -242,7 +244,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                 <div>
                     <Item
                         label={<div className="min-w-[124px]">任务名称</div>}
-                        name={'task_id'}
+                        name="task_id"
                     >
                         <Input placeholder="请输入..." />
                     </Item>
@@ -263,15 +265,15 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         />
                     </Item>
                     <Item
-                        label={'脚本类型'}
-                        name={'script_type'}
+                        label="脚本类型"
+                        name="script_type"
                         rules={[{ required: true, message: '请选择脚本类型' }]}
                         className="ml-14"
                     >
                         <Select options={scriptTypeOption} disabled={true} />
                     </Item>
-                    <Item name={'script_id'} noStyle />
-                    <Item name={'script_name'} noStyle />
+                    <Item name="script_id" noStyle />
+                    <Item name="script_name" noStyle />
                 </div>
             ),
             extra: (
@@ -311,7 +313,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
             },
             children: (
                 <div>
-                    <Item noStyle name={'param_files'} />
+                    <Item noStyle name="param_files" />
                     <Item noStyle dependencies={[]}>
                         {({ setFieldValue }) => {
                             return (
@@ -374,8 +376,8 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         url="/material/files"
                                         chunkSize={2}
                                         accept=".txt"
-                                        childrenType={'textArea'}
-                                        encryptionKey={'param_files'}
+                                        childrenType="textArea"
+                                        encryptionKey="param_files"
                                         setFieldValue={setFieldValue}
                                         maxCount={1}
                                         onChange={(fileName) => {
@@ -398,7 +400,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                     <Item
                         name={['params', 'execution_node']}
                         label={<div className="min-w-[124px]">执行节点</div>}
-                        initialValue={'1'}
+                        initialValue="1"
                     >
                         <Radio.Group
                             className="h-8 flex items-center"
@@ -627,7 +629,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                 <div>
                     <Item
                         label={<div className="min-w-[124px]">调度类型</div>}
-                        name={'sched_type'}
+                        name="sched_type"
                         initialValue={1}
                     >
                         <Select
@@ -741,9 +743,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         <span>
                                             扫描端口
                                             <Popover
-                                                content={
-                                                    '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
-                                                }
+                                                content="当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口"
                                                 trigger="hover"
                                             >
                                                 <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
@@ -789,7 +789,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             <span>
                                 弱口令
                                 <Popover
-                                    content={'是否启用弱口令检测'}
+                                    content="是否启用弱口令检测"
                                     trigger="hover"
                                 >
                                     <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
@@ -807,7 +807,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             <span>
                                 CVE基线检查
                                 <Popover
-                                    content={'是否启用CVE基线检查'}
+                                    content="是否启用CVE基线检查"
                                     trigger="hover"
                                 >
                                     <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />

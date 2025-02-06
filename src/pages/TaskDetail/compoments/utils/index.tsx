@@ -4,7 +4,7 @@ import fatalImg from '../img/fatal.png';
 import middleImg from '../img/middle.png';
 import lowImg from '../img/low.png';
 import debugImg from '../img/debug.png';
-import { TGetAssertsDataResponse } from '@/apis/taskDetail/types';
+import type { TGetAssertsDataResponse } from '@/apis/taskDetail/types';
 
 const detailHeaderGroupOptions = [
     {

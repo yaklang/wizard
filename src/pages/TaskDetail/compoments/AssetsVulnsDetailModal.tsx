@@ -1,6 +1,6 @@
-import { TGetAssetsVulnsResponse } from '@/apis/taskDetail/types';
+import type { TGetAssetsVulnsResponse } from '@/apis/taskDetail/types';
 import { WizardModal } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { useSafeState } from 'ahooks';
 import { Col, Row, Typography } from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
@@ -14,6 +14,7 @@ const AssetsVulnsDetailModal = forwardRef<
     {
         title: string;
     }
+    // eslint-disable-next-line complexity
 >(({ title }, ref) => {
     const [model] = WizardModal.useModal();
     const [info, setInfo] = useSafeState<TGetAssetsVulnsResponse>();

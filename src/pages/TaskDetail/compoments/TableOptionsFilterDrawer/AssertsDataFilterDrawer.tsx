@@ -1,8 +1,9 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 
 import { Button, Form } from 'antd';
 
-import { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
+import type { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { IpTag } from './IpTag';
 import {
@@ -94,7 +95,7 @@ const AssertsDataFilterDrawer: FC<{ task_id: string }> = ({ task_id }) => {
                     重置
                 </Button>
             </div>
-            <Item name={'hosts'} initialValue={[]}>
+            <Item name="hosts" initialValue={[]}>
                 <IpTag data={list} />
             </Item>
             <div className="flex align-center justify-between">

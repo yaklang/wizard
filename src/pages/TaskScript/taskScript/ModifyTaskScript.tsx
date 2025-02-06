@@ -1,4 +1,5 @@
-import { FC, useEffect } from 'react';
+import type { FC } from 'react';
+import { useEffect } from 'react';
 
 import { ChunkUpload, WizardAceEditor } from '@/compoments';
 import { generateUniqueId } from '@/utils';
@@ -21,7 +22,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { postStorageTaskScript } from '@/apis/task';
-import { TGetStroageDetailRequest } from '@/apis/task/types';
+import type { TGetStroageDetailRequest } from '@/apis/task/types';
 
 const { Item } = Form;
 const { TextArea } = Input;
@@ -71,11 +72,12 @@ const ModifyTaskScript: FC = () => {
 
     useEffect(() => {
         if (state.type === 'edit') {
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             form.setFieldsValue({
                 ...state,
                 name: state?.script_name,
-            }),
-                setScriptValue(state.script);
+            });
+            setScriptValue(state.script);
         }
     }, []);
 
@@ -91,9 +93,9 @@ const ModifyTaskScript: FC = () => {
                 </Button>
             </div>
             <div className="flex h-[calc(100%-64px)] px-4 border border-t-[#E9EBED] border-t-solid">
-                <div className="w-1/5 pt-4">
+                <div className="w-1/5 pt-4 overflow-y-auto h-full">
                     <Item
-                        name={'name'}
+                        name="name"
                         label="分布式脚本"
                         rules={[
                             {
@@ -105,14 +107,14 @@ const ModifyTaskScript: FC = () => {
                         <Input placeholder="请输入" allowClear />
                     </Item>
 
-                    <Item name={'description'} label="脚本描述">
+                    <Item name="description" label="脚本描述">
                         <TextArea rows={2} placeholder="请输入" allowClear />
                     </Item>
 
                     <Item
-                        label={'脚本类型'}
-                        name={'script_type'}
-                        initialValue={'portAndVulScan'}
+                        label="脚本类型"
+                        name="script_type"
+                        initialValue="portAndVulScan"
                     >
                         <Select
                             options={scriptTypeOption}
@@ -130,8 +132,8 @@ const ModifyTaskScript: FC = () => {
                     />
                 </div>
 
-                <div className="w-1/5 pt-4">
-                    <Item noStyle name={'param_files'} />
+                <div className="w-1/5 pt-4 overflow-y-auto h-full">
+                    <Item noStyle name="param_files" />
                     <Item noStyle dependencies={['script_type']}>
                         {({ setFieldValue, getFieldValue }) => {
                             const scriptType = getFieldValue('script_type');
@@ -187,8 +189,8 @@ const ModifyTaskScript: FC = () => {
                                         url="/material/files"
                                         chunkSize={2}
                                         accept=".txt"
-                                        childrenType={'textArea'}
-                                        encryptionKey={'param_files'}
+                                        childrenType="textArea"
+                                        encryptionKey="param_files"
                                         setFieldValue={setFieldValue}
                                         maxCount={1}
                                         onChange={(fileName) => {
@@ -270,9 +272,7 @@ const ModifyTaskScript: FC = () => {
                                                         <span>
                                                             扫描端口
                                                             <Popover
-                                                                content={
-                                                                    '当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口'
-                                                                }
+                                                                content="当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口"
                                                                 trigger="hover"
                                                             >
                                                                 <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
@@ -322,9 +322,7 @@ const ModifyTaskScript: FC = () => {
                                                 <span>
                                                     弱口令
                                                     <Popover
-                                                        content={
-                                                            '是否启用弱口令检测'
-                                                        }
+                                                        content="是否启用弱口令检测"
                                                         trigger="hover"
                                                     >
                                                         <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
@@ -345,9 +343,7 @@ const ModifyTaskScript: FC = () => {
                                                 <span>
                                                     CVE基线检查
                                                     <Popover
-                                                        content={
-                                                            '是否启用CVE基线检查'
-                                                        }
+                                                        content="是否启用CVE基线检查"
                                                         trigger="hover"
                                                     >
                                                         <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />

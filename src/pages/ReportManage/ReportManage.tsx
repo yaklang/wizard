@@ -3,13 +3,13 @@ import {
     getReportTaskGroups,
     getssetsProts,
 } from '@/apis/reportManage';
-import { ReportItem, TReportRequest } from '@/apis/reportManage/types';
+import type { ReportItem, TReportRequest } from '@/apis/reportManage/types';
 import { WizardTable } from '@/compoments';
-import { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { useRequest, useSafeState } from 'ahooks';
 import { Button, message, Modal } from 'antd';
 import dayjs from 'dayjs';
-import { FC } from 'react';
+import type { FC } from 'react';
 import { ColumnsOperateRender } from './compoments/ColumnsOperate';
 
 export type TDeleteValues = Record<
@@ -170,6 +170,7 @@ const ReportManage: FC = () => {
                 request={async (params, filter) => {
                     const star = filter?.start_time?.[0];
                     const end = filter?.start_time?.[1];
+                    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                     const request = {
                         ...params,
                         ...filter,

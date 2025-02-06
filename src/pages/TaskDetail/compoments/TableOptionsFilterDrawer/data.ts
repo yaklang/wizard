@@ -151,6 +151,7 @@ const updateAssetsProtsFilterDataList = (
             return acc;
         },
         {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             updatedAssetsData: {} as UpdatedAssetsProtsFilterDataList,
             unmatchedKeys: list.filter(
                 ({ key }) =>

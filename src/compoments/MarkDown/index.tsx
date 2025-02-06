@@ -1,5 +1,6 @@
 import React from 'react';
-import ReactMarkdown, { Options } from 'react-markdown';
+import type { Options } from 'react-markdown';
+import ReactMarkdown from 'react-markdown';
 import 'github-markdown-css';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -12,7 +13,7 @@ const Markdown: React.FC<MarkdownProp> = (props) => {
     const { escapeHtml = true } = props;
 
     return (
-        <div className={'markdown-body'}>
+        <div className="markdown-body">
             <ReactMarkdown
                 {...props}
                 remarkPlugins={[remarkGfm]}

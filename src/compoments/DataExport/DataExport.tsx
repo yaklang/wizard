@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Button, ButtonProps, Modal, Space, message, Pagination } from 'antd';
-import { export_json_to_excel, CellSetting } from './toExcel';
+import type { ButtonProps } from 'antd';
+import { Button, Modal, Space, message, Pagination } from 'antd';
+import type { CellSetting } from './toExcel';
+import { export_json_to_excel } from './toExcel';
 import { useMemoizedFn } from 'ahooks';
 import './DataExport.css';
 
@@ -15,11 +17,11 @@ interface PaginationSchema {
     total_page: number;
 }
 
-const genDefaultPagination = (limit?: number, page?: number) => {
+let genDefaultPagination = (limit?: number, page?: number) => {
     return {
         limit: limit || 10,
         page: page || 1,
-    } as PaginationSchema;
+    } as any;
 };
 
 interface ExportExcelProps {
@@ -101,7 +103,7 @@ export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
                         ); // 导出次数
                         exportNumber.current = Math.floor(
                             maxCellNumber / header.length,
-                        ); //每次导出的数量
+                        ); // 每次导出的数量
                         exportDataBatch.current = exportData;
                         headerExcel.current = header;
                         setFrequency(frequency);
@@ -112,7 +114,7 @@ export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
                 }
             })
             .catch((e: any) => {
-                message.error('数据导出失败: ' + `${e}`);
+                message.error(`数据导出失败: ${e}`);
             })
             .finally(() => setTimeout(() => setLoading(false), 300));
     });

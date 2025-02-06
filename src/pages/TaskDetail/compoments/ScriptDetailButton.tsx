@@ -1,24 +1,24 @@
+import type { ReactNode } from 'react';
 import {
     forwardRef,
-    ReactNode,
     useImperativeHandle,
     useEffect,
     useRef,
     useState,
 } from 'react';
 
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { WizardDrawer } from '@/compoments';
 import { useSafeState } from 'ahooks';
 import ReportTemplate from '@/compoments/ReportTemplate';
-import {
+import type {
     ReportJsonKindData,
     TReportTemplateProps,
 } from '@/compoments/ReportTemplate/type';
 import { Button } from 'antd';
 import html2pdf from 'html2pdf.js';
 import { EmailMoadl } from './EmialModal';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 
 export const opt = {
     margin: [10, 5, 10, 5],
@@ -96,7 +96,7 @@ const ScriptDetailButton = forwardRef<
     };
 
     return (
-        <WizardDrawer drawer={drawer} width={'75%'} title={title} footer={null}>
+        <WizardDrawer drawer={drawer} width="75%" title={title} footer={null}>
             <div className="w-full flex justify-end">
                 <Button
                     type="link"

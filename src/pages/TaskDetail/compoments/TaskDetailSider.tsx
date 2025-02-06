@@ -1,4 +1,5 @@
-import { FC, useEffect } from 'react';
+import type { FC } from 'react';
+import { useEffect } from 'react';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
 import {
@@ -24,7 +25,7 @@ import {
     getBatchInvokingScript,
     // getTimelinRuntimeId
 } from '@/apis/taskDetail';
-import { TDetailDatailOptions } from '../TaskDetail';
+import type { TDetailDatailOptions } from '../TaskDetail';
 import { getSubtaskSteam } from '@/apis/task';
 import { useEventSource } from '@/hooks';
 // import { TFetchProcessResponse } from '@/apis/task/types';
@@ -259,7 +260,7 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
 
     return (
         <div
-            className={`bg-[#FFF]  overflow-y-auto overflow-x-hidden`}
+            className="bg-[#FFF]  overflow-y-auto overflow-x-hidden"
             style={{
                 borderRight: '1px solid #EAECF3',
                 transition: 'all 0.3s ease',

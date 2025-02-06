@@ -4,7 +4,7 @@ import React, {
     useImperativeHandle,
     forwardRef,
 } from 'react';
-import {
+import type {
     EChartsOption,
     SelectChangedEvent,
     VulnerabilityLevelPieProps,
@@ -63,13 +63,16 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
             let lowNumber = 0;
             let infoNumber = 0;
             const newData = Array(5).fill(null);
+            // eslint-disable-next-line complexity
             list?.forEach((ele) => {
                 if (
                     ele?.Verbose &&
                     ele.Verbose.includes('未知') &&
                     ele?.Total &&
+                    // eslint-disable-next-line radix
                     parseInt(ele.Total) > 0
                 ) {
+                    // eslint-disable-next-line radix
                     seriousNumber = parseInt(ele.Total);
                     newData[0] = {
                         value: seriousNumber,
@@ -90,6 +93,7 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                     ele?.Verbose &&
                     ele.Verbose.includes('严重') &&
                     ele?.Total &&
+                    // eslint-disable-next-line radix
                     parseInt(ele.Total) > 0
                 ) {
                     highNumber = parseInt(ele.Total, 10);
@@ -112,6 +116,7 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                     ele?.Verbose &&
                     ele.Verbose.includes('高危') &&
                     ele?.Total &&
+                    // eslint-disable-next-line radix
                     parseInt(ele.Total) > 0
                 ) {
                     middleNumber = parseInt(ele.Total, 10);
@@ -134,6 +139,7 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                     ele?.Verbose &&
                     ele.Verbose.includes('中危') &&
                     ele?.Total &&
+                    // eslint-disable-next-line radix
                     parseInt(ele.Total) > 0
                 ) {
                     lowNumber = parseInt(ele.Total, 10);
@@ -156,8 +162,10 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                     ele?.Verbose &&
                     ele.Verbose.includes('低危') &&
                     ele?.Total &&
+                    // eslint-disable-next-line radix
                     parseInt(ele.Total) > 0
                 ) {
+                    // eslint-disable-next-line radix
                     infoNumber = parseInt(ele.Total);
                     newData[4] = {
                         value: infoNumber,
@@ -178,8 +186,10 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                     ele?.Verbose &&
                     ele.Verbose.includes('存活') &&
                     ele?.Total &&
+                    // eslint-disable-next-line radix
                     parseInt(ele.Total) > 0
                 ) {
+                    // eslint-disable-next-line radix
                     infoNumber = parseInt(ele.Total);
                     newData[5] = {
                         value: infoNumber,
@@ -200,8 +210,10 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                     ele?.Verbose &&
                     ele.Verbose.includes('安全') &&
                     ele?.Total &&
+                    // eslint-disable-next-line radix
                     parseInt(ele.Total) > 0
                 ) {
+                    // eslint-disable-next-line radix
                     infoNumber = parseInt(ele.Total);
                     newData[5] = {
                         value: infoNumber,
@@ -276,11 +288,9 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                 if (!pieChart.current)
                     pieChart.current = echarts.init(chartRef.current);
                 if (
-                    !!(
-                        optionRef.current?.series &&
-                        Array.isArray(optionRef.current?.series) &&
-                        optionRef.current.series?.[0]
-                    )
+                    optionRef.current?.series &&
+                    Array.isArray(optionRef.current?.series) &&
+                    optionRef.current.series?.[0]
                 ) {
                     dataRef.current = getData();
                     if (
@@ -330,7 +340,7 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
             optionRef.current.series[0].data = dataRef.current.map((ele) => ({
                 ...ele,
                 selected:
-                    selectList?.length == 0
+                    selectList?.length === 0
                         ? true
                         : selectList?.includes(
                               list?.find((l) => l.value === ele.formValue)
@@ -343,11 +353,9 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
         const onReset = useMemoizedFn(() => {
             if (!pieChart.current) return;
             if (
-                !!(
-                    optionRef.current.series &&
-                    Array.isArray(optionRef.current.series) &&
-                    optionRef.current.series[0]
-                )
+                optionRef.current.series &&
+                Array.isArray(optionRef.current.series) &&
+                optionRef.current.series[0]
             ) {
                 const data = getData();
                 dataRef.current = data;
@@ -357,11 +365,11 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
             setSelectList([]);
         });
 
-        /**数据选中状态发生变化时触发的事件 */
+        /** 数据选中状态发生变化时触发的事件 */
         const onSelectChanged = useMemoizedFn((value) => {
             const { fromAction, fromActionPayload } =
                 value as any as SelectChangedEvent;
-            //不额外处理全选
+            // 不额外处理全选
             if (fromAction === 'toggleSelect') {
                 return;
             }
@@ -387,7 +395,7 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
                         break;
                     case 'unselect':
                         newSelect = selectList.filter(
-                            (ele) => ele != selectName,
+                            (ele) => ele !== selectName,
                         );
                         break;
                     default:

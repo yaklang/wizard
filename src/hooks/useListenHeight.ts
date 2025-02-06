@@ -1,4 +1,5 @@
-import { MutableRefObject, useEffect, useRef, useState } from 'react';
+import type { MutableRefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCreation, useDebounceFn, useMemoizedFn } from 'ahooks';
 
 type TargetValue<T> = T | undefined | null;
@@ -49,9 +50,9 @@ const useListenHeight = (target: BasicTarget): number[] => {
         if (!target) return;
         if (typeof target === 'string') {
             const dom = document.getElementById(target);
-            if (!!dom) resizeObserver.observe(dom);
+            if (dom) resizeObserver.observe(dom);
         } else if ('current' in target) {
-            if (!!target.current) resizeObserver.observe(target.current);
+            if (target.current) resizeObserver.observe(target.current);
         } else {
             resizeObserver.observe(target);
         }

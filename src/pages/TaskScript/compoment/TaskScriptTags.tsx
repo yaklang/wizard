@@ -1,10 +1,12 @@
-import React, { Key, useEffect, useRef } from 'react';
-import { Input, InputRef, message, Popover, Tag } from 'antd';
+import type { Key } from 'react';
+import React, { useEffect, useRef } from 'react';
+import type { InputRef } from 'antd';
+import { Input, message, Popover, Tag } from 'antd';
 import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
 import styles from '../index.module.scss';
 import { targetColorFn } from '../data';
 import { useSafeState, useUpdateEffect } from 'ahooks';
-import { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { postAnalysisScript } from '@/apis/task';
 
 interface TaskScriptTagsProps {

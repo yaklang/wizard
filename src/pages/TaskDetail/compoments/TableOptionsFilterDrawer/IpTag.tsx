@@ -1,5 +1,5 @@
 import { randomString } from '@/utils';
-import { FC } from 'react';
+import type { FC } from 'react';
 
 interface TIpTagProps {
     value?: string[];

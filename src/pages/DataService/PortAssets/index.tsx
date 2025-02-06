@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
 import { WizardTable } from '@/compoments';
 
@@ -7,8 +7,8 @@ import { ProtColumns } from '@/pages/TaskDetail/compoments/Columns';
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { AssetsProtsFilterDrawer } from '@/pages/TaskDetail/compoments/TableOptionsFilterDrawer/AssetsProtsFilterDrawer';
-import { CreateTableProps } from '@/compoments/WizardTable/types';
-import { TGetAssetsProtsResponse } from '@/apis/taskDetail/types';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { TGetAssetsProtsResponse } from '@/apis/taskDetail/types';
 
 const PortAssets: FC = () => {
     const [page] = WizardTable.usePage();
@@ -26,7 +26,7 @@ const PortAssets: FC = () => {
     return (
         <WizardTable
             page={page}
-            rowKey={'id'}
+            rowKey="id"
             columns={[
                 ...ProtColumns.slice(0, 1),
                 ...taskNameColumns,

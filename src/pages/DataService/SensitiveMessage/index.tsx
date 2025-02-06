@@ -1,12 +1,12 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
 import { UploadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 import { getSensitiveMessagePage } from '@/apis/reportManage';
-import { TSensitiveMessageResponse } from '@/apis/reportManage/types';
+import type { TSensitiveMessageResponse } from '@/apis/reportManage/types';
 import { WizardTable } from '@/compoments';
-import { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { message, Tag } from 'antd';
 import CopyOutlined from '@/pages/TaskDetail/compoments/utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
@@ -101,7 +101,7 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
     return (
         <WizardTable
             page={page}
-            rowKey={'id'}
+            rowKey="id"
             columns={columns}
             tableHeader={{
                 title: '敏感信息列表',

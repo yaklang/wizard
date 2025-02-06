@@ -1,6 +1,7 @@
-import { FC, forwardRef, ReactNode, useImperativeHandle, useRef } from 'react';
+import type { FC, ReactNode } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { WizardAceEditor, WizardDrawer } from '@/compoments';
 import { useEventSource } from '@/hooks';
 import { useSafeState } from 'ahooks';
@@ -46,7 +47,6 @@ const ViewLogDrawer = forwardRef<UseDrawerRefType>((_, ref): ReactNode => {
     const startReading = () => {
         if (timerRef.current) return; // 避免重复启动
         timerRef.current = setInterval(() => {
-            console.log(1);
             if (queueRef.current.length > 0) {
                 setDisplayedData((prev) => {
                     const next = queueRef.current.shift()!;
@@ -93,8 +93,8 @@ const ViewLogDrawer = forwardRef<UseDrawerRefType>((_, ref): ReactNode => {
         <WizardDrawer
             footer={null}
             drawer={drawer}
-            title={'节点-日志'}
-            width={'75%'}
+            title="节点-日志"
+            width="75%"
             onClose={() => {
                 handleDisconnect();
             }}

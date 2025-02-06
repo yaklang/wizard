@@ -1,7 +1,8 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 import { Button, message } from 'antd';
 
-import { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
+import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 
 import { ScriptDetailButton } from './ScriptDetailButton';
 import { useRequest } from 'ahooks';

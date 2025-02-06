@@ -1,17 +1,18 @@
-import { FC, useRef } from 'react';
+import type { FC } from 'react';
+import { useRef } from 'react';
 
 import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
-import { ReportItem } from '@/apis/reportManage/types';
+import type { ReportItem } from '@/apis/reportManage/types';
 import { DownloadOutlinedIcon } from '@/assets/report/DownloadOutlinedIcon';
 import { FileOutlinedIcon } from '@/assets/report/FileOutlinedIcon';
 import { Button, message, Popover, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { deleteProts, getTimelinId } from '@/apis/reportManage';
-import { UsePageRef } from '@/hooks/usePage';
-import { TDeleteValues } from '../ReportManage';
+import type { UsePageRef } from '@/hooks/usePage';
+import type { TDeleteValues } from '../ReportManage';
 import { ExportButton } from '@/compoments';
-import { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { PreviewReportDrawer } from './PreviewReportDrawer';
 
 const ColumnsOperateRender: FC<{
@@ -78,7 +79,7 @@ const ColumnsOperateRender: FC<{
                 type="link"
                 params={{ id: render?.report_id }}
                 fileName={render?.report_title + '.zip'}
-                method={'get'}
+                method="get"
                 url="/timeline/download"
                 className="p-0"
                 title={

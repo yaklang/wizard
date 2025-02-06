@@ -1,6 +1,6 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 
-interface TFormOutlined extends React.SVGProps<SVGSVGElement> {}
+type TFormOutlined = React.SVGProps<SVGSVGElement>;
 
 const FormOutlined: FC<TFormOutlined> = (props) => (
     <svg
