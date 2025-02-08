@@ -34,58 +34,64 @@ const WizardTableFilter: FC<{
     };
 
     return (
-        <div className="w-full pb-3 flex justify-between table-header-filter pr-3 gap-2">
-            <div className="flex items-center font-bold text-xl">
-                <div> {props?.title ?? tableHeaderGroup}</div>
-            </div>
+        <div>
+            {props?.headerRender}
+            <div className="w-full pb-3 flex justify-between table-header-filter pr-3 gap-2">
+                <div className="flex items-center font-bold text-xl">
+                    <div> {props?.title ?? tableHeaderGroup}</div>
+                </div>
 
-            <div className="flex gap-2 items-center">
-                {exprotExcel && (
-                    <ExportButton
-                        // url={exprotExcel.url}
-                        // title={exprotExcel.title}
-                        // params={exprotExcel.params}
-                        // method={exprotExcel.method}
-                        // fileName={exprotExcel.fileName}
-                        {...exprotExcel}
-                    />
-                )}
-
-                {tableoptionsSearch &&
-                    typeof tableoptionsSearch.key === 'string' && (
-                        <Input.Search
-                            allowClear
-                            onSearch={(e) => {
-                                filterDispatch &&
-                                    filterDispatch({
-                                        filter: {
-                                            ...filterState?.filter,
-                                            [tableoptionsSearch.key]: e,
-                                        },
-                                        params: {
-                                            limit: filterState!.params!.limit,
-                                            page: 1,
-                                            total: filterState!.pagemeta!.total,
-                                            total_page:
-                                                filterState!.pagemeta!
-                                                    .total_page,
-                                        },
-                                    });
-                            }}
-                            placeholder={
-                                tableoptionsSearch.placeholder ?? '请输入'
-                            }
+                <div className="flex gap-2 items-center">
+                    {exprotExcel && (
+                        <ExportButton
+                            // url={exprotExcel.url}
+                            // title={exprotExcel.title}
+                            // params={exprotExcel.params}
+                            // method={exprotExcel.method}
+                            // fileName={exprotExcel.fileName}
+                            {...exprotExcel}
                         />
                     )}
 
-                {props?.options?.trigger}
+                    {tableoptionsSearch &&
+                        typeof tableoptionsSearch.key === 'string' && (
+                            <Input.Search
+                                allowClear
+                                onSearch={(e) => {
+                                    filterDispatch &&
+                                        filterDispatch({
+                                            filter: {
+                                                ...filterState?.filter,
+                                                [tableoptionsSearch.key]: e,
+                                            },
+                                            params: {
+                                                limit: filterState!.params!
+                                                    .limit,
+                                                page: 1,
+                                                total: filterState!.pagemeta!
+                                                    .total,
+                                                total_page:
+                                                    filterState!.pagemeta!
+                                                        .total_page,
+                                            },
+                                        });
+                                }}
+                                placeholder={
+                                    tableoptionsSearch.placeholder ?? '请输入'
+                                }
+                            />
+                        )}
 
-                {proFilterSwitch?.trigger && !filterState?.proSwitchStatus && (
-                    <div className="flex gap-2 justify-center items-center ml-2">
-                        <div className="color-[#85899E]">高级筛选</div>
-                        <Switch onChange={headSwitchChange} />
-                    </div>
-                )}
+                    {props?.options?.trigger}
+
+                    {proFilterSwitch?.trigger &&
+                        !filterState?.proSwitchStatus && (
+                            <div className="flex gap-2 justify-center items-center ml-2">
+                                <div className="color-[#85899E]">高级筛选</div>
+                                <Switch onChange={headSwitchChange} />
+                            </div>
+                        )}
+                </div>
             </div>
         </div>
     );
