@@ -28,7 +28,7 @@ import License from '@/pages/License';
 import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
 import ActiChainDNS from '../../pages/ActiChainDNS';
 import ICMPSize from '../../pages/ICMPSize';
-// import TCPLog from '../../pages/TCPLog';
+import TCPLog from '../../pages/TCPLog';
 // import MessageCollect from '@/pages/MessageCollect';
 
 // 继承路由接口，增加name字段
@@ -159,12 +159,12 @@ const routers: RouteObjectRootMy[] = [
                         key: 'icmp-size-logger',
                         element: <ICMPSize />,
                     },
-                    // {
-                    //     path: 'tcp',
-                    //     name: 'TCP-ProtLog',
-                    //     key: 'tcp-prot-logger',
-                    //     element: <TCPLog />,
-                    // },
+                    {
+                        path: 'tcp',
+                        name: 'TCP-ProtLog',
+                        key: 'tcp-prot-logger',
+                        element: <TCPLog />,
+                    },
                 ],
             },
             {
