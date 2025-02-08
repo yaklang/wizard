@@ -400,6 +400,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     }}
                 />
                 <Table
+                    bordered
                     {...props}
                     ref={tableRef}
                     dataSource={dataSource}
@@ -409,7 +410,6 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                         props.rowKey,
                         props.columns,
                     )}
-                    bordered
                     pagination={false}
                     scroll={{
                         x: wizardScrollHeight,

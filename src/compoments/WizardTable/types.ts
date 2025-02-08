@@ -81,12 +81,8 @@ type ExtendedColumnType<T> = ColumnType<T> & {
 // 定义 CreateTableProps，扩展 columns 属性
 type CreateTableProps<T> = Omit<
     TableProps<T>,
-    | 'bordered'
-    | 'pagination'
-    | 'dataSource'
-    | 'columns'
-    | 'rowSelection'
-    | 'rowKey'
+    // | 'bordered'
+    'pagination' | 'dataSource' | 'columns' | 'rowSelection' | 'rowKey'
 > & {
     // 此处因传递key给我时，处理 render 的回调入参只存在record和key参数，不存在text, 我无法处理，所以我拒绝使用key
     columns: Omit<ExtendedColumnType<T>, 'key'>[];
@@ -146,6 +142,7 @@ interface TWizardTableProps<T = AnyObject> extends CreateTableProps<T> {
         options?: Partial<TableHeaderOptions>;
         filterDispatch?: Dispatch<TRecudeInitiakValue>;
         filterState?: TRecudeInitiakValue;
+        headerRender?: ReactNode;
     };
     empotyNode?: ReactNode;
     request: RequestFunction;
