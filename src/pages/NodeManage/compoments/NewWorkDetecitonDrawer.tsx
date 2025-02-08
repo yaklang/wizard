@@ -77,12 +77,12 @@ const NewWorkDetecitonDrawer = forwardRef<UseDrawerRefType>(
                         columns={[]}
                         rowKey="aa"
                         request={async () => {
-                            const data = await postHostAliveDetectionRun({
+                            // const data =
+                            await postHostAliveDetectionRun({
                                 nodes_id: nodeIds,
                                 hosts,
                                 dns_timeout: 0.5,
                             });
-                            console.log(data, 'data');
                             return {
                                 list: [],
                                 pagemeta: {

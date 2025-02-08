@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 
 import { useRequest, useSafeState } from 'ahooks';
 import { getAnalysisScript } from '@/apis/task';
@@ -7,6 +7,7 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import type { TTaskScriptCard } from './compoment/TaskScirptCard';
 import { TaskScriptCard } from './compoment/TaskScirptCard';
 import { useNavigate } from 'react-router-dom';
+import { generateUniqueId } from '@/utils';
 
 const TaskScript: FC = () => {
     const navigate = useNavigate();
@@ -35,6 +36,24 @@ const TaskScript: FC = () => {
         runAsync(searchName);
     };
 
+    const taskScriptRender = useMemo(() => {
+        return (
+            <div className="grid grid-cols-3 gap-4">
+                {taskScriptList?.map((items) => {
+                    return (
+                        <TaskScriptCard
+                            key={generateUniqueId()}
+                            items={items}
+                            setTaskScriptList={setTaskScriptList}
+                            taskScriptList={taskScriptList}
+                            refreshAsync={refreshAsync}
+                        />
+                    );
+                })}
+            </div>
+        );
+    }, [taskScriptList]);
+
     return (
         <div className="p-4">
             <Spin spinning={scriptLoading}>
@@ -60,19 +79,7 @@ const TaskScript: FC = () => {
                         创建脚本
                     </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                    {taskScriptList?.map((items) => {
-                        return (
-                            <TaskScriptCard
-                                key={items.script_name}
-                                items={items}
-                                setTaskScriptList={setTaskScriptList}
-                                taskScriptList={taskScriptList}
-                                refreshAsync={refreshAsync}
-                            />
-                        );
-                    })}
-                </div>
+                {taskScriptRender}
             </Spin>
         </div>
     );

@@ -312,7 +312,6 @@ const copyToClipboard = async (text: string): Promise<void> => {
     if (navigator?.clipboard?.writeText) {
         try {
             await navigator.clipboard.writeText(text);
-            console.log('Text copied to clipboard!');
         } catch (err) {
             console.error('Failed to copy text: ', err);
         }
@@ -326,7 +325,6 @@ const copyToClipboard = async (text: string): Promise<void> => {
         textArea.select();
         try {
             document.execCommand('copy');
-            console.log('Fallback: Text copied to clipboard!');
         } catch (err) {
             console.error('Fallback failed: ', err);
         }

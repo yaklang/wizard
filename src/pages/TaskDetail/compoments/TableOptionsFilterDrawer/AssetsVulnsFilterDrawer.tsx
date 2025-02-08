@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useMemo, useRef } from 'react';
 
-import { Button, Form } from 'antd';
+import { Button, Empty, Form } from 'antd';
 
 import { VulnerabilityLevelPie } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPie';
 import type { VulnerabilityLevelPieRefProps } from '@/compoments/AntdCharts/VulnerabilityLevelPie/VulnerabilityLevelPieType';
@@ -79,10 +79,15 @@ const AssetsVulnsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
                     initialValue={[]}
                     className="border-b-solid border-[#EAECF3] border-b-[1px]"
                 >
-                    <VulnerabilityLevelPie
-                        ref={pieLevelRef}
-                        list={data?.transformSeverityList ?? []}
-                    />
+                    {!data?.transformSeverityList ||
+                    data?.transformSeverityList?.length === 0 ? (
+                        <Empty className="my-4" />
+                    ) : (
+                        <VulnerabilityLevelPie
+                            ref={pieLevelRef}
+                            list={data?.transformSeverityList ?? []}
+                        />
+                    )}
                 </Item>
                 <div className="flex align-center justify-between">
                     <div>漏洞类型 Top 10</div>
@@ -96,10 +101,15 @@ const AssetsVulnsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
                     </Button>
                 </div>
                 <Item name="risk_type_verbose" initialValue={[]}>
-                    <VulnerabilityTypePie
-                        ref={pieTypeRef}
-                        list={data?.transformList ?? []}
-                    />
+                    {!data?.transformList ||
+                    data?.transformList.length === 0 ? (
+                        <Empty className="my-4" />
+                    ) : (
+                        <VulnerabilityTypePie
+                            ref={pieTypeRef}
+                            list={data?.transformList ?? []}
+                        />
+                    )}
                 </Item>
             </div>
         );
