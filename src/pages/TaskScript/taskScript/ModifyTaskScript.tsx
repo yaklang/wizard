@@ -41,7 +41,7 @@ const ModifyTaskScript: FC = () => {
     const navigate = useNavigate();
 
     const [form] = Form.useForm();
-    const [scriptValue, setScriptValue] = useSafeState('');
+    const [scriptValue, setScriptValue] = useSafeState<string | undefined>('');
 
     const state: StateProps = location.state || {}; // 获取传递的 record 数据
 
@@ -52,7 +52,7 @@ const ModifyTaskScript: FC = () => {
             navigate('/task/task-script');
         },
         onError: (err) => {
-            console.log(err);
+            console.error(err);
         },
     });
 

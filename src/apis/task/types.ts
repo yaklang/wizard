@@ -152,19 +152,20 @@ interface TPostRpcQueryYakPluginsRequestTable<T> {
 
 // 添加/编辑任务模版请求参数
 interface TPostStorageTaskScriptResponse {
-    script_name: string;
-    description: string;
-    script_type: string;
+    script_name?: string;
+    description?: string;
+    script_type?: string;
     param_files?: string;
     tags?: string[];
-    params: {
+    params?: {
         target: string;
         'preset-protes': string[];
         ports: string;
         'enable-brute': boolean;
         'enbale-cve-baseline': boolean;
     };
-    script: string;
+    script?: string;
+    name?: string;
 }
 
 // 获取 脚本 详情

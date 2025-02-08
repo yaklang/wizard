@@ -47,7 +47,7 @@ const TaskScriptDrawer = forwardRef<
             message.success(title.includes('创建') ? '创建成功' : '编辑成功');
         },
         onError: (err) => {
-            console.log(err);
+            console.error(err);
         },
     });
 

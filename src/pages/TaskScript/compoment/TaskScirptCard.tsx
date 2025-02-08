@@ -1,4 +1,4 @@
-import { type FC, useRef } from 'react';
+import { type FC, useEffect, useRef } from 'react';
 
 import { match, P } from 'ts-pattern';
 
@@ -13,7 +13,7 @@ import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
 import type { InputRef } from 'antd';
 import { Input, message, Modal, Spin } from 'antd';
-import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 import {
     getScriptTaskGroup,
     getStroageDetail,
@@ -92,8 +92,8 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                     .with('copy', () => {
                         setTaskScriptList((val) => [
                             {
-                                ...data,
                                 isCopy: true,
+                                ...data,
                             },
                             ...val,
                         ]);
@@ -119,7 +119,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             await refreshAsync();
         },
         onError: (err) => {
-            console.log(err);
+            console.error(err);
         },
     });
 
@@ -139,10 +139,16 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
         const inputValue =
             inputRef.current?.input?.value.replace(/\s+/g, '') ?? '';
         if (inputValue === '') {
-            return setTaskScriptList((val) =>
-                val.filter((item) => item.isCopy === false),
+            const targetTaskScriptList = taskScriptList.filter(
+                (items) => items.isCopy === false,
             );
+            setTaskScriptList(targetTaskScriptList);
+            // return setTaskScriptList((val) =>
+            //     val.filter((item) => item.isCopy === false),
+            // );
+            return;
         }
+
         const resetNot = taskScriptList.some(
             (item) => item.script_name === inputValue,
         );
@@ -150,7 +156,8 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             openTipsConfirm(inputValue);
             return;
         }
-        await copyRun({ ...(detailData as any), name: copyInputValue }, false);
+
+        await copyRun({ ...detailData, name: copyInputValue }, false);
         setTaskScriptList((it) =>
             it.map((item) => {
                 return item.isCopy === true
@@ -203,7 +210,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     };
 
     // 监听是否存在新建分组
-    useUpdateEffect(() => {
+    useEffect(() => {
         inputRef && inputRef.current?.focus();
     }, [items]);
 
