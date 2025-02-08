@@ -25,11 +25,10 @@ import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage';
 import { CveLoophole } from '@/pages/DataService/CveLoophole';
 import NodeManagePage from '@/pages/NodeManage';
 import License from '@/pages/License';
-import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
-import ActiChainDNS from '../../pages/ActiChainDNS';
-import ICMPSize from '../../pages/ICMPSize';
-import TCPLog from '../../pages/TCPLog';
-// import MessageCollect from '@/pages/MessageCollect';
+import MessageCollect from '@/pages/MessageCollect';
+import ActiChainDNS from '@/pages/ActiChainDNS';
+import ICMPSize from '@/pages/ICMPSize';
+import TCPLog from '@/pages/TCPLog';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -77,22 +76,9 @@ const routers: RouteObjectRootMy[] = [
                     },
                     {
                         path: 'task-script',
+                        element: <TaskScript />,
                         name: '脚本列表',
                         key: 'task-script',
-                        children: [
-                            {
-                                index: true,
-                                element: <TaskScript />,
-                            },
-                            {
-                                path: 'modify-task-script',
-                                key: 'modify-task-script',
-                                element: <ModifyTaskScript />,
-                                name: '分布式任务脚本',
-                                hidden: true,
-                                parentpath: '/task-script/task-script',
-                            },
-                        ],
                     },
                 ],
             },
@@ -127,12 +113,12 @@ const routers: RouteObjectRootMy[] = [
                         key: 'sensitive-message',
                         element: <SensitiveMessage />,
                     },
-                    // {
-                    //     path: 'message-collect',
-                    //     name: '信息收集',
-                    //     key: 'message-collect',
-                    //     element: <MessageCollect />,
-                    // },
+                    {
+                        path: 'message-collect',
+                        name: '信息收集',
+                        key: 'message-collect',
+                        element: <MessageCollect />,
+                    },
                     {
                         path: 'cve-loophole',
                         name: 'CVE漏洞库',

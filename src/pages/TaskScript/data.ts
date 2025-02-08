@@ -1,7 +1,8 @@
-import { TPostTaskStartRequest } from '@/apis/task/types';
+import type { TPostTaskStartRequest } from '@/apis/task/types';
 import { PresetColors } from 'antd/es/theme/internal';
-import dayjs, { Dayjs } from 'dayjs';
-import { Key } from 'react';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import type { Key } from 'react';
 
 // 创建任务脚本 modal
 // 新设置参数

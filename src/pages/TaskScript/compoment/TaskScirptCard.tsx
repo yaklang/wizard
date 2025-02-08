@@ -157,7 +157,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
             return;
         }
 
-        await copyRun({ ...detailData, name: copyInputValue }, false);
+        await copyRun({ ...detailData, name: copyInputValue } as any, false);
         setTaskScriptList((it) =>
             it.map((item) => {
                 return item.isCopy === true

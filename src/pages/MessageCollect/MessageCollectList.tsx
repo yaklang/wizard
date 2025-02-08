@@ -129,9 +129,6 @@ const MessageCollect = () => {
         if (!isAll) {
             run();
         }
-        // else {
-
-        // }
     };
 
     // 批量删除
