@@ -81,22 +81,9 @@ const routers: RouteObjectRootMy[] = [
                     },
                     {
                         path: 'task-script',
+                        element: <TaskScript />,
                         name: '脚本列表',
                         key: 'task-script',
-                        children: [
-                            {
-                                index: true,
-                                element: <TaskScript />,
-                            },
-                            {
-                                path: 'modify-task-script',
-                                key: 'modify-task-script',
-                                element: <ModifyTaskScript />,
-                                name: '分布式任务脚本',
-                                hidden: true,
-                                parentpath: '/task-script/task-script',
-                            },
-                        ],
                     },
                 ],
             },

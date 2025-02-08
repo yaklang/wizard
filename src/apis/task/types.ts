@@ -157,28 +157,21 @@ interface TPostStorageTaskScriptResponse {
     script_type?: string;
     param_files?: string;
     tags?: string[];
-    params?: {
+    name?: string;
+    params: {
         target: string;
         'preset-protes': string[];
         ports: string;
         'enable-brute': boolean;
         'enbale-cve-baseline': boolean;
     };
-    script?: string;
-    name?: string;
+    script: string;
 }
 
 // 获取 脚本 详情
 type TGetStroageDetailRequest = {
     prompt_args: Pick<TPostStorageTaskScriptResponse, 'params'>;
 } & Omit<TPostStorageTaskScriptResponse, 'params'>;
-
-interface TFetchProcessResponse {
-    list: {
-        progress: number;
-        subtask: string;
-    }[];
-}
 
 export type {
     TaskGrounpResponse,
@@ -194,7 +187,6 @@ export type {
     TPostRpcQueryYakPluginsRequestTable,
     TPostStorageTaskScriptResponse,
     TGetStroageDetailRequest,
-    TFetchProcessResponse,
 };
 
 export { TTaskListStatus };

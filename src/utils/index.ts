@@ -312,6 +312,7 @@ const copyToClipboard = async (text: string): Promise<void> => {
     if (navigator?.clipboard?.writeText) {
         try {
             await navigator.clipboard.writeText(text);
+            console.log('Text copied to clipboard!');
         } catch (err) {
             console.error('Failed to copy text: ', err);
         }
@@ -325,6 +326,7 @@ const copyToClipboard = async (text: string): Promise<void> => {
         textArea.select();
         try {
             document.execCommand('copy');
+            console.log('Fallback: Text copied to clipboard!');
         } catch (err) {
             console.error('Fallback failed: ', err);
         }
@@ -338,7 +340,8 @@ const findPathNodes = (
     routes: RouteObjectRootMy[],
     parentPath = '',
 ): { name: string; path: string }[] | null => {
-    const targetPaths = targetPath.replace(/^\/+|\/+$/g, '');
+    // eslint-disable-next-line no-param-reassign
+    targetPath = targetPath.replace(/^\/+|\/+$/g, '');
 
     for (const route of routes) {
         // 拼接当前路径
@@ -351,14 +354,14 @@ const findPathNodes = (
         const pathRegex = new RegExp(
             `^${currentPath.replace(/:\w+/g, '[^/]+')}$`,
         );
-        if (pathRegex.test(targetPaths)) {
+        if (pathRegex.test(targetPath)) {
             // 找到目标路径时，返回当前路径的所有祖先节点和目标节点
             return [{ name: route.name ?? '', path: currentPath }];
         }
 
         if (route.children) {
             const childResult = findPathNodes(
-                targetPaths,
+                targetPath,
                 route.children,
                 currentPath,
             );
@@ -397,7 +400,7 @@ const createRules = ({
 }: {
     required?: boolean;
     requiredMessage?: string;
-    validateStartTime?: (value: [Dayjs | null, Dayjs | null]) => any;
+    validateStartTime?: (value: [Dayjs | null, Dayjs | null]) => string | any;
 }): RuleObject[] => {
     const rules: RuleObject[] = [];
 
