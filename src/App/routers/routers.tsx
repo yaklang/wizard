@@ -29,6 +29,7 @@ import MessageCollect from '@/pages/MessageCollect';
 import ActiChainDNS from '@/pages/ActiChainDNS';
 import ICMPSize from '@/pages/ICMPSize';
 import TCPLog from '@/pages/TCPLog';
+import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -76,9 +77,22 @@ const routers: RouteObjectRootMy[] = [
                     },
                     {
                         path: 'task-script',
-                        element: <TaskScript />,
                         name: '脚本列表',
                         key: 'task-script',
+                        children: [
+                            {
+                                index: true,
+                                element: <TaskScript />,
+                            },
+                            {
+                                path: 'modify-task-script',
+                                key: 'modify-task-script',
+                                element: <ModifyTaskScript />,
+                                name: '分布式任务脚本',
+                                hidden: true,
+                                parentpath: '/task-script/task-script',
+                            },
+                        ],
                     },
                 ],
             },
