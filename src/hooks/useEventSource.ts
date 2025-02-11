@@ -80,6 +80,7 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
 
     const disconnect = useCallback(() => {
         if (eventSourceRef.current) {
+            console.log(2);
             interruptedRef.current = false; // 设置中断标志
             setLoading(true); // 停止加载
             eventSourceRef.current.close();

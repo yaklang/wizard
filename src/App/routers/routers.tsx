@@ -29,7 +29,9 @@ import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript
 import ActiChainDNS from '../../pages/ActiChainDNS';
 import ICMPSize from '../../pages/ICMPSize';
 import TCPLog from '../../pages/TCPLog';
-// import MessageCollect from '@/pages/MessageCollect';
+import MessageCollect from '@/pages/MessageCollect';
+import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
+import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/ReverseLinkServerFacadeServer';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -127,12 +129,12 @@ const routers: RouteObjectRootMy[] = [
                         key: 'sensitive-message',
                         element: <SensitiveMessage />,
                     },
-                    // {
-                    //     path: 'message-collect',
-                    //     name: '信息收集',
-                    //     key: 'message-collect',
-                    //     element: <MessageCollect />,
-                    // },
+                    {
+                        path: 'message-collect',
+                        name: '信息收集',
+                        key: 'message-collect',
+                        element: <MessageCollect />,
+                    },
                     {
                         path: 'cve-loophole',
                         name: 'CVE漏洞库',
@@ -164,6 +166,19 @@ const routers: RouteObjectRootMy[] = [
                         name: 'TCP-ProtLog',
                         key: 'tcp-prot-logger',
                         element: <TCPLog />,
+                    },
+                    {
+                        path: 'reverse-link-server',
+                        name: '反连服务器',
+                        key: 'reverse-link-server',
+                        element: <ReverseLinkServer />,
+                    },
+                    {
+                        path: 'reverse-link-server/facade-server',
+                        name: '反连服务器',
+                        key: 'reverse-link-server',
+                        element: <ReverseLinkServerFacadeServer />,
+                        hidden: true,
                     },
                 ],
             },
