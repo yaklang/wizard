@@ -72,11 +72,11 @@ const CommonTasksColumns = (
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,
-            onCell: (record) => ({
-                onClick: () => {
-                    handGoDetail(record);
-                },
-            }),
+            // onCell: (record) => ({
+            //     onClick: () => {
+            //         handGoDetail(record);
+            //     },
+            // }),
             width: 480,
             render: (_, record) => (
                 <div
