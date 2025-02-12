@@ -12,3 +12,4 @@ export { default as WizardDrawer } from './WizardDrawer';
 export { default as Markdown } from './MarkDown';
 export { default as WizardAceEditor } from './WizardAceEditor';
 export { default as ExportButton } from './ExportButton';
+export { SortableList } from './SortableList';
