@@ -30,6 +30,7 @@ import ActiChainDNS from '@/pages/ActiChainDNS';
 import ICMPSize from '@/pages/ICMPSize';
 import TCPLog from '@/pages/TCPLog';
 import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
+import DndKit from '@/pages/DndKit';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -193,6 +194,13 @@ const routers: RouteObjectRootMy[] = [
                 key: 'system',
                 icon: <SystemManagementIcon />,
                 element: <SystemManagement />,
+            },
+            {
+                path: 'dnd-demo',
+                name: 'dnd',
+                key: 'dnd',
+                icon: <SystemManagementIcon />,
+                element: <DndKit />,
             },
         ],
     },
