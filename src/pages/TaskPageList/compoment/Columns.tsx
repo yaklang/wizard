@@ -72,15 +72,16 @@ const CommonTasksColumns = (
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,
-            onCell: (record) => ({
-                onClick: () => {
-                    handGoDetail(record);
-                },
-            }),
+            // onCell: (record) => ({
+            //     onClick: () => {
+            //         handGoDetail(record);
+            //     },
+            // }),
             width: 480,
             render: (_, record) => (
                 <div
-                    className="p-0 text-clip color-[#4A94F8] cursor-pointer"
+                    className="p-0 text-clip color-[#4A94F8] cursor-pointer w-full "
+                    style={{ display: 'block' }}
                     onClick={() => handGoDetail(record)}
                 >
                     {record.task_id}
