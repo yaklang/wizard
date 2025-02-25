@@ -6,12 +6,14 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
+    closestCorners,
 } from '@dnd-kit/core';
-import type { Active, UniqueIdentifier } from '@dnd-kit/core';
+import type { Active, DragOverEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
     SortableContext,
     arrayMove,
     sortableKeyboardCoordinates,
+    rectSortingStrategy,
 } from '@dnd-kit/sortable';
 
 import './SortableList.css';
@@ -34,10 +36,12 @@ export function SortableList<T extends BaseItem>({
     renderItem,
 }: Props<T>) {
     const [active, setActive] = useState<Active | null>(null);
+
     const activeItem = useMemo(
         () => value.find((item) => item.id === active?.id),
         [active, value],
     );
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -45,8 +49,22 @@ export function SortableList<T extends BaseItem>({
         }),
     );
 
+    const handleDragOver = (event: DragOverEvent) => {
+        const { active, over } = event;
+        if (active.id !== over?.id) {
+            onChange(
+                arrayMove(
+                    value,
+                    value.findIndex((item) => item.id === active.id),
+                    value.findIndex((item) => item.id === over?.id),
+                ),
+            );
+        }
+    };
+
     return (
         <DndContext
+            collisionDetection={closestCorners}
             sensors={sensors}
             onDragStart={({ active }) => {
                 setActive(active);
@@ -64,11 +82,12 @@ export function SortableList<T extends BaseItem>({
                 }
                 setActive(null);
             }}
+            onDragOver={handleDragOver}
             onDragCancel={() => {
                 setActive(null);
             }}
         >
-            <SortableContext items={value}>
+            <SortableContext items={value} strategy={rectSortingStrategy}>
                 <ul className="SortableList" role="application">
                     {value.map((item) => (
                         <React.Fragment key={item.id}>
