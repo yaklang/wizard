@@ -55,6 +55,7 @@ const SortableItem: FC<SortableItemProps> = ({
         }),
         [attributes, listeners, setActivatorNodeRef],
     );
+
     const style: CSSProperties = {
         opacity: isDragging ? 0.4 : undefined,
         transform: CSS.Translate.toString(transform),
@@ -68,6 +69,7 @@ const SortableItem: FC<SortableItemProps> = ({
                 className={`SortableItem ${className}`}
                 ref={setNodeRef}
                 style={style}
+                data-id={id}
             >
                 {children}
             </div>
