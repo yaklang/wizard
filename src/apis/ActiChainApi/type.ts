@@ -17,8 +17,14 @@ interface TGetDnsQuryRequest {
     UseLocal: boolean;
 }
 
+interface TIcmpGenerateRequest {
+    length: number;
+    host: string;
+}
+
 export type {
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
     TGetDnsQuryRequest,
+    TIcmpGenerateRequest,
 };

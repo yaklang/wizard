@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import {
     getDnsQury,
     getQuerySupportedDnsLogPlatforms,
-    postDnsDelete,
+    posReverseDelete,
     postReverseDnsGenerate,
 } from '@/apis/ActiChainApi';
 import { useEventSource } from '@/hooks';
@@ -104,7 +104,7 @@ const ActiChainDNS = () => {
     );
 
     // 断开长连接监听
-    const { runAsync: DnsDeleteRunAsync } = useRequest(postDnsDelete, {
+    const { runAsync: DnsDeleteRunAsync } = useRequest(posReverseDelete, {
         manual: true,
     });
 
@@ -123,7 +123,6 @@ const ActiChainDNS = () => {
                 key: randomString(32),
                 ...JSON.parse(decodedString),
             };
-            console.log(jsonObject.Token, tokenRef.current, 'sss');
             setDataSource((preValue) => {
                 const newData =
                     jsonObject.Token === tokenRef.current

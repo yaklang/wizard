@@ -2,6 +2,7 @@ import axios from '@/utils/axios';
 import type { ResponseData } from '@/utils/commonTypes';
 import type {
     TGetDnsQuryRequest,
+    TIcmpGenerateRequest,
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
 } from './type';
@@ -28,12 +29,28 @@ const getDnsQury = (data: TGetDnsQuryRequest): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(`/reverse/dns/query`, data);
 
 // 断开需要监听的域名
-const postDnsDelete = (data: { key: string }): Promise<ResponseData<boolean>> =>
+const posReverseDelete = (data: {
+    key: string;
+}): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(`/reverse/delete`, data);
+
+// 生成 icmp 反链长度
+const getIcmpGenerate = (): Promise<ResponseData<TIcmpGenerateRequest>> =>
+    axios.get<never, ResponseData<TIcmpGenerateRequest>>(
+        '/reverse/icmp/generate',
+    );
+
+// 查询icmp结果，用sse返回
+const getIcmpQuery = (params: {
+    length: number;
+}): Promise<ResponseData<boolean>> =>
+    axios.get<never, ResponseData<boolean>>('/reverse/icmp/query', { params });
 
 export {
     postReverseDnsGenerate,
     getQuerySupportedDnsLogPlatforms,
     getDnsQury,
-    postDnsDelete,
+    posReverseDelete,
+    getIcmpGenerate,
+    getIcmpQuery,
 };
