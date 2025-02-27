@@ -34,6 +34,7 @@ const TaskPageList: FC = () => {
     const { disconnect } = useEventSource<{
         msg: any;
     }>('events?stream_type=status_updates', {
+        maxRetries: 1,
         onsuccess: (data) => {
             const { msg } = data;
             const dataSource = page.getDataSource();

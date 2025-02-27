@@ -135,12 +135,6 @@ li {
     background-color: #fff;
 }
 
-/* 强制让横向滚动条始终出现 */
-.ant-table-tbody-virtual {
-    padding-bottom: 60px;
-    border-right: 1px solid #f0f0f0;
-}
-
 .ant-spin-nested-loading > div > .ant-spin {
     max-height: none;
 }

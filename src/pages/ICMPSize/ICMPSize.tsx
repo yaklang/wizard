@@ -23,6 +23,7 @@ const ICMPSize = () => {
             dataIndex: 'time',
         },
     ];
+    console.log(dayjs(1740636801).format('YYYY-MM-DD HH:mm:ss'), 'sss');
     return (
         <WizardTable
             page={page}

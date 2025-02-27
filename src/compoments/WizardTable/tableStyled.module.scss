@@ -1,0 +1,18 @@
+#table-container {
+    .ant-table-filter-column {
+        align-items: center;
+        background-color: red;
+        .ant-dropdown-trigger {
+            height: 24px;
+        }
+    }
+}
+
+.wizard-table-container{
+    :global{
+        .ant-table-tbody-virtual {
+            padding-bottom: 60px;
+            border-right: 1px solid #f0f0f0;
+        }
+    }
+}

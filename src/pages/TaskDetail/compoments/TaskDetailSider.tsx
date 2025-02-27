@@ -118,6 +118,7 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
     } = useEventSource<{
         msg: { progress?: number };
     }>('events?stream_type=subtask_progress', {
+        maxRetries: 1,
         onsuccess: async (data) => {
             const { msg } = data;
             const progress = msg?.progress ? msg?.progress * 100 : 0;

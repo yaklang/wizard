@@ -1,7 +1,7 @@
 import axios from '@/utils/axios';
-import { ResponseData, TableResponseData } from '@/utils/commonTypes';
+import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
 
-import {
+import type {
     TReportRequest,
     TReportResonse,
     TSensitiveMessageReqeust,

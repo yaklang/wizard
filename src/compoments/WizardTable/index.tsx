@@ -18,9 +18,10 @@ import { usePage } from '@/hooks';
 import { deepEqual } from '@/utils';
 import extendTableProps from './extendTableProps';
 
-import './index.scss';
+// import './index.scss';
 import { match } from 'ts-pattern';
 import throttle from 'lodash/throttle';
+import styles from './tableStyled.module.scss';
 
 const reducer = <T extends TRecudeInitiakValue>(state: T, payload: T): T => ({
     ...state,
@@ -383,7 +384,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             {/* 表格部分 */}
 
             <div
-                id="table-container"
+                id={styles['table-container']}
                 ref={tableContainerRef}
                 className="transition-all duration-500 w-full p-4 bg-[#fff] relative"
                 style={{
@@ -400,6 +401,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                     }}
                 />
                 <Table
+                    className={styles['wizard-table-container']}
                     bordered
                     {...props}
                     ref={tableRef}

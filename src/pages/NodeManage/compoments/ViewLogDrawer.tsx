@@ -79,6 +79,7 @@ const ViewLogDrawer = forwardRef<UseDrawerRefType>((_, ref): ReactNode => {
     const { disconnect, connect, loading } = useEventSource<{
         msg: { data: string };
     }>('events?stream_type=node_logs', {
+        maxRetries: 1,
         manual: true,
         onsuccess: (data) => {
             queueRef.current.push(data?.msg?.data || ''); // 将数据推入队列

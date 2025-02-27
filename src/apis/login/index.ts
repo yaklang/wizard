@@ -1,6 +1,6 @@
 import axios from '@/utils/axios';
-import { ResponseData } from '@/utils/commonTypes';
-import {
+import type { ResponseData } from '@/utils/commonTypes';
+import type {
     GetCaptchaRequest,
     GetLicenseResponse,
     PostRequestAuth,
