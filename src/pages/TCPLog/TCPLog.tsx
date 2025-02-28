@@ -1,75 +1,225 @@
-import { getssetsProts } from '@/apis/reportManage';
-import type { TReportRequest } from '@/apis/reportManage/types';
-import { WizardTable } from '@/compoments';
+import { useEffect, useMemo, useRef } from 'react';
+
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
-import { copyToClipboard } from '@/utils';
-import { CopyOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Button, Input, message, Tag } from 'antd';
-import dayjs from 'dayjs';
+import { copyToClipboard, randomString } from '@/utils';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button, Input, message, Modal, Spin, Table, Tag } from 'antd';
+import useListenWidth from '@/hooks/useListenHeight';
+import { useRequest, useSafeState } from 'ahooks';
+import { useEventSource } from '@/hooks';
+import {
+    getTcoQuery,
+    getTcpGenerate,
+    posReverseDelete,
+} from '@/apis/ActiChainApi';
+import { adjustTimestamp } from '../ActiChainDNS/compoments/data';
+import { WizardAceEditor } from '@/compoments';
+
+const { confirm } = Modal;
+
+const showConfirm = (str: string) => {
+    confirm({
+        title: null,
+        icon: null,
+        content: (
+            <WizardAceEditor
+                style={{ minHeight: '100%' }}
+                value={str}
+                height="400px"
+                readOnly={true}
+            />
+        ),
+    });
+};
 
 const TCPLog = () => {
-    const [page] = WizardTable.usePage();
-    const ICMPSizeColumns: CreateTableProps<any>['columns'] = [
+    const tcpContainerRef = useRef<HTMLDivElement>(null);
+    const tcpHeaderRef = useRef<HTMLDivElement>(null);
+
+    const [containerHeight, containerWidth] = useListenWidth(tcpContainerRef);
+    const [headerHeight, headerWidth] = useListenWidth(tcpHeaderRef);
+    const portRef = useRef<number>();
+
+    const tableHeight = useMemo(() => {
+        console.log(containerWidth, headerWidth);
+        return containerHeight - headerHeight - 100;
+    }, [headerHeight, containerHeight]);
+
+    const [dataSource, setDataSource] = useSafeState<any[]>([]);
+
+    const { data, refreshAsync, loading } = useRequest(
+        async () => {
+            const { data } = await getTcpGenerate();
+            return data;
+        },
+        {
+            onSuccess: async (data) => {
+                portRef.current = data.port;
+                await getTcoQuery({ token: data.token });
+                await connect();
+            },
+        },
+    );
+
+    const { runAsync: DeleteRunAsync } = useRequest(posReverseDelete, {
+        manual: true,
+    });
+
+    const {
+        disconnect,
+        connect,
+        loading: sseLoading,
+    } = useEventSource<{
+        msg: { data: string };
+    }>('events?stream_type=reverseTcp', {
+        maxRetries: 1,
+        manual: true,
+        onsuccess: (data) => {
+            const base64String = data?.msg?.data;
+            // 解码 Base64 字符串
+            const decodedString = atob(base64String);
+
+            // 解析 JSON 字符串
+            const jsonObject = {
+                key: randomString(32),
+                ...JSON.parse(decodedString),
+            };
+            setDataSource((preValue) => {
+                const newData = [jsonObject, ...preValue];
+                const seenRemoteAddrs = new Set<string>(); // 使用 Set 来追踪已处理的 RemoteAddr
+
+                return newData.reduce((result, item) => {
+                    if (!seenRemoteAddrs.has(item.RemoteAddr)) {
+                        seenRemoteAddrs.add(item.RemoteAddr); // 只添加第一次出现的 RemoteAddr
+                        result.push(item); // 将元素添加到结果数组中
+                    }
+                    return result;
+                }, []); // 初始值为空数组
+            });
+        },
+        onerror: () => {
+            message.error(`连接失败`);
+        },
+    });
+
+    useEffect(() => {
+        return () => {
+            if (data?.token) {
+                DeleteRunAsync({ key: `${data.token}` });
+            } else {
+                console.warn('Token is missing');
+            }
+        };
+    }, [data?.token]); // 依赖于 token 变化
+
+    useEffect(() => {
+        return disconnect();
+    }, []);
+
+    const TcpColumns: CreateTableProps<any>['columns'] = [
         {
             title: '随机反连端口',
-            dataIndex: 'size',
+            dataIndex: 'LocalPort',
         },
         {
             title: '远端地址',
-            dataIndex: 'ip',
+            dataIndex: 'RemoteAddr',
+            render: (text: string) => {
+                return text ? (
+                    <div>
+                        <span className="mr-[2px]">{text}</span>
+                        <CopyOutlined
+                            style={{
+                                minWidth: 16,
+                                color: '#1677FF',
+                                marginLeft: 2,
+                            }}
+                            onClick={() => {
+                                copyToClipboard(`${text}`)
+                                    .then(() => {
+                                        message.success('复制成功');
+                                    })
+                                    .catch(() => {
+                                        message.info('复制失败，请重试');
+                                    });
+                            }}
+                        />
+                    </div>
+                ) : (
+                    '-'
+                );
+            },
         },
         {
             title: '同主机其他链接（一分钟内）',
-            dataIndex: 'time',
+            dataIndex: 'CurrentRemoteCachedConnectionCount',
         },
         {
             title: '同端口历史（一分钟内）',
-            dataIndex: 'prot',
+            dataIndex: 'LocalPortCachedHistoryConnectionCount',
+            render: (text, record) => {
+                const HistoryStr = record?.History
+                    ? record.History.join('\n')
+                    : '';
+                return (
+                    <Button type="link" onClick={() => showConfirm(HistoryStr)}>
+                        其他连接： {text ?? 0}
+                    </Button>
+                );
+            },
         },
         {
             title: '触发时间',
-            dataIndex: 'time',
+            dataIndex: 'TriggerTimestamp',
+            render: (text: number) => {
+                const targetTime = adjustTimestamp(text);
+                return text ? (
+                    <Tag color="magenta">
+                        {targetTime.format('YYYY-MM-DD HH:mm:ss')}
+                    </Tag>
+                ) : (
+                    '-'
+                );
+            },
         },
     ];
+
     return (
-        <WizardTable
-            page={page}
-            rowKey="report_id"
-            columns={ICMPSizeColumns}
-            tableHeader={{
-                headerRender: (
-                    <div className="text-[14px]">
-                        <div className="flex items-center gap-4 border-b-solid border-[1px] border-gray-200 pb-4">
-                            <div className="border-r-solid border-[1px] border-gray-200 pr-4">
-                                <span>Random Port Logger</span>
-                                <span className="text-[10px] text-gray-400 ml-2">
-                                    使用未开放的随机端口来判定 TCP 反连
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="whitespace-nowrap">
-                                    当前随机端口：
-                                </div>
-                                <Input disabled size="small" />
-                                <Button type="primary" size="small">
-                                    申请随机端口
-                                </Button>
-                                <Button type="link" size="small">
-                                    <ReloadOutlined />
-                                    刷新
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            使用以下随机端口尝试触发记录：
+        <div className="py-4 h-full" ref={tcpContainerRef}>
+            <div className="text-[14px] pb-4" ref={tcpHeaderRef}>
+                <div className="flex items-center gap-4 border-b-solid border-[1px] border-gray-200 pb-4 px-4">
+                    <div className="border-r-solid border-[1px] border-gray-200 pr-4">
+                        <span>Random Port Logger</span>
+                        <span className="text-[10px] text-gray-400 ml-2">
+                            使用未开放的随机端口来判定 TCP 反连
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="whitespace-nowrap">当前随机端口：</div>
+                        <Input disabled size="small" value={data?.port} />
+                        <Button
+                            type="primary"
+                            size="small"
+                            loading={loading}
+                            onClick={refreshAsync}
+                        >
+                            申请随机端口
+                        </Button>
+                    </div>
+                </div>
+                <div className="mt-4 px-4 flex items-center">
+                    使用以下随机端口尝试触发记录：
+                    {loading ? (
+                        <Spin spinning={loading} size="small" />
+                    ) : (
+                        <div>
+                            {' '}
                             <Tag color="blue" className="mx-2">
-                                <span className="mr-[2px]">
-                                    101.33.34.170:59486
-                                </span>
+                                <span className="mr-[2px]">{data?.host}</span>
                                 <CopyOutlined
                                     style={{ minWidth: 16 }}
                                     onClick={() => {
-                                        copyToClipboard('aaa')
+                                        copyToClipboard(`${data?.host}`)
                                             .then(() => {
                                                 message.success('复制成功');
                                             })
@@ -84,12 +234,12 @@ const TCPLog = () => {
                             使用 NC 命令
                             <Tag color="green" className="mx-2">
                                 <span className="mr-[2px]">
-                                    nc 101.33.34.170 59486
+                                    nc {data?.host}
                                 </span>
                                 <CopyOutlined
                                     style={{ minWidth: 16 }}
                                     onClick={() => {
-                                        copyToClipboard('aaa')
+                                        copyToClipboard(`nc ${data?.host}`)
                                             .then(() => {
                                                 message.success('复制成功');
                                             })
@@ -102,11 +252,11 @@ const TCPLog = () => {
                                 />
                             </Tag>
                             <Tag color="purple" className="mx-2">
-                                <span className="mr-[2px]">59486</span>
+                                <span className="mr-[2px]">{data?.port}</span>
                                 <CopyOutlined
                                     style={{ minWidth: 16 }}
                                     onClick={() => {
-                                        copyToClipboard('aaa')
+                                        copyToClipboard(`${data?.port}`)
                                             .then(() => {
                                                 message.success('复制成功');
                                             })
@@ -119,33 +269,19 @@ const TCPLog = () => {
                                 />
                             </Tag>
                         </div>
-                    </div>
-                ),
-            }}
-            request={async (params, filter) => {
-                const star = filter?.start_time?.[0];
-                const end = filter?.start_time?.[1];
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                const request = {
-                    ...params,
-                    ...filter,
-                    start: star ? dayjs(star).unix() : undefined,
-                    end: end ? dayjs(end).unix() : undefined,
-                    start_time: undefined,
-                } as TReportRequest;
-                const result = await getssetsProts({ ...request });
-                const { data } = result;
-                return {
-                    list: data?.elements ?? [],
-                    pagemeta: {
-                        page: data?.page ?? 1,
-                        total: data?.total ?? 1,
-                        limit: data?.limit ?? 1,
-                        total_page: data?.page_total ?? 1,
-                    },
-                };
-            }}
-        />
+                    )}
+                </div>
+            </div>
+            <Table
+                rowKey="key"
+                columns={TcpColumns}
+                dataSource={dataSource}
+                pagination={false}
+                virtual
+                scroll={{ y: tableHeight }}
+                loading={sseLoading}
+            />
+        </div>
     );
 };
 

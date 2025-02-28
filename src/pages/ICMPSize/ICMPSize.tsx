@@ -13,7 +13,7 @@ import {
     posReverseDelete,
 } from '@/apis/ActiChainApi';
 import { useEventSource } from '@/hooks';
-import dayjs from 'dayjs';
+import { adjustTimestamp } from '../ActiChainDNS/compoments/data';
 
 const ICMPSize = () => {
     const icmpContainerRef = useRef<HTMLDivElement>(null);
@@ -107,14 +107,16 @@ const ICMPSize = () => {
         {
             title: '触发时间',
             dataIndex: 'TriggerTimestamp',
-            render: (text) =>
-                text ? (
-                    <Tag color="magenta">
-                        {dayjs.unix(text).format('YYYY-MM-DD HH:mm:ss')}
+            render: (text: number) => {
+                const targetTime = adjustTimestamp(text);
+                return text ? (
+                    <Tag color="blue">
+                        {targetTime.format('YYYY-MM-DD HH:mm:ss')}
                     </Tag>
                 ) : (
                     '-'
-                ),
+                );
+            },
         },
     ];
 

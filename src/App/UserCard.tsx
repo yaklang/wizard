@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import type { FC } from 'react';
 import Avatar from '../assets/compoments/Avatar.png';
 import { CloseIcon } from '@/assets/compoments';
 import useLoginStore from './store/loginStore';
@@ -82,7 +82,7 @@ const UserCard: FC<{ collapsed: boolean }> = ({ collapsed }) => {
                 title={
                     <div>
                         <InfoCircleOutlined color="#faad14" />
-                        <span className="ml-1 font-400"> 确定退出登陆吗？</span>
+                        <span className="ml-1 font-400"> 确定退出登录吗？</span>
                     </div>
                 }
                 trigger="click"

@@ -10,7 +10,7 @@ interface PostResponseVerifyCaptcha {
     code: string;
 }
 
-// 登陆接口请求参数
+// 登录接口请求参数
 interface PostResponseAuth {
     username: string;
     password: string;

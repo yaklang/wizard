@@ -5,6 +5,8 @@ import type {
     TIcmpGenerateRequest,
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
+    TReverseStartFacadesRequest,
+    TTcpGenerateRequest,
 } from './type';
 
 // 获取内置 DNSLog 配置选项
@@ -46,6 +48,24 @@ const getIcmpQuery = (params: {
 }): Promise<ResponseData<boolean>> =>
     axios.get<never, ResponseData<boolean>>('/reverse/icmp/query', { params });
 
+// 生成 icmp 反链长度
+const getTcpGenerate = (): Promise<ResponseData<TTcpGenerateRequest>> =>
+    axios.get<never, ResponseData<TTcpGenerateRequest>>(
+        '/reverse/tcp/generate',
+    );
+
+// 查询icmp结果，用sse返回
+const getTcoQuery = (params: {
+    token: string;
+}): Promise<ResponseData<boolean>> =>
+    axios.get<never, ResponseData<boolean>>('/reverse/tcp/query', { params });
+
+// 反连服务器 启动facedeServer
+const postReverseStartFacades = (
+    data: TReverseStartFacadesRequest,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>('/reverse/start/facades', data);
+
 export {
     postReverseDnsGenerate,
     getQuerySupportedDnsLogPlatforms,
@@ -53,4 +73,7 @@ export {
     posReverseDelete,
     getIcmpGenerate,
     getIcmpQuery,
+    getTcpGenerate,
+    getTcoQuery,
+    postReverseStartFacades,
 };
