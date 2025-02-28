@@ -18,7 +18,7 @@ const postVerifyCaptcha = (
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>('/verify/captcha', data);
 
-// 登陆接口
+// 登录接口
 const postLogin = (
     data: PostResponseAuth,
 ): Promise<ResponseData<PostRequestAuth>> =>

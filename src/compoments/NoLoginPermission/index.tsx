@@ -40,14 +40,14 @@ const NoLoginPermission: FC = () => {
             <div className="color-[#31343F] text-sm font-semibold">
                 暂无访问权限
             </div>
-            <div>登陆后即可访问该页面</div>
+            <div>登录后即可访问该页面</div>
             <Button
                 color="primary"
                 variant="outlined"
                 onClick={headLogin}
                 loading={loading}
             >
-                {!loading ? '立即登陆' : '获取权限中...'}
+                {!loading ? '立即登录' : '获取权限中...'}
             </Button>
         </div>
     );

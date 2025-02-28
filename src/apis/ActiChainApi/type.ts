@@ -22,9 +22,16 @@ interface TIcmpGenerateRequest {
     host: string;
 }
 
+interface TTcpGenerateRequest {
+    token: string;
+    port: number;
+    host: string;
+}
+
 export type {
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
     TGetDnsQuryRequest,
     TIcmpGenerateRequest,
+    TTcpGenerateRequest,
 };

@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { CopyOutlined } from '@ant-design/icons';
-import { DNSLogOptions } from './compoments/data';
+import { adjustTimestamp, DNSLogOptions } from './compoments/data';
 import { useMemoizedFn, useRequest, useSafeState } from 'ahooks';
 import type { TableProps } from 'antd';
 import { Button, message, Select, Switch, Table, Tag } from 'antd';
 import { copyToClipboard, randomString } from '@/utils';
 import { WizardAceEditor } from '@/compoments';
-import dayjs from 'dayjs';
 import {
     getDnsQury,
     getQuerySupportedDnsLogPlatforms,
@@ -128,7 +127,12 @@ const ActiChainDNS = () => {
                     jsonObject.Token === tokenRef.current
                         ? [jsonObject, ...preValue]
                         : preValue;
-                return newData;
+                const targetData = Array.from(
+                    new Map(
+                        newData.map((item) => [item.RemoteIp, item]),
+                    ).values(),
+                );
+                return targetData;
             });
         },
         onerror: () => {
@@ -158,14 +162,16 @@ const ActiChainDNS = () => {
         {
             title: 'Timestamp',
             dataIndex: 'Timestamp',
-            render: (text) =>
-                text ? (
+            render: (text: number) => {
+                const targetTime = adjustTimestamp(text);
+                return text ? (
                     <Tag color="blue">
-                        {dayjs.unix(text).format('YYYY-MM-DD HH:mm:ss')}
+                        {targetTime.format('YYYY-MM-DD HH:mm:ss')}
                     </Tag>
                 ) : (
                     '-'
-                ),
+                );
+            },
         },
     ];
 

@@ -7,7 +7,7 @@ import useLoginStore from '@/App/store/loginStore';
 // export const REQUEST_SOURCE = 'management';
 
 export const successCode = 200; // 成功
-export const noAuthCode = 401; // 登陆过期
+export const noAuthCode = 401; // 登录过期
 export const roleLoseEfficacy = 20001; // 权限实效  目前可以暂时不用
 
 const axios = Axios.create({
