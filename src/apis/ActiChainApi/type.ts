@@ -28,10 +28,19 @@ interface TTcpGenerateRequest {
     host: string;
 }
 
+interface TReverseStartFacadesRequest {
+    isRemote: boolean;
+    remoteAddress: string;
+    secret: string;
+    reversePort: number;
+    Token: string;
+}
+
 export type {
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
     TGetDnsQuryRequest,
     TIcmpGenerateRequest,
     TTcpGenerateRequest,
+    TReverseStartFacadesRequest,
 };

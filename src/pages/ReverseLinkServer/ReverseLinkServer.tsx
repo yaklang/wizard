@@ -1,7 +1,11 @@
-import { copyToClipboard } from '@/utils';
-import { CopyOutlined } from '@ant-design/icons';
-import { Button, Form, Input, InputNumber, message, Switch, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { Button, Form, Input, InputNumber, message, Switch, Tag } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
+import { v4 as uuidv4 } from 'uuid';
+
+import { postReverseStartFacades } from '@/apis/ActiChainApi';
+import { copyToClipboard } from '@/utils';
+import { useRequest } from 'ahooks';
 
 const { Item } = Form;
 
@@ -9,9 +13,17 @@ const ReverseLinkServer = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
 
+    const { loading, runAsync } = useRequest(postReverseStartFacades, {
+        manual: true,
+        onSuccess: () => {
+            message.success('启动成功');
+        },
+    });
+
     // 提交 callback
     const onSubmit = async () => {
         const formValues = await form.validateFields();
+        await runAsync({ ...formValues, Token: uuidv4() });
         navigate(`facade-server`, {
             state: { formValues },
         });
@@ -31,84 +43,65 @@ const ReverseLinkServer = () => {
                     form={form}
                     className="w-[50%]"
                     labelCol={{ span: 4 }}
-                    wrapperCol={{ span: 20 }}
+                    wrapperCol={{ span: 18 }}
                 >
-                    <Item name="penetrate" label="启动公网穿透">
+                    <Item
+                        name="isRemote"
+                        label="启动公网穿透"
+                        initialValue={true}
+                    >
                         <Switch />
                     </Item>
-                    <Item dependencies={['penetrate']} noStyle>
+                    {/* <Item dependencies={['penetrate']} noStyle>
                         {({ getFieldValue }) => {
                             const penetrate = getFieldValue(['penetrate']);
-                            return penetrate ? (
-                                <div>
-                                    <div className="color-[rgba(0,0,0,.45)] ml-34 my-4">
-                                        在自己的服务器安装 yak 核心引擎，执行
-                                        <Tag color="blue" className="mx-2">
-                                            <span className="mr-[2px]">
-                                                yak bridge --secret [your-pass]
-                                            </span>
-                                            <CopyOutlined
-                                                style={{ minWidth: 16 }}
-                                                onClick={() => {
-                                                    copyToClipboard('aaa')
-                                                        .then(() => {
-                                                            message.success(
-                                                                '复制成功',
-                                                            );
-                                                        })
-                                                        .catch(() => {
-                                                            message.info(
-                                                                '复制失败，请重试',
-                                                            );
-                                                        });
-                                                }}
-                                            />
-                                        </Tag>
-                                        {`启动 Yak Bridge 公网服务 yak
-                                                version >= v1.0.11-sp9`}
-                                    </div>
-                                    <Item
-                                        name="bridge-address"
-                                        label="公网Bridge地址"
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message: '请输入公网Bridge地址',
-                                            },
-                                        ]}
-                                    >
-                                        <Input
-                                            placeholder="请输入"
-                                            allowClear={true}
-                                        />
-                                    </Item>
-                                    <Item name="password" label="密码">
-                                        <Input placeholder="请输入" />
-                                    </Item>
-                                </div>
-                            ) : (
-                                <div>
-                                    <Item
-                                        name="address"
-                                        label="反连地址"
-                                        rules={[
-                                            {
-                                                required: true,
-                                                message: '请输入反连地址',
-                                            },
-                                        ]}
-                                    >
-                                        <Input
-                                            allowClear={true}
-                                            placeholder="请输入"
-                                        />
-                                    </Item>
-                                </div>
-                            );
+                            return penetrate ? 
                         }}
-                    </Item>
+                    </Item> */}
+                    <div>
+                        <div className="color-[rgba(0,0,0,.45)] ml-34 my-4">
+                            在自己的服务器安装 yak 核心引擎，执行
+                            <Tag color="blue" className="mx-2">
+                                <span className="mr-[2px]">
+                                    yak bridge --secret [your-pass]
+                                </span>
+                                <CopyOutlined
+                                    style={{ minWidth: 16 }}
+                                    onClick={() => {
+                                        copyToClipboard(
+                                            'yak bridge --secret [your-pass]',
+                                        )
+                                            .then(() => {
+                                                message.success('复制成功');
+                                            })
+                                            .catch(() => {
+                                                message.info(
+                                                    '复制失败，请重试',
+                                                );
+                                            });
+                                    }}
+                                />
+                            </Tag>
+                            {`启动 Yak Bridge 公网服务 yak version >= v1.0.11-sp9`}
+                        </div>
+                        <Item
+                            name="remoteAddress"
+                            label="公网Bridge地址"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: '请输入公网Bridge地址',
+                                },
+                            ]}
+                        >
+                            <Input placeholder="请输入" allowClear={true} />
+                        </Item>
+                        <Item name="secret" label="密码">
+                            <Input placeholder="请输入" allowClear />
+                        </Item>
+                    </div>
                     <Item
-                        name="prots"
+                        name="reversePort"
                         label="反连端口"
                         rules={[
                             {
@@ -119,9 +112,12 @@ const ReverseLinkServer = () => {
                     >
                         <InputNumber className="w-full" placeholder="请输入" />
                     </Item>
-
                     <div className="flex justify-center">
-                        <Button type="primary" onClick={onSubmit}>
+                        <Button
+                            type="primary"
+                            onClick={onSubmit}
+                            loading={loading}
+                        >
                             启动FacadeServer
                         </Button>
                     </div>

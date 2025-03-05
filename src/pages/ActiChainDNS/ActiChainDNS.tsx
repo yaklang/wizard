@@ -33,7 +33,7 @@ const ActiChainDNS = () => {
     const [initialize, setInitialize] = useSafeState<
         Omit<TReverseDnsGenerateRequest, 'address' | 'secret'>
     >({
-        dnsMode: 'builtin',
+        dnsMode: '',
         token: undefined,
         UseLocal: false,
     });

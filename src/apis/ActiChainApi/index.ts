@@ -5,6 +5,7 @@ import type {
     TIcmpGenerateRequest,
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
+    TReverseStartFacadesRequest,
     TTcpGenerateRequest,
 } from './type';
 
@@ -59,6 +60,12 @@ const getTcoQuery = (params: {
 }): Promise<ResponseData<boolean>> =>
     axios.get<never, ResponseData<boolean>>('/reverse/tcp/query', { params });
 
+// 反连服务器 启动facedeServer
+const postReverseStartFacades = (
+    data: TReverseStartFacadesRequest,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>('/reverse/start/facades', data);
+
 export {
     postReverseDnsGenerate,
     getQuerySupportedDnsLogPlatforms,
@@ -68,4 +75,5 @@ export {
     getIcmpQuery,
     getTcpGenerate,
     getTcoQuery,
+    postReverseStartFacades,
 };

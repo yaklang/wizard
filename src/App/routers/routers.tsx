@@ -26,12 +26,14 @@ import { CveLoophole } from '@/pages/DataService/CveLoophole';
 import NodeManagePage from '@/pages/NodeManage';
 import License from '@/pages/License';
 import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
-import ActiChainDNS from '../../pages/ActiChainDNS';
-import ICMPSize from '../../pages/ICMPSize';
-import TCPLog from '../../pages/TCPLog';
+import ActiChainDNS from '@/pages/ActiChainDNS';
+import ICMPSize from '@/pages/ICMPSize';
+import TCPLog from '@/pages/TCPLog';
 import MessageCollect from '@/pages/MessageCollect';
-import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
 import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/ReverseLinkServerFacadeServer';
+import GlobalReverseLink from '@/pages/ReverseLink';
+import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
+import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -147,7 +149,7 @@ const routers: RouteObjectRootMy[] = [
                 path: 'acti-chain',
                 name: '反连',
                 key: 'acti-chain',
-                icon: <DataServiceIcon />,
+                icon: <ApiOutlinedIcon />,
                 children: [
                     {
                         path: 'dns',
@@ -207,7 +209,20 @@ const routers: RouteObjectRootMy[] = [
                 name: '系统管理',
                 key: 'system',
                 icon: <SystemManagementIcon />,
-                element: <SystemManagement />,
+                children: [
+                    {
+                        path: 'userinfo',
+                        name: '用户管理',
+                        key: 'system-user',
+                        element: <SystemManagement />,
+                    },
+                    {
+                        name: '全局反连',
+                        path: 'global-reverse-link',
+                        key: 'system-global-reverse-link',
+                        element: <GlobalReverseLink />,
+                    },
+                ],
             },
         ],
     },
