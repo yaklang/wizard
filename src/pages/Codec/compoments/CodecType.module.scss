@@ -1,0 +1,10 @@
+.collapse-children{
+    :global {
+        .ant-collapse-content{
+            .ant-collapse-content-box {
+                padding: 0;
+                padding-block: 0 !important;
+            }
+        }
+    }
+}

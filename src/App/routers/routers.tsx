@@ -6,6 +6,7 @@ import Login from '@/pages/Login';
 import {
     DataServiceIcon,
     NodeConfigIcon,
+    PublicCodec,
     ReportManageIcon,
     SystemManagementIcon,
     TaskCenterIcon,
@@ -30,7 +31,7 @@ import ActiChainDNS from '@/pages/ActiChainDNS';
 import ICMPSize from '@/pages/ICMPSize';
 import TCPLog from '@/pages/TCPLog';
 import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
-import DndKit from '@/pages/DndKit';
+import CodecEntry from '@/pages/Codec';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -143,6 +144,13 @@ const routers: RouteObjectRootMy[] = [
                 ],
             },
             {
+                path: 'codec',
+                name: 'Codec',
+                key: 'codec',
+                icon: <PublicCodec />,
+                element: <CodecEntry />,
+            },
+            {
                 path: 'acti-chain',
                 name: '反连',
                 key: 'acti-chain',
@@ -194,13 +202,6 @@ const routers: RouteObjectRootMy[] = [
                 key: 'system',
                 icon: <SystemManagementIcon />,
                 element: <SystemManagement />,
-            },
-            {
-                path: 'dnd-demo',
-                name: 'dnd',
-                key: 'dnd',
-                icon: <SystemManagementIcon />,
-                element: <DndKit />,
             },
         ],
     },

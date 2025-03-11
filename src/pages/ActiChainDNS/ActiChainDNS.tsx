@@ -17,30 +17,6 @@ const ActiChainDNS = () => {
     const [dnsLog, setDnsLog] = useSafeState('builtin');
     const [page] = WizardTable.usePage();
 
-    // const columns: CreateTableProps<any>['columns'] = [
-    //     // Table.EXPAND_COLUMN,
-    //     {
-    //         dataIndex: 'name',
-    //         title: '域名',
-    //         width: 180,
-    //     },
-    //     {
-    //         dataIndex: 'type',
-    //         title: '类型',
-    //         width: 60,
-    //     },
-    //     {
-    //         dataIndex: 'ip',
-    //         title: '远端IP',
-    //         width: 160,
-    //     },
-    //     {
-    //         dataIndex: 'timestamp',
-    //         title: 'Timestamp',
-    //         width: 120,
-    //     },
-    // ];
-
     const ReportManageColumns: CreateTableProps<any>['columns'] = [
         {
             title: '域名',

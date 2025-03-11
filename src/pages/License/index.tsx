@@ -104,10 +104,10 @@ const License: FC = () => {
                         <Input.TextArea rows={16} placeholder="请输入" />
                     </Item>
 
-                    <div className="pl-48">
+                    <div className="w-full flex items-center justify-end">
                         <Button
                             loading={loading}
-                            className="flex justify-center items-center my-4 w-full py-7"
+                            className="my-4 w-[83.2%] py-7"
                             type="primary"
                             onClick={handSumit}
                         >

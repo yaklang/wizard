@@ -1,6 +1,6 @@
 import axios from '@/utils/axios';
-import { ResponseData, TableResponseData } from '@/utils/commonTypes';
-import { TCveQueryRequest, TCveQueryResponse } from './type';
+import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
+import type { TCveQueryRequest, TCveQueryResponse } from './type';
 
 // 节点是否安装成功
 const postCveQuery = (
