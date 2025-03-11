@@ -4,3 +4,4 @@ export { default as ReportManageIcon } from './ReportManageIcon';
 export { default as DataServiceIcon } from './DataServiceIcon';
 export { default as NodeConfigIcon } from './NodeConfigIcon';
 export { default as SystemManagementIcon } from './SystemManagementIcon';
+export { default as PublicCodec } from './CodecIcon';

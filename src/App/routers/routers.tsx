@@ -6,6 +6,7 @@ import Login from '@/pages/Login';
 import {
     DataServiceIcon,
     NodeConfigIcon,
+    PublicCodec,
     ReportManageIcon,
     SystemManagementIcon,
     TaskCenterIcon,
@@ -35,6 +36,7 @@ import GlobalReverseLink from '@/pages/ReverseLink';
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
 import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 import DndKit from '@/pages/DndKit';
+import CodecEntry from '@/pages/Codec';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -147,6 +149,13 @@ const routers: RouteObjectRootMy[] = [
                 ],
             },
             {
+                path: 'codec',
+                name: 'Codec',
+                key: 'codec',
+                icon: <PublicCodec />,
+                element: <CodecEntry />,
+            },
+            {
                 path: 'acti-chain',
                 name: '反连',
                 key: 'acti-chain',
@@ -224,13 +233,6 @@ const routers: RouteObjectRootMy[] = [
                         element: <GlobalReverseLink />,
                     },
                 ],
-            },
-            {
-                path: 'dnd-demo',
-                name: 'dnd',
-                key: 'dnd',
-                icon: <SystemManagementIcon />,
-                element: <DndKit />,
             },
         ],
     },

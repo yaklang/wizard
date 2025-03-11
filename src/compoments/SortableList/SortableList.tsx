@@ -24,17 +24,20 @@ interface BaseItem {
     id: UniqueIdentifier;
 }
 
-interface Props<T extends BaseItem> {
+type DefaultRowKey<T> = 'id' extends keyof T ? 'id' : keyof T;
+
+interface Props<T, K extends keyof T = DefaultRowKey<T>> {
     value: T[];
     onChange: (items: T[]) => void;
     renderItem: (item: T) => ReactNode;
+    rowKey?: K;
 }
 
-export function SortableList<T extends BaseItem>({
+const SortableList = <T extends BaseItem, K extends keyof T>({
     value,
     onChange,
     renderItem,
-}: Props<T>) {
+}: Props<T, K>) => {
     const [active, setActive] = useState<Active | null>(null);
 
     const activeItem = useMemo(
@@ -101,7 +104,9 @@ export function SortableList<T extends BaseItem>({
             </SortableOverlay>
         </DndContext>
     );
-}
+};
 
 SortableList.Item = SortableItem;
 SortableList.DragHandle = DragHandle;
+
+export { SortableList };

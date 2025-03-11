@@ -60,6 +60,7 @@ const SortableItem: FC<SortableItemProps> = ({
         opacity: isDragging ? 0.4 : undefined,
         transform: CSS.Translate.toString(transform),
         transition,
+        ...props.style,
     };
 
     return (
