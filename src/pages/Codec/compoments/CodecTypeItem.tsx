@@ -6,6 +6,7 @@ import { match } from 'ts-pattern';
 import type { TAllCodecMethodsParams } from '@/apis/CodecApi/type';
 import styles from './CodecTypeItemStyle.module.scss';
 import { WizardAceEditor } from '@/compoments';
+import { useTheme } from '../CodecEntry';
 // import { useTheme } from '../CodecEntry';
 
 interface TCodecTypeItemProps {
@@ -32,8 +33,56 @@ const ant_defualte_class =
     'border-0 p-0 shadow-none rounded-none  focus:shadow-[0_1px_0_#1677ff] focus:outline-0 transition-shadow pl-2';
 
 const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
-    // const { setCollectListContext, collectListContext } = useTheme();
-    // console.log(childrenItem, collectListContext, 'sss');
+    const { setCollectListContext } = useTheme();
+
+    const handInputChange = (value: string | boolean) => {
+        setCollectListContext((preList) => {
+            return {
+                ...preList,
+                workflow: preList.workflow.map((item) => {
+                    return item.id === childrenItem.id
+                        ? {
+                              ...item,
+                              Params:
+                                  item.Params?.map((it) => {
+                                      return it.Name === childrenItem.Name
+                                          ? { ...it, DefaultValue: value }
+                                          : it;
+                                  }) ?? [],
+                          }
+                        : item;
+                }),
+            };
+        });
+    };
+
+    const handInputSelectChange = (value: string) => {
+        setCollectListContext((preList) => {
+            return {
+                ...preList,
+                workflow: preList.workflow.map((item) => {
+                    return item.id === childrenItem.id
+                        ? {
+                              ...item,
+                              Params:
+                                  item.Params?.map((it) => {
+                                      return it.Name === childrenItem.Name
+                                          ? {
+                                                ...it,
+                                                Connector: {
+                                                    ...it.Connector,
+                                                    DefaultValue: value,
+                                                },
+                                            }
+                                          : it;
+                                  }) ?? [],
+                          }
+                        : item;
+                }),
+            };
+        });
+    };
+
     return match(childrenItem.Type)
         .with('input', () => {
             return (
@@ -47,6 +96,19 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     <Input
                         placeholder="请输入..."
                         className={ant_defualte_class}
+                        defaultValue={
+                            childrenItem.DefaultValue
+                                ? `${childrenItem.DefaultValue}`
+                                : undefined
+                        }
+                        value={
+                            childrenItem.DefaultValue
+                                ? `${childrenItem.DefaultValue}`
+                                : undefined
+                        }
+                        onChange={(event) =>
+                            handInputChange(event.target.value)
+                        }
                     />
                 </div>
             );
@@ -63,6 +125,19 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     <Input.TextArea
                         placeholder="请输入..."
                         className={ant_defualte_class}
+                        defaultValue={
+                            childrenItem.DefaultValue
+                                ? `${childrenItem.DefaultValue}`
+                                : undefined
+                        }
+                        value={
+                            childrenItem.DefaultValue
+                                ? `${childrenItem.DefaultValue}`
+                                : undefined
+                        }
+                        onChange={(event) =>
+                            handInputChange(event.target.value)
+                        }
                     />
                 </div>
             );
@@ -75,32 +150,42 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
 
             return (
                 <div className="text-[#b4bbca] text-xs bg-[#fff] rounded-sm pt-2 mb-2">
-                    <div className="flex gap-1 items-center pl-2">
-                        <div>{childrenItem?.Label}</div>
-                        {childrenItem?.Required && (
-                            <div className="text-[#f4736b]">*</div>
-                        )}
-                    </div>
+                    {childrenItem?.Label && (
+                        <div className="flex gap-1 items-center pl-2">
+                            <div>{childrenItem?.Label}</div>
+                            {childrenItem?.Required && (
+                                <div className="text-[#f4736b]">*</div>
+                            )}
+                        </div>
+                    )}
                     <div className={styles['ant-select-codec']}>
                         <Select
                             options={options}
                             variant="borderless"
                             defaultValue={childrenItem.DefaultValue}
+                            value={childrenItem.DefaultValue}
+                            onChange={(value) => handInputChange(value)}
                         />
                     </div>
                 </div>
             );
         })
         .with('checkbox', () => {
-            const options = [
-                {
-                    label: childrenItem.Label,
-                    value: childrenItem.Name,
-                },
-            ];
             return (
                 <div className="inline-block mt-1">
-                    <Checkbox.Group options={options} />
+                    <Checkbox
+                        checked={
+                            childrenItem.DefaultValue ||
+                            childrenItem.DefaultValue === 'true'
+                                ? true
+                                : false
+                        }
+                        onChange={(event) =>
+                            handInputChange(event.target.checked)
+                        }
+                    >
+                        {childrenItem.Label}
+                    </Checkbox>
                 </div>
             );
         })
@@ -124,6 +209,9 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                             placeholder="请选择..."
                             optionFilterProp="label"
                             options={options}
+                            defaultValue={childrenItem.DefaultValue}
+                            value={childrenItem.DefaultValue}
+                            onChange={(value) => handInputChange(value)}
                         />
                     </div>
                 </div>
@@ -140,9 +228,17 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     </div>
                     <WizardAceEditor
                         style={{ height: '240px' }}
-                        defaultValue={CodecPluginTemplate}
-                        // value={scriptValue}
-                        // onChange={setScriptValue}
+                        defaultValue={
+                            childrenItem.DefaultValue
+                                ? `${childrenItem.DefaultValue}`
+                                : undefined
+                        }
+                        value={
+                            (childrenItem.DefaultValue
+                                ? `${childrenItem.DefaultValue}`
+                                : undefined) as string
+                        }
+                        onChange={(value: string) => handInputChange(value)}
                     />
                 </div>
             );
@@ -164,6 +260,19 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                         <Input
                             placeholder="请输入..."
                             className={ant_defualte_class}
+                            defaultValue={
+                                childrenItem.DefaultValue
+                                    ? `${childrenItem.DefaultValue}`
+                                    : undefined
+                            }
+                            value={
+                                childrenItem.DefaultValue
+                                    ? `${childrenItem.DefaultValue}`
+                                    : undefined
+                            }
+                            onChange={(event) =>
+                                handInputChange(event.target.value)
+                            }
                         />
                     </div>
                     <div className="text-[#b4bbca] text-xs bg-[#fff] mb-2 w-1/3">
@@ -178,7 +287,17 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                                 options={options}
                                 variant="borderless"
                                 defaultValue={
-                                    childrenItem?.Connector?.DefaultValue
+                                    childrenItem.Connector.DefaultValue
+                                        ? `${childrenItem.Connector.DefaultValue}`
+                                        : undefined
+                                }
+                                value={
+                                    childrenItem.Connector.DefaultValue
+                                        ? `${childrenItem.Connector.DefaultValue}`
+                                        : undefined
+                                }
+                                onChange={(value: string) =>
+                                    handInputSelectChange(value)
                                 }
                             />
                         </div>

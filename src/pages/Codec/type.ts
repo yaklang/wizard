@@ -7,4 +7,11 @@ interface TGetAllCodecMethodsResponseWithId
     enable: boolean; // 是否 启用
 }
 
-export type { TGetAllCodecMethodsResponseWithId };
+interface TDataIntegration {
+    workflow: TGetAllCodecMethodsResponseWithId[];
+    auto: boolean;
+    text: string;
+    rowResult: string;
+}
+
+export type { TGetAllCodecMethodsResponseWithId, TDataIntegration };

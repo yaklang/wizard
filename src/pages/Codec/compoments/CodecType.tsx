@@ -37,8 +37,8 @@ const CodecType: FC = () => {
     >([]);
     const [searchValue, setSearchValue] = useSafeState('');
 
-    const [containerHeight, containerWidth] = useListenHeight(typeContainerRef);
-    const [headerHeight, headerWidth] = useListenHeight(typeHeaderRef);
+    const [containerHeight] = useListenHeight(typeContainerRef);
+    const [headerHeight] = useListenHeight(typeHeaderRef);
 
     // 获取 codec 类目
     const { data, loading } = useRequest(async () => {
@@ -87,20 +87,28 @@ const CodecType: FC = () => {
 
     // 取消/ 添加 codec 类目
     const headClick = (item: TGetAllCodecMethodsResponse) => {
-        setCollectListContext((preValue) =>
-            preValue.concat({
-                ...item,
-                id: uuidv4(),
-                breakpoint: false,
-                enable: false,
-            }),
-        );
+        setCollectListContext((preValue) => {
+            return {
+                ...preValue,
+                workflow: preValue.workflow.concat({
+                    ...item,
+                    id: uuidv4(),
+                    breakpoint: false,
+                    enable: false,
+                    Params:
+                        item.Params?.map((it) => ({
+                            ...it,
+                            id: uuidv4(),
+                            DefaultValue: it.DefaultValue ?? false,
+                        })) ?? null,
+                }),
+            };
+        });
     };
 
     // Collapse 展开渲染节点
     const CollapseChildren = useMemoizedFn(
         (list: TGetAllCodecMethodsResponse[]) => {
-            console.log(containerWidth, headerWidth);
             return (
                 <div>
                     {list?.map((item) => {

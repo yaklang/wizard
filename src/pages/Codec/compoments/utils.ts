@@ -1,4 +1,7 @@
-import type { TGetAllCodecMethodsResponse } from '@/apis/CodecApi/type';
+import type {
+    TGetAllCodecMethodsResponse,
+    TPostRunCodecResponseWorkflow,
+} from '@/apis/CodecApi/type';
 import type { TGetAllCodecMethodsResponseWithId } from '../type';
 import { match } from 'ts-pattern';
 
@@ -47,4 +50,27 @@ const codecBgColorFn = (
         .run();
 };
 
-export { groupedCodecs, headOperateCodecType, codecBgColorFn };
+const transformData = (
+    data: TGetAllCodecMethodsResponseWithId[],
+): TPostRunCodecResponseWorkflow[] =>
+    data.map(({ CodecMethod, Params }) => ({
+        codeType: CodecMethod,
+        params: (Params ?? []).flatMap(({ Name, DefaultValue, Connector }) => [
+            {
+                key: Name,
+                value: DefaultValue,
+                explain: '',
+            },
+            ...(Connector?.DefaultValue !== undefined
+                ? [
+                      {
+                          key: `${Name}Type`,
+                          value: Connector.DefaultValue,
+                          explain: '',
+                      },
+                  ]
+                : []),
+        ]),
+    }));
+
+export { groupedCodecs, headOperateCodecType, codecBgColorFn, transformData };

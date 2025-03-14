@@ -2,12 +2,13 @@ import { useRef } from 'react';
 
 import { WizardAceEditor } from '@/compoments';
 import useListenHeight from '@/hooks/useListenHeight';
+import { useTheme } from '../CodecEntry';
 
 const CodeEditor = () => {
+    const { collectListContext, setCollectListContext } = useTheme();
     const typeContainerRef = useRef(null);
+    const [containerHeight] = useListenHeight(typeContainerRef);
 
-    const [containerHeight, containerWidth] = useListenHeight(typeContainerRef);
-    console.log(containerHeight, containerWidth, 'containerHeight');
     return (
         <div ref={typeContainerRef} className="h-full flex-1">
             <div className="h-9 flex justify-between items-center px-2">
@@ -16,8 +17,13 @@ const CodeEditor = () => {
             </div>
             <WizardAceEditor
                 style={{ height: `${containerHeight / 2}px` }}
-                // value={scriptValue}
-                // onChange={setScriptValue}
+                value={collectListContext.text}
+                onChange={(e: string) =>
+                    setCollectListContext((preValue) => ({
+                        ...preValue,
+                        text: e,
+                    }))
+                }
             />
 
             <div className="h-9 flex justify-between items-center px-2">
@@ -27,8 +33,7 @@ const CodeEditor = () => {
             <WizardAceEditor
                 style={{ height: `${containerHeight / 2 - 72}px` }}
                 readOnly={true}
-                // value={scriptValue}
-                // onChange={setScriptValue}
+                value={collectListContext.rowResult}
             />
         </div>
     );

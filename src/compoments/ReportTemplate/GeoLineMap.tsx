@@ -2,10 +2,10 @@ import React, { useEffect } from 'react';
 import { Scene, LineLayer } from '@antv/l7';
 import { GaodeMap } from '@antv/l7-maps';
 import { randomString } from '@/utils';
-import { GraphProps } from './compoments/GraphViewer';
-import { PalmSiemGeoJson } from './GeoHeatmap';
+import type { GraphProps } from './compoments/GraphViewer';
+import type { PalmSiemGeoJson } from './GeoHeatmap';
 
-export interface GeoMapProp extends GraphProps {}
+export type GeoMapProp = GraphProps;
 
 export const GeoLineMap: React.FC<GeoMapProp> = (props) => {
     const containerId = `map-container-${randomString(11)}`;

@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { SortableList } from '@/compoments';
 import { DragHandleIcon } from '../assets/DragHandleIcon';
 import {
@@ -12,14 +10,15 @@ import { useTheme } from '../CodecEntry';
 import type { TGetAllCodecMethodsResponseWithId } from '../type';
 import { useMemo, useRef } from 'react';
 import useListenHeight from '@/hooks/useListenHeight';
-import { useMemoizedFn, useSafeState } from 'ahooks';
+import { useMemoizedFn, useRequest, useSafeState } from 'ahooks';
 
 import EmptyImages from '@/assets/compoments/Empty.png';
-import { Button, Checkbox, Popover, Tooltip } from 'antd';
+import { Button, Checkbox, message, Popover, Tooltip } from 'antd';
 import { OutlineStorage } from '../assets/OutlineStorage';
 import { OutlineClock } from '../assets/OutlineClock';
 import { CodecTypeItem } from './CodecTypeItem';
-import { codecBgColorFn } from './utils';
+import { codecBgColorFn, transformData } from './utils';
+import { postRunCodec } from '@/apis/CodecApi';
 
 const { DragHandle } = SortableList;
 
@@ -33,28 +32,56 @@ const CodeOrder = () => {
     const typeHeaderRef = useRef(null);
     const typeContainerRef = useRef(null);
 
-    const [containerHeight, containerWidth] = useListenHeight(typeContainerRef);
-    const [headerHeight, headerWidth] = useListenHeight(typeHeaderRef);
+    const [containerHeight] = useListenHeight(typeContainerRef);
+    const [headerHeight] = useListenHeight(typeHeaderRef);
+
+    const { loading, runAsync } = useRequest(postRunCodec, {
+        manual: true,
+        onSuccess: (value) => {
+            const {
+                data: { rawResult },
+            } = value;
+            console.log(rawResult, 'rawResult');
+            setCollectListContext((preValue) => ({
+                ...preValue,
+                rowResult: rawResult,
+            }));
+        },
+        onError: (error) => {
+            message.destroy();
+            message.error(error.message);
+        },
+    });
 
     // 计算codec 类目所在节点高度
     const typeCollapseHeight = useMemoizedFn(() => {
-        console.log(containerWidth, headerWidth);
         return containerHeight - headerHeight - 64;
     });
 
+    const disableStatus = useMemo(() => {
+        return collectListContext.workflow.length > 0 &&
+            collectListContext.text.length > 0
+            ? false
+            : true;
+    }, [collectListContext.workflow, collectListContext.text]);
+
     // 清空逻辑
-    const headClear = () => setCollectListContext([]);
+    const headClear = () =>
+        setCollectListContext((preValue) => ({ ...preValue, workflow: [] }));
 
     // 单个删除逻辑
     const headClose = (id: string) => {
         setCollectListContext((preValue) => {
-            return preValue.filter((it) => it.id !== id);
+            return {
+                ...preValue,
+                workflow: preValue.workflow.filter((it) => it.id !== id),
+            };
         });
     };
 
     // 启动 / 禁用逻辑
     const handEnable = (id: string) => {
-        const result = collectListContext.map((it) =>
+        const result = collectListContext.workflow.map((it) =>
             id === it.id
                 ? {
                       ...it,
@@ -64,11 +91,14 @@ const CodeOrder = () => {
                   }
                 : { ...it },
         );
-        setCollectListContext(result);
+        setCollectListContext((preValue) => ({
+            ...preValue,
+            workflow: result,
+        }));
     };
 
     const handBreakpoint = (id: string) => {
-        const result = collectListContext.map((it) =>
+        const result = collectListContext.workflow.map((it) =>
             id === it.id
                 ? {
                       ...it,
@@ -77,7 +107,10 @@ const CodeOrder = () => {
                   }
                 : { ...it },
         );
-        setCollectListContext(result);
+        setCollectListContext((preValue) => ({
+            ...preValue,
+            workflow: result,
+        }));
     };
 
     // 打开关闭 历史存储 气泡卡片
@@ -100,6 +133,15 @@ const CodeOrder = () => {
         );
     }, [mockHistoryList]);
 
+    // 立即执行
+    const onSubmit = async () => {
+        const tragetValue = transformData(collectListContext.workflow);
+        await runAsync({
+            ...collectListContext,
+            workflow: tragetValue,
+        });
+    };
+
     return (
         <div
             ref={typeContainerRef}
@@ -113,7 +155,7 @@ const CodeOrder = () => {
                     <span className="whitespace-nowrap flex items-center gap-1">
                         编解码顺序
                         <div className="bg-[#f0f1f3] text-[#85899e] px-2 rounded-lg">
-                            {collectListContext.length}
+                            {collectListContext.workflow.length}
                         </div>
                     </span>
                     <div className="flex items-center justify-center gap-2">
@@ -143,7 +185,8 @@ const CodeOrder = () => {
                 </div>
             </div>
 
-            {collectListContext && collectListContext.length > 0 ? (
+            {collectListContext.workflow &&
+            collectListContext.workflow.length > 0 ? (
                 <div
                     className="overflow-auto pb-4"
                     style={{
@@ -155,8 +198,13 @@ const CodeOrder = () => {
                         'CodecMethod'
                     >
                         rowKey="CodecMethod"
-                        value={collectListContext}
-                        onChange={setCollectListContext}
+                        value={collectListContext.workflow}
+                        onChange={(e) =>
+                            setCollectListContext((preValue) => ({
+                                ...preValue,
+                                workflow: e,
+                            }))
+                        }
                         renderItem={(item) => (
                             <SortableList.Item
                                 id={item.id}
@@ -232,7 +280,7 @@ const CodeOrder = () => {
                                     ? item.Params.map((node) => {
                                           return (
                                               <CodecTypeItem
-                                                  key={uuidv4()}
+                                                  key={node.id}
                                                   childrenItem={{
                                                       ...node,
                                                       id: item.id,
@@ -260,10 +308,25 @@ const CodeOrder = () => {
             )}
 
             <div className="h-14 border-t-solid border-t-[1px] border-t-[#eaecf3] p-4 flex items-center">
-                <Checkbox>
+                <Checkbox
+                    disabled={disableStatus}
+                    value={collectListContext.auto}
+                    onChange={(event) =>
+                        setCollectListContext((preValue) => ({
+                            ...preValue,
+                            auto: event.target.checked,
+                        }))
+                    }
+                >
                     <div className="whitespace-nowrap mr-2">自动执行</div>
                 </Checkbox>
-                <Button type="primary" className="w-full">
+                <Button
+                    type="primary"
+                    className="w-full"
+                    onClick={onSubmit}
+                    loading={loading}
+                    disabled={disableStatus}
+                >
                     立即执行
                 </Button>
             </div>

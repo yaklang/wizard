@@ -5,23 +5,24 @@ import { CodecType } from './compoments/CodecType';
 import { CodeOrder } from './compoments/CodeOrder';
 import { CodeEditor } from './compoments/CodeEditor';
 import { useSafeState } from 'ahooks';
-import type { TGetAllCodecMethodsResponseWithId } from './type';
+import type { TDataIntegration } from './type';
 
 // 定义 ThemeContext 类型
 interface ThemeContextType {
-    collectListContext: TGetAllCodecMethodsResponseWithId[];
-    setCollectListContext: Dispatch<
-        React.SetStateAction<TGetAllCodecMethodsResponseWithId[]>
-    >;
+    collectListContext: TDataIntegration;
+    setCollectListContext: Dispatch<React.SetStateAction<TDataIntegration>>;
 }
 
 // 创建上下文并设置默认值
 const CodecContext = createContext<ThemeContextType | null>(null);
 
 const CodecEntry: FC = () => {
-    const [collectList, setCollectList] = useSafeState<
-        TGetAllCodecMethodsResponseWithId[]
-    >([]);
+    const [collectList, setCollectList] = useSafeState<TDataIntegration>({
+        workflow: [],
+        text: '',
+        auto: false,
+        rowResult: '',
+    });
 
     const themeValue = useMemo(
         () => ({
