@@ -11,7 +11,10 @@ interface TDataIntegration {
     workflow: TGetAllCodecMethodsResponseWithId[];
     auto: boolean;
     text: string;
-    rowResult: string;
+    rowResultBuff: Uint8Array;
+    resultStr: string;
+    expansion: boolean;
+    hex: boolean;
 }
 
 export type { TGetAllCodecMethodsResponseWithId, TDataIntegration };

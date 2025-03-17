@@ -87,11 +87,12 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
                 enableSnippets: true,
                 mergeUndoDeltas: true,
                 enableMultiselect: true,
-                wrap: true, // 选择合适的换行方式
+                wrap: false, // 选择合适的换行方式
                 useWorker: false,
                 printMargin: false,
                 showLineNumbers: true,
-                tabSize: 4,
+                tabSize: props.tabSize,
+                indentedSoftWrap: false, // 确保自动换行时不缩进
             }}
             editorProps={{ $blockScrolling: true }}
             {...props}

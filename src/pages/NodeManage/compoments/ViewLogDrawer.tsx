@@ -53,7 +53,7 @@ const ViewLogDrawer = forwardRef<UseDrawerRefType>((_, ref): ReactNode => {
                     return prev ? prev + '\n' + next : next;
                 });
             }
-        }, 1000);
+        }, 1000) as any;
     };
 
     // 停止读取

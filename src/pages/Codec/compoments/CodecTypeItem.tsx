@@ -11,6 +11,7 @@ import { useTheme } from '../CodecEntry';
 
 interface TCodecTypeItemProps {
     childrenItem: TAllCodecMethodsParams & { id: string };
+    disabled: boolean;
 }
 
 export const CodecPluginTemplate = `# codec plugin
@@ -32,7 +33,7 @@ handle = func(origin /*string*/) {
 const ant_defualte_class =
     'border-0 p-0 shadow-none rounded-none  focus:shadow-[0_1px_0_#1677ff] focus:outline-0 transition-shadow pl-2';
 
-const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
+const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem, disabled }) => {
     const { setCollectListContext } = useTheme();
 
     const handInputChange = (value: string | boolean) => {
@@ -96,6 +97,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     <Input
                         placeholder="请输入..."
                         className={ant_defualte_class}
+                        disabled={disabled}
                         defaultValue={
                             childrenItem.DefaultValue
                                 ? `${childrenItem.DefaultValue}`
@@ -125,6 +127,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     <Input.TextArea
                         placeholder="请输入..."
                         className={ant_defualte_class}
+                        disabled={disabled}
                         defaultValue={
                             childrenItem.DefaultValue
                                 ? `${childrenItem.DefaultValue}`
@@ -161,6 +164,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     <div className={styles['ant-select-codec']}>
                         <Select
                             options={options}
+                            disabled={disabled}
                             variant="borderless"
                             defaultValue={childrenItem.DefaultValue}
                             value={childrenItem.DefaultValue}
@@ -174,6 +178,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
             return (
                 <div className="inline-block mt-1">
                     <Checkbox
+                        disabled={disabled}
                         checked={
                             childrenItem.DefaultValue ||
                             childrenItem.DefaultValue === 'true'
@@ -204,6 +209,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     </div>
                     <div className={styles['ant-select-codec']}>
                         <Select
+                            disabled={disabled}
                             variant="borderless"
                             showSearch
                             placeholder="请选择..."
@@ -228,6 +234,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                     </div>
                     <WizardAceEditor
                         style={{ height: '240px' }}
+                        readOnly={disabled}
                         defaultValue={
                             childrenItem.DefaultValue
                                 ? `${childrenItem.DefaultValue}`
@@ -259,6 +266,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                         </div>
                         <Input
                             placeholder="请输入..."
+                            disabled={disabled}
                             className={ant_defualte_class}
                             defaultValue={
                                 childrenItem.DefaultValue
@@ -286,6 +294,7 @@ const CodecTypeItem: FC<TCodecTypeItemProps> = ({ childrenItem }) => {
                             <Select
                                 options={options}
                                 variant="borderless"
+                                disabled={disabled}
                                 defaultValue={
                                     childrenItem.Connector.DefaultValue
                                         ? `${childrenItem.Connector.DefaultValue}`

@@ -118,7 +118,7 @@ const ActiChainDNS = () => {
                 options: {
                     trigger: (
                         <div>
-                            <ReloadOutlined className="cursor-pointer hover:color-[#4a94f8] mt-" />
+                            <ReloadOutlined className="cursor-pointer hover:color-[#4a94f8]" />
                         </div>
                     ),
                 },

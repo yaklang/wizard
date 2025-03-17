@@ -116,12 +116,17 @@ export const isPromise = (n: any) => {
 };
 
 // 文件保存
-export function saveFile(file: Blob, fileName: string) {
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(file);
-    link.download = fileName ?? '未命名文件';
-    link.click();
-}
+export const saveFile = (content: string | Blob, filename: string): void => {
+    const blob =
+        content instanceof Blob
+            ? content
+            : new Blob([content], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename; // 自定义文件名
+    a.click();
+    URL.revokeObjectURL(a.href);
+};
 
 // 递归节点树
 export const traverseTree = (tree: any[], callback: (arg0: any) => void) => {
