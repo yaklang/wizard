@@ -10,14 +10,19 @@ import { useTheme } from '../CodecEntry';
 import type { TGetAllCodecMethodsResponseWithId } from '../type';
 import { useMemo, useRef } from 'react';
 import useListenHeight from '@/hooks/useListenHeight';
-import { useMemoizedFn, useRequest, useSafeState } from 'ahooks';
+import {
+    useMemoizedFn,
+    useRequest,
+    useSafeState,
+    useUpdateEffect,
+} from 'ahooks';
 
 import EmptyImages from '@/assets/compoments/Empty.png';
 import { Button, Checkbox, message, Popover, Tooltip } from 'antd';
 import { OutlineStorage } from '../assets/OutlineStorage';
 import { OutlineClock } from '../assets/OutlineClock';
 import { CodecTypeItem } from './CodecTypeItem';
-import { codecBgColorFn, transformData } from './utils';
+import { codecBgColorFn, transformData, validateData } from './utils';
 import { postRunCodec } from '@/apis/CodecApi';
 
 const { DragHandle } = SortableList;
@@ -31,6 +36,7 @@ const CodeOrder = () => {
 
     const typeHeaderRef = useRef(null);
     const typeContainerRef = useRef(null);
+    const sortableListNodeRef = useRef<HTMLDivElement>(null);
 
     const [containerHeight] = useListenHeight(typeContainerRef);
     const [headerHeight] = useListenHeight(typeHeaderRef);
@@ -39,12 +45,12 @@ const CodeOrder = () => {
         manual: true,
         onSuccess: (value) => {
             const {
-                data: { rawResult },
+                data: { rawResult, result },
             } = value;
-            console.log(rawResult, 'rawResult');
             setCollectListContext((preValue) => ({
                 ...preValue,
-                rowResult: rawResult,
+                rowResultBuff: new TextEncoder().encode(rawResult),
+                resultStr: result,
             }));
         },
         onError: (error) => {
@@ -134,13 +140,37 @@ const CodeOrder = () => {
     }, [mockHistoryList]);
 
     // 立即执行
-    const onSubmit = async () => {
+    const onSubmit = () => {
         const tragetValue = transformData(collectListContext.workflow);
-        await runAsync({
-            ...collectListContext,
-            workflow: tragetValue,
-        });
+        const formValidata = validateData(tragetValue);
+        if (formValidata) {
+            message.warning(formValidata);
+        } else {
+            runAsync({
+                workflow: tragetValue,
+                auto: collectListContext.auto,
+                text: collectListContext.text,
+            });
+        }
     };
+
+    useUpdateEffect(() => {
+        collectListContext.auto &&
+            collectListContext.text.length > 0 &&
+            collectListContext.workflow.length > 0 &&
+            onSubmit();
+    }, [
+        collectListContext.auto,
+        collectListContext.text,
+        collectListContext.workflow,
+    ]);
+
+    useUpdateEffect(() => {
+        if (sortableListNodeRef.current) {
+            sortableListNodeRef.current.scrollTop =
+                sortableListNodeRef.current.scrollHeight;
+        }
+    }, [collectListContext.workflow]);
 
     return (
         <div
@@ -148,6 +178,7 @@ const CodeOrder = () => {
             className="h-full w-[480px] border-x-solid border-[1px] border-x-[#eaecf3]"
             style={{
                 borderBottom: '1px solid #EAECF3',
+                display: `${collectListContext.expansion ? 'none' : 'block'}`,
             }}
         >
             <div ref={typeHeaderRef}>
@@ -189,6 +220,7 @@ const CodeOrder = () => {
             collectListContext.workflow.length > 0 ? (
                 <div
                     className="overflow-auto pb-4"
+                    ref={sortableListNodeRef}
                     style={{
                         height: `${typeCollapseHeight()}px`,
                     }}
@@ -281,6 +313,7 @@ const CodeOrder = () => {
                                           return (
                                               <CodecTypeItem
                                                   key={node.id}
+                                                  disabled={item.enable}
                                                   childrenItem={{
                                                       ...node,
                                                       id: item.id,

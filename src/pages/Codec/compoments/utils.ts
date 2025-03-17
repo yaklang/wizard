@@ -1,4 +1,5 @@
 import type {
+    TAllCodecMethodsParams,
     TGetAllCodecMethodsResponse,
     TPostRunCodecResponseWorkflow,
 } from '@/apis/CodecApi/type';
@@ -50,27 +51,71 @@ const codecBgColorFn = (
         .run();
 };
 
+const addDefaultValue = (
+    type: TAllCodecMethodsParams['Type'],
+    defaultValue: TAllCodecMethodsParams['DefaultValue'],
+) => {
+    if (type === 'checkbox') {
+        return defaultValue ?? false;
+    } else {
+        return defaultValue ?? '';
+    }
+};
+
 const transformData = (
     data: TGetAllCodecMethodsResponseWithId[],
 ): TPostRunCodecResponseWorkflow[] =>
-    data.map(({ CodecMethod, Params }) => ({
-        codeType: CodecMethod,
-        params: (Params ?? []).flatMap(({ Name, DefaultValue, Connector }) => [
-            {
-                key: Name,
-                value: DefaultValue,
-                explain: '',
-            },
-            ...(Connector?.DefaultValue !== undefined
-                ? [
-                      {
-                          key: `${Name}Type`,
-                          value: Connector.DefaultValue,
-                          explain: '',
+    data
+        .filter(({ enable }) => !enable) // 先去掉 enable 为 true 的数据
+        .reduce<{ result: TPostRunCodecResponseWorkflow[]; stopped: boolean }>(
+            ({ result, stopped }, { CodecMethod, Params, breakpoint }) =>
+                stopped
+                    ? { result, stopped } // 如果已经遇到 breakpoint，则不再处理
+                    : {
+                          result: [
+                              ...result,
+                              {
+                                  codeType: CodecMethod,
+                                  params: (Params ?? []).flatMap(
+                                      ({ Name, DefaultValue, Connector }) => [
+                                          {
+                                              key: Name,
+                                              value: DefaultValue,
+                                              explain: '',
+                                          },
+                                          ...(Connector?.DefaultValue !==
+                                          undefined
+                                              ? [
+                                                    {
+                                                        key: `${Name}Type`,
+                                                        value: Connector.DefaultValue,
+                                                        explain: '',
+                                                    },
+                                                ]
+                                              : []),
+                                      ],
+                                  ),
+                              },
+                          ],
+                          stopped: breakpoint, // 碰到 breakpoint，后续不再处理
                       },
-                  ]
-                : []),
-        ]),
-    }));
+            { result: [], stopped: false },
+        ).result;
 
-export { groupedCodecs, headOperateCodecType, codecBgColorFn, transformData };
+const validateData = (data: TPostRunCodecResponseWorkflow[]): string | null =>
+    data.reduce<string | null>((acc, { codeType, params }) => {
+        if (acc) return acc; // 已经找到空值，终止执行
+        const emptyParam = params.find(
+            ({ value }) => typeof value === 'string' && value === '',
+        );
+        return emptyParam ? `${codeType} - ${emptyParam.key}: 为必填项` : null;
+    }, null);
+
+export {
+    groupedCodecs,
+    headOperateCodecType,
+    codecBgColorFn,
+    transformData,
+    addDefaultValue,
+    validateData,
+};

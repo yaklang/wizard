@@ -21,7 +21,10 @@ const CodecEntry: FC = () => {
         workflow: [],
         text: '',
         auto: false,
-        rowResult: '',
+        rowResultBuff: new Uint8Array([]),
+        resultStr: '',
+        expansion: false,
+        hex: false,
     });
 
     const themeValue = useMemo(
