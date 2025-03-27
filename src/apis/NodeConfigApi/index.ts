@@ -1,5 +1,5 @@
 import axios from '@/utils/axios';
-import { ResponseData } from '@/utils/commonTypes';
+import type { ResponseData } from '@/utils/commonTypes';
 
 // 节点是否安装成功
 const getFileExists = (

@@ -7,6 +7,7 @@ import { Button, Popover } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useSafeState } from 'ahooks';
 import { useNavigate } from 'react-router-dom';
+import { getLoginOut } from '@/apis/login';
 
 /**
  *
@@ -21,7 +22,8 @@ const UserCard: FC<{ collapsed: boolean }> = ({ collapsed }) => {
     const { outLogin, userInfo } = useLoginStore((state) => state);
     const { clearPower } = usePermissionsSlice();
 
-    const handleOutLogin = () => {
+    const handleOutLogin = async () => {
+        await getLoginOut();
         outLogin();
         navigate('/login', { replace: true });
         clearPower();
