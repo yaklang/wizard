@@ -85,9 +85,15 @@ const Login = () => {
 
     const loginFn = async (values: FieldType) => {
         try {
-            await login(values);
-            await updatePower();
-            navigate('/');
+            await login(values)
+                .then(() => {
+                    updatePower();
+                    navigate('/');
+                })
+                .catch((err) => {
+                    message.destroy();
+                    message.error(err.message);
+                });
         } catch {
             setButtonLoading(false);
         } finally {

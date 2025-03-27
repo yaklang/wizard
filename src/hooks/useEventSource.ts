@@ -3,6 +3,7 @@ import useLoginStore from '@/App/store/loginStore';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { noAuthCode } from '@/utils/axios';
 import { message } from 'antd';
+import { getLoginOut } from '@/apis/login';
 
 interface SSEHooksError {
     msg: string;
@@ -60,13 +61,14 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
             options?.onsuccess?.(data);
         };
 
-        es.onerror = (e: any) => {
+        es.onerror = async (e: any) => {
             const statusText = e.statusText;
             const code = e.status;
             if (code === noAuthCode) {
                 message.destroy();
                 message.error('登录已过期');
                 es.close();
+                await getLoginOut();
                 store.outLogin();
             } else if (code === 500) {
                 message.destroy();

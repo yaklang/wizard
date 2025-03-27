@@ -1,7 +1,8 @@
-import { TPostTaskStartRequest } from '@/apis/task/types';
+import type { TPostTaskStartRequest } from '@/apis/task/types';
 import { PresetColors } from 'antd/es/theme/internal';
-import dayjs, { Dayjs } from 'dayjs';
-import { Key } from 'react';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import type { Key } from 'react';
 
 // 创建任务脚本 modal
 // 新设置参数
@@ -23,7 +24,7 @@ const PresetPorts = {
 const scriptTypeOption = [
     { label: '端口与漏洞扫描', value: 'portAndVulScan' },
     { label: '敏感信息', value: 'weakinfo' },
-    { label: '信息收集', value: 'xinxishouji' },
+    // { label: '信息收集', value: 'xinxishouji' },
 ];
 
 // 预设端口多选数据

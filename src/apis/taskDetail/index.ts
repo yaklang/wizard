@@ -10,7 +10,7 @@ import type {
     TTaskDetail,
     TGetAssetsValueFilterResponse,
 } from './types';
-import { Palm } from '@/gen/schema';
+import type { Palm } from '@/gen/schema';
 
 // 获取任务详情 基础信息
 const getTaskDetail = (

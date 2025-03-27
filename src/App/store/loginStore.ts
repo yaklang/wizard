@@ -1,7 +1,4 @@
-import {
-    // getLoginout,
-    postLogin,
-} from '@/apis/login';
+import { postLogin } from '@/apis/login';
 import type { PostRequestAuth } from '@/apis/login/types';
 import { create } from 'zustand';
 
@@ -31,7 +28,6 @@ const useLoginStore = create<LoginStore>()((set) => ({
         });
     },
     outLogin: async () => {
-        // await getLoginout();
         localStorage.clear();
         set({ userInfo: {}, token: '' });
     },

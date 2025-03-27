@@ -10,6 +10,7 @@ import { WizardTable } from '@/compoments';
 import {
     AssertsDataColumns,
     AssetsVulnsColumns,
+    companyInfoColumns,
     ProtColumns,
 } from './compoments/Columns';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
@@ -32,6 +33,7 @@ import { AssertsDataFilterDrawer } from './compoments/TableOptionsFilterDrawer/A
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { SensitiveMessage } from '../DataService/SensitiveMessage';
+import { getCompanyInfo } from '@/apis/MessageCollectApi';
 
 const { Group } = Radio;
 
@@ -67,7 +69,9 @@ const TaskDetail: FC = () => {
 
     const { record } = location.state || {}; // 获取传递的 record 数据
 
-    const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3>(1);
+    const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3 | 4>(
+        1,
+    );
     const [columns, setColumns] = useSafeState<any>([]);
 
     // 获取基础信息
@@ -112,6 +116,11 @@ const TaskDetail: FC = () => {
                 },
                 {
                     label: '漏洞与风险',
+                    value: data.risk_num ?? 0,
+                },
+                // TODO 缺少字段
+                {
+                    label: '收集资产数',
                     value: data.risk_num ?? 0,
                 },
             ];
@@ -247,6 +256,23 @@ const TaskDetail: FC = () => {
                         setTableLoadings(false);
                     }
                 })
+                .with(4, async () => {
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await getCompanyInfo({
+                            ...params,
+                            ...filter,
+                            from_task_id: record?.task_id,
+                        });
+                        setTableLoadings(false);
+                        setColumns(companyInfoColumns);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
+                })
                 .exhaustive();
         },
         [headerGroupValue],
@@ -309,31 +335,41 @@ const TaskDetail: FC = () => {
                             </Spin>
                         ),
                         options: {
-                            dowloadFile: {
-                                fileName:
-                                    `${exprotFileName[headerGroupValue]} (` +
-                                    dayjs().unix() +
-                                    ').csv',
-                                params: {
-                                    typ: ExportRequestKey?.[headerGroupValue],
-                                    data: {
-                                        ...page.getParams()?.filter,
-                                        limit: -1,
-                                        task_id: record?.task_id,
-                                    },
-                                },
-                                url: '/assets/export/report',
-                                method: 'post',
-                                type: 'primary',
-                                title: (
-                                    <div>
-                                        <UploadOutlined />
-                                        <span className="ml-2">导出 Excel</span>
-                                    </div>
-                                ),
-                            },
+                            dowloadFile:
+                                headerGroupValue === 4
+                                    ? undefined
+                                    : {
+                                          fileName:
+                                              `${exprotFileName[headerGroupValue]} (` +
+                                              dayjs().unix() +
+                                              ').csv',
+                                          params: {
+                                              type: ExportRequestKey?.[
+                                                  headerGroupValue
+                                              ],
+                                              data: {
+                                                  ...page.getParams()?.filter,
+                                                  limit: -1,
+                                                  task_id: record?.task_id,
+                                              },
+                                          },
+                                          url: '/assets/export/report',
+                                          method: 'post',
+                                          type: 'primary',
+                                          title: (
+                                              <div>
+                                                  <UploadOutlined />
+                                                  <span className="ml-2">
+                                                      导出 Excel
+                                                  </span>
+                                              </div>
+                                          ),
+                                      },
                             ProFilterSwitch: {
-                                trigger: tableFilterEnum(headerGroupValue),
+                                trigger:
+                                    headerGroupValue === 4
+                                        ? null
+                                        : tableFilterEnum(headerGroupValue),
                                 layout: 'vertical',
                             },
                         },

@@ -1,10 +1,11 @@
 import axios from '@/utils/axios';
-import { ResponseData, TableResponseData } from '@/utils/commonTypes';
-import {
+import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
+import type {
     UserResponse,
     UserRequest,
     TAddUserRequest,
     TAddUserResponse,
+    PostUserOperateRequest,
 } from './types';
 
 // 获取用户管理 表格数据
@@ -33,4 +34,10 @@ const postUserReset = (data: {
 const deleteUser = (username: string): Promise<ResponseData<boolean>> =>
     axios.delete<never, ResponseData<boolean>>(`/user?username=${username}`);
 
-export { getUserList, postAddUser, postUserReset, deleteUser };
+// 操作用户权限 /user/operate
+const postUserOperate = (
+    data: PostUserOperateRequest,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>('/user/operate', data);
+
+export { getUserList, postAddUser, postUserReset, deleteUser, postUserOperate };

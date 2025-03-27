@@ -1,16 +1,18 @@
 import { WizardTable } from '@/compoments';
 
-import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { useRequest, useSafeState } from 'ahooks';
 import { Button, Tooltip } from 'antd';
 import type { TDeleteValues } from '../ReportManage/ReportManage';
-import VulnerabilityScanningIcon from '@/assets/compoments/VulnerabilityScanningIcon';
-import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
-import { tableHeaderCheckedptions } from './data';
 import { useRef } from 'react';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CreateTaskScriptModal } from '../TaskPageList/compoment/CreateTaskScriptModal';
 import { getAnalysisScript } from '@/apis/task';
+import { getCompanyInfo } from '@/apis/MessageCollectApi';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { TGetCompanyInfoResponse } from '@/apis/MessageCollectApi/type';
+import VulnerabilityScanningIcon from '@/assets/compoments/VulnerabilityScanningIcon';
+import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
+import dayjs from 'dayjs';
 
 const MessageCollect = () => {
     const [page] = WizardTable.usePage();
@@ -20,7 +22,7 @@ const MessageCollect = () => {
     const openCreateTaskModalRef = useRef<UseModalRefType>(null);
     const ipListRef = useRef<string[]>([]);
 
-    const { run, loading } = useRequest(
+    const { run } = useRequest(
         async () => {
             const result = await getAnalysisScript();
             const {
@@ -39,10 +41,10 @@ const MessageCollect = () => {
         },
     );
 
-    const columns: CreateTableProps<any>['columns'] = [
+    const columns: CreateTableProps<TGetCompanyInfoResponse>['columns'] = [
         {
             title: '公司名称',
-            dataIndex: 'name',
+            dataIndex: 'company_name',
             columnsHeaderFilterType: 'input',
             rowSelection: 'checkbox',
             rowSelectKeys: checkedValue,
@@ -51,60 +53,39 @@ const MessageCollect = () => {
         },
         {
             title: '公司层级',
-            dataIndex: 'level',
+            dataIndex: 'company_type',
             width: 80,
+            render: (text) => {
+                return text === 1 ? '一级' : '二级';
+            },
         },
         {
             title: '域名',
-            dataIndex: 'yuming',
+            dataIndex: 'domains',
             columnsHeaderFilterType: 'input',
-            width: 120,
+            width: 240,
         },
         {
-            title: 'IP',
-            dataIndex: 'ip',
-            columnsHeaderFilterType: 'input',
-            width: 120,
-        },
-        {
-            title: 'IP位置',
-            dataIndex: 'ip_address',
-            columnsHeaderFilterType: 'input',
-            width: 80,
-        },
-        {
-            title: '运营商',
-            dataIndex: 'yunyingshang',
-            width: 60,
-        },
-        {
-            title: '备案号',
-            dataIndex: 'beianhao',
-            width: 120,
-        },
-        {
-            title: '是否为CDN',
-            dataIndex: 'is_cdn',
-            columnsHeaderFilterType: 'radio',
-            wizardColumnsOptions: tableHeaderCheckedptions,
-            width: 80,
-        },
-        {
-            title: '是否为泛解析',
-            dataIndex: 'is_jiexi',
-            columnsHeaderFilterType: 'radio',
-            wizardColumnsOptions: tableHeaderCheckedptions,
-            width: 100,
+            title: '创建时间',
+            dataIndex: 'updated_at',
+            width: 240,
+            render: (text) => dayjs.unix(text).format('YYYY-MM-DD HH:mm:ss'),
         },
         {
             title: '操作',
             dataIndex: 'id',
             width: 80,
-            render: () => {
+            fixed: 'right',
+            render: (_, render) => {
                 return (
                     <div className="flex items-center justify-center gap-4">
                         <Tooltip title="漏洞扫描">
-                            <div>
+                            <div
+                                onClick={() => {
+                                    ipListRef.current = [render.domains];
+                                    run();
+                                }}
+                            >
                                 <VulnerabilityScanningIcon />
                             </div>
                         </Tooltip>
@@ -115,15 +96,54 @@ const MessageCollect = () => {
                 );
             },
         },
+        // TODO 目前后端获取不到数据，后续添加
+        // {
+        //     title: 'IP',
+        //     dataIndex: 'ip',
+        //     columnsHeaderFilterType: 'input',
+        //     width: 120,
+        // },
+        // {
+        //     title: 'IP位置',
+        //     dataIndex: 'ip_address',
+        //     columnsHeaderFilterType: 'input',
+        //     width: 80,
+        // },
+        // {
+        //     title: '运营商',
+        //     dataIndex: 'yunyingshang',
+        //     width: 60,
+        // },
+        // {
+        //     title: '备案号',
+        //     dataIndex: 'beianhao',
+        //     width: 120,
+        // },
+        // {
+        //     title: '是否为CDN',
+        //     dataIndex: 'is_cdn',
+        //     columnsHeaderFilterType: 'radio',
+        //     wizardColumnsOptions: tableHeaderCheckedptions,
+        //     width: 80,
+        // },
+        // {
+        //     title: '是否为泛解析',
+        //     dataIndex: 'is_jiexi',
+        //     columnsHeaderFilterType: 'radio',
+        //     wizardColumnsOptions: tableHeaderCheckedptions,
+        //     width: 100,
+        // },
     ];
 
     // 批量漏洞扫描
     const headVulnerabilityScanning = () => {
-        const isAll = checkedValue?.['name'].isAll;
-        const idsList = checkedValue?.['name'].ids;
+        const isAll = checkedValue?.['company_name'].isAll;
+        const idsList = checkedValue?.['company_name'].ids;
         const dataSource = page.getDataSource();
         const ipList = dataSource
-            .map((item) => (idsList?.includes(item.id) ? item.ip : undefined))
+            .map((item) =>
+                idsList?.includes(item.id) ? item.domains : undefined,
+            )
             .filter((list) => list);
         ipListRef.current = ipList;
         if (!isAll) {
@@ -155,8 +175,9 @@ const MessageCollect = () => {
                                     danger
                                     onClick={() => headDelete()}
                                     disabled={
-                                        checkedValue?.name &&
-                                        checkedValue?.name?.ids?.length > 0
+                                        checkedValue?.company_name &&
+                                        checkedValue?.company_name?.ids
+                                            ?.length > 0
                                             ? false
                                             : true
                                     }
@@ -165,11 +186,12 @@ const MessageCollect = () => {
                                 </Button>
                                 <Button
                                     type="primary"
-                                    loading={loading}
+                                    // loading={loading}
                                     onClick={() => headVulnerabilityScanning()}
                                     disabled={
-                                        checkedValue?.name &&
-                                        checkedValue?.name?.ids?.length > 0
+                                        checkedValue?.company_name &&
+                                        checkedValue?.company_name?.ids
+                                            ?.length > 0
                                             ? false
                                             : true
                                     }
@@ -180,49 +202,15 @@ const MessageCollect = () => {
                         ),
                     },
                 }}
-                request={async () => {
+                request={async (params, filter) => {
+                    const { data } = await getCompanyInfo({
+                        ...params,
+                        ...filter,
+                    });
+
                     return {
-                        list: [
-                            {
-                                id: 1,
-                                name: '四维创智慧（成都）',
-                                level: '一级',
-                                ip: 'baidu.com',
-                                ip_address: '192.168.2.1',
-                                yunyingshang: '电信',
-                                beianhao: '京ICP证030173号-1',
-                                is_cdn: '是',
-                                is_jiexi: '否',
-                            },
-                            {
-                                id: 2,
-                                name: '四维创智慧（成都）',
-                                level: '一级',
-                                ip: 'google.com',
-                                ip_address: '192.168.2.1',
-                                yunyingshang: '电信',
-                                beianhao: '京ICP证030173号-1',
-                                is_cdn: '否',
-                                is_jiexi: '否',
-                            },
-                            {
-                                id: 3,
-                                name: '四维创智慧',
-                                level: '二级',
-                                ip: 'bilibili.com',
-                                ip_address: '192.168.2.1',
-                                yunyingshang: '电信',
-                                beianhao: '京ICP证030173号-1',
-                                is_cdn: '是',
-                                is_jiexi: '是',
-                            },
-                        ],
-                        pagemeta: {
-                            limit: 1,
-                            page: 1,
-                            total_page: 10,
-                            total: 1,
-                        },
+                        list: data?.list ?? [],
+                        pagemeta: data?.pagemeta,
                     };
                 }}
             />

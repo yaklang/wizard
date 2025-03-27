@@ -3,7 +3,15 @@ import { WizardModal } from '@/compoments';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import type { UsePageRef } from '@/hooks/usePage';
 import { useRequest, useSafeState } from 'ahooks';
-import { Button, Form, Input, message, Modal, Typography } from 'antd';
+import {
+    Button,
+    Form,
+    Input,
+    InputNumber,
+    message,
+    Modal,
+    Typography,
+} from 'antd';
 import { forwardRef, useImperativeHandle } from 'react';
 import { match } from 'ts-pattern';
 import type { User } from '@/apis/SystemManagementApi/types';
@@ -18,10 +26,9 @@ const CreateUserModal = forwardRef<
     UseModalRefType,
     {
         title: '创建用户' | '编辑用户' | '重置密码';
-        refresh: () => void;
-        localRefrech: UsePageRef['localRefrech'];
+        page: UsePageRef;
     }
->(({ title, refresh, localRefrech }, ref) => {
+>(({ title, page }, ref) => {
     const [model] = WizardModal.useModal();
     const [form] = Form.useForm();
     const [record, setRecord] = useSafeState<User>();
@@ -30,15 +37,40 @@ const CreateUserModal = forwardRef<
         open(record) {
             form.setFieldsValue(record);
             setRecord(record);
+            console.log(record, 'record');
             model.open();
         },
     }));
 
     const { runAsync, loading } = useRequest(postAddUser, {
         manual: true,
-        // onSuccess: (values) => {
-        //     console.log(values, 'aaa');
-        // },
+        onSuccess: async (values) => {
+            await page.onLoad();
+            message.success('创建成功');
+            model.close();
+            Modal.success({
+                content: (
+                    <div>
+                        账号：{values.data.username}
+                        <br />
+                        <div className="flex items-center">
+                            <div className="mb-[1rem]">密码：</div>
+                            <Typography.Paragraph
+                                copyable={{
+                                    tooltips: ['复制', '复制成功'],
+                                }}
+                            >
+                                {values.data.password}
+                            </Typography.Paragraph>
+                        </div>
+                    </div>
+                ),
+            });
+        },
+        onError: (err) => {
+            message.destroy();
+            message.error(err.message);
+        },
     });
 
     const onOk = async () => {
@@ -46,40 +78,12 @@ const CreateUserModal = forwardRef<
             const formData = await form.validateFields();
             match(title)
                 .with('创建用户', async () => {
-                    runAsync({ ...formData, role: ['super-admin'] }).then(
-                        (res) => {
-                            refresh();
-                            message.success('创建成功');
-                            model.close();
-                            Modal.success({
-                                content: (
-                                    <div>
-                                        账号：{res.data.username}
-                                        <br />
-                                        <div className="flex items-center">
-                                            <div className="mb-[1rem]">
-                                                密码：
-                                            </div>
-                                            <Typography.Paragraph
-                                                copyable={{
-                                                    tooltips: [
-                                                        '复制',
-                                                        '复制成功',
-                                                    ],
-                                                }}
-                                            >
-                                                {res.data.password}
-                                            </Typography.Paragraph>
-                                        </div>
-                                    </div>
-                                ),
-                            });
-                        },
-                    );
+                    await runAsync({ ...formData, role: ['super-admin'] });
+                    // audit-user
                 })
                 .with('编辑用户', async () => {
                     await runAsync({ ...formData, role: record?.role });
-                    localRefrech({
+                    page.localRefrech({
                         operate: 'edit',
                         newObj: formData,
                         oldObj: record,
@@ -150,6 +154,30 @@ const CreateUserModal = forwardRef<
                             ]}
                         >
                             <Input placeholder="请输入邮箱" />
+                        </Item>
+                    )}
+                    {title !== '重置密码' && (
+                        <Item
+                            name="expire"
+                            label="有效期"
+                            initialValue={7}
+                            rules={[
+                                {
+                                    required: true,
+                                    message: '账号有效期不能为空',
+                                },
+                                {
+                                    type: 'number',
+                                    min: 1,
+                                    message: '账号有效期最少为一天',
+                                },
+                            ]}
+                        >
+                            <InputNumber
+                                addonAfter="天"
+                                placeholder="请输入有效期"
+                                style={{ width: '100%' }}
+                            />
                         </Item>
                     )}
                 </Form>

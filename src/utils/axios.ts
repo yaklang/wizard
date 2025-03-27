@@ -2,6 +2,7 @@ import { Modal, message } from 'antd';
 import type { AxiosResponse, AxiosError } from 'axios';
 import Axios from 'axios';
 import useLoginStore from '@/App/store/loginStore';
+import { getLoginOut } from '@/apis/login';
 
 // 请求头标识
 // export const REQUEST_SOURCE = 'management';
@@ -54,8 +55,9 @@ axios.interceptors.response.use(
                             title: '通知',
                             content: data?.message ?? '角色权限失效',
                             okText: '重新登录',
-                            onOk() {
+                            async onOk() {
                                 roleChanged = false;
+                                await getLoginOut();
                                 store.outLogin();
                             },
                         });

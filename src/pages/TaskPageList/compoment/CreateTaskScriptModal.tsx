@@ -22,6 +22,7 @@ const CreateTaskScriptModal = forwardRef<
 
     useImperativeHandle(ref, () => ({
         open(scriptData: TGetAnalysisScriptReponse[]) {
+            console.log(scriptData, 'scriptData');
             setScriptData(scriptData);
             model1.open();
         },
