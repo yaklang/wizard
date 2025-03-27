@@ -24,6 +24,10 @@ const postLogin = (
 ): Promise<ResponseData<PostRequestAuth>> =>
     axios.post<never, ResponseData<PostRequestAuth>>('/auth', data);
 
+// 退出登陆接口
+const getLoginOut = (): Promise<ResponseData<never>> =>
+    axios.get<never, ResponseData<never>>('/user/loginOut');
+
 const getLicense = (): Promise<ResponseData<GetLicenseResponse>> =>
     axios.get<never, ResponseData<GetLicenseResponse>>('/license');
 
@@ -42,4 +46,5 @@ export {
     getLicense,
     postLicense,
     getLoginout,
+    getLoginOut,
 };

@@ -210,7 +210,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
     // 刷新
     page.refresh = async () => {
         handleScrollToFirstRow();
-        runAsync(request, true);
+        await runAsync(request, true);
     };
 
     // 手动触发

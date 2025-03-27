@@ -316,6 +316,10 @@ const extendTableProps = (
                     return (
                         <Checkbox
                             className="mr-2"
+                            disabled={
+                                alone === 'all' &&
+                                state.dataSource?.length === 0
+                            }
                             checked={selectItems(column.dataIndex)}
                             indeterminate={
                                 alone === 'all' &&

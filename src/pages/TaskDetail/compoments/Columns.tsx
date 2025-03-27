@@ -14,6 +14,7 @@ import { AssetsVulnsDetailOperate } from './AssetsVulnsDetailOperate';
 import { SeverityMapTag, survivalStatusList } from './utils';
 import CopyOutlined from './utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
+import type { TGetCompanyInfoResponse } from '@/apis/MessageCollectApi/type';
 
 // 端口资产 columns
 const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
@@ -253,4 +254,39 @@ const AssertsDataColumns: CreateTableProps<TGetAssertsDataResponse>['columns'] =
         },
     ];
 
-export { ProtColumns, AssetsVulnsColumns, AssertsDataColumns };
+const companyInfoColumns: CreateTableProps<TGetCompanyInfoResponse>['columns'] =
+    [
+        {
+            title: '公司名称',
+            dataIndex: 'keyword',
+            columnsHeaderFilterType: 'input',
+            width: 160,
+            render: (_, record) => record?.company_name ?? '-',
+        },
+        {
+            title: '公司层级',
+            dataIndex: 'company_type',
+            width: 80,
+            render: (text) => {
+                return text === 1 ? '一级' : '二级';
+            },
+        },
+        {
+            title: '域名',
+            dataIndex: 'domains',
+            width: 240,
+        },
+        {
+            title: '创建时间',
+            dataIndex: 'updated_at',
+            width: 240,
+            render: (text) => dayjs.unix(text).format('YYYY-MM-DD HH:mm:ss'),
+        },
+    ];
+
+export {
+    ProtColumns,
+    AssetsVulnsColumns,
+    AssertsDataColumns,
+    companyInfoColumns,
+};

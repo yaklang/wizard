@@ -19,6 +19,10 @@ const detailHeaderGroupOptions = [
         label: '资产数据',
         value: 3,
     },
+    {
+        label: '信息收集',
+        value: 4,
+    },
 ];
 
 /** name字段里面的内容不可随意更改，与查询条件有关 */

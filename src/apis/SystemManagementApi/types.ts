@@ -1,4 +1,4 @@
-import { Order } from '@/types';
+import type { Order } from '@/types';
 
 interface User {
     email?: string;
@@ -6,6 +6,7 @@ interface User {
     role: string[];
     user_group?: string;
     username: string;
+    status: 0 | 1;
 }
 interface UserResponse {
     list?: User[];
@@ -31,6 +32,7 @@ interface TAddUserRequest {
     role: string[];
     user_group?: string;
     username: string;
+    expire: number;
 }
 
 /**
@@ -41,10 +43,16 @@ interface TAddUserResponse {
     username: string;
 }
 
+interface PostUserOperateRequest {
+    op: 'disable' | 'enable';
+    username: string;
+}
+
 export type {
     UserResponse,
     UserRequest,
     User,
     TAddUserRequest,
     TAddUserResponse,
+    PostUserOperateRequest,
 };

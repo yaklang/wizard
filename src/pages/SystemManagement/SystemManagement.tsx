@@ -18,6 +18,7 @@ import TableFormOutlined from '@/assets/task/TableFormOutlined';
 import Outline from './Outline';
 import { useRequest, useSafeState } from 'ahooks';
 import type { UsePageRef } from '@/hooks/usePage';
+import { SystemOperate } from './SystemOperate';
 
 const SystemManagement: FC = () => {
     const [page] = WizardTable.usePage();
@@ -39,10 +40,11 @@ const SystemManagement: FC = () => {
             title: '操作',
             dataIndex: 'report_id',
             fixed: 'right',
-            width: 140,
+            width: 180,
             render: (_, record) => {
                 return (
                     <div className="flex items-center justify-center gap-2">
+                        <SystemOperate page={page} record={record} />
                         <div
                             className="pr-3 h-4 flex items-center"
                             style={{
@@ -148,8 +150,7 @@ const SystemManagement: FC = () => {
             <CreateUserModal
                 ref={CreateUserModalRef}
                 title={modalTitle}
-                refresh={page.refresh}
-                localRefrech={page.localRefrech}
+                page={page}
             />
         </>
     );
