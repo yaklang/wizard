@@ -35,7 +35,6 @@ import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/Reverse
 import GlobalReverseLink from '@/pages/ReverseLink';
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
 import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
-import DndKit from '@/pages/DndKit';
 import CodecEntry from '@/pages/Codec';
 
 // 继承路由接口，增加name字段
