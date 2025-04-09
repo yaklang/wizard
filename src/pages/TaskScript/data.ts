@@ -34,6 +34,7 @@ const presetProtsGroupOptions = [
     { label: '常见一两千', value: 'top1000+' },
     { label: '常见数据库与MQ', value: 'topdb' },
     { label: '常见UDP端口', value: 'topdp' },
+    { label: '全端口', value: 'all' },
 ];
 
 const targetColorFn = (key: Key) => {

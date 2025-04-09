@@ -10,7 +10,7 @@ import { useEventSource } from '@/hooks';
 import {
     getTcoQuery,
     getTcpGenerate,
-    posReverseDelete,
+    postSseDelete,
 } from '@/apis/ActiChainApi';
 import { adjustTimestamp } from '../ActiChainDNS/compoments/data';
 import { WizardAceEditor } from '@/compoments';
@@ -61,7 +61,7 @@ const TCPLog = () => {
         },
     );
 
-    const { runAsync: DeleteRunAsync } = useRequest(posReverseDelete, {
+    const { runAsync: DeleteRunAsync } = useRequest(postSseDelete, {
         manual: true,
     });
 

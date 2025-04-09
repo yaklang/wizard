@@ -31,10 +31,8 @@ const getDnsQury = (data: TGetDnsQuryRequest): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(`/reverse/dns/query`, data);
 
 // 断开需要监听的域名
-const posReverseDelete = (data: {
-    key: string;
-}): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>(`/reverse/delete`, data);
+const postSseDelete = (data: { key: string }): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(`/sse/delete`, data);
 
 // 生成 icmp 反链长度
 const getIcmpGenerate = (): Promise<ResponseData<TIcmpGenerateRequest>> =>
@@ -70,7 +68,7 @@ export {
     postReverseDnsGenerate,
     getQuerySupportedDnsLogPlatforms,
     getDnsQury,
-    posReverseDelete,
+    postSseDelete,
     getIcmpGenerate,
     getIcmpQuery,
     getTcpGenerate,

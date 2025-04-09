@@ -15,8 +15,9 @@ import { CveLoopholeFilterDrawer } from './compoments/CveLoopholeFilterDrawer';
 import { Button, Input, Popover, Select, Space } from 'antd';
 import { useSafeState } from 'ahooks';
 import { SyncOutlined } from '@ant-design/icons';
-import { CveUpdateModal } from './compoments/CveUpdateModal';
+import { CveAllUpdateModal } from './compoments/CveAllUpdateModal';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { CveDifferUpdateModal } from './compoments/CveDifferUpdateModal';
 
 const options = [
     {
@@ -33,7 +34,8 @@ const options = [
 
 const CveLoophole: FC = () => {
     const [page] = WizardTable.usePage();
-    const CveUpdateModalRef = useRef<UseModalRefType>(null);
+    const CveAllUpdateModalRef = useRef<UseModalRefType>(null);
+    const CveDifferUpdateModalRef = useRef<UseModalRefType>(null);
     const [search, setSearch] = useSafeState({
         key: 'cve',
         value: '',
@@ -191,10 +193,9 @@ const CveLoophole: FC = () => {
                                             <div
                                                 className="mb-2 py-1 px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer"
                                                 onClick={() => {
-                                                    CveUpdateModalRef.current?.open(
+                                                    CveDifferUpdateModalRef.current?.open(
                                                         {
                                                             title: 'CVE 差量最新数据更新',
-                                                            type: 'lack',
                                                         },
                                                     );
                                                     setOpen(false);
@@ -205,10 +206,9 @@ const CveLoophole: FC = () => {
                                             <div
                                                 className="px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer"
                                                 onClick={() => {
-                                                    CveUpdateModalRef.current?.open(
+                                                    CveAllUpdateModalRef.current?.open(
                                                         {
                                                             title: 'CVE 数据库更新',
-                                                            type: 'global',
                                                         },
                                                     );
                                                     setOpen(false);
@@ -244,7 +244,14 @@ const CveLoophole: FC = () => {
                     };
                 }}
             />
-            <CveUpdateModal ref={CveUpdateModalRef} refresh={page.refresh} />
+            <CveAllUpdateModal
+                ref={CveAllUpdateModalRef}
+                refresh={page.refresh}
+            />
+            <CveDifferUpdateModal
+                ref={CveDifferUpdateModalRef}
+                refresh={page.refresh}
+            />
         </div>
     );
 };

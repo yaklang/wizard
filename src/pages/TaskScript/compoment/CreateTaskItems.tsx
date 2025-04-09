@@ -798,7 +798,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         }
                         name={['params', 'enable-brute']}
                         className="ml-[62px]"
-                        initialValue={false}
+                        initialValue={true}
                     >
                         <Switch />
                     </Item>
@@ -816,17 +816,16 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         }
                         name={['params', 'enbale-cve-baseline']}
                         className="ml-5"
-                        initialValue={false}
+                        initialValue={true}
                     >
                         <Switch />
                     </Item>
-                    {/* TDOO 缺少字段 */}
                     {scriptTypeValue === 'portAndVulScan' && (
                         <Item
                             label="Web登录页爆破"
-                            name={['params', 'enbale-cve-baseline']}
+                            name={['params', 'enbale-web-login-brute']}
                             className="ml-5"
-                            initialValue={false}
+                            initialValue={true}
                         >
                             <Switch />
                         </Item>

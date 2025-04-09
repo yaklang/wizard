@@ -9,7 +9,7 @@ import { WizardAceEditor } from '@/compoments';
 import {
     getDnsQury,
     getQuerySupportedDnsLogPlatforms,
-    posReverseDelete,
+    postSseDelete,
     postReverseDnsGenerate,
 } from '@/apis/ActiChainApi';
 import { useEventSource } from '@/hooks';
@@ -103,7 +103,7 @@ const ActiChainDNS = () => {
     );
 
     // 断开长连接监听
-    const { runAsync: DnsDeleteRunAsync } = useRequest(posReverseDelete, {
+    const { runAsync: DnsDeleteRunAsync } = useRequest(postSseDelete, {
         manual: true,
     });
 

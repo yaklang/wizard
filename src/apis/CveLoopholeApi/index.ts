@@ -1,6 +1,10 @@
 import axios from '@/utils/axios';
 import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
-import type { TCveQueryRequest, TCveQueryResponse } from './type';
+import type {
+    TCveQueryRequest,
+    TCveQueryResponse,
+    TGetCveUpdateResquest,
+} from './type';
 
 // 节点是否安装成功
 const postCveQuery = (
@@ -11,4 +15,11 @@ const postCveQuery = (
         data,
     );
 
-export { postCveQuery };
+// cve 数据库更新 /cve/update
+const getCveUpdate = (
+    params: TGetCveUpdateResquest,
+    signal?: AbortSignal,
+): Promise<ResponseData<boolean>> =>
+    axios.get<never, ResponseData<boolean>>(`/cve/update`, { params, signal });
+
+export { postCveQuery, getCveUpdate };

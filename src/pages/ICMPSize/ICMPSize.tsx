@@ -10,7 +10,7 @@ import { useRequest, useSafeState } from 'ahooks';
 import {
     getIcmpGenerate,
     getIcmpQuery,
-    posReverseDelete,
+    postSseDelete,
 } from '@/apis/ActiChainApi';
 import { useEventSource } from '@/hooks';
 import { adjustTimestamp } from '../ActiChainDNS/compoments/data';
@@ -44,7 +44,7 @@ const ICMPSize = () => {
         },
     );
 
-    const { runAsync: DeleteRunAsync } = useRequest(posReverseDelete, {
+    const { runAsync: DeleteRunAsync } = useRequest(postSseDelete, {
         manual: true,
     });
 

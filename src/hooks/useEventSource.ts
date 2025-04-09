@@ -28,7 +28,7 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
     const interruptedRef = useRef(false);
 
     // 连接方法
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
         if (
             eventSourceRef.current ||
             interruptedRef.current ||

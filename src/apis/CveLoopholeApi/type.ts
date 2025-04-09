@@ -112,4 +112,9 @@ interface TCveQueryResponse {
     vulnerable_product: string;
 }
 
-export type { TCveQueryRequest, TCveQueryResponse };
+interface TGetCveUpdateResquest {
+    just_last: boolean;
+    proxy?: string;
+}
+
+export type { TCveQueryRequest, TCveQueryResponse, TGetCveUpdateResquest };
