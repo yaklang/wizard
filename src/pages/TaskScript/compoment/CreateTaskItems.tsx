@@ -424,8 +424,9 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                 scannerDataList?.length > 6 ? (
                                     <Item
                                         name="scanner"
+                                        className="ml-14"
                                         label={
-                                            <div className="min-w-[124px]">
+                                            <div className="max-w-full">
                                                 节点选择
                                             </div>
                                         }
@@ -469,11 +470,18 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                 ) : (
                                     <Item
                                         name="scanner"
+                                        className="ml-14"
                                         initialValue={[
                                             scannerDataList?.[0]?.name,
                                         ].filter((it) => it)}
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: '请选择节点',
+                                            },
+                                        ]}
                                         label={
-                                            <div className="min-w-[124px]">
+                                            <div className="max-w-full">
                                                 节点选择
                                             </div>
                                         }
@@ -820,11 +828,10 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                     >
                         <Switch />
                     </Item>
-                    {/* TDOO 缺少字段 */}
                     {scriptTypeValue === 'portAndVulScan' && (
                         <Item
                             label="Web登录页爆破"
-                            name={['params', 'enbale-cve-baseline']}
+                            name={['params', 'enbale-web-login-brute']}
                             className="ml-5"
                             initialValue={false}
                         >
