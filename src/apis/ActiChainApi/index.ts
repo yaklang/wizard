@@ -2,6 +2,7 @@ import axios from '@/utils/axios';
 import type { ResponseData } from '@/utils/commonTypes';
 import type {
     TGetDnsQuryRequest,
+    TgetTunnelServerRequest,
     TIcmpGenerateRequest,
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
@@ -66,6 +67,15 @@ const postReverseStartFacades = (
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>('/reverse/start/facades', data);
 
+// 反连服务器 获取监听地址 /reverse/get-tunnel-server
+const getTunnelServer = (
+    data: TgetTunnelServerRequest,
+): Promise<ResponseData<{ tunnelServer: string }>> =>
+    axios.post<never, ResponseData<{ tunnelServer: string }>>(
+        '/reverse/get_tunnel_server',
+        data,
+    );
+
 export {
     postReverseDnsGenerate,
     getQuerySupportedDnsLogPlatforms,
@@ -76,4 +86,5 @@ export {
     getTcpGenerate,
     getTcoQuery,
     postReverseStartFacades,
+    getTunnelServer,
 };

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button, Form, Input, InputNumber, message, Switch, Tag } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,12 +6,24 @@ import { v4 as uuidv4 } from 'uuid';
 import { postReverseStartFacades } from '@/apis/ActiChainApi';
 import { copyToClipboard } from '@/utils';
 import { useRequest } from 'ahooks';
+import { useEffect } from 'react';
 
 const { Item } = Form;
 
 const ReverseLinkServer = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
+
+    const location = useLocation();
+
+    const { formValues } = location.state || {}; // 获取传递的 record 数据
+
+    useEffect(() => {
+        formValues &&
+            form.setFieldsValue({
+                ...formValues,
+            });
+    }, [formValues, form]);
 
     const { loading, runAsync } = useRequest(postReverseStartFacades, {
         manual: true,
