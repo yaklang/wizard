@@ -36,6 +36,11 @@ interface TReverseStartFacadesRequest {
     Token: string;
 }
 
+interface TgetTunnelServerRequest {
+    remoteAddress: string;
+    secret: string;
+}
+
 export type {
     TReverseDnsGenerateRequest,
     TReverseDnsGenerateResponse,
@@ -43,4 +48,5 @@ export type {
     TIcmpGenerateRequest,
     TTcpGenerateRequest,
     TReverseStartFacadesRequest,
+    TgetTunnelServerRequest,
 };

@@ -40,7 +40,6 @@ const NodeManagePage: FC = () => {
         {
             dataIndex: 'external_ip',
             title: '节点IP',
-            width: 180,
             rowSelection: 'checkbox',
             rowSelectKeys: checkedValues,
             onSelectChange: setCheckedValues,
@@ -55,17 +54,14 @@ const NodeManagePage: FC = () => {
         {
             dataIndex: 'location',
             title: '所在区域',
-            width: 120,
         },
         {
             dataIndex: 'task_running',
             title: '当前任务量',
-            width: 120,
         },
         {
             dataIndex: 'updated_at',
             title: '活跃状态',
-            width: 120,
             render: (value) =>
                 value ? (
                     <Tag color="orange">
@@ -78,7 +74,7 @@ const NodeManagePage: FC = () => {
         {
             dataIndex: 'id',
             title: '操作',
-            width: 190,
+            width: 180,
             fixed: 'right',
             render: (_, record) => {
                 return (

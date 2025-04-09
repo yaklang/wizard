@@ -3,13 +3,14 @@ import type { FC } from 'react';
 import { UploadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
-import { getSensitiveMessagePage } from '@/apis/reportManage';
+import { getSensitiveMessagePage, postupdateStatus } from '@/apis/reportManage';
 import type { TSensitiveMessageResponse } from '@/apis/reportManage/types';
 import { WizardTable } from '@/compoments';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
-import { message, Tag } from 'antd';
+import { message, Select } from 'antd';
 import CopyOutlined from '@/pages/TaskDetail/compoments/utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
+import { useRequest } from 'ahooks';
 
 const sensitiveInfoStatus = [
     {
@@ -79,16 +80,9 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
             columnsHeaderFilterType: 'radio',
             wizardColumnsOptions: sensitiveInfoStatus,
             width: 120,
-            render: (value) => {
-                const findItem = sensitiveInfoStatus.find(
-                    (item) => item.value === value,
-                );
-                return typeof value === 'number' ? (
-                    <Tag color={findItem?.color}>{findItem?.label}</Tag>
-                ) : (
-                    '-'
-                );
-            },
+            render: (value, render) => (
+                <SensitiveInfoStatus value={value} id={render.id} />
+            ),
         },
         {
             title: '执行节点',
@@ -144,6 +138,35 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
                     pagemeta: data?.pagemeta,
                 };
             }}
+        />
+    );
+};
+
+const SensitiveInfoStatus = ({ value, id }: { value: number; id: number }) => {
+    const status = sensitiveInfoStatus.find((item) => item.value === value);
+
+    const { loading, run } = useRequest(postupdateStatus, {
+        manual: true,
+        onSuccess: () => {
+            message.success('修改成功');
+        },
+        onError: () => {
+            message.error('修改失败，请重试');
+        },
+    });
+
+    return (
+        <Select
+            defaultValue={status?.value}
+            loading={loading}
+            onChange={(value) => {
+                run({
+                    id,
+                    status: value,
+                });
+            }}
+            style={{ width: 120 }}
+            options={sensitiveInfoStatus}
         />
     );
 };

@@ -48,10 +48,21 @@ const getSensitiveMessagePage = (
         ResponseData<TableResponseData<TSensitiveMessageResponse[]>>
     >('/assets/sensitive-info', { params });
 
+// 更改敏感信息状态
+const postupdateStatus = (data: {
+    id: number;
+    status: number;
+}): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(
+        '/assets/sensitive-info/update-status',
+        data,
+    );
+
 export {
     getssetsProts,
     deleteProts,
     getTimelinId,
     getReportTaskGroups,
     getSensitiveMessagePage,
+    postupdateStatus,
 };
