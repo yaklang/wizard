@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import StopUsingIcon from '@/assets/task/StopUsingIcon';
-import { Button, Popover, Tooltip } from 'antd';
+import { Button, message, Popover, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { postUserOperate } from '@/apis/SystemManagementApi';
@@ -25,6 +25,7 @@ const SystemOperate: FC<SystemOperateProps> = ({ page, record }) => {
                 oldObj: record,
             });
             setOpen(!open);
+            message.success(`${status !== 0 ? '禁用' : '启用'}成功`);
         },
     });
 
