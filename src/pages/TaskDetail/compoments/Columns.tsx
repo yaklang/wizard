@@ -71,6 +71,11 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
         width: 180,
     },
     {
+        title: '执行节点',
+        dataIndex: 'execute_node',
+        width: 180,
+    },
+    {
         title: '更新时间',
         dataIndex: 'order',
         columnsHeaderFilterType: 'orderby',
@@ -132,6 +137,11 @@ const AssetsVulnsColumns = (filterData: {
             title: 'IP',
             dataIndex: 'ip_addr',
             columnsHeaderFilterType: 'input',
+            width: 180,
+        },
+        {
+            title: '执行节点',
+            dataIndex: 'execute_node',
             width: 180,
         },
         {

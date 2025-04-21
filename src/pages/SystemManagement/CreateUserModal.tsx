@@ -1,4 +1,8 @@
-import { postAddUser } from '@/apis/SystemManagementApi';
+import {
+    postAddUser,
+    postUserReset,
+    putEditUser,
+} from '@/apis/SystemManagementApi';
 import { WizardModal } from '@/compoments';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import type { UsePageRef } from '@/hooks/usePage';
@@ -37,7 +41,6 @@ const CreateUserModal = forwardRef<
         open(record) {
             form.setFieldsValue(record);
             setRecord(record);
-            console.log(record, 'record');
             model.open();
         },
     }));
@@ -73,6 +76,11 @@ const CreateUserModal = forwardRef<
         },
     });
 
+    const { runAsync: runAsyncEdit, loading: loadingEdit } = useRequest(
+        putEditUser,
+        { manual: true },
+    );
+
     const onOk = async () => {
         try {
             const formData = await form.validateFields();
@@ -82,17 +90,29 @@ const CreateUserModal = forwardRef<
                     // audit-user
                 })
                 .with('编辑用户', async () => {
-                    await runAsync({ ...formData, role: record?.role });
-                    page.localRefrech({
-                        operate: 'edit',
-                        newObj: formData,
-                        oldObj: record,
-                    });
+                    await runAsyncEdit({ ...formData, role: record?.role });
+                    // page.localRefrech({
+                    //     operate: 'edit',
+                    //     newObj: {
+                    //         ...record,
+                    //         ...formData,
+                    //         expire: `${formData.expire}`,
+                    //     },
+                    //     oldObj: record,
+                    // });
+                    page.refresh();
                     message.success('编辑成功');
                     model.close();
                 })
                 .with('重置密码', () => {
-                    model.close();
+                    record &&
+                        postUserReset({
+                            username: record.username,
+                        }).then((res) => {
+                            const { data } = res;
+                            form.setFieldsValue(data);
+                            message.success('重置成功');
+                        });
                 })
                 .exhaustive();
         } catch (err) {
@@ -117,7 +137,7 @@ const CreateUserModal = forwardRef<
                         key="submit"
                         type="primary"
                         onClick={() => onOk()}
-                        loading={loading}
+                        loading={loading || loadingEdit}
                     >
                         确定
                     </Button>
@@ -141,7 +161,11 @@ const CreateUserModal = forwardRef<
                         />
                     </Item>
                     {title === '重置密码' ? (
-                        <Item name="password" label="密码">
+                        <Item
+                            name="password"
+                            label="密码"
+                            initialValue="******"
+                        >
                             <Input placeholder="请输入" disabled />
                         </Item>
                     ) : (
@@ -177,6 +201,9 @@ const CreateUserModal = forwardRef<
                                 addonAfter="天"
                                 placeholder="请输入有效期"
                                 style={{ width: '100%' }}
+                                precision={0}
+                                step={1}
+                                min={0}
                             />
                         </Item>
                     )}

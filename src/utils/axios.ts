@@ -64,11 +64,12 @@ axios.interceptors.response.use(
                     }
                     throw console.error('登录已过期');
                 default:
-                    message.destroy();
-                    message.error(data?.message ?? '请求错误,请检查网络后重试');
-                    throw console.error(
-                        data?.message ?? '请求错误,请检查网络后重试',
-                    );
+                    // message.destroy();
+                    // message.error(data?.message ?? '请求错误,请检查网络后重试');
+                    // throw console.error(
+                    //     data?.message ?? '请求错误,请检查网络后重试',
+                    // );
+                    return;
             }
         } else {
             return response.data;
@@ -79,8 +80,9 @@ axios.interceptors.response.use(
         if (!response) {
             return Promise.reject(error);
         }
+        const data = response.data as any;
         message.destroy();
-        message.error('请求错误,请检查网络后重试');
+        message.error(data?.message ?? '请求错误,请检查网络后重试');
 
         return Promise.reject(response.data);
     },

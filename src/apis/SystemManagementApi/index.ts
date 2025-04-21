@@ -22,6 +22,11 @@ const postAddUser = (
 ): Promise<ResponseData<TAddUserResponse>> =>
     axios.post<never, ResponseData<TAddUserResponse>>('/user', data);
 
+const putEditUser = (
+    data: TAddUserRequest,
+): Promise<ResponseData<TAddUserResponse>> =>
+    axios.put<never, ResponseData<TAddUserResponse>>('/user', data);
+
 // 重置密码
 const postUserReset = (data: {
     username: string;
@@ -40,4 +45,11 @@ const postUserOperate = (
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>('/user/operate', data);
 
-export { getUserList, postAddUser, postUserReset, deleteUser, postUserOperate };
+export {
+    getUserList,
+    postAddUser,
+    postUserReset,
+    deleteUser,
+    postUserOperate,
+    putEditUser,
+};

@@ -32,23 +32,23 @@ const TaskPageList: FC = () => {
     const [page] = WizardTable.usePage();
 
     const { disconnect } = useEventSource<{
-        message: any;
+        msg: any;
     }>('events?stream_type=status_updates', {
         maxRetries: 1,
-        onsuccess: (data) => {
-            const { message } = data;
+        onsuccess: (data: any) => {
+            const { msg } = data;
             const dataSource = page.getDataSource();
             const targetItem =
                 dataSource.findIndex(
-                    (it: TaskListRequest) => it.id === message?.id,
+                    (it: TaskListRequest) => it.id === msg?.data?.id,
                 ) !== -1
-                    ? dataSource.find((it) => it.id === message?.id)
+                    ? dataSource.find((it) => it.id === msg?.data?.id)
                     : false;
             targetItem &&
                 page.localRefrech({
                     operate: 'edit',
                     oldObj: targetItem,
-                    newObj: message,
+                    newObj: msg?.data,
                 });
         },
         onerror: (error) => {

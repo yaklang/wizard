@@ -7,6 +7,7 @@ interface User {
     user_group?: string;
     username: string;
     status: 0 | 1;
+    expire: string;
 }
 interface UserResponse {
     list?: User[];

@@ -86,9 +86,19 @@ const MessageCollect = () => {
             },
         },
         {
+            title: '所属公司',
+            dataIndex: 'parent_company_name',
+            width: 160,
+        },
+        {
             title: '域名',
             dataIndex: 'domains',
             width: 240,
+        },
+        {
+            title: '执行节点',
+            dataIndex: 'execute_node',
+            width: 180,
         },
         {
             title: '创建时间',

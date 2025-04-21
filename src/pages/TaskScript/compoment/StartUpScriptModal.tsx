@@ -74,7 +74,7 @@ const StartUpScriptModal = forwardRef<
 
     // 创建任务 请求
     const { runAsync: AddTaskRunAsync, loading: addLoading } = useRequest(
-        async (resultData) => await postTaskStart(resultData),
+        postTaskStart,
         {
             manual: true,
             onSuccess: async ({ data }) => {
@@ -213,7 +213,10 @@ const StartUpScriptModal = forwardRef<
             const errorFields = err?.errorFields
                 ?.map((it: any) => it?.errors?.join(','))
                 ?.join(',');
-            message.error(errorFields);
+            if (errorFields) {
+                message.destroy();
+                message.error(errorFields);
+            }
         }
     };
 

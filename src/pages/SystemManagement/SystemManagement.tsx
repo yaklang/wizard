@@ -2,11 +2,7 @@ import type { FC } from 'react';
 import { useRef } from 'react';
 import { Button, message, Popover, Tooltip } from 'antd';
 
-import {
-    deleteUser,
-    getUserList,
-    postUserReset,
-} from '@/apis/SystemManagementApi';
+import { deleteUser, getUserList } from '@/apis/SystemManagementApi';
 import type { User, UserRequest } from '@/apis/SystemManagementApi/types';
 import { WizardTable } from '@/compoments';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
@@ -37,12 +33,25 @@ const SystemManagement: FC = () => {
             dataIndex: 'email',
         },
         {
+            title: '过期时间',
+            dataIndex: 'expire',
+            render: (text, record) => {
+                if (record.username === 'root') {
+                    return '-';
+                } else {
+                    return !text || text === '0'
+                        ? '已过期'
+                        : Number(text).toFixed(2) + '天';
+                }
+            },
+        },
+        {
             title: '操作',
             dataIndex: 'report_id',
             fixed: 'right',
             width: 180,
             render: (_, record) => {
-                return (
+                return record.username === 'root' ? null : (
                     <div className="flex items-center justify-center gap-2">
                         <SystemOperate page={page} record={record} />
                         <div
@@ -58,18 +67,12 @@ const SystemManagement: FC = () => {
                                         onClick={() => {
                                             setModalTitle('重置密码');
                                             if (record.username) {
-                                                postUserReset({
-                                                    username: record.username,
-                                                }).then((res) => {
-                                                    const { data } = res;
-                                                    CreateUserModalRef.current?.open(
-                                                        {
-                                                            ...record,
-                                                            ...data,
-                                                            type: 'reset',
-                                                        },
-                                                    );
-                                                });
+                                                CreateUserModalRef.current?.open(
+                                                    {
+                                                        ...record,
+                                                        type: 'reset',
+                                                    },
+                                                );
                                             } else {
                                                 message.info(
                                                     '获取用户名失败，请刷新页面重试',
@@ -85,6 +88,7 @@ const SystemManagement: FC = () => {
                                 setModalTitle('编辑用户');
                                 CreateUserModalRef.current?.open({
                                     ...record,
+                                    expire: Number(record.expire).toFixed(0),
                                     type: 'edit',
                                 });
                             }}

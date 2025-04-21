@@ -266,6 +266,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
                             ([key, value]) => item[key] === value,
                         ),
                     ) ?? -1;
+                console.log(index, oldObj, newObj, 'sss');
                 if (index !== -1) {
                     // 使用新的常量创建更新后的数据
                     const updatedItem = {

@@ -77,10 +77,12 @@ const CveAllUpdateModal = forwardRef<
         },
     });
 
+    // 更新下载
     const initValue = async () => {
         await deleteAsync({ key: 'cve_progress' });
     };
 
+    // 打开弹窗事件
     useImperativeHandle(ref, () => ({
         async open(data) {
             setParentData(data);
@@ -91,6 +93,7 @@ const CveAllUpdateModal = forwardRef<
         },
     }));
 
+    // 更新 数据自动滚动置地
     useEffect(() => {
         const el = messageRef.current;
         if (!el) return;
@@ -104,6 +107,7 @@ const CveAllUpdateModal = forwardRef<
         }
     }, [updateData.msg]); // 每次消息变化就判断一次
 
+    // 更新是否完成
     useEffect(() => {
         if (updateData.percent === 100) {
             message.success('更新完成');

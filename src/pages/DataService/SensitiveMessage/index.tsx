@@ -91,6 +91,11 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
             },
         },
         {
+            title: '执行节点',
+            dataIndex: 'execute_node',
+            width: 180,
+        },
+        {
             title: '发现时间',
             dataIndex: 'created_at',
             width: 240,
