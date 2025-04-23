@@ -92,7 +92,7 @@ type TPromptArgs = Partial<{
     'preset-protes': string;
     ports: string;
     'enable-brute': boolean;
-    'enbale-cve-baseline': boolean;
+    'enable-cve-baseline': boolean;
     execution_node: number;
     plugins: string;
     sched_type: number;
@@ -163,7 +163,7 @@ interface TPostStorageTaskScriptResponse {
         'preset-protes': string[];
         ports: string;
         'enable-brute': boolean;
-        'enbale-cve-baseline': boolean;
+        'enable-cve-baseline': boolean;
     };
     script: string;
 }

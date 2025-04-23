@@ -39,6 +39,14 @@ const WizardTableFilter: FC<{
             <div className="w-full pb-3 flex justify-between table-header-filter pr-3 gap-2">
                 <div className="flex items-center font-bold text-xl">
                     <div> {props?.title ?? tableHeaderGroup}</div>
+                    {props?.totalStatus && (
+                        <div className="ml-4 text-[#85899E] text-[14px] translate-y-[2px] font-normal">
+                            <span className="mr-1">Total</span>
+                            <span className="text-[#1677ff]">
+                                {filterState?.pagemeta?.total}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex gap-2 items-center">

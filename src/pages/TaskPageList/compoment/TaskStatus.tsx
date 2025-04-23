@@ -3,7 +3,7 @@ import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Tag } from 'antd';
 import { match, P } from 'ts-pattern';
 
-type TTaskListStatusType = `${TTaskListStatus}`; // 提取枚举值的联合类型
+export type TTaskListStatusType = `${TTaskListStatus}`; // 提取枚举值的联合类型
 
 const TaskStatus = (status?: TTaskListStatusType) =>
     match(status)

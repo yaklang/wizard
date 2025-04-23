@@ -432,6 +432,23 @@ const createRules = ({
     return rules;
 };
 
+const toBoolean = (value: unknown): boolean => {
+    if (typeof value === 'boolean') return value;
+
+    if (typeof value === 'string') {
+        const val = value.toLowerCase().trim();
+        if (val === 'true' || val === '1') return true;
+        if (val === 'false' || val === '0') return false;
+        return false;
+    }
+
+    if (typeof value === 'number') {
+        return value === 1;
+    }
+
+    return false;
+};
+
 export {
     createFlatTreeWithId,
     processMenu,
@@ -442,4 +459,5 @@ export {
     generateUniqueId,
     copyToClipboard,
     createRules,
+    toBoolean,
 };

@@ -1,13 +1,19 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Input, message, Spin } from 'antd';
+import { Button, Card, Form, Input, message, Modal, Spin } from 'antd';
 import { useRequest, useSafeState } from 'ahooks';
 import useLoginStore from '@/App/store/loginStore';
 import permissionsSliceFn from '@/App/store/powerStore';
 import { LoginIcon } from '@/assets/menu';
 import login_logo from '@/assets/compoments/login_logo.png';
 import login_background from '@/assets/login/login_background.png';
-import { getCaptcha, getLicense, postVerifyCaptcha } from '@/apis/login';
+import {
+    getAuth,
+    getCaptcha,
+    getLicense,
+    postVerifyCaptcha,
+} from '@/apis/login';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 interface FieldType {
     username: string;
     password: string;
@@ -20,6 +26,7 @@ const { Password } = Input;
 const Login = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const [modal, contextHolder] = Modal.useModal();
     const [buttonLoading, setButtonLoading] = useSafeState(false);
 
     const { login, token } = useLoginStore((state) => state);
@@ -64,14 +71,47 @@ const Login = () => {
             run();
         },
         onSuccess: async () => {
-            const formValues = form.getFieldsValue();
-            loginFn(formValues);
+            authRun(form.getFieldValue('username'));
+        },
+    });
+
+    const { run: authRun } = useRequest(getAuth, {
+        manual: true,
+        onSuccess: (res) => {
+            if (res.data.status) {
+                confirm();
+            } else {
+                const formValues = form.getFieldsValue();
+                loginFn(formValues);
+            }
+        },
+        onError: () => {
+            message.destroy();
+            message.error('登录失败');
         },
     });
 
     useEffect(() => {
         runAsync();
     }, []);
+
+    const confirm = () => {
+        modal.confirm({
+            title: '提示',
+            icon: <ExclamationCircleOutlined />,
+            content: '当前账号已登录，是否强制登录？',
+            okText: '确认',
+            cancelText: '取消',
+            async onOk() {
+                const formValues = form.getFieldsValue();
+                await loginFn(formValues);
+                setButtonLoading(false);
+            },
+            onCancel() {
+                setButtonLoading(false);
+            },
+        });
+    };
 
     // useEffect(() => {
     //     // 登录限制，如果有token，并且token未过期，就不能打开login页
@@ -241,6 +281,7 @@ const Login = () => {
                     </Form>
                 </Card>
             </div>
+            {contextHolder}
         </div>
     );
 };

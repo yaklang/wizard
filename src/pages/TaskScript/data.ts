@@ -53,9 +53,13 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
                 typeof values?.params?.['enable-brute'] === 'boolean'
                     ? `${values?.params?.['enable-brute']}`
                     : undefined,
-            'enbale-cve-baseline':
-                typeof values?.params?.['enbale-cve-baseline'] === 'boolean'
-                    ? `${values?.params?.['enbale-cve-baseline']}`
+            'enable-cve-baseline':
+                typeof values?.params?.['enable-cve-baseline'] === 'boolean'
+                    ? `${values?.params?.['enable-cve-baseline']}`
+                    : undefined,
+            'enable-web-login-brute':
+                typeof values?.params?.['enable-web-login-brute'] === 'boolean'
+                    ? `${values?.params?.['enable-web-login-brute']}`
                     : undefined,
         },
         param_files: values?.param_files

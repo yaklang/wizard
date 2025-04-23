@@ -86,11 +86,19 @@ const CreateUserModal = forwardRef<
             const formData = await form.validateFields();
             match(title)
                 .with('创建用户', async () => {
-                    await runAsync({ ...formData, role: ['super-admin'] });
+                    await runAsync({
+                        ...formData,
+                        role: ['super-admin'],
+                        expire: parseInt(formData.expire, 10),
+                    });
                     // audit-user
                 })
                 .with('编辑用户', async () => {
-                    await runAsyncEdit({ ...formData, role: record?.role });
+                    await runAsyncEdit({
+                        ...formData,
+                        role: record?.role,
+                        expire: parseInt(formData.expire, 10),
+                    });
                     // page.localRefrech({
                     //     operate: 'edit',
                     //     newObj: {
@@ -191,9 +199,19 @@ const CreateUserModal = forwardRef<
                                     message: '账号有效期不能为空',
                                 },
                                 {
-                                    type: 'number',
-                                    min: 1,
-                                    message: '账号有效期最少为一天',
+                                    validator: (_, value) => {
+                                        if (
+                                            typeof value === 'number' &&
+                                            value < 1
+                                        ) {
+                                            return Promise.reject(
+                                                new Error(
+                                                    '账号有效期最少为一天',
+                                                ),
+                                            );
+                                        }
+                                        return Promise.resolve();
+                                    },
                                 },
                             ]}
                         >
@@ -203,7 +221,6 @@ const CreateUserModal = forwardRef<
                                 style={{ width: '100%' }}
                                 precision={0}
                                 step={1}
-                                min={0}
                             />
                         </Item>
                     )}

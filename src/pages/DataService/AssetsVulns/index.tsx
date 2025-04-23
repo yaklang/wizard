@@ -63,7 +63,7 @@ const AssetsVulns: FC = () => {
             ...columns.slice(1),
         ];
         return result;
-    }, []);
+    }, [data]);
 
     return (
         <WizardTable

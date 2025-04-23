@@ -28,13 +28,16 @@ import {
 import type { TDetailDatailOptions } from '../TaskDetail';
 import { getSubtaskSteam } from '@/apis/task';
 import { useEventSource } from '@/hooks';
+import type { TTaskListStatusType } from '@/pages/TaskPageList/compoment/TaskStatus';
 // import { TFetchProcessResponse } from '@/apis/task/types';
 
 const { Paragraph } = Typography;
 
 interface TTaskDetailSiderProps {
-    id?: string;
+    task_id?: string;
     data?: TDetailDatailOptions;
+    status?: TTaskListStatusType;
+    id?: string;
 }
 
 // const taskList = [
@@ -72,7 +75,12 @@ const info = (item: Record<'label' | 'value', string | number>) => {
     });
 };
 
-const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
+const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
+    task_id,
+    data,
+    status,
+    id,
+}) => {
     const [collapsed, setCollapsed] = useSafeState(true);
 
     const {
@@ -81,9 +89,9 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
         loading,
         refreshAsync,
     } = useRequest(
-        async (id) => {
+        async (task_id) => {
             const result = await getBatchInvokingScript({
-                task_id: id,
+                task_id: task_id,
                 page: -1,
             });
             const { data } = result;
@@ -123,7 +131,7 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
             const { msg } = data;
             const progress = msg?.progress ? msg?.progress * 100 : 0;
             setTaskProcess({
-                name: id!,
+                name: task_id!,
                 process: parseInt(progress.toFixed(2), 10),
             });
         },
@@ -133,6 +141,16 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
         },
         manual: true,
     });
+
+    useEffect(() => {
+        setTaskProcess((preValue) => ({
+            name: task_id!,
+            process:
+                status === 'success' || status === 'failed'
+                    ? 100
+                    : preValue?.process || 0,
+        }));
+    }, [status]);
 
     useUpdateEffect(() => {
         if (id) {
@@ -145,8 +163,8 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({ id, data }) => {
     }, [sseLoading]);
 
     useEffect(() => {
-        if (id) {
-            runAsync(id);
+        if (task_id) {
+            runAsync(task_id);
             connect();
         }
         return () => disconnect();

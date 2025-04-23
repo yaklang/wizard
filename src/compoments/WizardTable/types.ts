@@ -139,6 +139,7 @@ interface TWizardTableProps<T = AnyObject> extends CreateTableProps<T> {
     tableHeader?: {
         tableHeaderGroup?: ReactNode;
         title?: string | ReactNode;
+        totalStatus?: boolean;
         options?: Partial<TableHeaderOptions>;
         filterDispatch?: Dispatch<TRecudeInitiakValue>;
         filterState?: TRecudeInitiakValue;

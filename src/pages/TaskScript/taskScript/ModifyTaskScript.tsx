@@ -64,7 +64,7 @@ const ModifyTaskScript: FC = () => {
             prompt_args: {
                 ...formValue.prompt_args,
                 'enable-brute': `${formValue?.prompt_args?.['enable-brute']}`,
-                'enbale-cve-baseline': `${formValue?.prompt_args?.['enbale-cve-baseline']}`,
+                'enable-cve-baseline': `${formValue?.prompt_args?.['enable-cve-baseline']}`,
             },
         };
         run(transformFormValue, state.type === 'edit');
@@ -352,7 +352,7 @@ const ModifyTaskScript: FC = () => {
                                             }
                                             name={[
                                                 'prompt_args',
-                                                'enbale-cve-baseline',
+                                                'enable-cve-baseline',
                                             ]}
                                             initialValue={false}
                                         >

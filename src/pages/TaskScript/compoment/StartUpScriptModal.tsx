@@ -2,7 +2,7 @@ import { WizardModal } from '@/compoments';
 import { Button, Collapse, Form, message } from 'antd';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
-import { randomString } from '@/utils';
+import { randomString, toBoolean } from '@/utils';
 import dayjs from 'dayjs';
 import {
     getNodeList,
@@ -175,6 +175,15 @@ const StartUpScriptModal = forwardRef<
                                     ? items.ip_list.join(',')
                                     : items.params?.target ||
                                       items.params?.keyword,
+                            'enable-cve-baseline': toBoolean(
+                                items.params?.['enable-cve-baseline'],
+                            ),
+                            'enable-brute': toBoolean(
+                                items.params?.['enable-brute'],
+                            ),
+                            'enable-web-login-brute': toBoolean(
+                                items.params?.['enable-web-login-brute'],
+                            ),
                             plugins: items.params?.plugins
                                 ? {
                                       ScriptName: {
@@ -187,6 +196,7 @@ const StartUpScriptModal = forwardRef<
                                 : undefined,
                         },
                     };
+                    console.log(targetSetFormData, 'targetSetFormData');
                     form.setFieldsValue(targetSetFormData);
                     setScriptGroupList(scriptGroupList);
                     setEditObj({

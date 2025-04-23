@@ -694,7 +694,11 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         false,
                                     );
                                     setFieldValue(
-                                        ['params', 'enbale-cve-baseline'],
+                                        ['params', 'enable-cve-baseline'],
+                                        false,
+                                    );
+                                    setFieldValue(
+                                        ['params', 'enable-web-login-brute'],
                                         false,
                                     );
                                 }}
@@ -822,7 +826,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                 </Popover>
                             </span>
                         }
-                        name={['params', 'enbale-cve-baseline']}
+                        name={['params', 'enable-cve-baseline']}
                         className="ml-5"
                         initialValue={true}
                     >
@@ -831,7 +835,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                     {scriptTypeValue === 'portAndVulScan' && (
                         <Item
                             label="Web登录页爆破"
-                            name={['params', 'enbale-web-login-brute']}
+                            name={['params', 'enable-web-login-brute']}
                             className="ml-5"
                             initialValue={true}
                         >

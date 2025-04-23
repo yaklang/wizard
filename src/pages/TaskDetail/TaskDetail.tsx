@@ -50,7 +50,7 @@ export type TDetailDatailOptions = Array<{
         | 'target'
         | 'ports'
         | 'enable-brute'
-        | 'enbale-cve-baseline'
+        | 'enable-cve-baseline'
         | 'plugins'
         | 'ip_num'
         | 'port_num'
@@ -99,8 +99,8 @@ const TaskDetail: FC = () => {
                     value: dataTop?.params?.['enable-brute'],
                 },
                 {
-                    label: 'enbale-cve-baseline',
-                    value: dataTop?.params?.['enbale-cve-baseline'],
+                    label: 'enable-cve-baseline',
+                    value: dataTop?.params?.['enable-cve-baseline'],
                 },
                 {
                     label: '节点',
@@ -310,7 +310,12 @@ const TaskDetail: FC = () => {
 
     return (
         <div className="flex align-start h-full">
-            <TaskDetailSider id={record?.task_id} data={data} />
+            <TaskDetailSider
+                task_id={record?.task_id}
+                data={data}
+                status={record?.status}
+                id={record?.id}
+            />
             {record?.script_type === 'portAndVulScan' ? (
                 <WizardTable
                     rowKey="id"

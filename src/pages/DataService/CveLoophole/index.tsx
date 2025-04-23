@@ -147,6 +147,7 @@ const CveLoophole: FC = () => {
                 columns={columns}
                 tableHeader={{
                     title: 'CVE 数据库管理',
+                    totalStatus: true,
                     options: {
                         trigger: (
                             <div className="flex items-center justify-center gap-4">
