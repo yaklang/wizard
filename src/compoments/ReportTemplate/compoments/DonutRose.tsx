@@ -1,7 +1,7 @@
 import React from 'react';
 import { Chart, Coord, Geom, Legend, Tooltip } from 'bizcharts';
-import { GraphProps } from './GraphViewer';
-import { Palm } from '@/gen/schema';
+import type { GraphProps } from './GraphViewer';
+import type { Palm } from '@/gen/schema';
 
 export const NonutRose: React.FC<GraphProps> = (graph) => {
     const data = graph.data as Palm.NonutRoseGraph;

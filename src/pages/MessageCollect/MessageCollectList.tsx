@@ -6,7 +6,7 @@ import type { TDeleteValues } from '../ReportManage/ReportManage';
 import { useRef } from 'react';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CreateTaskScriptModal } from '../TaskPageList/compoment/CreateTaskScriptModal';
-import { getAnalysisScript } from '@/apis/task';
+import { getAnalysisScript, getBatchInvokingScriptTaskNode } from '@/apis/task';
 import {
     deleteCompanyInfo,
     getAlldomains,
@@ -66,6 +66,18 @@ const MessageCollect = () => {
             },
         });
 
+    // 获取执行节点 列表
+    const { data: taskNodeData } = useRequest(async () => {
+        const result = await getBatchInvokingScriptTaskNode();
+        const {
+            data: { list },
+        } = result;
+        const resultData = Array.isArray(list)
+            ? list.map((it) => ({ label: it, value: it }))
+            : [];
+        return resultData;
+    });
+
     const columns: CreateTableProps<TGetCompanyInfoResponse>['columns'] = [
         {
             title: '公司名称',
@@ -97,6 +109,8 @@ const MessageCollect = () => {
         },
         {
             title: '执行节点',
+            columnsHeaderFilterType: 'radio',
+            wizardColumnsOptions: taskNodeData,
             dataIndex: 'execute_node',
             width: 180,
         },

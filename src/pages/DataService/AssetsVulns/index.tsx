@@ -10,6 +10,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
 import { AssetsVulnsFilterDrawer } from '@/pages/TaskDetail/compoments/TableOptionsFilterDrawer/AssetsVulnsFilterDrawer';
+import { getBatchInvokingScriptTaskNode } from '@/apis/task';
 
 const taskNameColumns: any = [
     {
@@ -52,10 +53,25 @@ const AssetsVulns: FC = () => {
         };
     });
 
+    // 获取执行节点 列表
+    const { data: taskNodeData } = useRequest(async () => {
+        const result = await getBatchInvokingScriptTaskNode();
+        const {
+            data: { list },
+        } = result;
+        const resultData = Array.isArray(list)
+            ? list.map((it) => ({ label: it, value: it }))
+            : [];
+        return resultData;
+    });
+
     const columns = useMemo(() => {
-        const columns = AssetsVulnsColumns(
-            data ?? { transformSeverityList: [], transformList: [] },
-        );
+        const assetsVulnsColumnsProps = {
+            transformSeverityList: data?.transformSeverityList ?? [],
+            transformList: data?.transformList ?? [],
+            taskNodeData: taskNodeData ?? [],
+        };
+        const columns = AssetsVulnsColumns(assetsVulnsColumnsProps);
 
         const result = [
             ...columns.slice(0, 1),
@@ -63,7 +79,7 @@ const AssetsVulns: FC = () => {
             ...columns.slice(1),
         ];
         return result;
-    }, [data]);
+    }, [data, taskNodeData]);
 
     return (
         <WizardTable

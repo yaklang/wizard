@@ -11,6 +11,7 @@ import { message, Select } from 'antd';
 import CopyOutlined from '@/pages/TaskDetail/compoments/utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
 import { useRequest } from 'ahooks';
+import { getBatchInvokingScriptTaskNode } from '@/apis/task';
 
 const sensitiveInfoStatus = [
     {
@@ -32,6 +33,18 @@ const sensitiveInfoStatus = [
 
 const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
     const [page] = WizardTable.usePage();
+
+    // 获取执行节点 列表
+    const { data: taskNodeData } = useRequest(async () => {
+        const result = await getBatchInvokingScriptTaskNode();
+        const {
+            data: { list },
+        } = result;
+        const resultData = Array.isArray(list)
+            ? list.map((it) => ({ label: it, value: it }))
+            : [];
+        return resultData;
+    });
     const columns: CreateTableProps<TSensitiveMessageResponse>['columns'] = [
         {
             title: '仓库名',
@@ -87,6 +100,8 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
         {
             title: '执行节点',
             dataIndex: 'execute_node',
+            columnsHeaderFilterType: 'radio',
+            wizardColumnsOptions: taskNodeData,
             width: 180,
         },
         {

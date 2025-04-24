@@ -181,9 +181,10 @@ const StartUpScriptModal = forwardRef<
                             'enable-brute': toBoolean(
                                 items.params?.['enable-brute'],
                             ),
-                            'enable-web-login-brute': toBoolean(
-                                items.params?.['enable-web-login-brute'],
-                            ),
+                            'enable-web-login-brute':
+                                items.script_type === 'company_scan'
+                                    ? true
+                                    : false,
                             plugins: items.params?.plugins
                                 ? {
                                       ScriptName: {
@@ -196,7 +197,6 @@ const StartUpScriptModal = forwardRef<
                                 : undefined,
                         },
                     };
-                    console.log(targetSetFormData, 'targetSetFormData');
                     form.setFieldsValue(targetSetFormData);
                     setScriptGroupList(scriptGroupList);
                     setEditObj({

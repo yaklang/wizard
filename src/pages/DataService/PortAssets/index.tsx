@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 
 import { WizardTable } from '@/compoments';
 
@@ -9,6 +9,8 @@ import { UploadOutlined } from '@ant-design/icons';
 import { AssetsProtsFilterDrawer } from '@/pages/TaskDetail/compoments/TableOptionsFilterDrawer/AssetsProtsFilterDrawer';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import type { TGetAssetsProtsResponse } from '@/apis/taskDetail/types';
+import { getBatchInvokingScriptTaskNode } from '@/apis/task';
+import { useRequest } from 'ahooks';
 
 const PortAssets: FC = () => {
     const [page] = WizardTable.usePage();
@@ -23,15 +25,35 @@ const PortAssets: FC = () => {
             },
         ];
 
+    // 获取执行节点 列表
+    const { data: taskNodeData } = useRequest(async () => {
+        const result = await getBatchInvokingScriptTaskNode();
+        const {
+            data: { list },
+        } = result;
+        const resultData = Array.isArray(list)
+            ? list.map((it) => ({ label: it, value: it }))
+            : [];
+        return resultData;
+    });
+
+    const columns = useMemo(() => {
+        const protColumnsList = ProtColumns({
+            taskNodeData: taskNodeData ?? [],
+        });
+        const result = [
+            ...protColumnsList.slice(0, 1),
+            ...taskNameColumns,
+            ...protColumnsList.slice(1),
+        ];
+        return result;
+    }, [taskNodeData]);
+
     return (
         <WizardTable
             page={page}
             rowKey="id"
-            columns={[
-                ...ProtColumns.slice(0, 1),
-                ...taskNameColumns,
-                ...ProtColumns.slice(1),
-            ]}
+            columns={columns}
             tableHeader={{
                 title: '端口资产列表',
                 options: {

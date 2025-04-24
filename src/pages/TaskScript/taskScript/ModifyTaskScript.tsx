@@ -140,14 +140,14 @@ const ModifyTaskScript: FC = () => {
                             return (
                                 <Item
                                     label={
-                                        scriptType === 'portAndVulScan'
-                                            ? '扫描目标'
-                                            : '关键词'
+                                        scriptType === 'weakinfo'
+                                            ? '关键词'
+                                            : '扫描目标'
                                     }
                                     name={
-                                        scriptType === 'portAndVulScan'
-                                            ? ['prompt_args', 'target']
-                                            : ['prompt_args', 'keyword']
+                                        scriptType === 'weakinfo'
+                                            ? ['prompt_args', 'keyword']
+                                            : ['prompt_args', 'target']
                                     }
                                     extra={
                                         <div className="flex items-center font-normal text-xs color-[#85899E]">
@@ -160,14 +160,14 @@ const ModifyTaskScript: FC = () => {
                                                 onChange={(fileName) => {
                                                     setFieldValue(
                                                         scriptType ===
-                                                            'portAndVulScan'
+                                                            'weakinfo'
                                                             ? [
                                                                   'prompt_args',
-                                                                  'target',
+                                                                  'keyword',
                                                               ]
                                                             : [
                                                                   'prompt_args',
-                                                                  'keyword',
+                                                                  'target',
                                                               ],
                                                         fileName,
                                                     );
@@ -195,12 +195,9 @@ const ModifyTaskScript: FC = () => {
                                         maxCount={1}
                                         onChange={(fileName) => {
                                             setFieldValue(
-                                                scriptType === 'portAndVulScan'
-                                                    ? ['prompt_args', 'target']
-                                                    : [
-                                                          'prompt_args',
-                                                          'keyword',
-                                                      ],
+                                                scriptType === 'weakinfo'
+                                                    ? ['prompt_args', 'keyword']
+                                                    : ['prompt_args', 'target'],
                                                 fileName,
                                             );
                                         }}
@@ -214,7 +211,7 @@ const ModifyTaskScript: FC = () => {
                         {({ getFieldValue }) => {
                             const scriptType = getFieldValue('script_type');
                             return (
-                                scriptType === 'portAndVulScan' && (
+                                scriptType !== 'weakinfo' && (
                                     <>
                                         <Item noStyle dependencies={[]}>
                                             {({ setFieldValue }) => {

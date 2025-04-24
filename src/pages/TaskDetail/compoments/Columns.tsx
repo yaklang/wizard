@@ -17,7 +17,9 @@ import { copyToClipboard } from '@/utils';
 import type { TGetCompanyInfoResponse } from '@/apis/MessageCollectApi/type';
 
 // 端口资产 columns
-const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
+const ProtColumns = (filterData?: {
+    taskNodeData: any[];
+}): CreateTableProps<TGetAssetsProtsResponse>['columns'] => [
     {
         title: '网络地址',
         dataIndex: 'host',
@@ -73,6 +75,8 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
     {
         title: '执行节点',
         dataIndex: 'execute_node',
+        columnsHeaderFilterType: 'radio',
+        wizardColumnsOptions: filterData?.taskNodeData ?? [],
         width: 180,
     },
     {
@@ -101,6 +105,7 @@ const ProtColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] = [
 const AssetsVulnsColumns = (filterData: {
     transformSeverityList: any[];
     transformList: any[];
+    taskNodeData?: any[];
 }): CreateTableProps<TGetAssetsVulnsResponse>['columns'] => {
     return [
         {
@@ -142,6 +147,8 @@ const AssetsVulnsColumns = (filterData: {
         {
             title: '执行节点',
             dataIndex: 'execute_node',
+            columnsHeaderFilterType: 'radio',
+            wizardColumnsOptions: filterData?.taskNodeData ?? [],
             width: 180,
         },
         {

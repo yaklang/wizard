@@ -24,6 +24,9 @@ const PresetPorts = {
 const scriptTypeOption = [
     { label: '端口与漏洞扫描', value: 'portAndVulScan' },
     { label: '敏感信息', value: 'weakinfo' },
+    { label: '扫描公司', value: 'company_scan' },
+    { label: '扫描域名', value: 'subdomain_scan' },
+    { label: '登录框扫描', value: 'login_brute_scan' },
     // { label: '信息收集', value: 'xinxishouji' },
 ];
 
@@ -135,9 +138,9 @@ const disabledTime = (selectedDate: Dayjs | null) => {
 export {
     PresetPorts,
     presetProtsGroupOptions,
+    scriptTypeOption,
     targetColorFn,
     transformFormData,
-    scriptTypeOption,
     disabledDate,
     disabledTime,
 };

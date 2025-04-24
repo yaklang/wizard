@@ -39,7 +39,12 @@ type TScriptGrounpList = Array<{ value: string; label: string }>;
 
 type TCreateTaskItemsProps = (
     title: string,
-    scriptTypeValue: 'portAndVulScan' | 'weakinfo',
+    scriptTypeValue:
+        | 'portAndVulScan'
+        | 'weakinfo'
+        | 'company_scan'
+        | 'subdomain_scan'
+        | 'login_brute_scan',
     scriptGroupList: TScriptGrounpList,
     scannerDataList?: TScannerDataList,
 ) => ItemType[] | any;
@@ -318,20 +323,19 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         {({ setFieldValue }) => {
                             return (
                                 <Item
-                                    className={`${scriptTypeValue === 'portAndVulScan' ? 'ml-14' : 'ml-18'}`}
+                                    className={`${scriptTypeValue === 'weakinfo' ? 'ml-18' : 'ml-14'}`}
                                     label={
                                         <div className="max-w-full">
-                                            {scriptTypeValue ===
-                                            'portAndVulScan'
-                                                ? '扫描目标'
-                                                : '关键词'}
+                                            {scriptTypeValue === 'weakinfo'
+                                                ? '关键词'
+                                                : '扫描目标'}
                                         </div>
                                     }
                                     name={[
                                         'params',
-                                        scriptTypeValue === 'portAndVulScan'
-                                            ? 'target'
-                                            : 'keyword',
+                                        scriptTypeValue === 'weakinfo'
+                                            ? 'keyword'
+                                            : 'target',
                                     ]}
                                     rules={[
                                         {
@@ -352,9 +356,9 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                         [
                                                             'params',
                                                             scriptTypeValue ===
-                                                            'portAndVulScan'
-                                                                ? 'target'
-                                                                : 'keyword',
+                                                            'weakinfo'
+                                                                ? 'keyword'
+                                                                : 'target',
                                                         ],
                                                         fileName,
                                                     );
@@ -385,9 +389,9 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                 [
                                                     'params',
                                                     scriptTypeValue ===
-                                                    'portAndVulScan'
-                                                        ? 'target'
-                                                        : 'keyword',
+                                                    'weakinfo'
+                                                        ? 'keyword'
+                                                        : 'target',
                                                 ],
                                                 fileName,
                                             );
@@ -504,7 +508,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             );
                         }}
                     </Item>
-                    {scriptTypeValue === 'portAndVulScan' && (
+                    {scriptTypeValue !== 'weakinfo' && (
                         <Item
                             shouldUpdate={(prevValues, curValues) => {
                                 const preScannerStr = Array.isArray(
@@ -832,24 +836,83 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                     >
                         <Switch />
                     </Item>
-                    {scriptTypeValue === 'portAndVulScan' && (
+                    {scriptTypeValue === 'company_scan' && (
                         <Item
                             label="Web登录页爆破"
                             name={['params', 'enable-web-login-brute']}
                             className="ml-5"
                             initialValue={true}
                         >
-                            <Switch />
+                            <Switch disabled />
                         </Item>
                     )}
+                    <Item
+                        noStyle
+                        dependencies={['params', 'enable-web-login-brute']}
+                    >
+                        {({ getFieldValue }) => {
+                            const loginBruteValue = getFieldValue([
+                                'params',
+                                'enable-web-login-brute',
+                            ]);
+                            return (
+                                loginBruteValue && (
+                                    <>
+                                        <Item
+                                            label={
+                                                <span>
+                                                    爆破用户名
+                                                    <Popover
+                                                        content="多数据支持逗号进行分隔"
+                                                        trigger="hover"
+                                                    >
+                                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                    </Popover>
+                                                </span>
+                                            }
+                                            name={['params', 'usernames']}
+                                            className="ml-7"
+                                        >
+                                            <Input.TextArea
+                                                placeholder="请输入爆破用户名"
+                                                style={{ width: '100%' }}
+                                                rows={2}
+                                            />
+                                        </Item>
+                                        <Item
+                                            label={
+                                                <span>
+                                                    爆破密码
+                                                    <Popover
+                                                        content="多数据支持逗号进行分隔"
+                                                        trigger="hover"
+                                                    >
+                                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                    </Popover>
+                                                </span>
+                                            }
+                                            name={['params', 'passwords']}
+                                            className="ml-[42px]"
+                                        >
+                                            <Input.TextArea
+                                                placeholder="请输入爆破密码"
+                                                style={{ width: '100%' }}
+                                                rows={2}
+                                            />
+                                        </Item>
+                                    </>
+                                )
+                            );
+                        }}
+                    </Item>
                 </div>
             ),
         },
     ];
 
     const resultCollapseChildren = useMemo(() => {
-        const taskType = scriptTypeValue === 'portAndVulScan';
-        return !taskType
+        const taskType = scriptTypeValue === 'weakinfo';
+        return taskType
             ? collapseChildren.slice(0, collapseChildren.length - 1)
             : collapseChildren;
     }, [scriptTypeValue]);

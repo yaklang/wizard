@@ -204,7 +204,24 @@ const TaskDetail: FC = () => {
                             order_by: filter?.order ? 'updated_at' : undefined,
                             task_id: record?.task_id,
                         });
-                        setColumns(ProtColumns);
+                        const targetProtColumns = ProtColumns().map(
+                            // eslint-disable-next-line max-nested-callbacks
+                            (item) =>
+                                item.dataIndex === 'execute_node'
+                                    ? {
+                                          ...item,
+                                          wizardColumnsOptions:
+                                              record?.scanner?.map(
+                                                  // eslint-disable-next-line max-nested-callbacks
+                                                  (it: string) => ({
+                                                      label: it,
+                                                      value: it,
+                                                  }),
+                                              ),
+                                      }
+                                    : item,
+                        );
+                        setColumns(targetProtColumns);
                         setTableLoadings(false);
                         return {
                             data,
@@ -223,7 +240,19 @@ const TaskDetail: FC = () => {
                         });
                         await assetsVulnsFilterrunAsync()
                             .then((filterData) => {
-                                setColumns(AssetsVulnsColumns(filterData));
+                                const targetFilterData = {
+                                    ...filterData,
+                                    taskNodeData: record?.scanner?.map(
+                                        // eslint-disable-next-line max-nested-callbacks
+                                        (it: string) => ({
+                                            label: it,
+                                            value: it,
+                                        }),
+                                    ),
+                                };
+                                const assetsVulnsColumns =
+                                    AssetsVulnsColumns(targetFilterData);
+                                setColumns(assetsVulnsColumns);
                             })
                             .catch(() =>
                                 AssetsVulnsColumns({

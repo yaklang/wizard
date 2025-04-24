@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { Scene, HeatmapLayer } from '@antv/l7';
 import { GaodeMap } from '@antv/l7-maps';
-import { GraphProps } from './compoments/GraphViewer';
+import type { GraphProps } from './compoments/GraphViewer';
 import { randomString } from '@/utils';
 
-export interface GeoMapProp extends GraphProps {}
+export type GeoMapProp = GraphProps;
 
 export interface PalmSiemGeoJson {
     points?: any;
