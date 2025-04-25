@@ -715,137 +715,155 @@ const CreateTaskItems: TCreateTaskItemsProps = (
             ),
             children: (
                 <div>
-                    <Item noStyle dependencies={[]}>
-                        {/* TODO 若需字段联动  dependencies 需添加监听项 */}
-                        {({ setFieldValue }) => {
-                            return (
-                                <Item
-                                    name={['params', 'preset-protes']}
-                                    label={
-                                        <div className="min-w-[124px] max-w-full">
-                                            预设端口
-                                        </div>
-                                    }
-                                >
-                                    <Checkbox.Group
-                                        options={presetProtsGroupOptions}
-                                        onChange={(e) => {
-                                            const portsValue = e
-                                                .map(
-                                                    (it) =>
-                                                        PresetPorts[
-                                                            it as keyof typeof PresetPorts
-                                                        ],
-                                                )
-                                                .join();
-                                            setFieldValue(
-                                                ['params', 'ports'],
-                                                portsValue,
-                                            );
-                                            return e;
-                                        }}
-                                    />
-                                </Item>
-                            );
-                        }}
-                    </Item>
-                    <Item noStyle dependencies={[['params', 'preset-protes']]}>
-                        {({ setFieldValue }) => {
-                            return (
-                                <Item
-                                    name={['params', 'ports']}
-                                    initialValue={PresetPorts.fast}
-                                    label={
-                                        <span>
-                                            扫描端口
-                                            <Popover
-                                                content="当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口"
-                                                trigger="hover"
-                                            >
-                                                <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                            </Popover>
-                                        </span>
-                                    }
-                                    rules={[
-                                        {
-                                            message: '请输入扫描端口',
-                                            required: true,
-                                        },
-                                    ]}
-                                    className="ml-9"
-                                >
-                                    <Input.TextArea
-                                        placeholder="请输入扫描端口"
-                                        style={{ width: '100%' }}
-                                        rows={4}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const keys = Object.keys(
-                                                PresetPorts,
-                                            ) as PresetKey[];
-                                            const match = keys.filter((key) =>
-                                                value.includes(
-                                                    PresetPorts[key],
-                                                ),
-                                            );
+                    {scriptTypeValue !== 'login_brute_scan' && (
+                        <>
+                            <Item noStyle dependencies={[]}>
+                                {/* TODO 若需字段联动  dependencies 需添加监听项 */}
+                                {({ setFieldValue }) => {
+                                    return (
+                                        <Item
+                                            name={['params', 'preset-protes']}
+                                            label={
+                                                <div className="min-w-[124px] max-w-full">
+                                                    预设端口
+                                                </div>
+                                            }
+                                        >
+                                            <Checkbox.Group
+                                                options={
+                                                    presetProtsGroupOptions
+                                                }
+                                                onChange={(e) => {
+                                                    const portsValue = e
+                                                        .map(
+                                                            (it) =>
+                                                                PresetPorts[
+                                                                    it as keyof typeof PresetPorts
+                                                                ],
+                                                        )
+                                                        .join();
+                                                    setFieldValue(
+                                                        ['params', 'ports'],
+                                                        portsValue,
+                                                    );
+                                                    return e;
+                                                }}
+                                            />
+                                        </Item>
+                                    );
+                                }}
+                            </Item>
+                            <Item
+                                noStyle
+                                dependencies={[['params', 'preset-protes']]}
+                            >
+                                {({ setFieldValue }) => {
+                                    return (
+                                        <Item
+                                            name={['params', 'ports']}
+                                            initialValue={PresetPorts.fast}
+                                            label={
+                                                <span>
+                                                    扫描端口
+                                                    <Popover
+                                                        content="当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口"
+                                                        trigger="hover"
+                                                    >
+                                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                    </Popover>
+                                                </span>
+                                            }
+                                            rules={[
+                                                {
+                                                    message: '请输入扫描端口',
+                                                    required: true,
+                                                },
+                                            ]}
+                                            className="ml-9"
+                                        >
+                                            <Input.TextArea
+                                                placeholder="请输入扫描端口"
+                                                style={{ width: '100%' }}
+                                                rows={4}
+                                                onChange={(e) => {
+                                                    const value =
+                                                        e.target.value;
+                                                    const keys = Object.keys(
+                                                        PresetPorts,
+                                                    ) as PresetKey[];
+                                                    const match = keys.filter(
+                                                        (key) =>
+                                                            value.includes(
+                                                                PresetPorts[
+                                                                    key
+                                                                ],
+                                                            ),
+                                                    );
 
-                                            setFieldValue(
-                                                ['params', 'preset-protes'],
-                                                match,
-                                            );
-                                            return value;
-                                        }}
-                                    />
-                                </Item>
-                            );
-                        }}
-                    </Item>
-                    <Item
-                        label={
-                            <span>
-                                弱口令
-                                <Popover
-                                    content="是否启用弱口令检测"
-                                    trigger="hover"
-                                >
-                                    <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                </Popover>
-                            </span>
-                        }
-                        name={['params', 'enable-brute']}
-                        className="ml-[62px]"
-                        initialValue={true}
-                    >
-                        <Switch />
-                    </Item>
-                    <Item
-                        label={
-                            <span>
-                                CVE基线检查
-                                <Popover
-                                    content="是否启用CVE基线检查"
-                                    trigger="hover"
-                                >
-                                    <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                </Popover>
-                            </span>
-                        }
-                        name={['params', 'enable-cve-baseline']}
-                        className="ml-5"
-                        initialValue={true}
-                    >
-                        <Switch />
-                    </Item>
-                    {scriptTypeValue === 'company_scan' && (
-                        <Item
-                            label="Web登录页爆破"
-                            name={['params', 'enable-web-login-brute']}
-                            className="ml-5"
-                            initialValue={true}
-                        >
-                            <Switch disabled />
-                        </Item>
+                                                    setFieldValue(
+                                                        [
+                                                            'params',
+                                                            'preset-protes',
+                                                        ],
+                                                        match,
+                                                    );
+                                                    return value;
+                                                }}
+                                            />
+                                        </Item>
+                                    );
+                                }}
+                            </Item>
+                            <Item
+                                label={
+                                    <span>
+                                        弱口令
+                                        <Popover
+                                            content="是否启用弱口令检测"
+                                            trigger="hover"
+                                        >
+                                            <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                        </Popover>
+                                    </span>
+                                }
+                                name={['params', 'enable-brute']}
+                                className="ml-[62px]"
+                                initialValue={true}
+                            >
+                                <Switch />
+                            </Item>
+                            <Item
+                                label={
+                                    <span>
+                                        CVE基线检查
+                                        <Popover
+                                            content="是否启用CVE基线检查"
+                                            trigger="hover"
+                                        >
+                                            <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                        </Popover>
+                                    </span>
+                                }
+                                name={['params', 'enable-cve-baseline']}
+                                className="ml-5"
+                                initialValue={true}
+                            >
+                                <Switch />
+                            </Item>
+                        </>
                     )}
+
+                    {scriptTypeValue === 'company_scan' ||
+                        (scriptTypeValue === 'login_brute_scan' && (
+                            <Item
+                                label="Web登录页爆破"
+                                name={['params', 'enable-web-login-brute']}
+                                className="ml-5"
+                                initialValue={true}
+                            >
+                                <Switch disabled />
+                            </Item>
+                        ))}
                     <Item
                         noStyle
                         dependencies={['params', 'enable-web-login-brute']}

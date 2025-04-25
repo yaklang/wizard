@@ -128,7 +128,10 @@ type TimelineReportBlockData =
           type: 'asset-cve';
           data: { active: boolean; filter: QueryPalmCVEDatabaseParam };
       }
-    | { type: 'raw'; data: string };
+    | { type: 'raw'; data: string }
+    | { type: 'portAndVulScan'; data: null }
+    | { type: 'company_scan'; data: null }
+    | { type: 'subdomain_scan'; data: null };
 
 // 报告模版最外层数据类型结构
 interface TReportTemplateProps {

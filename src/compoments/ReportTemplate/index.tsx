@@ -1,6 +1,7 @@
-import { FC } from 'react';
+/* eslint-disable react/no-children-prop */
+import type { FC } from 'react';
 
-import { Collapse, Divider } from 'antd';
+import { Collapse, Divider, Steps } from 'antd';
 import { match } from 'ts-pattern';
 import { useMemoizedFn } from 'ahooks';
 import ReactJson from 'react-json-view';
@@ -16,7 +17,7 @@ import type {
 import { ReportMergeTable, ReportTable } from './compoments/JsonTable';
 import { NewBarGraph } from './compoments/NewBarGraph';
 import { CodeViewer } from './compoments/CodeViewer';
-import { AnyObject } from 'antd/es/_util/type';
+import type { AnyObject } from 'antd/es/_util/type';
 import { GraphBasicInfoTable } from './compoments/GraphBasicInfoTable';
 import { GraphViewer } from './compoments/GraphViewer';
 import { HollowPie, MultiPie } from './compoments/EchartsInit';
@@ -28,6 +29,7 @@ import {
     StackedVerticalBar,
 } from './compoments/EchartsInit';
 import { Markdown } from './compoments/utils/Markdown';
+import { v4 as uuidv4 } from 'uuid';
 
 const ReportTemplate: FC<TReportTemplateProps> = ({
     blocks,
@@ -54,7 +56,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                     if (!raw || raw === 'null' || raw === 'undefined') {
                         return (
                             <div>
-                                <Divider orientation={'left'}>
+                                <Divider orientation="left">
                                     JSON: {title}
                                 </Divider>
                                 <ReactJson src={value.data} collapsed={true} />
@@ -84,13 +86,13 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                                 <div
                                     key={`${item.type}-${randomString(5)}`}
                                     style={{ height: 0 }}
-                                ></div>
+                                />
                             );
                         }
 
                         return (
                             <div key={`${item.type}-${randomString(5)}`}>
-                                <Divider orientation={'left'}>
+                                <Divider orientation="left">
                                     JSON: {value.data.title}
                                 </Divider>
                                 <ReactJson
@@ -108,7 +110,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                                 <CodeViewer
                                     value={raw}
                                     isReport={true}
-                                    width={'100%'}
+                                    width="100%"
                                 />
                             </div>
                         );
@@ -116,7 +118,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
 
                     return (
                         <div key={`${item.type}-${randomString(5)}`}>
-                            <Divider orientation={'left'}>
+                            <Divider orientation="left">
                                 JSON: {value.data.title}
                             </Divider>
                             <ReactJson
@@ -242,7 +244,105 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                         </div>
                     );
                 })
+                .with({ type: 'portAndVulScan' }, () => {
+                    return (
+                        <div key={`$${uuidv4()}-${randomString(5)}`}>
+                            <h2>输入公司名称，任务详情展示攻击路径图如下</h2>
+                            <Steps
+                                size="small"
+                                className="mb-6"
+                                current={5}
+                                items={[
+                                    {
+                                        title: '输入IP',
+                                    },
+                                    {
+                                        title: '开放端口识别',
+                                    },
+                                    {
+                                        title: '指纹检测',
+                                    },
+                                    {
+                                        title: '匹配POC',
+                                    },
+                                    {
+                                        title: '发现漏洞',
+                                    },
+                                ]}
+                            />
+                        </div>
+                    );
+                })
+                .with({ type: 'company_scan' }, () => {
+                    return (
+                        <div key={`$${uuidv4()}-${randomString(5)}`}>
+                            <h2>输入域名，任务详情展示攻击路径图如下</h2>
+                            <Steps
+                                size="small"
+                                current={5}
+                                items={[
+                                    {
+                                        title: '输入公司名称',
+                                    },
+                                    {
+                                        title: '识别子公司名称',
+                                    },
+                                    {
+                                        title: '识别子公司备案信息域名、IP',
+                                    },
+                                    {
+                                        title: '开放端口识别',
+                                    },
+                                    {
+                                        title: '指纹检测',
+                                    },
+                                    {
+                                        title: '匹配POC',
+                                    },
+                                    {
+                                        title: '发现漏洞',
+                                    },
+                                ]}
+                            />
+                        </div>
+                    );
+                })
+                .with({ type: 'subdomain_scan' }, () => {
+                    return (
+                        <div key={`$${uuidv4()}-${randomString(5)}`}>
+                            <h2>输入ip，任务详情展示攻击路径图如下</h2>
+                            <Steps
+                                size="small"
+                                current={5}
+                                items={[
+                                    {
+                                        title: '输入域名',
+                                    },
+                                    {
+                                        title: '子域名扫描',
+                                    },
+                                    {
+                                        title: '域名IP解析',
+                                    },
+                                    {
+                                        title: '开放端口识别',
+                                    },
+                                    {
+                                        title: '指纹检测',
+                                    },
+                                    {
+                                        title: '匹配POC',
+                                    },
+                                    {
+                                        title: '发现漏洞',
+                                    },
+                                ]}
+                            />
+                        </div>
+                    );
+                })
 
+                // eslint-disable-next-line complexity
                 .with({ type: 'raw' }, (value) => {
                     try {
                         const { data, type } = value;
@@ -253,7 +353,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                                 <div
                                     key={`${type}-${randomString(5)}`}
                                     style={{ height: 0 }}
-                                ></div>
+                                />
                             );
                         } else if (newData.type === 'bar-graph') {
                             const barGraphData: ReportJsonKindData['bar-graph'] =
@@ -303,6 +403,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                                     // 通用kv
                                     case 'general':
                                         // kv图展示柱状图
+                                        // eslint-disable-next-line no-case-declarations
                                         let kvObj: ReportJsonKindData['bar-graph'] =
                                             {
                                                 color: [],
@@ -340,6 +441,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                                             />
                                         );
                                     case 'card':
+                                        // eslint-disable-next-line no-case-declarations
                                         const dataTitle =
                                             content?.name_verbose ||
                                             content?.name ||
@@ -387,6 +489,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                             />
                         );
                     }
+                    // eslint-disable-next-line react/jsx-no-useless-fragment
                     return <></>;
                 })
 

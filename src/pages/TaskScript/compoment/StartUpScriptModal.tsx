@@ -182,7 +182,8 @@ const StartUpScriptModal = forwardRef<
                                 items.params?.['enable-brute'],
                             ),
                             'enable-web-login-brute':
-                                items.script_type === 'company_scan'
+                                items.script_type === 'company_scan' ||
+                                items.script_type === 'login_brute_scan'
                                     ? true
                                     : false,
                             plugins: items.params?.plugins
