@@ -290,9 +290,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                         } else if (newData.type === 'portAndVulScan') {
                             return (
                                 <div key={`$${uuidv4()}-${randomString(5)}`}>
-                                    <h2>
-                                        输入公司名称，任务详情展示攻击路径图如下
-                                    </h2>
+                                    <h2>攻击路径图如下：</h2>
                                     <Steps
                                         size="small"
                                         className="mb-6"
@@ -320,9 +318,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                         } else if (newData.type === 'company_scan') {
                             return (
                                 <div key={`$${uuidv4()}-${randomString(5)}`}>
-                                    <h2>
-                                        输入域名，任务详情展示攻击路径图如下
-                                    </h2>
+                                    <h2>攻击路径图如下：</h2>
                                     <Steps
                                         size="small"
                                         current={5}
@@ -355,7 +351,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                         } else if (newData.type === 'subdomain_scan') {
                             return (
                                 <div key={`$${uuidv4()}-${randomString(5)}`}>
-                                    <h2>输入ip，任务详情展示攻击路径图如下</h2>
+                                    <h2>攻击路径图如下：</h2>
                                     <Steps
                                         size="small"
                                         current={5}
