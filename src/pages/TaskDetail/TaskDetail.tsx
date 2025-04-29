@@ -34,6 +34,7 @@ import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { SensitiveMessage } from '../DataService/SensitiveMessage';
 import { getCompanyInfo } from '@/apis/MessageCollectApi';
+import { scriptTypeOption } from '../TaskScript/data';
 
 const { Group } = Radio;
 
@@ -68,6 +69,7 @@ const TaskDetail: FC = () => {
     const location = useLocation();
 
     const { record } = location.state || {}; // 获取传递的 record 数据
+    const [scriptType, setScriptType] = useSafeState<string[]>([]);
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3 | 4>(
         1,
@@ -187,6 +189,13 @@ const TaskDetail: FC = () => {
                 console.error('加载任务详情失败:', error);
             });
     }, [runAsync]);
+
+    useEffect(() => {
+        const targetScriptType = scriptTypeOption
+            .filter((item) => item.value !== 'weakinfo')
+            .map((item) => item.value);
+        setScriptType(targetScriptType);
+    }, [record?.script_type]);
 
     // table 请求  此处因 columns 渲染为静态，所以等 datasource 数据回来之后在渲染columns， 解决竞态请求问题
     const requestCallback = useDependentCallback(
@@ -337,6 +346,8 @@ const TaskDetail: FC = () => {
             .exhaustive();
     };
 
+    console.log(record?.script_type, 'record?.script_type');
+
     return (
         <div className="flex align-start h-full">
             <TaskDetailSider
@@ -345,7 +356,7 @@ const TaskDetail: FC = () => {
                 status={record?.status}
                 id={record?.id}
             />
-            {record?.script_type === 'portAndVulScan' ? (
+            {scriptType.includes(record?.script_type) ? (
                 <WizardTable
                     rowKey="id"
                     columns={columns}
