@@ -244,109 +244,12 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                         </div>
                     );
                 })
-                .with({ type: 'portAndVulScan' }, () => {
-                    return (
-                        <div key={`$${uuidv4()}-${randomString(5)}`}>
-                            <h2>输入公司名称，任务详情展示攻击路径图如下</h2>
-                            <Steps
-                                size="small"
-                                className="mb-6"
-                                current={5}
-                                items={[
-                                    {
-                                        title: '输入IP',
-                                    },
-                                    {
-                                        title: '开放端口识别',
-                                    },
-                                    {
-                                        title: '指纹检测',
-                                    },
-                                    {
-                                        title: '匹配POC',
-                                    },
-                                    {
-                                        title: '发现漏洞',
-                                    },
-                                ]}
-                            />
-                        </div>
-                    );
-                })
-                .with({ type: 'company_scan' }, () => {
-                    return (
-                        <div key={`$${uuidv4()}-${randomString(5)}`}>
-                            <h2>输入域名，任务详情展示攻击路径图如下</h2>
-                            <Steps
-                                size="small"
-                                current={5}
-                                items={[
-                                    {
-                                        title: '输入公司名称',
-                                    },
-                                    {
-                                        title: '识别子公司名称',
-                                    },
-                                    {
-                                        title: '识别子公司备案信息域名、IP',
-                                    },
-                                    {
-                                        title: '开放端口识别',
-                                    },
-                                    {
-                                        title: '指纹检测',
-                                    },
-                                    {
-                                        title: '匹配POC',
-                                    },
-                                    {
-                                        title: '发现漏洞',
-                                    },
-                                ]}
-                            />
-                        </div>
-                    );
-                })
-                .with({ type: 'subdomain_scan' }, () => {
-                    return (
-                        <div key={`$${uuidv4()}-${randomString(5)}`}>
-                            <h2>输入ip，任务详情展示攻击路径图如下</h2>
-                            <Steps
-                                size="small"
-                                current={5}
-                                items={[
-                                    {
-                                        title: '输入域名',
-                                    },
-                                    {
-                                        title: '子域名扫描',
-                                    },
-                                    {
-                                        title: '域名IP解析',
-                                    },
-                                    {
-                                        title: '开放端口识别',
-                                    },
-                                    {
-                                        title: '指纹检测',
-                                    },
-                                    {
-                                        title: '匹配POC',
-                                    },
-                                    {
-                                        title: '发现漏洞',
-                                    },
-                                ]}
-                            />
-                        </div>
-                    );
-                })
-
                 // eslint-disable-next-line complexity
                 .with({ type: 'raw' }, (value) => {
                     try {
                         const { data, type } = value;
                         const newData = JSON.parse(data);
+                        console.log(data, type, 'raw');
 
                         if (newData.type === 'report-cover') {
                             return (
@@ -384,6 +287,104 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                             );
                         } else if (newData.type === 'info-risk-list') {
                             return <FoldTable data={newData} />;
+                        } else if (newData.type === 'portAndVulScan') {
+                            return (
+                                <div key={`$${uuidv4()}-${randomString(5)}`}>
+                                    <h2>
+                                        输入公司名称，任务详情展示攻击路径图如下
+                                    </h2>
+                                    <Steps
+                                        size="small"
+                                        className="mb-6"
+                                        current={5}
+                                        items={[
+                                            {
+                                                title: '输入IP',
+                                            },
+                                            {
+                                                title: '开放端口识别',
+                                            },
+                                            {
+                                                title: '指纹检测',
+                                            },
+                                            {
+                                                title: '匹配POC',
+                                            },
+                                            {
+                                                title: '发现漏洞',
+                                            },
+                                        ]}
+                                    />
+                                </div>
+                            );
+                        } else if (newData.type === 'company_scan') {
+                            return (
+                                <div key={`$${uuidv4()}-${randomString(5)}`}>
+                                    <h2>
+                                        输入域名，任务详情展示攻击路径图如下
+                                    </h2>
+                                    <Steps
+                                        size="small"
+                                        current={5}
+                                        items={[
+                                            {
+                                                title: '输入公司名称',
+                                            },
+                                            {
+                                                title: '识别子公司名称',
+                                            },
+                                            {
+                                                title: '识别子公司备案信息域名、IP',
+                                            },
+                                            {
+                                                title: '开放端口识别',
+                                            },
+                                            {
+                                                title: '指纹检测',
+                                            },
+                                            {
+                                                title: '匹配POC',
+                                            },
+                                            {
+                                                title: '发现漏洞',
+                                            },
+                                        ]}
+                                    />
+                                </div>
+                            );
+                        } else if (newData.type === 'subdomain_scan') {
+                            return (
+                                <div key={`$${uuidv4()}-${randomString(5)}`}>
+                                    <h2>输入ip，任务详情展示攻击路径图如下</h2>
+                                    <Steps
+                                        size="small"
+                                        current={5}
+                                        items={[
+                                            {
+                                                title: '输入域名',
+                                            },
+                                            {
+                                                title: '子域名扫描',
+                                            },
+                                            {
+                                                title: '域名IP解析',
+                                            },
+                                            {
+                                                title: '开放端口识别',
+                                            },
+                                            {
+                                                title: '指纹检测',
+                                            },
+                                            {
+                                                title: '匹配POC',
+                                            },
+                                            {
+                                                title: '发现漏洞',
+                                            },
+                                        ]}
+                                    />
+                                </div>
+                            );
                         } else {
                             // kv图 南丁格尔玫瑰图 多层饼环
                             const content =
