@@ -88,10 +88,10 @@ const CreateUserModal = forwardRef<
                 .with('创建用户', async () => {
                     await runAsync({
                         ...formData,
-                        role: ['super-admin'],
+                        role: ['audit-user'],
                         expire: parseInt(formData.expire, 10),
                     });
-                    // audit-user
+                    // super-admin
                 })
                 .with('编辑用户', async () => {
                     await runAsyncEdit({

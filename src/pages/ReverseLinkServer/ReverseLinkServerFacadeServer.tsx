@@ -10,6 +10,7 @@ import { useEventSource } from '@/hooks';
 import { WizardAceEditor } from '@/compoments';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getTunnelServer } from '@/apis/ActiChainApi';
+import reverseLinkServerStore from '@/App/store/reverseLinkServerStore';
 
 const DefaultType: { text: string; value: string }[] = [
     { value: 'rmi', text: 'RMI连接' },
@@ -36,6 +37,8 @@ const ReverseLinkServerFacadeServer = () => {
     const tableHeight = useMemo(() => {
         return containerHeight - headerHeight - 100;
     }, [headerHeight, containerHeight]);
+
+    const { closeReverseServer } = reverseLinkServerStore();
 
     const [dataSource, setDataSource] = useSafeState<any[]>([]);
     const [tokenStatus, setTokenStatus] = useSafeState(false);
@@ -227,6 +230,7 @@ const ReverseLinkServerFacadeServer = () => {
                         onClick={async () => {
                             setDataSource([]);
                             await disconnect();
+                            await closeReverseServer();
                             navigate('/acti-chain/reverse-link-server', {
                                 state: { formValues },
                             });

@@ -7,6 +7,7 @@ import { postReverseStartFacades } from '@/apis/ActiChainApi';
 import { copyToClipboard } from '@/utils';
 import { useRequest } from 'ahooks';
 import { useEffect } from 'react';
+import reverseLinkServerStore from '@/App/store/reverseLinkServerStore';
 
 const { Item } = Form;
 
@@ -17,6 +18,19 @@ const ReverseLinkServer = () => {
     const location = useLocation();
 
     const { formValues } = location.state || {}; // 获取传递的 record 数据
+
+    const { isConnected, lastParam, starReverseServer, tryRestoreConnection } =
+        reverseLinkServerStore();
+
+    useEffect(() => {
+        if (isConnected) {
+            tryRestoreConnection().then(() =>
+                navigate(`facade-server`, {
+                    state: { lastParam },
+                }),
+            );
+        }
+    }, [isConnected, tryRestoreConnection]);
 
     useEffect(() => {
         formValues &&
@@ -34,8 +48,10 @@ const ReverseLinkServer = () => {
 
     // 提交 callback
     const onSubmit = async () => {
+        const uuid = uuidv4();
         const formValues = await form.validateFields();
-        await runAsync({ ...formValues, Token: uuidv4() });
+        await runAsync({ ...formValues, Token: uuid });
+        await starReverseServer({ ...formValues, Token: uuid });
         navigate(`facade-server`, {
             state: { formValues },
         });
