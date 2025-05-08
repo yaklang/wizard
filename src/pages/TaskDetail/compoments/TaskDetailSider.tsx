@@ -3,12 +3,14 @@ import { useEffect } from 'react';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
 
 import {
+    Button,
     Collapse,
     Empty,
     message,
     Modal,
     Progress,
     Spin,
+    Steps,
     Tag,
     Tooltip,
     Typography,
@@ -29,6 +31,7 @@ import type { TDetailDatailOptions } from '../TaskDetail';
 import { getSubtaskSteam } from '@/apis/task';
 import { useEventSource } from '@/hooks';
 import type { TTaskListStatusType } from '@/pages/TaskPageList/compoment/TaskStatus';
+import { targetRouteMap } from './utils';
 // import { TFetchProcessResponse } from '@/apis/task/types';
 
 const { Paragraph } = Typography;
@@ -38,6 +41,7 @@ interface TTaskDetailSiderProps {
     data?: TDetailDatailOptions;
     status?: TTaskListStatusType;
     id?: string;
+    script_type?: string;
 }
 
 // const taskList = [
@@ -80,8 +84,10 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
     data,
     status,
     id,
+    script_type,
 }) => {
     const [collapsed, setCollapsed] = useSafeState(true);
+    const [modal, contextHolder] = Modal.useModal();
 
     const {
         data: ReportData,
@@ -170,6 +176,25 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
         return () => disconnect();
     }, []);
 
+    const handOpenRoute = () => {
+        const targetCurrent =
+            targetRouteMap[script_type as keyof typeof targetRouteMap].current;
+        const targetList =
+            targetRouteMap[script_type as keyof typeof targetRouteMap].list;
+        modal.info({
+            title: '攻击路径图',
+            width: '50%',
+            content: (
+                <Steps
+                    size="small"
+                    className="my-4"
+                    current={targetCurrent}
+                    items={targetList}
+                />
+            ),
+        });
+    };
+
     const detailCollapseItems = [
         {
             key: '1',
@@ -204,6 +229,23 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
                             />
                         )}
                     </Spin>
+                    {script_type &&
+                        [
+                            'subdomain_scan',
+                            'company_scan',
+                            'portAndVulScan',
+                        ].includes(script_type) && (
+                            <div className="flex align-center justify-between">
+                                <div>本次任务攻击路径图</div>
+                                <Button
+                                    type="link"
+                                    className="p-0 h-[21px]"
+                                    onClick={handOpenRoute}
+                                >
+                                    查看
+                                </Button>
+                            </div>
+                        )}
                 </div>
             ),
         },
@@ -338,6 +380,7 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
                     </div>
                 </div>
             )}
+            {contextHolder}
         </div>
     );
 };

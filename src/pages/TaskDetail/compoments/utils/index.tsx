@@ -93,4 +93,84 @@ const survivalStatusList: Array<{
     },
 ];
 
-export { SeverityMapTag, survivalStatusList, detailHeaderGroupOptions };
+const targetRouteMap = {
+    portAndVulScan: {
+        list: [
+            {
+                title: '输入IP',
+            },
+            {
+                title: '开放端口识别',
+            },
+            {
+                title: '指纹检测',
+            },
+            {
+                title: '匹配POC',
+            },
+            {
+                title: '发现漏洞',
+            },
+        ],
+        current: 5,
+    },
+    company_scan: {
+        list: [
+            {
+                title: '输入公司名称',
+            },
+            {
+                title: '识别子公司名称',
+            },
+            {
+                title: '识别子公司备案信息域名、IP',
+            },
+            {
+                title: '开放端口识别',
+            },
+            {
+                title: '指纹检测',
+            },
+            {
+                title: '匹配POC',
+            },
+            {
+                title: '发现漏洞',
+            },
+        ],
+        current: 7,
+    },
+    subdomain_scan: {
+        list: [
+            {
+                title: '输入域名',
+            },
+            {
+                title: '子域名扫描',
+            },
+            {
+                title: '域名IP解析',
+            },
+            {
+                title: '开放端口识别',
+            },
+            {
+                title: '指纹检测',
+            },
+            {
+                title: '匹配POC',
+            },
+            {
+                title: '发现漏洞',
+            },
+        ],
+        current: 7,
+    },
+};
+
+export {
+    SeverityMapTag,
+    survivalStatusList,
+    detailHeaderGroupOptions,
+    targetRouteMap,
+};

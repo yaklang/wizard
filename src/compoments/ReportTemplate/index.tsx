@@ -321,7 +321,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                                     <h2>攻击路径图如下：</h2>
                                     <Steps
                                         size="small"
-                                        current={5}
+                                        current={7}
                                         items={[
                                             {
                                                 title: '输入公司名称',
@@ -354,7 +354,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                                     <h2>攻击路径图如下：</h2>
                                     <Steps
                                         size="small"
-                                        current={5}
+                                        current={7}
                                         items={[
                                             {
                                                 title: '输入域名',
