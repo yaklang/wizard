@@ -48,7 +48,7 @@ const CreateUserModal = forwardRef<
     const { runAsync, loading } = useRequest(postAddUser, {
         manual: true,
         onSuccess: async (values) => {
-            await page.onLoad();
+            page.onLoad();
             message.success('创建成功');
             model.close();
             Modal.success({
@@ -207,6 +207,16 @@ const CreateUserModal = forwardRef<
                                             return Promise.reject(
                                                 new Error(
                                                     '账号有效期最少为一天',
+                                                ),
+                                            );
+                                        }
+                                        if (
+                                            typeof value === 'number' &&
+                                            value > 100 * 10000
+                                        ) {
+                                            return Promise.reject(
+                                                new Error(
+                                                    '账号有效期最多为一百万天',
                                                 ),
                                             );
                                         }

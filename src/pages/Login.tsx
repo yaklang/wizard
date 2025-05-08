@@ -131,8 +131,10 @@ const Login = () => {
                     navigate('/');
                 })
                 .catch((err) => {
+                    form.setFieldValue('verificationCode', undefined);
                     message.destroy();
                     message.error(err.message);
+                    run();
                 });
         } catch {
             setButtonLoading(false);

@@ -346,8 +346,6 @@ const TaskDetail: FC = () => {
             .exhaustive();
     };
 
-    console.log(record?.script_type, 'record?.script_type');
-
     return (
         <div className="flex align-start h-full">
             <TaskDetailSider
@@ -355,6 +353,7 @@ const TaskDetail: FC = () => {
                 data={data}
                 status={record?.status}
                 id={record?.id}
+                script_type={record?.script_type}
             />
             {scriptType.includes(record?.script_type) ? (
                 <WizardTable
