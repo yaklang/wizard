@@ -1,6 +1,10 @@
 import axios from '@/utils/axios';
 import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
-import type { TGetCompanyInfoRequest, TGetCompanyInfoResponse } from './type';
+import type {
+    TGetCompanyInfoRequest,
+    TGetCompanyInfoResponse,
+    TGetDomainInfoResponse,
+} from './type';
 
 // 获取信息收集列表数据
 const getCompanyInfo = (
@@ -29,4 +33,13 @@ const getAlldomains = (params: {
         { params },
     );
 
-export { getCompanyInfo, deleteCompanyInfo, getAlldomains };
+//  获取子域名爆破列表数据
+const getDomainInfo = (
+    params: Omit<TGetCompanyInfoRequest, 'form_runtime_id' | 'keyword'>,
+): Promise<ResponseData<TableResponseData<TGetDomainInfoResponse>>> =>
+    axios.get<never, ResponseData<TableResponseData<TGetDomainInfoResponse>>>(
+        '/assets/domain-info',
+        { params },
+    );
+
+export { getCompanyInfo, deleteCompanyInfo, getAlldomains, getDomainInfo };

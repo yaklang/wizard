@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { Empty, Radio, Spin } from 'antd';
 import { match } from 'ts-pattern';
@@ -11,6 +11,7 @@ import {
     AssertsDataColumns,
     AssetsVulnsColumns,
     companyInfoColumns,
+    domainInfoColumns,
     ProtColumns,
 } from './compoments/Columns';
 import { TaskDetailSider } from './compoments/TaskDetailSider';
@@ -33,7 +34,7 @@ import { AssertsDataFilterDrawer } from './compoments/TableOptionsFilterDrawer/A
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { SensitiveMessage } from '../DataService/SensitiveMessage';
-import { getCompanyInfo } from '@/apis/MessageCollectApi';
+import { getCompanyInfo, getDomainInfo } from '@/apis/MessageCollectApi';
 import { scriptTypeOption } from '../TaskScript/data';
 
 const { Group } = Radio;
@@ -71,9 +72,9 @@ const TaskDetail: FC = () => {
     const { record } = location.state || {}; // 获取传递的 record 数据
     const [scriptType, setScriptType] = useSafeState<string[]>([]);
 
-    const [headerGroupValue, setHeaderGroupValue] = useSafeState<1 | 2 | 3 | 4>(
-        1,
-    );
+    const [headerGroupValue, setHeaderGroupValue] = useSafeState<
+        1 | 2 | 3 | 4 | 5
+    >(1);
     const [columns, setColumns] = useSafeState<any>([]);
 
     // 获取基础信息
@@ -189,6 +190,14 @@ const TaskDetail: FC = () => {
                 console.error('加载任务详情失败:', error);
             });
     }, [runAsync]);
+
+    const tableHeaderGroupOptions = useMemo(() => {
+        const filterTypeList = ['subdomain_scan', 'company_scan'];
+        const targetOptions = filterTypeList.includes(record?.script_type)
+            ? detailHeaderGroupOptions
+            : detailHeaderGroupOptions.filter((item) => item.value !== 5);
+        return targetOptions;
+    }, [record?.script_type]);
 
     useEffect(() => {
         const targetScriptType = scriptTypeOption
@@ -311,6 +320,23 @@ const TaskDetail: FC = () => {
                         setTableLoadings(false);
                     }
                 })
+                .with(5, async () => {
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await getDomainInfo({
+                            ...params,
+                            ...filter,
+                            from_task_id: record?.task_id,
+                        });
+                        setTableLoadings(false);
+                        setColumns(domainInfoColumns);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
+                })
                 .exhaustive();
         },
         [headerGroupValue],
@@ -366,7 +392,7 @@ const TaskDetail: FC = () => {
                                 <Group
                                     optionType="button"
                                     buttonStyle="solid"
-                                    options={detailHeaderGroupOptions}
+                                    options={tableHeaderGroupOptions}
                                     value={headerGroupValue}
                                     onChange={(e) => {
                                         setHeaderGroupValue(e.target.value);
@@ -380,7 +406,7 @@ const TaskDetail: FC = () => {
                         ),
                         options: {
                             dowloadFile:
-                                headerGroupValue === 4
+                                headerGroupValue === 4 || headerGroupValue === 5
                                     ? undefined
                                     : {
                                           fileName:
@@ -411,7 +437,8 @@ const TaskDetail: FC = () => {
                                       },
                             ProFilterSwitch: {
                                 trigger:
-                                    headerGroupValue === 4
+                                    headerGroupValue === 4 ||
+                                    headerGroupValue === 5
                                         ? null
                                         : tableFilterEnum(headerGroupValue),
                                 layout: 'vertical',

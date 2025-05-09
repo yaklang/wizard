@@ -185,6 +185,7 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
                 ? 0
                 : // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                   taskProcess?.process! / (100 / targetList.length);
+
         modal.info({
             title: '攻击路径图',
             width: '50%',

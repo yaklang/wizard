@@ -23,6 +23,10 @@ const detailHeaderGroupOptions = [
         label: '信息收集',
         value: 4,
     },
+    {
+        label: '子域名爆破',
+        value: 5,
+    },
 ];
 
 /** name字段里面的内容不可随意更改，与查询条件有关 */

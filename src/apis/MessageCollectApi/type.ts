@@ -16,4 +16,16 @@ interface TGetCompanyInfoResponse {
     updated_at: number;
 }
 
-export type { TGetCompanyInfoRequest, TGetCompanyInfoResponse };
+interface TGetDomainInfoResponse {
+    created_at: number;
+    domain: string;
+    id: number;
+    ip_addr: string;
+    updated_at: number;
+}
+
+export type {
+    TGetCompanyInfoRequest,
+    TGetCompanyInfoResponse,
+    TGetDomainInfoResponse,
+};

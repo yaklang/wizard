@@ -14,7 +14,10 @@ import { AssetsVulnsDetailOperate } from './AssetsVulnsDetailOperate';
 import { SeverityMapTag, survivalStatusList } from './utils';
 import CopyOutlined from './utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
-import type { TGetCompanyInfoResponse } from '@/apis/MessageCollectApi/type';
+import type {
+    TGetCompanyInfoResponse,
+    TGetDomainInfoResponse,
+} from '@/apis/MessageCollectApi/type';
 
 // 端口资产 columns
 const ProtColumns = (filterData?: {
@@ -301,9 +304,27 @@ const companyInfoColumns: CreateTableProps<TGetCompanyInfoResponse>['columns'] =
         },
     ];
 
+const domainInfoColumns: CreateTableProps<TGetDomainInfoResponse>['columns'] = [
+    {
+        title: '爆破域名',
+        dataIndex: 'domain',
+    },
+    {
+        title: '爆破IP',
+        dataIndex: 'ip_addr',
+    },
+    {
+        title: '更新时间',
+        dataIndex: 'created_at',
+        render: (text) =>
+            text ? dayjs.unix(text).format('YYYY-MM-DD HH:mm:ss') : '-',
+    },
+];
+
 export {
     ProtColumns,
     AssetsVulnsColumns,
     AssertsDataColumns,
     companyInfoColumns,
+    domainInfoColumns,
 };
