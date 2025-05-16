@@ -172,7 +172,11 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
     useEffect(() => {
         if (task_id) {
             runAsync(task_id);
-            connect();
+            if (status === 'success' || status === 'failed') {
+                return;
+            } else {
+                connect();
+            }
         }
         return () => disconnect();
     }, []);
@@ -211,7 +215,13 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
             },
             children: (
                 <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
-                    <Spin spinning={sseLoading}>
+                    <Spin
+                        spinning={
+                            sseLoading &&
+                            status !== 'success' &&
+                            status !== 'failed'
+                        }
+                    >
                         {taskProcess ? (
                             <div className="flex items-center justify-center gap-2 w-52">
                                 <Tooltip title={taskProcess.name}>
