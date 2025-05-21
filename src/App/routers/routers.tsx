@@ -36,6 +36,7 @@ import GlobalReverseLink from '@/pages/ReverseLink';
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
 import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 import CodecEntry from '@/pages/Codec';
+import CreateTask from '@/pages/CreateTask';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -99,6 +100,14 @@ const routers: RouteObjectRootMy[] = [
                                 parentpath: '/task-script/task-script',
                             },
                         ],
+                    },
+                    {
+                        path: 'create-task',
+                        key: 'create-task',
+                        name: '新建任务',
+                        element: <CreateTask />,
+                        hidden: false,
+                        parentpath: '/task/create-task',
                     },
                 ],
             },
