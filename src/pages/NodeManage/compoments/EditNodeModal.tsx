@@ -80,7 +80,7 @@ const EditNodeModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
             >
                 <div className="pt-2 px-6">
                     <Form form={form} layout="horizontal">
-                        <Item
+                        {/* <Item
                             name="nickname"
                             label="节点名称"
                             rules={[
@@ -88,7 +88,7 @@ const EditNodeModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
                             ]}
                         >
                             <Input placeholder="请输入节点名称" />
-                        </Item>
+                        </Item> */}
                         <Item
                             name="location"
                             label="所在地区"

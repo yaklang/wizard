@@ -64,6 +64,14 @@ const routers: RouteObjectRootMy[] = [
                 icon: <TaskCenterIcon />,
                 children: [
                     {
+                        path: 'create-task',
+                        key: 'create-task',
+                        name: '新建任务',
+                        element: <CreateTask />,
+                        hidden: false,
+                        parentpath: '/task/create-task',
+                    },
+                    {
                         path: 'task-list',
                         name: '任务列表',
                         key: 'task-list',
@@ -100,14 +108,6 @@ const routers: RouteObjectRootMy[] = [
                                 parentpath: '/task-script/task-script',
                             },
                         ],
-                    },
-                    {
-                        path: 'create-task',
-                        key: 'create-task',
-                        name: '新建任务',
-                        element: <CreateTask />,
-                        hidden: false,
-                        parentpath: '/task/create-task',
                     },
                 ],
             },

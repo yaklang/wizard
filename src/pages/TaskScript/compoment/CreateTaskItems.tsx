@@ -410,7 +410,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             className="h-8 flex items-center"
                             options={[
                                 { value: '1', label: '手动分配' },
-                                { value: '2', label: '智能分配' },
+                                // { value: '2', label: '智能分配' },
                             ]}
                         />
                     </Item>

@@ -373,92 +373,99 @@ const TaskDetail: FC = () => {
     };
 
     return (
-        <div className="flex align-start h-full">
-            <TaskDetailSider
-                task_id={record?.task_id}
-                data={data}
-                status={record?.status}
-                id={record?.id}
-                script_type={record?.script_type}
-            />
-            {scriptType.includes(record?.script_type) ? (
-                <WizardTable
-                    rowKey="id"
-                    columns={columns}
-                    page={page}
-                    tableHeader={{
-                        tableHeaderGroup: (
-                            <Spin spinning={tableLoading}>
-                                <Group
-                                    optionType="button"
-                                    buttonStyle="solid"
-                                    options={tableHeaderGroupOptions}
-                                    value={headerGroupValue}
-                                    onChange={(e) => {
-                                        setHeaderGroupValue(e.target.value);
-                                        page.clear();
-                                        page.onLoad({
-                                            task_type: e.target.value,
-                                        });
-                                    }}
-                                />
-                            </Spin>
-                        ),
-                        options: {
-                            dowloadFile:
-                                headerGroupValue === 4 || headerGroupValue === 5
-                                    ? undefined
-                                    : {
-                                          fileName:
-                                              `${exprotFileName[headerGroupValue]} (` +
-                                              dayjs().unix() +
-                                              ').csv',
-                                          params: {
-                                              type: ExportRequestKey?.[
-                                                  headerGroupValue
-                                              ],
-                                              data: {
-                                                  ...page.getParams()?.filter,
-                                                  limit: -1,
-                                                  task_id: record?.task_id,
-                                              },
-                                          },
-                                          url: '/assets/export/report',
-                                          method: 'post',
-                                          type: 'primary',
-                                          title: (
-                                              <div>
-                                                  <UploadOutlined />
-                                                  <span className="ml-2">
-                                                      导出 Excel
-                                                  </span>
-                                              </div>
-                                          ),
-                                      },
-                            ProFilterSwitch: {
-                                trigger:
+        <div>
+            <div className="flex align-start h-full">
+                <TaskDetailSider
+                    task_id={record?.task_id}
+                    data={data}
+                    status={record?.status}
+                    id={record?.id}
+                    script_type={record?.script_type}
+                />
+                {scriptType.includes(record?.script_type) ? (
+                    <WizardTable
+                        rowKey="id"
+                        columns={columns}
+                        page={page}
+                        tableHeader={{
+                            tableHeaderGroup: (
+                                <Spin spinning={tableLoading}>
+                                    <Group
+                                        optionType="button"
+                                        buttonStyle="solid"
+                                        options={tableHeaderGroupOptions}
+                                        value={headerGroupValue}
+                                        onChange={(e) => {
+                                            setHeaderGroupValue(e.target.value);
+                                            page.clear();
+                                            page.onLoad({
+                                                task_type: e.target.value,
+                                            });
+                                        }}
+                                    />
+                                </Spin>
+                            ),
+                            options: {
+                                dowloadFile:
                                     headerGroupValue === 4 ||
                                     headerGroupValue === 5
-                                        ? null
-                                        : tableFilterEnum(headerGroupValue),
-                                layout: 'vertical',
+                                        ? undefined
+                                        : {
+                                              fileName:
+                                                  `${exprotFileName[headerGroupValue]} (` +
+                                                  dayjs().unix() +
+                                                  ').csv',
+                                              params: {
+                                                  type: ExportRequestKey?.[
+                                                      headerGroupValue
+                                                  ],
+                                                  data: {
+                                                      ...page.getParams()
+                                                          ?.filter,
+                                                      limit: -1,
+                                                      task_id: record?.task_id,
+                                                  },
+                                              },
+                                              url: '/assets/export/report',
+                                              method: 'post',
+                                              type: 'primary',
+                                              title: (
+                                                  <div>
+                                                      <UploadOutlined />
+                                                      <span className="ml-2">
+                                                          导出 Excel
+                                                      </span>
+                                                  </div>
+                                              ),
+                                          },
+                                ProFilterSwitch: {
+                                    trigger:
+                                        headerGroupValue === 4 ||
+                                        headerGroupValue === 5
+                                            ? null
+                                            : tableFilterEnum(headerGroupValue),
+                                    layout: 'vertical',
+                                },
                             },
-                        },
-                    }}
-                    request={async (params, filter) => {
-                        const { data } = await requestCallback(params, filter);
+                        }}
+                        request={async (params, filter) => {
+                            const { data } = await requestCallback(
+                                params,
+                                filter,
+                            );
 
-                        return {
-                            list: data?.list ?? [],
-                            pagemeta: data?.pagemeta,
-                        };
-                    }}
-                />
-            ) : record?.script_type === 'weakinfo' ? (
-                <SensitiveMessage task_id={record?.task_id} />
-            ) : (
-                <Empty className="w-full h-full flex items-center justify-center flex-col" />
-            )}
+                            return {
+                                list: data?.list ?? [],
+                                pagemeta: data?.pagemeta,
+                            };
+                        }}
+                    />
+                ) : record?.script_type === 'weakinfo' ? (
+                    <SensitiveMessage task_id={record?.task_id} />
+                ) : (
+                    <Empty className="w-full h-full flex items-center justify-center flex-col" />
+                )}
+            </div>
         </div>
     );
 };
