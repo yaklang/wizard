@@ -5,18 +5,11 @@ import type {
     GetLicenseResponse,
     PostRequestAuth,
     PostResponseAuth,
-    PostResponseVerifyCaptcha,
 } from './types';
 
 // 获取验证码
 const getCaptcha = () =>
     axios.get<never, ResponseData<GetCaptchaRequest>>('/captcha');
-
-// 验证验证码
-const postVerifyCaptcha = (
-    data: PostResponseVerifyCaptcha,
-): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/verify/captcha', data);
 
 // 登录接口
 const postLogin = (
@@ -47,7 +40,6 @@ const getAuth = (
 
 export {
     getCaptcha,
-    postVerifyCaptcha,
     postLogin,
     getLicense,
     postLicense,

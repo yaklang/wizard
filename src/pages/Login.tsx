@@ -7,17 +7,13 @@ import permissionsSliceFn from '@/App/store/powerStore';
 import { LoginIcon } from '@/assets/menu';
 import login_logo from '@/assets/compoments/login_logo.png';
 import login_background from '@/assets/login/login_background.png';
-import {
-    getAuth,
-    getCaptcha,
-    getLicense,
-    postVerifyCaptcha,
-} from '@/apis/login';
+import { getAuth, getCaptcha, getLicense } from '@/apis/login';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 interface FieldType {
     username: string;
     password: string;
     verificationCode: string;
+    code: string;
 }
 
 const { Item } = Form;
@@ -61,28 +57,26 @@ const Login = () => {
         { manual: true, onSuccess: () => setButtonLoading(false) },
     );
 
-    // 校验验证码
-    const { run: verifyCaptchaRun } = useRequest(postVerifyCaptcha, {
-        manual: true,
-        onError: () => {
-            message.destroy();
-            message.error('验证码错误');
-            form.setFieldValue('verificationCode', undefined);
-            run();
-        },
-        onSuccess: async () => {
-            authRun(form.getFieldValue('username'));
-        },
-    });
-
     const { run: authRun } = useRequest(getAuth, {
         manual: true,
-        onSuccess: (res) => {
+        onSuccess: async (res) => {
             if (res.data.status) {
                 confirm();
             } else {
-                const formValues = form.getFieldsValue();
-                loginFn(formValues);
+                const formValues = await form.validateFields();
+                const verificationCode = formValues?.verificationCode;
+                // 将输入验证码全转为小写
+                const toLowerCaseVerificationCode =
+                    verificationCode &&
+                    verificationCode.replace(/[A-Za-z]/g, (char: string) =>
+                        char.toLowerCase(),
+                    );
+                loginFn({
+                    ...formValues,
+                    code: toLowerCaseVerificationCode,
+                    captcha_id: data?.captcha_id,
+                    verificationCode: undefined,
+                });
             }
         },
         onError: () => {
@@ -104,7 +98,19 @@ const Login = () => {
             cancelText: '取消',
             async onOk() {
                 const formValues = form.getFieldsValue();
-                await loginFn(formValues);
+                const verificationCode = formValues?.verificationCode;
+                // 将输入验证码全转为小写
+                const toLowerCaseVerificationCode =
+                    verificationCode &&
+                    verificationCode.replace(/[A-Za-z]/g, (char: string) =>
+                        char.toLowerCase(),
+                    );
+                await loginFn({
+                    ...formValues,
+                    code: toLowerCaseVerificationCode,
+                    captcha_id: data?.captcha_id,
+                    verificationCode: undefined,
+                });
                 setButtonLoading(false);
             },
             onCancel() {
@@ -125,6 +131,7 @@ const Login = () => {
 
     const loginFn = async (values: FieldType) => {
         try {
+            console.log(values, 'values');
             await login(values)
                 .then(() => {
                     updatePower();
@@ -144,20 +151,10 @@ const Login = () => {
     };
 
     // 登录
-    const onFinish = async (values: FieldType): Promise<void> => {
+    const onFinish = async (): Promise<void> => {
         try {
-            const verificationCode = values?.verificationCode;
             setButtonLoading(true);
-            // 将输入验证码全转为小写
-            const toLowerCaseVerificationCode =
-                verificationCode &&
-                verificationCode.replace(/[A-Za-z]/g, (char) =>
-                    char.toLowerCase(),
-                );
-            await verifyCaptchaRun({
-                captcha_id: data!.captcha_id,
-                code: toLowerCaseVerificationCode,
-            });
+            await authRun(form.getFieldValue('username'));
         } catch (err) {
             setButtonLoading(false);
             console.error(err);
