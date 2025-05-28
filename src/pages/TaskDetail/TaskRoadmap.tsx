@@ -1,0 +1,56 @@
+import type { FC } from 'react';
+import TreeGraphComponent from '@/compoments/AntdCharts/G6Tree';
+import { Radio } from 'antd';
+
+const treeData = {
+    id: '攻击路径图',
+    children: [
+        {
+            id: 'Category A',
+            children: [{ id: 'Item A1' }, { id: 'Item A2' }],
+        },
+        {
+            id: 'Category B',
+            children: [{ id: 'Item B1' }, { id: 'Item B2' }],
+        },
+    ],
+};
+
+interface TTaskRoadmpProps {
+    setHeaderGroupValue: (value: 0 | 1 | 2 | 3 | 4 | 5) => void;
+    headerGroupValue: 0 | 1 | 2 | 3 | 4 | 5;
+}
+
+const TaskRoadmap: FC<TTaskRoadmpProps> = ({
+    headerGroupValue,
+    setHeaderGroupValue,
+}) => {
+    return (
+        <div className="transition-all duration-500 w-full p-4 bg-[#fff] relative">
+            <div className="w-full pb-3 flex justify-between table-header-filter pr-3 gap-2">
+                <Radio.Group
+                    value={headerGroupValue}
+                    onChange={(e) => {
+                        setHeaderGroupValue(e.target.value);
+                    }}
+                    optionType="button"
+                    buttonStyle="solid"
+                    className="w-full"
+                    options={[
+                        { label: '攻击路径图', value: 0 },
+                        { label: '端口资产', value: 1 },
+                        { label: '漏洞与风险', value: 2 },
+                        { label: '资产数据', value: 3 },
+                        { label: '信息收集', value: 4 },
+                        { label: '子域名爆破', value: 5 },
+                    ]}
+                />
+            </div>
+            <div className="w-full h-[calc(100vh-200px)] flex items-center justify-center">
+                <TreeGraphComponent data={treeData} />
+            </div>
+        </div>
+    );
+};
+
+export { TaskRoadmap };

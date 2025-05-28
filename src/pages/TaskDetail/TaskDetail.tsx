@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useEffect, useMemo } from 'react';
 
+import type { RadioChangeEvent } from 'antd';
 import { Empty, Radio, Spin } from 'antd';
 import { match } from 'ts-pattern';
 import { useRequest, useSafeState } from 'ahooks';
@@ -35,7 +36,8 @@ import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { SensitiveMessage } from '../DataService/SensitiveMessage';
 import { getCompanyInfo, getDomainInfo } from '@/apis/MessageCollectApi';
-import { scriptTypeOption } from '../TaskScript/data';
+import { routeList, scriptTypeOption } from '../TaskScript/data';
+import { TaskRoadmap } from './TaskRoadmap';
 
 const { Group } = Radio;
 
@@ -73,7 +75,7 @@ const TaskDetail: FC = () => {
     const [scriptType, setScriptType] = useSafeState<string[]>([]);
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<
-        1 | 2 | 3 | 4 | 5
+        0 | 1 | 2 | 3 | 4 | 5
     >(1);
     const [columns, setColumns] = useSafeState<any>([]);
 
@@ -203,6 +205,7 @@ const TaskDetail: FC = () => {
         const targetScriptType = scriptTypeOption
             .filter((item) => item.value !== 'weakinfo')
             .map((item) => item.value);
+        console.log(targetScriptType, 'targetScriptType');
         setScriptType(targetScriptType);
     }, [record?.script_type]);
 
@@ -213,6 +216,7 @@ const TaskDetail: FC = () => {
             filter: Parameters<RequestFunction>['1'],
         ) => {
             return match(headerGroupValue)
+                .with(0, async () => null)
                 .with(1, async () => {
                     try {
                         setTableLoadings(true);
@@ -372,6 +376,16 @@ const TaskDetail: FC = () => {
             .exhaustive();
     };
 
+    const headerGroupChange = (e: RadioChangeEvent) => {
+        setHeaderGroupValue(e.target.value);
+        if (e.target.value !== 0) {
+            page.clear();
+            page.onLoad({
+                task_type: e.target.value,
+            });
+        }
+    };
+
     return (
         <div>
             <div className="flex align-start h-full">
@@ -382,7 +396,13 @@ const TaskDetail: FC = () => {
                     id={record?.id}
                     script_type={record?.script_type}
                 />
-                {scriptType.includes(record?.script_type) ? (
+                {routeList.includes(record?.script_type) &&
+                headerGroupValue === 0 ? (
+                    <TaskRoadmap
+                        headerGroupValue={headerGroupValue}
+                        setHeaderGroupValue={setHeaderGroupValue}
+                    />
+                ) : scriptType.includes(record?.script_type) ? (
                     <WizardTable
                         rowKey="id"
                         columns={columns}
@@ -395,18 +415,13 @@ const TaskDetail: FC = () => {
                                         buttonStyle="solid"
                                         options={tableHeaderGroupOptions}
                                         value={headerGroupValue}
-                                        onChange={(e) => {
-                                            setHeaderGroupValue(e.target.value);
-                                            page.clear();
-                                            page.onLoad({
-                                                task_type: e.target.value,
-                                            });
-                                        }}
+                                        onChange={headerGroupChange}
                                     />
                                 </Spin>
                             ),
                             options: {
                                 dowloadFile:
+                                    headerGroupValue === 0 ||
                                     headerGroupValue === 4 ||
                                     headerGroupValue === 5
                                         ? undefined
@@ -440,6 +455,7 @@ const TaskDetail: FC = () => {
                                           },
                                 ProFilterSwitch: {
                                     trigger:
+                                        headerGroupValue === 0 ||
                                         headerGroupValue === 4 ||
                                         headerGroupValue === 5
                                             ? null
