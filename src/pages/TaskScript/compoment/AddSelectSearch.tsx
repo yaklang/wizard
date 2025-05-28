@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useEffect } from 'react';
 
-import { useSafeState } from 'ahooks';
+import { useDebounceFn, useSafeState } from 'ahooks';
 import { Select } from 'antd';
 
 type TScriptGrounpList = Array<{ value: string; label: string }>;
@@ -22,10 +22,30 @@ const AddSelectSearch: FC<AddSelectSearchProps> = ({
     const [copyScriptGroupList, setCopyScriptGroupList] =
         useSafeState<TScriptGrounpList>([]);
 
+    const delayOnSearch = (value: string) => {
+        setCopyScriptGroupList((list) => {
+            const concatList =
+                list?.findIndex((it) => it.value === value) === -1
+                    ? list.concat({
+                          label: `${value}`,
+                          value,
+                      })
+                    : list;
+            const resultGroupList =
+                concatList?.filter((item) => item.label) ?? [];
+            return resultGroupList;
+        });
+    };
+
+    const { run } = useDebounceFn(delayOnSearch, {
+        wait: 500,
+    });
+
     useEffect(() => {
         setCopyScriptGroupList(scriptGroupList);
         scriptGroupListRef.current = scriptGroupList ?? [];
     }, [scriptGroupList]);
+
     return (
         <Select
             placeholder="请选择..."
@@ -38,22 +58,7 @@ const AddSelectSearch: FC<AddSelectSearchProps> = ({
                     [];
                 setCopyScriptGroupList(targetScriptGroup);
             }}
-            onSearch={(value) => {
-                setTimeout(() => {
-                    setCopyScriptGroupList((list) => {
-                        const concatList =
-                            list.findIndex((it) => it.value === value) === -1
-                                ? list.concat({
-                                      label: `${value}`,
-                                      value,
-                                  })
-                                : list;
-                        const resultGroupList =
-                            concatList?.filter((item) => item.label) ?? [];
-                        return resultGroupList;
-                    });
-                }, 500);
-            }}
+            onSearch={run}
             onSelect={(value, options) => {
                 const addList = scriptGroupListRef.current!.concat({
                     label: options.value,
@@ -61,7 +66,7 @@ const AddSelectSearch: FC<AddSelectSearchProps> = ({
                 });
                 const resultList = addList.filter(
                     (item, index, self) =>
-                        self.findIndex((obj) => obj.value === item.value) ===
+                        self?.findIndex((obj) => obj.value === item.value) ===
                         index,
                 );
                 scriptGroupListRef.current = resultList;

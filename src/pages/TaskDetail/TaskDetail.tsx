@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useEffect, useMemo } from 'react';
 
+import type { RadioChangeEvent } from 'antd';
 import { Empty, Radio, Spin } from 'antd';
 import { match } from 'ts-pattern';
 import { useRequest, useSafeState } from 'ahooks';
@@ -35,7 +36,8 @@ import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { SensitiveMessage } from '../DataService/SensitiveMessage';
 import { getCompanyInfo, getDomainInfo } from '@/apis/MessageCollectApi';
-import { scriptTypeOption } from '../TaskScript/data';
+import { routeList, scriptTypeOption } from '../TaskScript/data';
+import { TaskRoadmap } from './TaskRoadmap';
 
 const { Group } = Radio;
 
@@ -73,7 +75,7 @@ const TaskDetail: FC = () => {
     const [scriptType, setScriptType] = useSafeState<string[]>([]);
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<
-        1 | 2 | 3 | 4 | 5
+        0 | 1 | 2 | 3 | 4 | 5
     >(1);
     const [columns, setColumns] = useSafeState<any>([]);
 
@@ -203,6 +205,7 @@ const TaskDetail: FC = () => {
         const targetScriptType = scriptTypeOption
             .filter((item) => item.value !== 'weakinfo')
             .map((item) => item.value);
+        console.log(targetScriptType, 'targetScriptType');
         setScriptType(targetScriptType);
     }, [record?.script_type]);
 
@@ -213,6 +216,7 @@ const TaskDetail: FC = () => {
             filter: Parameters<RequestFunction>['1'],
         ) => {
             return match(headerGroupValue)
+                .with(0, async () => null)
                 .with(1, async () => {
                     try {
                         setTableLoadings(true);
@@ -372,100 +376,106 @@ const TaskDetail: FC = () => {
             .exhaustive();
     };
 
+    const headerGroupChange = (e: RadioChangeEvent) => {
+        setHeaderGroupValue(e.target.value);
+        if (e.target.value !== 0) {
+            page.clear();
+            page.onLoad({
+                task_type: e.target.value,
+            });
+        }
+    };
+
     return (
-        <div>
-            <div className="flex align-start h-full">
-                <TaskDetailSider
-                    task_id={record?.task_id}
-                    data={data}
-                    status={record?.status}
-                    id={record?.id}
-                    script_type={record?.script_type}
+        <div className="flex align-start h-full">
+            <TaskDetailSider
+                task_id={record?.task_id}
+                data={data}
+                status={record?.status}
+                id={record?.id}
+                script_type={record?.script_type}
+            />
+            {routeList.includes(record?.script_type) &&
+            headerGroupValue === 0 ? (
+                <TaskRoadmap
+                    headerGroupValue={headerGroupValue}
+                    setHeaderGroupValue={setHeaderGroupValue}
                 />
-                {scriptType.includes(record?.script_type) ? (
-                    <WizardTable
-                        rowKey="id"
-                        columns={columns}
-                        page={page}
-                        tableHeader={{
-                            tableHeaderGroup: (
-                                <Spin spinning={tableLoading}>
-                                    <Group
-                                        optionType="button"
-                                        buttonStyle="solid"
-                                        options={tableHeaderGroupOptions}
-                                        value={headerGroupValue}
-                                        onChange={(e) => {
-                                            setHeaderGroupValue(e.target.value);
-                                            page.clear();
-                                            page.onLoad({
-                                                task_type: e.target.value,
-                                            });
-                                        }}
-                                    />
-                                </Spin>
-                            ),
-                            options: {
-                                dowloadFile:
+            ) : scriptType.includes(record?.script_type) ? (
+                <WizardTable
+                    rowKey="id"
+                    columns={columns}
+                    page={page}
+                    tableHeader={{
+                        tableHeaderGroup: (
+                            <Spin spinning={tableLoading}>
+                                <Group
+                                    optionType="button"
+                                    buttonStyle="solid"
+                                    options={tableHeaderGroupOptions}
+                                    value={headerGroupValue}
+                                    onChange={headerGroupChange}
+                                />
+                            </Spin>
+                        ),
+                        options: {
+                            dowloadFile:
+                                headerGroupValue === 0 ||
+                                headerGroupValue === 4 ||
+                                headerGroupValue === 5
+                                    ? undefined
+                                    : {
+                                          fileName:
+                                              `${exprotFileName[headerGroupValue]} (` +
+                                              dayjs().unix() +
+                                              ').csv',
+                                          params: {
+                                              type: ExportRequestKey?.[
+                                                  headerGroupValue
+                                              ],
+                                              data: {
+                                                  ...page.getParams()?.filter,
+                                                  limit: -1,
+                                                  task_id: record?.task_id,
+                                              },
+                                          },
+                                          url: '/assets/export/report',
+                                          method: 'post',
+                                          type: 'primary',
+                                          title: (
+                                              <div>
+                                                  <UploadOutlined />
+                                                  <span className="ml-2">
+                                                      导出 Excel
+                                                  </span>
+                                              </div>
+                                          ),
+                                      },
+                            ProFilterSwitch: {
+                                trigger:
+                                    headerGroupValue === 0 ||
                                     headerGroupValue === 4 ||
                                     headerGroupValue === 5
-                                        ? undefined
-                                        : {
-                                              fileName:
-                                                  `${exprotFileName[headerGroupValue]} (` +
-                                                  dayjs().unix() +
-                                                  ').csv',
-                                              params: {
-                                                  type: ExportRequestKey?.[
-                                                      headerGroupValue
-                                                  ],
-                                                  data: {
-                                                      ...page.getParams()
-                                                          ?.filter,
-                                                      limit: -1,
-                                                      task_id: record?.task_id,
-                                                  },
-                                              },
-                                              url: '/assets/export/report',
-                                              method: 'post',
-                                              type: 'primary',
-                                              title: (
-                                                  <div>
-                                                      <UploadOutlined />
-                                                      <span className="ml-2">
-                                                          导出 Excel
-                                                      </span>
-                                                  </div>
-                                              ),
-                                          },
-                                ProFilterSwitch: {
-                                    trigger:
-                                        headerGroupValue === 4 ||
-                                        headerGroupValue === 5
-                                            ? null
-                                            : tableFilterEnum(headerGroupValue),
-                                    layout: 'vertical',
-                                },
+                                        ? null
+                                        : tableFilterEnum(headerGroupValue),
+                                layout: 'vertical',
                             },
-                        }}
-                        request={async (params, filter) => {
-                            const { data } = await requestCallback(
-                                params,
-                                filter,
-                            );
+                        },
+                    }}
+                    request={async (params, filter) => {
+                        const { data } = await requestCallback(params, filter);
 
-                            return {
-                                list: data?.list ?? [],
-                                pagemeta: data?.pagemeta,
-                            };
-                        }}
-                    />
-                ) : record?.script_type === 'weakinfo' ? (
-                    <SensitiveMessage task_id={record?.task_id} />
-                ) : (
-                    <Empty className="w-full h-full flex items-center justify-center flex-col" />
-                )}
-            </div>
+                        return {
+                            list: data?.list ?? [],
+                            pagemeta: data?.pagemeta,
+                        };
+                    }}
+                />
+            ) : record?.script_type === 'weakinfo' ? (
+                <SensitiveMessage task_id={record?.task_id} />
+            ) : (
+                <Empty className="w-full h-full flex items-center justify-center flex-col" />
+            )}
         </div>
     );
 };

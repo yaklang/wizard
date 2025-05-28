@@ -3,13 +3,13 @@ import { useRef } from 'react';
 
 import { WizardTable } from '@/compoments';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
-import { Button, message, Modal, Popover, Tag, Tooltip } from 'antd';
+import { Button, message, Modal, Popover, Tag } from 'antd';
 import dayjs from 'dayjs';
 import { deleteNodeManage, getNodeManage } from '@/apis/NodeManageApi';
 import type { TDeleteValues } from '../ReportManage/ReportManage';
 import { useRequest, useSafeState } from 'ahooks';
 import type { Palm } from '@/gen/schema';
-import PerformanceIcon from './Icon/PerformanceIcon';
+// import PerformanceIcon from './Icon/PerformanceIcon';
 import { MoreNode } from './compoments/MoreNode';
 import { PerformanceTestingDrawer } from './compoments/PerformanceTestingDrawer';
 import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
@@ -74,14 +74,14 @@ const NodeManagePage: FC = () => {
         {
             dataIndex: 'id',
             title: '操作',
-            width: 180,
+            width: 150,
             fixed: 'right',
             render: (_, record) => {
                 return (
                     <div className="flex items-center justify-center gap-2">
                         <LogIconNode />
                         <NetWorkIconNode node_ids={[record.node_id]} />
-                        <Tooltip title="性能检测">
+                        {/* <Tooltip title="性能检测">
                             <div>
                                 <PerformanceIcon
                                     style={{
@@ -93,7 +93,7 @@ const NodeManagePage: FC = () => {
                                     }}
                                 />
                             </div>
-                        </Tooltip>
+                        </Tooltip> */}
                         <MoreNode record={record} page={page} />
                     </div>
                 );

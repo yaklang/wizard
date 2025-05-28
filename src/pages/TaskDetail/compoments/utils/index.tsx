@@ -8,6 +8,10 @@ import type { TGetAssertsDataResponse } from '@/apis/taskDetail/types';
 
 const detailHeaderGroupOptions = [
     {
+        label: '攻击路径图',
+        value: 0,
+    },
+    {
         label: '端口资产',
         value: 1,
     },

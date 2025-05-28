@@ -1,7 +1,6 @@
 import type { FC } from 'react';
 import { useRef } from 'react';
 
-import dayjs from 'dayjs';
 import classNames from 'classnames';
 
 import { postCveQuery } from '@/apis/CveLoopholeApi';
@@ -18,6 +17,7 @@ import { SyncOutlined } from '@ant-design/icons';
 import { CveAllUpdateModal } from './compoments/CveAllUpdateModal';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { CveDifferUpdateModal } from './compoments/CveDifferUpdateModal';
+import dayjs from 'dayjs';
 
 const options = [
     {
@@ -128,15 +128,19 @@ const CveLoophole: FC = () => {
             dataIndex: 'published_date',
             title: '披露时间',
             width: 180,
-            render: (value) =>
-                value ? dayjs(value).format('YYYY-MM-DD MM:hh') : '-',
+            render: (value) => {
+                const d = dayjs(value);
+                return d.isValid() ? d.format('YYYY-MM-DD HH:mm') : '-';
+            },
         },
         {
             dataIndex: 'last_modified_date',
             title: '更新时间',
             width: 180,
-            render: (value) =>
-                value ? dayjs(value).format('YYYY-MM-DD MM:hh') : '-',
+            render: (value) => {
+                const d = dayjs(value);
+                return d.isValid() ? d.format('YYYY-MM-DD HH:mm') : '-';
+            },
         },
     ];
 

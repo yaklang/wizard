@@ -390,7 +390,7 @@ const extendTableProps = (
                             }
                         </div>
                     ) : (
-                        <Tooltip enable={text.length > 36} title={text}>
+                        <Tooltip enable={text!.length > 36} title={text}>
                             <div className="flex">
                                 {rowSelectionFn(
                                     handleCheckboxChange,

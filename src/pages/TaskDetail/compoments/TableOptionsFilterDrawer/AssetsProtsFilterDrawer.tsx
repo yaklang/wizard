@@ -49,7 +49,12 @@ const AssetsProtsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
         return match(data)
             .with(
                 P.when(
-                    (val) => Array.isArray(val?.keys) && val.keys.length > 0,
+                    (val) =>
+                        typeof val === 'object' &&
+                        val !== null &&
+                        'keys' in val &&
+                        Array.isArray((val as { keys: unknown }).keys) &&
+                        (val as { keys: unknown[] }).keys.length > 0,
                 ),
                 (value) => {
                     return (
