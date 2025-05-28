@@ -1,6 +1,7 @@
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import TreeGraphComponent from '@/compoments/AntdCharts/G6Tree';
-import { Radio } from 'antd';
+import { Radio, Steps } from 'antd';
+import { targetRouteMap } from './compoments/utils';
 
 const treeData = {
     id: '攻击路径图',
@@ -25,6 +26,12 @@ const TaskRoadmap: FC<TTaskRoadmpProps> = ({
     headerGroupValue,
     setHeaderGroupValue,
 }) => {
+    const stepsList = useMemo(() => {
+        const targetList =
+            targetRouteMap['portAndVulScan' as keyof typeof targetRouteMap]
+                .list;
+        return targetList;
+    }, []);
     return (
         <div className="transition-all duration-500 w-full p-4 bg-[#fff] relative">
             <div className="w-full pb-3 flex justify-between table-header-filter pr-3 gap-2">
@@ -46,7 +53,13 @@ const TaskRoadmap: FC<TTaskRoadmpProps> = ({
                     ]}
                 />
             </div>
-            <div className="w-full h-[calc(100vh-200px)] flex items-center justify-center">
+            <Steps
+                size="small"
+                className="my-4 mt-8"
+                current={5}
+                items={stepsList}
+            />
+            <div className="w-full h-[calc(100vh-240px)] flex items-center justify-items-start">
                 <TreeGraphComponent data={treeData} />
             </div>
         </div>
