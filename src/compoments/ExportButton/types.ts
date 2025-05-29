@@ -3,8 +3,8 @@ import type { ReactElement } from 'react';
 
 // 导出组件 props类型
 export type ExportProps = {
-    title: ReactElement;
-    params: any;
+    title: ReactElement | string;
+    params?: any;
     msg?: string;
     method: string;
     url: string;

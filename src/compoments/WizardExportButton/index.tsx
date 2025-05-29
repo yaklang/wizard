@@ -22,15 +22,16 @@ const WizardExport: FC<TWizardExportProps> = ({
             type="primary"
             loading={loading}
             icon={props.icon ?? <ExportsIcon />}
-            onClick={
-                async () => await dowload_request()
+            onClick={async (e) => {
+                e.stopPropagation();
+                await dowload_request();
                 // .then(() => {
                 //     message.success('导出成功');
                 // })
                 // .catch(() => {
                 //     message.error('导出失败');
                 // });
-            }
+            }}
         >
             导出Excel
         </Button>

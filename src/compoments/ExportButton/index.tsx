@@ -12,28 +12,33 @@ const initialValue: ExportState = {
     controller: null,
     visible: false,
 };
+
 const reducer = (state: ExportState, payload: ExportState) => ({
     ...state,
     ...payload,
 });
 
-const ExportButton: FC<ExportProps> = ({
+const ExportButton: FC<
+    ExportProps & {
+        onChange?: (status: any) => void;
+    }
+> = ({
     title,
     params,
     method,
     url,
     fileName,
     msg = '导出成功',
+    onChange,
     ...props
 }) => {
     const [state, dispatch] = useReducer(reducer, initialValue);
     const { controller, visible } = state;
 
     const getParams = (p: any) => (typeof p === 'function' ? p() : p);
-    // 获取文件流
+
     const request = useCallback(
         (callback: () => void) => {
-            // 700ms内未下载完时提示
             const timer = setTimeout(() => {
                 dispatch({ visible: true });
             }, 700);
@@ -42,7 +47,6 @@ const ExportButton: FC<ExportProps> = ({
 
             const config: AxiosRequestConfig = {
                 signal: _controller.signal,
-                // responseType 为blob，这里不能直接获取到code，所有结果都将为200
                 transformResponse(data) {
                     return {
                         data,
@@ -52,37 +56,40 @@ const ExportButton: FC<ExportProps> = ({
                 },
                 responseType: 'blob',
             };
+
+            const success = (file: any) => {
+                saveFile(file.data, getParams(fileName));
+                clearTimeout(timer);
+                callback();
+                onChange?.('success');
+            };
+
+            const failure = () => {
+                message.error('导出错误');
+                clearTimeout(timer);
+                onChange?.('error');
+            };
+
             if (method === 'get') {
                 axios
                     .get(url, { params: getParams(params), ...config })
-                    .then((file) => {
-                        saveFile(file.data, getParams(fileName));
-                        callback();
-                        clearTimeout(timer);
-                    })
-                    .catch(() => {
-                        message.error('导出错误');
-                    });
+                    .then(success)
+                    .catch(failure);
             } else if (method === 'post') {
                 axios
                     .post(url, getParams(params), config)
-                    .then((file) => {
-                        saveFile(file.data, getParams(fileName));
-                        callback();
-                        clearTimeout(timer);
-                    })
-                    .catch(() => {
-                        message.error('导出错误');
-                    });
+                    .then(success)
+                    .catch(failure);
             }
         },
-        [fileName, method, params, url],
+        [fileName, method, params, url, onChange],
     );
 
     return (
         <>
             <Button
-                onClick={async () => {
+                onClick={async (e) => {
+                    e.stopPropagation();
                     request(() => {
                         dispatch({ visible: false });
                         message.success(msg);
@@ -122,4 +129,5 @@ const ExportButton: FC<ExportProps> = ({
         </>
     );
 };
+
 export default ExportButton;

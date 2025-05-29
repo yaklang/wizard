@@ -1,5 +1,5 @@
 import { postSseDelete } from '@/apis/ActiChainApi';
-import { getCveUpdate } from '@/apis/CveLoopholeApi';
+import { getCveOfflineUpdate, getCveUpdate } from '@/apis/CveLoopholeApi';
 import { WizardModal } from '@/compoments';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { useEventSource } from '@/hooks';
@@ -43,7 +43,16 @@ const CveAllUpdateModal = forwardRef<
             message.error(`更新失败`);
         },
     });
-
+    const { runAsync: offlineUpdateRunAsync } = useRequest(
+        getCveOfflineUpdate,
+        {
+            manual: true,
+            onError: () => {
+                message.destroy();
+                message.error(`更新失败`);
+            },
+        },
+    );
     // 断开更新 cve
     const { runAsync: deleteAsync } = useRequest(postSseDelete, {
         manual: true,
@@ -77,21 +86,25 @@ const CveAllUpdateModal = forwardRef<
         },
     });
 
-    // 更新下载
-    const initValue = async () => {
-        await deleteAsync({ key: 'cve_progress' });
-    };
-
     // 打开弹窗事件
     useImperativeHandle(ref, () => ({
         async open(data) {
             setParentData(data);
             await connect();
-            runAsync({ just_last: false });
+            if (data.type === 'all') {
+                runAsync({ just_last: false });
+            } else if (data.type === 'offline') {
+                offlineUpdateRunAsync();
+            }
 
             model.open();
         },
     }));
+
+    // 更新下载
+    const initValue = async () => {
+        await deleteAsync({ key: 'cve_progress' });
+    };
 
     // 更新 数据自动滚动置地
     useEffect(() => {
@@ -130,7 +143,7 @@ const CveAllUpdateModal = forwardRef<
                 <div className="flex gap-2">
                     <SyncOutlined className="text-8 flex items-start" />
                     <div className="w-full color-[#B5B5B5] mt-1">
-                        点击“强制更新”，可更新本地CVE数据库
+                        {/* 点击“强制更新”，可更新本地CVE数据库 */}
                         <Progress
                             percent={updateData.percent}
                             className="mb-4"

@@ -15,11 +15,14 @@ const postCveQuery = (
         data,
     );
 
-// cve 数据库更新 /cve/update
+// cve 数据库更新
 const getCveUpdate = (
     params: TGetCveUpdateResquest,
     signal?: AbortSignal,
 ): Promise<ResponseData<boolean>> =>
     axios.get<never, ResponseData<boolean>>(`/cve/update`, { params, signal });
 
-export { postCveQuery, getCveUpdate };
+const getCveOfflineUpdate = (): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(`/reset/cve`);
+
+export { postCveQuery, getCveUpdate, getCveOfflineUpdate };

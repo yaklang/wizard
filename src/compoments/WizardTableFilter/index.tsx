@@ -50,16 +50,7 @@ const WizardTableFilter: FC<{
                 </div>
 
                 <div className="flex gap-2 items-center">
-                    {exprotExcel && (
-                        <ExportButton
-                            // url={exprotExcel.url}
-                            // title={exprotExcel.title}
-                            // params={exprotExcel.params}
-                            // method={exprotExcel.method}
-                            // fileName={exprotExcel.fileName}
-                            {...exprotExcel}
-                        />
-                    )}
+                    {exprotExcel && <ExportButton {...exprotExcel} />}
 
                     {tableoptionsSearch &&
                         typeof tableoptionsSearch.key === 'string' && (

@@ -15,10 +15,12 @@ import Outline from './Outline';
 import { useRequest, useSafeState } from 'ahooks';
 import type { UsePageRef } from '@/hooks/usePage';
 import { SystemOperate } from './SystemOperate';
+import { BatchCreateUserModal } from './BatchCreateUserModal';
 
 const SystemManagement: FC = () => {
     const [page] = WizardTable.usePage();
     const CreateUserModalRef = useRef<UseModalRefType>(null);
+    const BatchCreateUserModalRef = useRef<UseModalRefType>(null);
     const [modalTitle, setModalTitle] = useSafeState<
         '创建用户' | '编辑用户' | '重置密码'
     >('创建用户');
@@ -123,7 +125,11 @@ const SystemManagement: FC = () => {
                         },
                         trigger: (
                             <div className="flex gap-2">
-                                <Button onClick={async () => {}}>
+                                <Button
+                                    onClick={async () =>
+                                        BatchCreateUserModalRef.current?.open()
+                                    }
+                                >
                                     <PlusOutlined /> 批量创建
                                 </Button>
 
@@ -154,6 +160,11 @@ const SystemManagement: FC = () => {
             <CreateUserModal
                 ref={CreateUserModalRef}
                 title={modalTitle}
+                page={page}
+            />
+            <BatchCreateUserModal
+                ref={BatchCreateUserModalRef}
+                title="批量创建"
                 page={page}
             />
         </>

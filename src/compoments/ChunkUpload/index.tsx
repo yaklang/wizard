@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import React, { isValidElement } from 'react';
+import React, { isValidElement, useState } from 'react';
 import { Button, Input, Upload, message } from 'antd';
 import useLoginStore from '@/App/store/loginStore';
 import axios from '@/utils/axios';
@@ -8,33 +8,38 @@ import { match, P } from 'ts-pattern';
 import { generateUniqueId } from '@/utils';
 
 type ChunkUploadProps = UploadProps & {
-    url: string; // 上传服务器地址
-    chunkSize?: number; // 分片大小，单位为MB
+    url: string;
+    chunkSize?: number;
     onChange?: (value: any) => void;
     value?: any;
-    children?: ReactNode; // 自定义渲染上传按钮
+    children?: ReactNode;
     childrenType?: 'textArea';
     encryptionKey?: any;
     setFieldValue?: (name: any, value: any) => void;
+    onlyNameBool?: boolean;
 };
 
 const ChunkUpload: React.FC<ChunkUploadProps> = ({
     url,
-    chunkSize = 2, // 默认每个分片为2MB
+    chunkSize = 2,
     onChange,
     value,
     children,
     childrenType,
     encryptionKey,
     setFieldValue,
-    ...props // 如果有其他额外的 props
+    onlyNameBool,
+    ...props
 }) => {
     const { token } = useLoginStore((state) => state);
+    const [loading, setLoading] = useState(false);
 
     const uploadChunk = async (
         file: File,
         chunkIndex: number,
         totalChunks: number,
+        newFileName: string,
+        // eslint-disable-next-line max-params
     ) => {
         const chunk = file.slice(
             chunkIndex * chunkSize * 1024 * 1024,
@@ -42,8 +47,8 @@ const ChunkUpload: React.FC<ChunkUploadProps> = ({
         );
 
         const formData = new FormData();
-        formData.append('file', chunk);
-        formData.append('file_name', file.name);
+        formData.append('file', chunk, newFileName);
+        formData.append('file_name', newFileName);
         formData.append('chunkIndex', `${chunkIndex}`);
         formData.append('totalChunks', `${totalChunks}`);
 
@@ -60,61 +65,81 @@ const ChunkUpload: React.FC<ChunkUploadProps> = ({
 
     const handleUpload = (file: File) => {
         const totalChunks = Math.ceil(file.size / (chunkSize * 1024 * 1024));
+        const newFileName = onlyNameBool
+            ? file.name
+            : `${generateUniqueId()}_${file.name}`;
+        setLoading(true);
 
         const uploadNextChunk = (chunkIndex: number) => {
             if (chunkIndex >= totalChunks) {
                 message.success('上传完成');
                 setFieldValue?.(encryptionKey, generateUniqueId());
-                onChange?.(file.name);
+                onChange?.(newFileName);
+                setLoading(false);
                 return;
             }
 
-            uploadChunk(file, chunkIndex, totalChunks)
+            uploadChunk(file, chunkIndex, totalChunks, newFileName)
                 .then(() => {
-                    onChange?.(file.name);
+                    onChange?.(newFileName);
                     uploadNextChunk(chunkIndex + 1);
                 })
                 .catch(() => {
                     message.destroy();
                     message.error('上传失败');
+                    setLoading(false);
                 });
         };
 
         uploadNextChunk(0);
     };
 
-    // 判断是否为ReactNode节点
     const isReactNode = (value: unknown): value is ReactNode =>
         typeof value === 'string' ||
         typeof value === 'number' ||
         isValidElement(value) ||
         (Array.isArray(value) && value.every(isReactNode));
 
-    // 根据 props 渲染组件
+    // 包装上传按钮（可选处理 loading）
     const chidrenNode = match([children, childrenType])
-        .with([P.when(isReactNode), P.nullish], () => children)
-        .with([P.nullish, P.nullish], () => <Button>上传文件</Button>)
+        .with([P.when(isReactNode), P.nullish], () =>
+            React.cloneElement(children as React.ReactElement, {
+                loading, // ✅ 给按钮添加 loading
+                disabled: loading,
+            }),
+        )
+        .with([P.nullish, P.nullish], () => (
+            <Button loading={loading} disabled={loading}>
+                上传文件
+            </Button>
+        ))
         .with([P.nullish, 'textArea'], () => (
             <Input.TextArea
                 placeholder="请输入"
                 onClick={(e) => e.stopPropagation()}
                 onPressEnter={(e) => e.stopPropagation()}
-                onChange={(e) => {
-                    const value = e.target.value;
-                    onChange?.(value);
-                }}
+                onChange={(e) => onChange?.(e.target.value)}
                 value={value}
+                disabled={loading}
             />
         ))
-        // 容错
-        .with([P.when(isReactNode), P.any], () => children)
-        .otherwise(() => <Button>上传文件</Button>);
+        .with([P.when(isReactNode), P.any], () =>
+            React.cloneElement(children as React.ReactElement, {
+                loading,
+                disabled: loading,
+            }),
+        )
+        .otherwise(() => (
+            <Button loading={loading} disabled={loading}>
+                上传文件
+            </Button>
+        ));
 
     return (
         <Upload
             beforeUpload={(file) => {
                 handleUpload(file);
-                return false; // 阻止默认的上传行为
+                return false;
             }}
             showUploadList={false}
             action={token}

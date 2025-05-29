@@ -36,6 +36,7 @@ const CveLoophole: FC = () => {
     const [page] = WizardTable.usePage();
     const CveAllUpdateModalRef = useRef<UseModalRefType>(null);
     const CveDifferUpdateModalRef = useRef<UseModalRefType>(null);
+
     const [search, setSearch] = useSafeState({
         key: 'cve',
         value: '',
@@ -205,17 +206,32 @@ const CveLoophole: FC = () => {
                                                 只更新最新数据
                                             </div>
                                             <div
-                                                className="px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer"
+                                                className="mb-2 py-1 px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer"
                                                 onClick={() => {
                                                     CveAllUpdateModalRef.current?.open(
                                                         {
                                                             title: 'CVE 数据库更新',
+                                                            type: 'all',
                                                         },
                                                     );
                                                     setOpen(false);
                                                 }}
                                             >
                                                 全量更新
+                                            </div>
+                                            <div
+                                                className="px-2 rounded hover:bg-[#4a94f8] hover:text-[#fff] cursor-pointer"
+                                                onClick={() => {
+                                                    CveAllUpdateModalRef.current?.open(
+                                                        {
+                                                            title: 'CVE 数据库离线更新',
+                                                            type: 'offline',
+                                                        },
+                                                    );
+                                                    setOpen(false);
+                                                }}
+                                            >
+                                                离线更新
                                             </div>
                                         </div>
                                     }
