@@ -508,60 +508,6 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                             );
                         }}
                     </Item>
-                    {scriptTypeValue !== 'weakinfo' && (
-                        <Item
-                            shouldUpdate={(prevValues, curValues) => {
-                                const preScannerStr = Array.isArray(
-                                    prevValues?.['scanner'],
-                                )
-                                    ? prevValues?.['scanner']?.join()
-                                    : prevValues?.['scanner'];
-
-                                const curScannerStr = Array.isArray(
-                                    curValues?.['scanner'],
-                                )
-                                    ? curValues?.['scanner']?.join()
-                                    : curValues?.['scanner'];
-
-                                const preExecution_nodeStr =
-                                    prevValues.params?.['params']?.[
-                                        'execution_node'
-                                    ];
-                                const curExecution_nodeStr =
-                                    curValues.params?.['params']?.[
-                                        'execution_node'
-                                    ];
-                                return (
-                                    preScannerStr !== curScannerStr ||
-                                    preExecution_nodeStr !==
-                                        curExecution_nodeStr
-                                );
-                            }}
-                        >
-                            {({ getFieldValue }) => {
-                                const nodeCardValue = getFieldValue('scanner');
-                                const execution_node = getFieldValue([
-                                    'params',
-                                    'execution_node',
-                                ]);
-                                return (
-                                    <Item
-                                        label={
-                                            <div className="min-w-[124px]">
-                                                设置插件
-                                            </div>
-                                        }
-                                        name={['params', 'plugins']}
-                                    >
-                                        <AddPlugins
-                                            nodeCardValue={nodeCardValue}
-                                            execution_node={execution_node}
-                                        />
-                                    </Item>
-                                );
-                            }}
-                        </Item>
-                    )}
                 </div>
             ),
             extra: (
@@ -580,9 +526,6 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                     ];
                                     twoItemKeys.forEach((val) => {
                                         setFieldValue(val, undefined);
-                                    });
-                                    setFieldValue(['params', 'plugins'], {
-                                        ScriptName: [],
                                     });
                                     setFieldValue('scanner', [
                                         scannerDataList?.[0]?.name,
@@ -705,6 +648,10 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         ['params', 'enable-web-login-brute'],
                                         false,
                                     );
+                                    setFieldValue(
+                                        ['params', 'plugins'],
+                                        undefined,
+                                    );
                                 }}
                             >
                                 重置
@@ -814,6 +761,65 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                     );
                                 }}
                             </Item>
+                            {scriptTypeValue !== 'weakinfo' && (
+                                <Item
+                                    shouldUpdate={(prevValues, curValues) => {
+                                        const preScannerStr = Array.isArray(
+                                            prevValues?.['scanner'],
+                                        )
+                                            ? prevValues?.['scanner']?.join()
+                                            : prevValues?.['scanner'];
+
+                                        const curScannerStr = Array.isArray(
+                                            curValues?.['scanner'],
+                                        )
+                                            ? curValues?.['scanner']?.join()
+                                            : curValues?.['scanner'];
+
+                                        const preExecution_nodeStr =
+                                            prevValues.params?.['params']?.[
+                                                'execution_node'
+                                            ];
+                                        const curExecution_nodeStr =
+                                            curValues.params?.['params']?.[
+                                                'execution_node'
+                                            ];
+                                        return (
+                                            preScannerStr !== curScannerStr ||
+                                            preExecution_nodeStr !==
+                                                curExecution_nodeStr
+                                        );
+                                    }}
+                                >
+                                    {({ getFieldValue }) => {
+                                        const nodeCardValue =
+                                            getFieldValue('scanner');
+                                        const execution_node = getFieldValue([
+                                            'params',
+                                            'execution_node',
+                                        ]);
+                                        return (
+                                            <Item
+                                                label={
+                                                    <div className="min-w-[124px]">
+                                                        设置插件
+                                                    </div>
+                                                }
+                                                name={['params', 'plugins']}
+                                            >
+                                                <AddPlugins
+                                                    nodeCardValue={
+                                                        nodeCardValue
+                                                    }
+                                                    execution_node={
+                                                        execution_node
+                                                    }
+                                                />
+                                            </Item>
+                                        );
+                                    }}
+                                </Item>
+                            )}
                             <Item
                                 label={
                                     <span>

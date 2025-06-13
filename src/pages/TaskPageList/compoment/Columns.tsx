@@ -72,11 +72,6 @@ const CommonTasksColumns = (
             rowSelection: 'checkbox',
             rowSelectKeys: deleteValues,
             onSelectChange: setDeleteValues,
-            // onCell: (record) => ({
-            //     onClick: () => {
-            //         handGoDetail(record);
-            //     },
-            // }),
             width: 480,
             render: (_, record) => (
                 <div
@@ -87,6 +82,12 @@ const CommonTasksColumns = (
                     {record.task_id}
                 </div>
             ),
+        },
+        {
+            title: '创建人',
+            dataIndex: 'account',
+            columnsHeaderFilterType: 'input',
+            width: 160,
         },
         {
             title: '任务组',

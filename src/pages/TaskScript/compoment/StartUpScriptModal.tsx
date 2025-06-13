@@ -186,16 +186,11 @@ const StartUpScriptModal = forwardRef<
                                 items.script_type === 'login_brute_scan'
                                     ? true
                                     : false,
-                            plugins: items.params?.plugins
-                                ? {
-                                      ScriptName: {
-                                          ids: items.params?.plugins?.split(
-                                              ',',
-                                          ),
-                                          isAll: false,
-                                      },
-                                  }
-                                : undefined,
+                            plugins:
+                                items.params?.plugins &&
+                                items.params?.plugins?.length > 0
+                                    ? items.params.plugins.split(',')
+                                    : undefined,
                         },
                     };
                     form.setFieldsValue(targetSetFormData);

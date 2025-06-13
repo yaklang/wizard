@@ -50,7 +50,7 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
         ...values,
         params: {
             ...values.params,
-            plugins: values.params?.plugins?.ScriptName?.ids?.join(','),
+            plugins: values.params?.plugins?.join(','),
             'enable-brute':
                 typeof values?.params?.['enable-brute'] === 'boolean'
                     ? `${values?.params?.['enable-brute']}`
