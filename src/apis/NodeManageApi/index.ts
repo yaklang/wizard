@@ -39,7 +39,7 @@ const postNodesDownloadDataRun = (
     data: TPostNodesDownloadDataRunRequest,
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(
-        'task/start/nodes-download-data/run',
+        '/task/start/nodes-download-data/run',
         data,
     );
 

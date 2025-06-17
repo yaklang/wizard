@@ -29,21 +29,10 @@ const postLicense = (data: {
 }): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>('/license', data);
 
-const getLoginout = (): Promise<ResponseData<boolean>> =>
-    axios.get('/auth/loginout');
-
-// 校验当前账号是否存在登录状态 /auth
+// 校验当前账号是否存在登录状态
 const getAuth = (
     username: string,
 ): Promise<ResponseData<{ status: boolean }>> =>
     axios.get(`/auth?username=${username}`);
 
-export {
-    getCaptcha,
-    postLogin,
-    getLicense,
-    postLicense,
-    getLoginout,
-    getLoginOut,
-    getAuth,
-};
+export { getCaptcha, postLogin, getLicense, postLicense, getLoginOut, getAuth };
