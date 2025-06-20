@@ -5,7 +5,7 @@ import { useRequest, useSafeState } from 'ahooks';
 import useLoginStore from '@/App/store/loginStore';
 import permissionsSliceFn from '@/App/store/powerStore';
 import { LoginIcon } from '@/assets/menu';
-import login_logo from '@/assets/compoments/login_logo.png';
+import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
 import login_background from '@/assets/login/login_background.png';
 import { getAuth, getCaptcha, getLicense } from '@/apis/login';
 import { ExclamationCircleOutlined } from '@ant-design/icons';

@@ -10,7 +10,7 @@ import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { message, Select } from 'antd';
 import CopyOutlined from '@/pages/TaskDetail/compoments/utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
-import { useRequest } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 import { getBatchInvokingScriptTaskNode } from '@/apis/task';
 
 const sensitiveInfoStatus = [
@@ -33,6 +33,9 @@ const sensitiveInfoStatus = [
 
 const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
     const [page] = WizardTable.usePage();
+    const [tableFilter, setTableFilter] = useSafeState<
+        Record<string, any> | undefined
+    >({});
 
     // 获取执行节点 列表
     const { data: taskNodeData } = useRequest(async () => {
@@ -125,7 +128,7 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
                         params: {
                             typ: 'sensitive',
                             data: {
-                                ...page.getParams()?.filter,
+                                ...tableFilter,
                                 limit: -1,
                             },
                         },
@@ -142,6 +145,7 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
                 },
             }}
             request={async (params, filter) => {
+                setTableFilter(filter);
                 const { data } = await getSensitiveMessagePage({
                     ...params,
                     ...filter,

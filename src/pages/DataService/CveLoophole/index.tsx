@@ -61,13 +61,13 @@ const CveLoophole: FC = () => {
             width: 120,
             render: (text: string) =>
                 text ? (
-                    <>
+                    <div className="flex flex-wrap gap-2">
                         {text.split('|').map((ele) => (
                             <YakitTag color="bluePurple" key={ele}>
                                 {ele}
                             </YakitTag>
                         ))}
-                    </>
+                    </div>
                 ) : (
                     ''
                 ),

@@ -7,7 +7,7 @@ import { useRequest, useSafeState } from 'ahooks';
 import routers from './routers/routers';
 import { useNetworkStatus, usePermissionsSlice } from '@/hooks';
 
-import login_logo from '@/assets/compoments/login_logo.png';
+import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
 // import header_text from '@/assets/login/header_text.png';
 import { SiderClose, SiderOpen } from '@/assets/compoments';
 import { UserCard } from './UserCard';
@@ -257,9 +257,9 @@ const AppLayout = () => {
                             </div>
                         );
                     })}
-                    <span className="ml-2 text-[14px] color-[#B4BBCA]">
+                    {/* <span className="ml-2 text-[14px] color-[#B4BBCA]">
                         分布式调度yaklang引擎，执行分布式脚本，获得结果
-                    </span>
+                    </span> */}
                 </Header>
                 {permissionsSlice.length > 0 && (
                     <Content

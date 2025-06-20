@@ -10,10 +10,13 @@ import { AssetsProtsFilterDrawer } from '@/pages/TaskDetail/compoments/TableOpti
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import type { TGetAssetsProtsResponse } from '@/apis/taskDetail/types';
 import { getBatchInvokingScriptTaskNode } from '@/apis/task';
-import { useRequest } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 
 const PortAssets: FC = () => {
     const [page] = WizardTable.usePage();
+    const [tableFilter, setTableFilter] = useSafeState<
+        Record<string, any> | undefined
+    >({});
 
     const taskNameColumns: CreateTableProps<TGetAssetsProtsResponse>['columns'] =
         [
@@ -62,7 +65,7 @@ const PortAssets: FC = () => {
                         params: {
                             typ: 'port',
                             data: {
-                                ...page.getParams()?.filter,
+                                ...tableFilter,
                                 limit: -1,
                             },
                         },
@@ -83,6 +86,7 @@ const PortAssets: FC = () => {
                 },
             }}
             request={async (params, filter) => {
+                setTableFilter(filter);
                 const { data } = await postAssetsProts({
                     ...params,
                     ...filter,

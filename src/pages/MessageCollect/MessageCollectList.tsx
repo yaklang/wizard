@@ -184,18 +184,8 @@ const MessageCollect = () => {
                 try {
                     const isAll = checkedValue?.['keyword'].isAll;
                     const idsList = checkedValue?.['keyword'].ids;
-                    // const targetDeleteRequest = isAll
-                    //     ? {
-                    //           all: page.getParams().filter.keyword
-                    //               ? false
-                    //               : isAll,
-                    //           keyword: page.getParams().filter.keyword,
-                    //       }
-                    //     : {
-                    //           ids: idsList,
-                    //           keyword: page.getParams().filter.keyword,
-                    //       };
                     const keyword = page.getParams().filter.keyword;
+
                     const targetDeleteRequest =
                         isAll && !keyword
                             ? {

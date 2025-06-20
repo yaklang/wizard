@@ -111,8 +111,12 @@ const useStreamingTreeData = () => {
 };
 
 interface TTaskRoadmpProps {
-    setHeaderGroupValue: (value: 0 | 1 | 2 | 3 | 4 | 5) => void;
-    headerGroupValue: 0 | 1 | 2 | 3 | 4 | 5;
+    setHeaderGroupValue: (
+        value: // 0 |
+        1 | 2 | 3 | 4 | 5,
+    ) => void;
+    headerGroupValue: // 0 |
+    1 | 2 | 3 | 4 | 5;
 }
 
 const TaskRoadmap: FC<TTaskRoadmpProps> = ({
@@ -140,7 +144,7 @@ const TaskRoadmap: FC<TTaskRoadmpProps> = ({
                     buttonStyle="solid"
                     className="w-full"
                     options={[
-                        { label: '攻击路径图', value: 0 },
+                        // { label: '攻击路径图', value: 0 },
                         { label: '端口资产', value: 1 },
                         { label: '漏洞与风险', value: 2 },
                         { label: '资产数据', value: 3 },

@@ -90,25 +90,6 @@ const routers: RouteObjectRootMy[] = [
                             },
                         ],
                     },
-                    {
-                        path: 'task-script',
-                        name: '脚本列表',
-                        key: 'task-script',
-                        children: [
-                            {
-                                index: true,
-                                element: <TaskScript />,
-                            },
-                            {
-                                path: 'modify-task-script',
-                                key: 'modify-task-script',
-                                element: <ModifyTaskScript />,
-                                name: '分布式任务脚本',
-                                hidden: true,
-                                parentpath: '/task-script/task-script',
-                            },
-                        ],
-                    },
                 ],
             },
             {
@@ -120,7 +101,7 @@ const routers: RouteObjectRootMy[] = [
             },
             {
                 path: 'data-service',
-                name: '数据库',
+                name: '资产数据',
                 key: 'data-service',
                 icon: <DataServiceIcon />,
                 children: [
@@ -147,12 +128,6 @@ const routers: RouteObjectRootMy[] = [
                         name: '信息收集',
                         key: 'message-collect',
                         element: <MessageCollect />,
-                    },
-                    {
-                        path: 'cve-loophole',
-                        name: 'CVE漏洞库',
-                        key: 'cve-loophole',
-                        element: <CveLoophole />,
                     },
                 ],
             },
@@ -233,6 +208,31 @@ const routers: RouteObjectRootMy[] = [
                         name: '用户管理',
                         key: 'system-user',
                         element: <SystemManagement />,
+                    },
+                    {
+                        path: 'task-script',
+                        name: '脚本管理',
+                        key: 'task-script',
+                        children: [
+                            {
+                                index: true,
+                                element: <TaskScript />,
+                            },
+                            {
+                                path: 'modify-task-script',
+                                key: 'modify-task-script',
+                                element: <ModifyTaskScript />,
+                                name: '分布式任务脚本',
+                                hidden: true,
+                                parentpath: '/task-script/task-script',
+                            },
+                        ],
+                    },
+                    {
+                        path: 'cve-loophole',
+                        name: '漏洞库管理',
+                        key: 'cve-loophole',
+                        element: <CveLoophole />,
                     },
                     {
                         name: '全局反连',

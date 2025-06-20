@@ -7,7 +7,7 @@ import { getAssetsValueFilter, postAssetsVulns } from '@/apis/taskDetail';
 import { AssetsVulnsColumns } from '@/pages/TaskDetail/compoments/Columns';
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
-import { useRequest } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
 import { AssetsVulnsFilterDrawer } from '@/pages/TaskDetail/compoments/TableOptionsFilterDrawer/AssetsVulnsFilterDrawer';
 import { getBatchInvokingScriptTaskNode } from '@/apis/task';
@@ -23,6 +23,9 @@ const taskNameColumns: any = [
 
 const AssetsVulns: FC = () => {
     const [page] = WizardTable.usePage();
+    const [tableFilter, setTableFilter] = useSafeState<
+        Record<string, any> | undefined
+    >({});
 
     const { data } = useRequest(async () => {
         const { data } = await getAssetsValueFilter();
@@ -94,7 +97,7 @@ const AssetsVulns: FC = () => {
                         params: {
                             typ: 'vulns',
                             data: {
-                                ...page.getParams()?.filter,
+                                ...tableFilter,
                                 limit: -1,
                             },
                         },
@@ -116,6 +119,7 @@ const AssetsVulns: FC = () => {
                 },
             }}
             request={async (params, filter) => {
+                setTableFilter(filter);
                 const { data } = await postAssetsVulns({
                     ...params,
                     ...filter,
