@@ -41,6 +41,14 @@ interface TGetAssetsProtsResponse {
     updated_at: number;
 }
 
+interface TGetAssetsProtsFilterResponse {
+    list: Array<{
+        explain: string | null;
+        key: string;
+        value: string;
+    }>;
+}
+
 interface TGetAssetsVulnsRequest {
     form_runtime_id?: string;
     task_id?: string;
@@ -133,4 +141,5 @@ export type {
     TGetAssertsDataResponse,
     TTaskDetail,
     TGetAssetsValueFilterResponse,
+    TGetAssetsProtsFilterResponse,
 };

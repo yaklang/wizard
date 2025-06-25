@@ -107,6 +107,8 @@ const AssetsProtsFilterDataList = {
             cout: 0,
         },
     ],
+    // IP统计
+    ipList: [],
 };
 
 const targetTitle = {
@@ -115,6 +117,7 @@ const targetTitle = {
     data: '数据库',
     webSever: 'Web 服务器',
     fingerprint: '其他指纹信息',
+    ipList: 'IP 统计',
 };
 
 // 转换数据源

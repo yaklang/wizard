@@ -14,7 +14,7 @@ import {
 import { match } from 'ts-pattern';
 import { NodeCard } from './NodeCard';
 import { AddPlugins } from './AddPlugins';
-import { createRules, generateUniqueId } from '@/utils';
+import { createRules } from '@/utils';
 import {
     disabledDate,
     disabledTime,
@@ -364,7 +364,8 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                     );
                                                     setFieldValue(
                                                         'param_files',
-                                                        generateUniqueId(),
+                                                        fileName,
+                                                        // generateUniqueId(),
                                                     );
                                                 }}
                                             >

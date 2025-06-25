@@ -14,6 +14,8 @@ import {
 } from './data';
 import { match, P } from 'ts-pattern';
 import type { UsePageRef } from '@/hooks/usePage';
+import styles from './AssetsProtsFilterDrawerScss.module.scss';
+import classNames from 'classnames';
 
 const { Item } = Form;
 
@@ -28,10 +30,23 @@ const AssetsProtsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
         });
         const list = data?.list ?? [];
 
+        const targetIpList = list
+            .filter((item) => item.explain === 'cidr')
+            .map((item) => ({
+                label: item.key,
+                value: item.key,
+                cout: parseInt(item.value, 10),
+            }));
+
+        const targetAssetsProtsFilterDataList = {
+            ...AssetsProtsFilterDataList,
+            ipList: targetIpList,
+        };
+
         // 调用函数更新数据
         const updatedData = updateAssetsProtsFilterDataList(
             list,
-            AssetsProtsFilterDataList,
+            targetAssetsProtsFilterDataList,
         );
 
         const translateKeys = Object.keys(targetTitle);
@@ -63,7 +78,7 @@ const AssetsProtsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
                             ghost
                             items={value?.keys.map((it) => {
                                 const type =
-                                    it === 'group' ? 'tags' : 'services';
+                                    it === 'ipList' ? 'cidr' : 'service_type';
 
                                 return {
                                     key: it,
@@ -85,12 +100,16 @@ const AssetsProtsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
                                                     page.getParams()?.filter;
 
                                                 const filterCheckedList = {
-                                                    tags:
-                                                        type === 'tags'
-                                                            ? []
-                                                            : getTableParams.tags,
-
-                                                    services:
+                                                    cidr: getTableParams?.cidr?.filter(
+                                                        (key?: string) =>
+                                                            !targetData
+                                                                ?.map(
+                                                                    (item) =>
+                                                                        item.value,
+                                                                )
+                                                                .includes(key),
+                                                    ),
+                                                    service_type:
                                                         getTableParams?.services?.filter(
                                                             (key?: string) =>
                                                                 !targetData
@@ -120,9 +139,14 @@ const AssetsProtsFilterDrawer: FC<{ task_id?: string; page: UsePageRef }> = ({
                                             | 'data'
                                             | 'webSever'
                                             | 'fingerprint'
+                                            | 'ipList'
                                     ],
                                     children: (
-                                        <div>
+                                        <div
+                                            className={classNames(
+                                                styles[`assets_prots_${type}`],
+                                            )}
+                                        >
                                             <Item name={type}>
                                                 <AssetsProtsGroupTag
                                                     data={value.items[it]}

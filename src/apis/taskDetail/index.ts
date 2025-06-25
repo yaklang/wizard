@@ -9,6 +9,7 @@ import type {
     TGetAssertsDataResponse,
     TTaskDetail,
     TGetAssetsValueFilterResponse,
+    TGetAssetsProtsFilterResponse,
 } from './types';
 import type { Palm } from '@/gen/schema';
 
@@ -35,7 +36,9 @@ const postAssetsProts = (
     );
 
 // 获取端口资产 高级筛选信息
-const getAssetsProtsFilter = (params?: { task_id?: string }) =>
+const getAssetsProtsFilter = (params?: {
+    task_id?: string;
+}): Promise<ResponseData<TGetAssetsProtsFilterResponse>> =>
     axios.get(`/assets/ports`, { params });
 
 // 获取漏洞与风险 高级筛选信息
