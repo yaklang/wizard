@@ -24,8 +24,19 @@ interface TGetDomainInfoResponse {
     updated_at: number;
 }
 
+interface AttackPathChildren {
+    children: AttackPathChildren[];
+    id: string;
+}
+
+interface TGetAttackPathResponse {
+    children: AttackPathChildren[];
+    id: string;
+}
+
 export type {
     TGetCompanyInfoRequest,
     TGetCompanyInfoResponse,
     TGetDomainInfoResponse,
+    TGetAttackPathResponse,
 };

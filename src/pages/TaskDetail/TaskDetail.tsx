@@ -36,11 +36,8 @@ import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { SensitiveMessage } from '../DataService/SensitiveMessage';
 import { getCompanyInfo, getDomainInfo } from '@/apis/MessageCollectApi';
-import {
-    // routeList,
-    scriptTypeOption,
-} from '../TaskScript/data';
-// import { TaskRoadmap } from './TaskRoadmap';
+import { routeList, scriptTypeOption } from '../TaskScript/data';
+import { TaskRoadmap } from './TaskRoadmap';
 
 const { Group } = Radio;
 
@@ -81,8 +78,7 @@ const TaskDetail: FC = () => {
     >({});
 
     const [headerGroupValue, setHeaderGroupValue] = useSafeState<
-        // 0 |
-        1 | 2 | 3 | 4 | 5
+        0 | 1 | 2 | 3 | 4 | 5
     >(1);
     const [columns, setColumns] = useSafeState<any>([]);
 
@@ -222,137 +218,133 @@ const TaskDetail: FC = () => {
             params: Parameters<RequestFunction>['0'],
             filter: Parameters<RequestFunction>['1'],
         ) => {
-            return (
-                match(headerGroupValue)
-                    // .with(0, async () => null)
-                    .with(1, async () => {
-                        try {
-                            setTableLoadings(true);
-                            const { data } = await postAssetsProts({
-                                ...params,
-                                ...filter,
-                                order_by: filter?.order
-                                    ? 'updated_at'
-                                    : undefined,
-                                task_id: record?.task_id,
-                            });
-                            const targetProtColumns = ProtColumns().map(
-                                // eslint-disable-next-line max-nested-callbacks
-                                (item) =>
-                                    item.dataIndex === 'execute_node'
-                                        ? {
-                                              ...item,
-                                              wizardColumnsOptions:
-                                                  record?.scanner?.map(
-                                                      // eslint-disable-next-line max-nested-callbacks
-                                                      (it: string) => ({
-                                                          label: it,
-                                                          value: it,
-                                                      }),
-                                                  ),
-                                          }
-                                        : item,
+            return match(headerGroupValue)
+                .with(0, async () => null)
+                .with(1, async () => {
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await postAssetsProts({
+                            ...params,
+                            ...filter,
+                            order_by: filter?.order ? 'updated_at' : undefined,
+                            task_id: record?.task_id,
+                        });
+                        const targetProtColumns = ProtColumns().map(
+                            // eslint-disable-next-line max-nested-callbacks
+                            (item) =>
+                                item.dataIndex === 'execute_node'
+                                    ? {
+                                          ...item,
+                                          wizardColumnsOptions:
+                                              record?.scanner?.map(
+                                                  // eslint-disable-next-line max-nested-callbacks
+                                                  (it: string) => ({
+                                                      label: it,
+                                                      value: it,
+                                                  }),
+                                              ),
+                                      }
+                                    : item,
+                        );
+                        setColumns(targetProtColumns);
+                        setTableLoadings(false);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
+                })
+                .with(2, async () => {
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await postAssetsVulns({
+                            ...params,
+                            ...filter,
+                            task_id: record?.task_id,
+                        });
+                        await assetsVulnsFilterrunAsync()
+                            .then((filterData) => {
+                                const targetFilterData = {
+                                    ...filterData,
+                                    taskNodeData: record?.scanner?.map(
+                                        // eslint-disable-next-line max-nested-callbacks
+                                        (it: string) => ({
+                                            label: it,
+                                            value: it,
+                                        }),
+                                    ),
+                                };
+                                const assetsVulnsColumns =
+                                    AssetsVulnsColumns(targetFilterData);
+                                setColumns(assetsVulnsColumns);
+                            })
+                            .catch(() =>
+                                AssetsVulnsColumns({
+                                    transformSeverityList: [],
+                                    transformList: [],
+                                }),
                             );
-                            setColumns(targetProtColumns);
-                            setTableLoadings(false);
-                            return {
-                                data,
-                            };
-                        } catch {
-                            setTableLoadings(false);
-                        }
-                    })
-                    .with(2, async () => {
-                        try {
-                            setTableLoadings(true);
-                            const { data } = await postAssetsVulns({
-                                ...params,
-                                ...filter,
-                                task_id: record?.task_id,
-                            });
-                            await assetsVulnsFilterrunAsync()
-                                .then((filterData) => {
-                                    const targetFilterData = {
-                                        ...filterData,
-                                        taskNodeData: record?.scanner?.map(
-                                            // eslint-disable-next-line max-nested-callbacks
-                                            (it: string) => ({
-                                                label: it,
-                                                value: it,
-                                            }),
-                                        ),
-                                    };
-                                    const assetsVulnsColumns =
-                                        AssetsVulnsColumns(targetFilterData);
-                                    setColumns(assetsVulnsColumns);
-                                })
-                                .catch(() =>
-                                    AssetsVulnsColumns({
-                                        transformSeverityList: [],
-                                        transformList: [],
-                                    }),
-                                );
-                            setTableLoadings(false);
-                            return {
-                                data,
-                            };
-                        } catch {
-                            setTableLoadings(false);
-                        }
-                    })
-                    .with(3, async () => {
-                        try {
-                            setTableLoadings(true);
-                            const { data } = await postAssertsData({
-                                ...params,
-                                ...filter,
-                                task_id: record?.task_id,
-                            });
-                            setTableLoadings(false);
-                            setColumns(AssertsDataColumns);
-                            return {
-                                data,
-                            };
-                        } catch {
-                            setTableLoadings(false);
-                        }
-                    })
-                    .with(4, async () => {
-                        try {
-                            setTableLoadings(true);
-                            const { data } = await getCompanyInfo({
-                                ...params,
-                                ...filter,
-                                from_task_id: record?.task_id,
-                            });
-                            setTableLoadings(false);
-                            setColumns(companyInfoColumns);
-                            return {
-                                data,
-                            };
-                        } catch {
-                            setTableLoadings(false);
-                        }
-                    })
-                    .with(5, async () => {
-                        try {
-                            setTableLoadings(true);
-                            const { data } = await getDomainInfo({
-                                ...params,
-                                ...filter,
-                                from_task_id: record?.task_id,
-                            });
-                            setTableLoadings(false);
-                            setColumns(domainInfoColumns);
-                            return {
-                                data,
-                            };
-                        } catch {
-                            setTableLoadings(false);
-                        }
-                    })
-                    .exhaustive()
-            );
+                        setTableLoadings(false);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
+                })
+                .with(3, async () => {
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await postAssertsData({
+                            ...params,
+                            ...filter,
+                            task_id: record?.task_id,
+                        });
+                        setTableLoadings(false);
+                        setColumns(AssertsDataColumns);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
+                })
+                .with(4, async () => {
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await getCompanyInfo({
+                            ...params,
+                            ...filter,
+                            from_task_id: record?.task_id,
+                        });
+                        setTableLoadings(false);
+                        setColumns(companyInfoColumns);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
+                })
+                .with(5, async () => {
+                    try {
+                        setTableLoadings(true);
+                        const { data } = await getDomainInfo({
+                            ...params,
+                            ...filter,
+                            from_task_id: record?.task_id,
+                        });
+                        setTableLoadings(false);
+                        setColumns(domainInfoColumns);
+                        return {
+                            data,
+                        };
+                    } catch {
+                        setTableLoadings(false);
+                    }
+                })
+                .exhaustive();
         },
         [headerGroupValue],
     );
@@ -363,7 +355,7 @@ const TaskDetail: FC = () => {
                 spinning={!isReady || loading}
                 className="w-full h-full justify-center items-center flex"
             />
-        ); // 占位符
+        );
     }
 
     // 枚举 展示table 高级筛选抽屉值
@@ -406,94 +398,88 @@ const TaskDetail: FC = () => {
                 id={record?.id}
                 script_type={record?.script_type}
             />
-            {
-                //     routeList.includes(record?.script_type) &&
-                // headerGroupValue === 0 ? (
-                //     <TaskRoadmap
-                //         headerGroupValue={headerGroupValue}
-                //         setHeaderGroupValue={setHeaderGroupValue}
-                //     />
-                // ) :
-                scriptType.includes(record?.script_type) ? (
-                    <WizardTable
-                        rowKey="id"
-                        columns={columns}
-                        page={page}
-                        tableHeader={{
-                            tableHeaderGroup: (
-                                <Spin spinning={tableLoading}>
-                                    <Group
-                                        optionType="button"
-                                        buttonStyle="solid"
-                                        options={tableHeaderGroupOptions}
-                                        value={headerGroupValue}
-                                        onChange={headerGroupChange}
-                                    />
-                                </Spin>
-                            ),
-                            options: {
-                                dowloadFile:
-                                    // headerGroupValue === 0 ||
+            {routeList.includes(record?.script_type) &&
+            headerGroupValue === 0 ? (
+                <TaskRoadmap
+                    headerGroupValue={headerGroupValue}
+                    setHeaderGroupValue={setHeaderGroupValue}
+                />
+            ) : scriptType.includes(record?.script_type) ? (
+                <WizardTable
+                    rowKey="id"
+                    columns={columns}
+                    page={page}
+                    tableHeader={{
+                        tableHeaderGroup: (
+                            <Spin spinning={tableLoading}>
+                                <Group
+                                    optionType="button"
+                                    buttonStyle="solid"
+                                    options={tableHeaderGroupOptions}
+                                    value={headerGroupValue}
+                                    onChange={headerGroupChange}
+                                />
+                            </Spin>
+                        ),
+                        options: {
+                            dowloadFile:
+                                headerGroupValue === 0 ||
+                                headerGroupValue === 4 ||
+                                headerGroupValue === 5
+                                    ? undefined
+                                    : {
+                                          fileName:
+                                              `${exprotFileName[headerGroupValue]} (` +
+                                              dayjs().unix() +
+                                              ').csv',
+                                          params: {
+                                              type: ExportRequestKey?.[
+                                                  headerGroupValue
+                                              ],
+                                              data: {
+                                                  ...tableFilter,
+                                                  limit: -1,
+                                                  task_id: record?.task_id,
+                                              },
+                                          },
+                                          url: '/assets/export/report',
+                                          method: 'post',
+                                          type: 'primary',
+                                          title: (
+                                              <div>
+                                                  <UploadOutlined />
+                                                  <span className="ml-2">
+                                                      导出 Excel
+                                                  </span>
+                                              </div>
+                                          ),
+                                      },
+                            ProFilterSwitch: {
+                                trigger:
+                                    headerGroupValue === 0 ||
                                     headerGroupValue === 4 ||
                                     headerGroupValue === 5
-                                        ? undefined
-                                        : {
-                                              fileName:
-                                                  `${exprotFileName[headerGroupValue]} (` +
-                                                  dayjs().unix() +
-                                                  ').csv',
-                                              params: {
-                                                  type: ExportRequestKey?.[
-                                                      headerGroupValue
-                                                  ],
-                                                  data: {
-                                                      ...tableFilter,
-                                                      limit: -1,
-                                                      task_id: record?.task_id,
-                                                  },
-                                              },
-                                              url: '/assets/export/report',
-                                              method: 'post',
-                                              type: 'primary',
-                                              title: (
-                                                  <div>
-                                                      <UploadOutlined />
-                                                      <span className="ml-2">
-                                                          导出 Excel
-                                                      </span>
-                                                  </div>
-                                              ),
-                                          },
-                                ProFilterSwitch: {
-                                    trigger:
-                                        // headerGroupValue === 0 ||
-                                        headerGroupValue === 4 ||
-                                        headerGroupValue === 5
-                                            ? null
-                                            : tableFilterEnum(headerGroupValue),
-                                    layout: 'vertical',
-                                },
+                                        ? null
+                                        : tableFilterEnum(headerGroupValue),
+                                layout: 'vertical',
                             },
-                        }}
-                        request={async (params, filter) => {
-                            setTableFilter(filter);
-                            const { data } = await requestCallback(
-                                params,
-                                filter,
-                            );
+                        },
+                    }}
+                    request={async (params, filter) => {
+                        setTableFilter(filter);
+                        const { data } = await requestCallback(params, filter);
 
-                            return {
-                                list: data?.list ?? [],
-                                pagemeta: data?.pagemeta,
-                            };
-                        }}
-                    />
-                ) : record?.script_type === 'weakinfo' ? (
-                    <SensitiveMessage task_id={record?.task_id} />
-                ) : (
-                    <Empty className="w-full h-full flex items-center justify-center flex-col" />
-                )
-            }
+                        return {
+                            list: data?.list ?? [],
+                            pagemeta: data?.pagemeta,
+                        };
+                    }}
+                />
+            ) : record?.script_type === 'weakinfo' ? (
+                <SensitiveMessage task_id={record?.task_id} />
+            ) : (
+                <Empty className="w-full h-full flex items-center justify-center flex-col" />
+            )}
         </div>
     );
 };
