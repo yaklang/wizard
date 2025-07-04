@@ -49,7 +49,7 @@ const ModifyTaskScript: FC = () => {
         manual: true,
         onSuccess: async () => {
             message.success(state.type === 'add' ? '创建成功' : '编辑成功');
-            navigate('/task/task-script');
+            navigate('/task/create-task');
         },
         onError: (err) => {
             console.error(err);

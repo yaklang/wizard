@@ -1,20 +1,8 @@
 import type { FC } from 'react';
 import { useEffect } from 'react';
-import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
+import { useRequest, useSafeState } from 'ahooks';
 
-import {
-    Button,
-    Collapse,
-    Empty,
-    message,
-    Modal,
-    Progress,
-    Spin,
-    Steps,
-    Tag,
-    Tooltip,
-    Typography,
-} from 'antd';
+import { Collapse, Modal, Spin, Tag, Typography } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 
 import { SiderClose, SiderOpen } from '@/assets/compoments';
@@ -27,13 +15,11 @@ import {
     getBatchInvokingScript,
     // getTimelinRuntimeId
 } from '@/apis/taskDetail';
-import type { TDetailDatailOptions } from '../TaskDetail';
-import { getSubtaskSteam } from '@/apis/task';
-import { useEventSource } from '@/hooks';
+// import { getSubtaskSteam } from '@/apis/task';
+// import { useEventSource } from '@/hooks';
 import type { TTaskListStatusType } from '@/pages/TaskPageList/compoment/TaskStatus';
-import { targetRouteMap } from './utils';
-import { routeList } from '@/pages/TaskScript/data';
-// import { TFetchProcessResponse } from '@/apis/task/types';
+// import { targetRouteMap } from './utils';
+import type { TDetailDatailOptions } from '../types';
 
 const { Paragraph } = Typography;
 
@@ -83,12 +69,12 @@ const info = (item: Record<'label' | 'value', string | number>) => {
 const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
     task_id,
     data,
-    status,
-    id,
-    script_type,
+    // status,
+    // id,
+    // script_type,
 }) => {
     const [collapsed, setCollapsed] = useSafeState(true);
-    const [modal, contextHolder] = Modal.useModal();
+    // const [modal, contextHolder] = Modal.useModal();
 
     const {
         data: ReportData,
@@ -119,146 +105,146 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
         { manual: true },
     );
 
-    const { run } = useRequest(getSubtaskSteam, { manual: true });
+    // const { run } = useRequest(getSubtaskSteam, { manual: true });
 
-    const [taskProcess, setTaskProcess] = useSafeState<{
-        name: string;
-        process: number;
-    }>();
+    // const [taskProcess, setTaskProcess] = useSafeState<{
+    //     name: string;
+    //     process: number;
+    // }>();
 
-    const {
-        connect,
-        disconnect,
-        loading: sseLoading,
-    } = useEventSource<{
-        msg: { progress?: number };
-    }>('events?stream_type=subtask_progress', {
-        maxRetries: 1,
-        onsuccess: async (data) => {
-            const { msg } = data;
-            const progress = msg?.progress ? msg?.progress * 100 : 0;
-            setTaskProcess({
-                name: task_id!,
-                process: parseInt(progress.toFixed(2), 10),
-            });
-        },
-        onerror: (error) => {
-            message.error('连接超时，重连中');
-            console.error('SSE error:', error);
-        },
-        manual: true,
-    });
+    // const {
+    //     connect,
+    //     disconnect,
+    //     loading: sseLoading,
+    // } = useEventSource<{
+    //     msg: { progress?: number };
+    // }>('events?stream_type=subtask_progress', {
+    //     maxRetries: 1,
+    //     onsuccess: async (data) => {
+    //         const { msg } = data;
+    //         const progress = msg?.progress ? msg?.progress * 100 : 0;
+    //         setTaskProcess({
+    //             name: task_id!,
+    //             process: parseInt(progress.toFixed(2), 10),
+    //         });
+    //     },
+    //     onerror: (error) => {
+    //         message.error('连接超时，重连中');
+    //         console.error('SSE error:', error);
+    //     },
+    //     manual: true,
+    // });
 
-    useEffect(() => {
-        setTaskProcess((preValue) => ({
-            name: task_id!,
-            process:
-                status === 'success' || status === 'failed'
-                    ? 100
-                    : preValue?.process || 0,
-        }));
-    }, [status]);
+    // useEffect(() => {
+    //     setTaskProcess((preValue) => ({
+    //         name: task_id!,
+    //         process:
+    //             status === 'success' || status === 'failed'
+    //                 ? 100
+    //                 : preValue?.process || 0,
+    //     }));
+    // }, [status]);
 
-    useUpdateEffect(() => {
-        if (id) {
-            if (!sseLoading) {
-                run(id);
-            }
-        } else {
-            message.error('获取任务ID失败，请重新进入详情页面');
-        }
-    }, [sseLoading]);
+    // useUpdateEffect(() => {
+    //     if (id) {
+    //         if (!sseLoading) {
+    //             run(id);
+    //         }
+    //     } else {
+    //         message.error('获取任务ID失败，请重新进入详情页面');
+    //     }
+    // }, [sseLoading]);
 
     useEffect(() => {
         if (task_id) {
             runAsync(task_id);
-            if (status === 'success' || status === 'failed') {
-                return;
-            } else {
-                connect();
-            }
+            // if (status === 'success' || status === 'failed') {
+            //     return;
+            // } else {
+            //     connect();
+            // }
         }
-        return () => disconnect();
+        // return () => disconnect();
     }, []);
 
-    const handOpenRoute = () => {
-        const targetList =
-            targetRouteMap[script_type as keyof typeof targetRouteMap].list;
-        const process =
-            taskProcess?.process === 0
-                ? 0
-                : // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                  taskProcess?.process! / (100 / targetList.length);
+    // const handOpenRoute = () => {
+    //     const targetList =
+    //         targetRouteMap[script_type as keyof typeof targetRouteMap].list;
+    //     const process =
+    //         taskProcess?.process === 0
+    //             ? 0
+    //             : // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+    //               taskProcess?.process! / (100 / targetList.length);
 
-        modal.info({
-            title: '攻击路径图',
-            width: '50%',
-            content: (
-                <Steps
-                    size="small"
-                    className="my-4"
-                    current={process}
-                    items={targetList}
-                />
-            ),
-        });
-    };
+    //     modal.info({
+    //         title: '攻击路径图',
+    //         width: '50%',
+    //         content: (
+    //             <Steps
+    //                 size="small"
+    //                 className="my-4"
+    //                 current={process}
+    //                 items={targetList}
+    //             />
+    //         ),
+    //     });
+    // };
 
     const detailCollapseItems = [
-        {
-            key: '1',
-            label: <div className="whitespace-nowrap">本次任务进度</div>,
-            style: {
-                borderBottom: '1px solid #EAECF3',
-                borderRadius: '0px',
-                padding: '8px 16px',
-            },
-            children: (
-                <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
-                    <Spin
-                        spinning={
-                            sseLoading &&
-                            status !== 'success' &&
-                            status !== 'failed'
-                        }
-                    >
-                        {taskProcess ? (
-                            <div className="flex items-center justify-center gap-2 w-52">
-                                <Tooltip title={taskProcess.name}>
-                                    <div className="text-clips w-1/2 cursor-pointer">
-                                        {taskProcess.name}
-                                    </div>
-                                </Tooltip>
-                                <div className="whitespace-nowrap w-1/2">
-                                    <Progress
-                                        percent={taskProcess.process}
-                                        status="active"
-                                        type="line"
-                                    />
-                                </div>
-                            </div>
-                        ) : (
-                            <Empty
-                                description="暂无进度信息"
-                                imageStyle={{ height: '48px' }}
-                            />
-                        )}
-                    </Spin>
-                    {script_type && routeList.includes(script_type) && (
-                        <div className="flex align-center justify-between">
-                            <div>本次任务攻击路径图</div>
-                            <Button
-                                type="link"
-                                className="p-0 h-[21px]"
-                                onClick={handOpenRoute}
-                            >
-                                查看
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            ),
-        },
+        // {
+        //     key: '1',
+        //     label: <div className="whitespace-nowrap">本次任务进度</div>,
+        //     style: {
+        //         borderBottom: '1px solid #EAECF3',
+        //         borderRadius: '0px',
+        //         padding: '8px 16px',
+        //     },
+        //     children: (
+        //         <div className="whitespace-nowrap flex flex-col gap-2 mt-2">
+        //             <Spin
+        //                 spinning={
+        //                     sseLoading &&
+        //                     status !== 'success' &&
+        //                     status !== 'failed'
+        //                 }
+        //             >
+        //                 {taskProcess ? (
+        //                     <div className="flex items-center justify-center gap-2 w-52">
+        //                         <Tooltip title={taskProcess.name}>
+        //                             <div className="text-clips w-1/2 cursor-pointer">
+        //                                 {taskProcess.name}
+        //                             </div>
+        //                         </Tooltip>
+        //                         <div className="whitespace-nowrap w-1/2">
+        //                             <Progress
+        //                                 percent={taskProcess.process}
+        //                                 status="active"
+        //                                 type="line"
+        //                             />
+        //                         </div>
+        //                     </div>
+        //                 ) : (
+        //                     <Empty
+        //                         description="暂无进度信息"
+        //                         imageStyle={{ height: '48px' }}
+        //                     />
+        //                 )}
+        //             </Spin>
+        //             {script_type && routeList.includes(script_type) && (
+        //                 <div className="flex align-center justify-between">
+        //                     <div>本次任务攻击路径图</div>
+        //                     <Button
+        //                         type="link"
+        //                         className="p-0 h-[21px]"
+        //                         onClick={handOpenRoute}
+        //                     >
+        //                         查看
+        //                     </Button>
+        //                 </div>
+        //             )}
+        //         </div>
+        //     ),
+        // },
         {
             key: '2',
             label: <div className="whitespace-nowrap">历史执行记录</div>,
@@ -390,7 +376,7 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
                     </div>
                 </div>
             )}
-            {contextHolder}
+            {/* {contextHolder} */}
         </div>
     );
 };

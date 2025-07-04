@@ -1,6 +1,7 @@
 import axios from '@/utils/axios';
 import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
 import type {
+    TGetAttackPathResponse,
     TGetCompanyInfoRequest,
     TGetCompanyInfoResponse,
     TGetDomainInfoResponse,
@@ -42,4 +43,19 @@ const getDomainInfo = (
         { params },
     );
 
-export { getCompanyInfo, deleteCompanyInfo, getAlldomains, getDomainInfo };
+// /assets/attack-path?task_id
+const getAttackPath = (params: {
+    task_id: string;
+}): Promise<ResponseData<TGetAttackPathResponse>> =>
+    axios.get<never, ResponseData<TGetAttackPathResponse>>(
+        '/assets/attack-path',
+        { params },
+    );
+
+export {
+    getCompanyInfo,
+    deleteCompanyInfo,
+    getAlldomains,
+    getDomainInfo,
+    getAttackPath,
+};

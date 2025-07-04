@@ -30,6 +30,7 @@ import {
 } from './compoments/EchartsInit';
 import { Markdown } from './compoments/utils/Markdown';
 import { v4 as uuidv4 } from 'uuid';
+import { targetRouteMap } from '@/pages/TaskDetail/compoments/utils';
 
 const ReportTemplate: FC<TReportTemplateProps> = ({
     blocks,
@@ -276,96 +277,57 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                     } else if (newData.type === 'info-risk-list') {
                         return <FoldTable data={newData} />;
                     } else if (newData.type === 'portAndVulScan') {
+                        const type = newData.type;
                         return (
                             <div key={`$${uuidv4()}-${randomString(5)}`}>
                                 <h2>攻击路径图如下：</h2>
                                 <Steps
                                     size="small"
                                     className="mb-6"
-                                    current={5}
-                                    items={[
-                                        {
-                                            title: '输入IP',
-                                        },
-                                        {
-                                            title: '开放端口识别',
-                                        },
-                                        {
-                                            title: '指纹检测',
-                                        },
-                                        {
-                                            title: '匹配POC',
-                                        },
-                                        {
-                                            title: '发现漏洞',
-                                        },
-                                    ]}
+                                    current={
+                                        targetRouteMap[type as 'portAndVulScan']
+                                            .current
+                                    }
+                                    items={
+                                        targetRouteMap[type as 'portAndVulScan']
+                                            .list
+                                    }
                                 />
                             </div>
                         );
                     } else if (newData.type === 'company_scan') {
+                        const type = newData.type;
                         return (
                             <div key={`$${uuidv4()}-${randomString(5)}`}>
                                 <h2>攻击路径图如下：</h2>
                                 <Steps
                                     size="small"
-                                    current={7}
-                                    items={[
-                                        {
-                                            title: '输入公司名称',
-                                        },
-                                        {
-                                            title: '识别子公司名称',
-                                        },
-                                        {
-                                            title: '识别子公司备案信息域名、IP',
-                                        },
-                                        {
-                                            title: '开放端口识别',
-                                        },
-                                        {
-                                            title: '指纹检测',
-                                        },
-                                        {
-                                            title: '匹配POC',
-                                        },
-                                        {
-                                            title: '发现漏洞',
-                                        },
-                                    ]}
+                                    current={
+                                        targetRouteMap[type as 'portAndVulScan']
+                                            .current
+                                    }
+                                    items={
+                                        targetRouteMap[type as 'portAndVulScan']
+                                            .list
+                                    }
                                 />
                             </div>
                         );
                     } else if (newData.type === 'subdomain_scan') {
+                        const type = newData.type;
                         return (
                             <div key={`$${uuidv4()}-${randomString(5)}`}>
                                 <h2>攻击路径图如下：</h2>
                                 <Steps
                                     size="small"
-                                    current={7}
-                                    items={[
-                                        {
-                                            title: '输入域名',
-                                        },
-                                        {
-                                            title: '子域名扫描',
-                                        },
-                                        {
-                                            title: '域名IP解析',
-                                        },
-                                        {
-                                            title: '开放端口识别',
-                                        },
-                                        {
-                                            title: '指纹检测',
-                                        },
-                                        {
-                                            title: '匹配POC',
-                                        },
-                                        {
-                                            title: '发现漏洞',
-                                        },
-                                    ]}
+                                    current={
+                                        targetRouteMap[type as 'portAndVulScan']
+                                            .current
+                                    }
+                                    items={
+                                        targetRouteMap[type as 'portAndVulScan']
+                                            .list
+                                    }
                                 />
                             </div>
                         );
