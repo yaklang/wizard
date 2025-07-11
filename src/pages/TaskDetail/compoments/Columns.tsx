@@ -78,7 +78,7 @@ const ProtColumns = (filterData?: {
     {
         title: '执行节点',
         dataIndex: 'execute_node',
-        columnsHeaderFilterType: 'radio',
+        columnsHeaderFilterType: 'checkbox',
         wizardColumnsOptions: filterData?.taskNodeData ?? [],
         width: 180,
     },
@@ -150,7 +150,7 @@ const AssetsVulnsColumns = (filterData: {
         {
             title: '执行节点',
             dataIndex: 'execute_node',
-            columnsHeaderFilterType: 'radio',
+            columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: filterData?.taskNodeData ?? [],
             width: 180,
         },

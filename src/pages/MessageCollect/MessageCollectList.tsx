@@ -109,7 +109,7 @@ const MessageCollect = () => {
         },
         {
             title: '执行节点',
-            columnsHeaderFilterType: 'radio',
+            columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: taskNodeData,
             dataIndex: 'execute_node',
             width: 180,

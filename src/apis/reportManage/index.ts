@@ -41,12 +41,12 @@ const getReportTaskGroups = (): Promise<
     );
 
 const getSensitiveMessagePage = (
-    params: TSensitiveMessageReqeust,
+    data: TSensitiveMessageReqeust,
 ): Promise<ResponseData<TableResponseData<TSensitiveMessageResponse[]>>> =>
-    axios.get<
+    axios.post<
         never,
         ResponseData<TableResponseData<TSensitiveMessageResponse[]>>
-    >('/assets/sensitive-info', { params });
+    >('/assets/sensitive-info', data);
 
 // 更改敏感信息状态
 const postupdateStatus = (data: {

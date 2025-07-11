@@ -29,6 +29,7 @@ const TaskRoadmap: FC<TTaskRoadmpProps> = ({
         async () => {
             const { data } = await getAttackPath({
                 task_id,
+                script_type,
             });
 
             return data;

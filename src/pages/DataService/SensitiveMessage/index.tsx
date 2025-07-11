@@ -103,7 +103,7 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
         {
             title: '执行节点',
             dataIndex: 'execute_node',
-            columnsHeaderFilterType: 'radio',
+            columnsHeaderFilterType: 'checkbox',
             wizardColumnsOptions: taskNodeData,
             width: 180,
         },

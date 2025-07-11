@@ -9,12 +9,12 @@ import type {
 
 // 获取信息收集列表数据
 const getCompanyInfo = (
-    params: Partial<TGetCompanyInfoRequest>,
+    data: Partial<TGetCompanyInfoRequest>,
 ): Promise<ResponseData<TableResponseData<TGetCompanyInfoResponse[]>>> =>
-    axios.get<
+    axios.post<
         never,
         ResponseData<TableResponseData<TGetCompanyInfoResponse[]>>
-    >('/assets/company-info', { params });
+    >('/assets/company-info', data);
 
 // 删除信息收集 数据
 const deleteCompanyInfo = (params: {
@@ -43,9 +43,10 @@ const getDomainInfo = (
         { params },
     );
 
-// /assets/attack-path?task_id
+// 获取攻击路径图详情
 const getAttackPath = (params: {
     task_id: string;
+    script_type: string;
 }): Promise<ResponseData<TGetAttackPathResponse>> =>
     axios.get<never, ResponseData<TGetAttackPathResponse>>(
         '/assets/attack-path',
