@@ -1,6 +1,6 @@
 import { useMemo, useEffect, type FC } from 'react';
 import TreeGraphComponent from '@/compoments/AntdCharts/G6Tree';
-import { Radio, Steps } from 'antd';
+import { Empty, Radio, Steps } from 'antd';
 import { detailHeaderGroupOptions, targetRouteMap } from './compoments/utils';
 import { useRequest } from 'ahooks';
 import { getAttackPath } from '@/apis/MessageCollectApi';
@@ -83,7 +83,11 @@ const TaskRoadmap: FC<TTaskRoadmpProps> = ({
                 items={stepsList}
             />
             <div className="w-full h-[calc(100vh-240px)] min-h-[500px]">
-                <TreeGraphComponent data={data} />
+                {data ? (
+                    <TreeGraphComponent data={data} />
+                ) : (
+                    <Empty className="h-full w-full flex items-center justify-center flex-col " />
+                )}
             </div>
         </div>
     );

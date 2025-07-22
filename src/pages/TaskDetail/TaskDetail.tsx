@@ -365,7 +365,6 @@ const TaskDetail: FC = () => {
             ))
             .exhaustive();
     };
-    console.log(record, 'record');
 
     const headerGroupChange = (e: RadioChangeEvent) => {
         setHeaderGroupValue(e.target.value);
