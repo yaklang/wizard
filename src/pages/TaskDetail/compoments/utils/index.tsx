@@ -174,6 +174,29 @@ const targetRouteMap = {
         ],
         current: 7,
     },
+    login_brute_scan: {
+        list: [
+            {
+                title: '输入IP',
+            },
+            {
+                title: '开放端口识别',
+            },
+            {
+                title: '指纹检测',
+            },
+            {
+                title: '登录爆破',
+            },
+            {
+                title: '匹配POC',
+            },
+            {
+                title: '发现漏洞',
+            },
+        ],
+        current: 6,
+    },
 };
 
 export {

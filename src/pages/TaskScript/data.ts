@@ -134,7 +134,12 @@ const disabledTime = (selectedDate: Dayjs | null) => {
     };
 };
 
-const routeList = ['subdomain_scan', 'company_scan', 'portAndVulScan'];
+const routeList = [
+    'subdomain_scan',
+    'company_scan',
+    'portAndVulScan',
+    'login_brute_scan',
+];
 
 export {
     PresetPorts,

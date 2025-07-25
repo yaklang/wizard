@@ -1,7 +1,7 @@
 import { useMemo, useEffect, type FC } from 'react';
 import TreeGraphComponent from '@/compoments/AntdCharts/G6Tree';
 import { Empty, Radio, Steps } from 'antd';
-import { detailHeaderGroupOptions, targetRouteMap } from './compoments/utils';
+import { targetRouteMap } from './compoments/utils';
 import { useRequest } from 'ahooks';
 import { getAttackPath } from '@/apis/MessageCollectApi';
 import type { TTaskDetailHeaderGroups } from './types';
@@ -11,10 +11,15 @@ interface TTaskRoadmpProps {
     headerGroupValue: TTaskDetailHeaderGroups;
     task_id: string;
     script_type: string;
+    headerGroupValueOptions: {
+        label: string;
+        value: number;
+    }[];
 }
 
 const TaskRoadmap: FC<TTaskRoadmpProps> = ({
     headerGroupValue,
+    headerGroupValueOptions,
     setHeaderGroupValue,
     task_id,
     script_type,
@@ -73,7 +78,7 @@ const TaskRoadmap: FC<TTaskRoadmpProps> = ({
                     optionType="button"
                     buttonStyle="solid"
                     className="w-full"
-                    options={detailHeaderGroupOptions}
+                    options={headerGroupValueOptions}
                 />
             </div>
             <Steps
