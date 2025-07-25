@@ -389,6 +389,7 @@ const TaskDetail: FC = () => {
             headerGroupValue === 0 ? (
                 <TaskRoadmap
                     headerGroupValue={headerGroupValue}
+                    headerGroupValueOptions={tableHeaderGroupOptions}
                     setHeaderGroupValue={setHeaderGroupValue}
                     task_id={record.task_id}
                     script_type={record?.script_type}
