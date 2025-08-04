@@ -5,7 +5,8 @@ import { useRequest, useSafeState } from 'ahooks';
 import useLoginStore from '@/App/store/loginStore';
 import permissionsSliceFn from '@/App/store/powerStore';
 import { LoginIcon } from '@/assets/menu';
-import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
+// import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
+import login_logo from '@/assets/compoments/login_logo.png';
 import login_background from '@/assets/login/login_background.png';
 import { getAuth, getCaptcha, getLicense } from '@/apis/login';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
@@ -174,8 +175,8 @@ const Login = () => {
                     <div className="flex items-center gap-1">
                         <img src={login_logo} className="w-10 h-10" />
                         <div className="font-YouSheBiaoTiHei text-[25px] font-normal color-[#31343F]">
-                            {/* 分布式平台 */}
-                            自动化渗透系统
+                            分布式平台
+                            {/* 自动化渗透系统 */}
                             <div />
                         </div>
                     </div>

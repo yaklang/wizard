@@ -11,8 +11,9 @@ import { useRequest, useSafeState } from 'ahooks';
 import routers from './routers/routers';
 import { useNetworkStatus, usePermissionsSlice } from '@/hooks';
 
-import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
-// import header_text from '@/assets/login/header_text.png';
+// import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
+import login_logo from '@/assets/compoments/login_logo.png';
+import header_text from '@/assets/login/header_text.png';
 import { SiderClose, SiderOpen } from '@/assets/compoments';
 import { UserCard } from './UserCard';
 import { findFullPath, findPathNodes, processMenu } from '@/utils';
@@ -181,17 +182,17 @@ const AppLayout = () => {
                     style={{ borderBottom: '1px solid #E9EBED' }}
                 >
                     <div className="flex items-center">
-                        {/* <img src={login_logo} className="w-10 h-10" />
+                        <img src={login_logo} className="w-10 h-10" />
                         {!collapsed ? (
                             <img src={header_text} className="w-[100px]" />
-                        ) : null} */}
-                        {!collapsed ? (
+                        ) : null}
+                        {/* {!collapsed ? (
                             <div className="font-YouSheBiaoTiHei text-[24px] font-normal color-[#31343F] text-center whitespace-nowrap">
                                 自动化渗透系统
                             </div>
                         ) : (
                             <img src={login_logo} className="w-10 h-10" />
-                        )}
+                        )} */}
                     </div>
                     <div
                         className="h-10 flex items-center"
