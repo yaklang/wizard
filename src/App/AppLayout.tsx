@@ -230,7 +230,7 @@ const AppLayout = () => {
 
                 {!collapsed && (
                     <div className="text-xs color-[#B4BBCA] font-normal text-center mt-2">
-                        版本: 20240528-e01f03cb
+                        版本: 20240808-e01f03cb
                     </div>
                 )}
             </Sider>

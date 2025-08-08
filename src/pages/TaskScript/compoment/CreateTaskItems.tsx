@@ -675,6 +675,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         required: true,
                                     },
                                 ]}
+                                initialValue="syn"
                             >
                                 <Radio.Group
                                     optionType="button"
@@ -684,7 +685,6 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         { value: 'tcp', label: '指纹' },
                                         { value: 'syn+tcp', label: 'SYN+指纹' },
                                     ]}
-                                    defaultValue="syn"
                                 />
                             </Item>
                             <Item noStyle dependencies={[]}>
