@@ -410,8 +410,8 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                         <Radio.Group
                             className="h-8 flex items-center"
                             options={[
-                                { value: '1', label: '手动分配' },
-                                // { value: '2', label: '智能分配' },
+                                // { value: '1', label: '手动分配' },
+                                { value: '1', label: '智能分配' },
                             ]}
                         />
                     </Item>
@@ -665,6 +665,28 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                 <div>
                     {scriptTypeValue !== 'login_brute_scan' && (
                         <>
+                            <Item
+                                name={['params', 'mode']}
+                                label={<div>扫描模式</div>}
+                                className="ml-14"
+                                rules={[
+                                    {
+                                        message: '请选择扫描模式',
+                                        required: true,
+                                    },
+                                ]}
+                            >
+                                <Radio.Group
+                                    optionType="button"
+                                    buttonStyle="solid"
+                                    options={[
+                                        { value: 'syn', label: 'SYN' },
+                                        { value: 'tcp', label: '指纹' },
+                                        { value: 'syn+tcp', label: 'SYN+指纹' },
+                                    ]}
+                                    defaultValue="syn"
+                                />
+                            </Item>
                             <Item noStyle dependencies={[]}>
                                 {/* TODO 若需字段联动  dependencies 需添加监听项 */}
                                 {({ setFieldValue }) => {

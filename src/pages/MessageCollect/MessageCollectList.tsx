@@ -34,7 +34,7 @@ const MessageCollect = () => {
                 data: { list },
             } = result;
             const targetData = list
-                .filter((items) => items.script_type === 'portAndVulScan')
+                // .filter((items) => items.script_type === 'portAndVulScan')
                 .map((value) => ({ ...value, ip_list: ipListRef.current }));
             return targetData;
         },
