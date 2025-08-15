@@ -1,11 +1,11 @@
 import axios from '@/utils/axios';
 import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
 import type {
-    TGetAttackPathResponse,
     TGetCompanyInfoRequest,
     TGetCompanyInfoResponse,
     TGetDomainInfoResponse,
 } from './type';
+import type { TreeGraphData } from '@antv/g6';
 
 // 获取信息收集列表数据
 const getCompanyInfo = (
@@ -47,11 +47,10 @@ const getDomainInfo = (
 const getAttackPath = (params: {
     task_id: string;
     script_type: string;
-}): Promise<ResponseData<TGetAttackPathResponse>> =>
-    axios.get<never, ResponseData<TGetAttackPathResponse>>(
-        '/assets/attack-path',
-        { params },
-    );
+}): Promise<ResponseData<TreeGraphData>> =>
+    axios.get<never, ResponseData<TreeGraphData>>('/assets/attack-path', {
+        params,
+    });
 
 export {
     getCompanyInfo,

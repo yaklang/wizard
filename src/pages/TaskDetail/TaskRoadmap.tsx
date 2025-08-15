@@ -52,7 +52,8 @@ const TaskRoadmap: FC<TTaskRoadmpProps> = ({
     const StepsCurrentMemo = useMemo(() => {
         const targetList =
             targetRouteMap[script_type as keyof typeof targetRouteMap].list;
-        const getCurrentStep = data?.children.map((it) => it.id);
+        const getCurrentStep =
+            data?.children && data?.children.map((it) => it.id);
 
         // 获取最后一项 safely
         const lastTarget = getCurrentStep?.at(-1);
