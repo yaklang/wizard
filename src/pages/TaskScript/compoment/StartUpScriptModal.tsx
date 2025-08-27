@@ -1,6 +1,6 @@
 import { WizardModal } from '@/compoments';
 import { Button, Collapse, Form, message } from 'antd';
-import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 import { randomString, toBoolean } from '@/utils';
 import dayjs from 'dayjs';
@@ -44,6 +44,15 @@ const StartUpScriptModal = forwardRef<
     const [editObj, setEditObj] = useSafeState<
         Record<'headerGroupValue' | 'id', number>
     >({ id: 0, headerGroupValue: 0 });
+
+    const status = useMemo(() => {
+        if (localRefrech) {
+            return 'edit';
+        }
+        if (pageLoad) {
+            return 'add';
+        }
+    }, []);
 
     const { run: TaskStearmRun } = useRequest(getTaskStream, {
         manual: true,
@@ -264,6 +273,7 @@ const StartUpScriptModal = forwardRef<
                             title,
                             scriptTypeValue,
                             scriptGroupList,
+                            status,
                             scannerDataList,
                         )}
                     />

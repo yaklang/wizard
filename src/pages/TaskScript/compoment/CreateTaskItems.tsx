@@ -46,6 +46,7 @@ type TCreateTaskItemsProps = (
         | 'subdomain_scan'
         | 'login_brute_scan',
     scriptGroupList: TScriptGrounpList,
+    status?: 'edit' | 'add',
     scannerDataList?: TScannerDataList,
 ) => ItemType[] | any;
 
@@ -58,6 +59,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
     title,
     scriptTypeValue,
     scriptGroupList,
+    status,
     scannerDataList,
     // eslint-disable-next-line max-params
 ) => {
@@ -248,8 +250,23 @@ const CreateTaskItems: TCreateTaskItemsProps = (
             children: (
                 <div>
                     <Item
+                        className={`ml-14 ${status === 'edit' && 'hidden'}`}
+                        label={<div className="max-w-full">报告名称</div>}
+                        name={['params', 'report_name']}
+                        rules={[
+                            {
+                                message: '请输入报告名称',
+                                required: true,
+                            },
+                        ]}
+                    >
+                        <Input placeholder="请输入..." />
+                    </Item>
+
+                    <Item
                         label={<div className="min-w-[124px]">任务名称</div>}
                         name="task_id"
+                        className="hidden"
                     >
                         <Input placeholder="请输入..." />
                     </Item>
@@ -294,6 +311,9 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         'task_id',
                                         'task_group',
                                         'script_typ',
+                                        status === 'add'
+                                            ? ['params', 'report_name']
+                                            : undefined,
                                     ];
                                     firstItemKeys.forEach((val) =>
                                         setFieldValue(val, undefined),

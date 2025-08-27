@@ -93,8 +93,8 @@ const ReportManage: FC = () => {
             onSelectChange: setDeleteValues,
         },
         {
-            title: '任务名',
-            dataIndex: 'source',
+            title: '执行节点',
+            dataIndex: 'execute_node',
         },
         {
             title: '任务组',

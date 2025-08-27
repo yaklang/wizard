@@ -94,10 +94,10 @@ const TaskDetail: FC = () => {
                     label: 'enable-cve-baseline',
                     value: dataTop?.params?.['enable-cve-baseline'],
                 },
-                {
-                    label: '节点',
-                    value: dataTop?.params?.plugins,
-                },
+                // {
+                //     label: '节点',
+                //     value: dataTop?.params?.plugins,
+                // },
                 {
                     label: '存活主机数',
                     value: data.ip_num ?? 0,
