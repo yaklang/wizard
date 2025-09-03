@@ -161,7 +161,6 @@ const StartUpScriptModal = forwardRef<
                 .then(() => {
                     const targetSetFormData = {
                         task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
-
                         ...items,
                         execution_date:
                             items?.sched_type === 2 && items?.start_timestamp

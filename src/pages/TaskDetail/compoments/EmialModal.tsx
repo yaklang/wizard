@@ -84,7 +84,7 @@ const EmailMoadl = forwardRef<
 
         html2pdf()
             .from(div)
-            .set(opt)
+            .set(opt())
             .toPdf()
             .get('pdf')
             .then(async (pdf: any) => {

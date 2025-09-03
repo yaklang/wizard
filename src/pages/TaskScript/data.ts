@@ -48,6 +48,7 @@ const targetColorFn = (key: Key) => {
 const transformFormData = (values: any): TPostTaskStartRequest => {
     return {
         ...values,
+        task_id: `[${values?.params?.report_name}]-[${dayjs().format('M月DD日')}]-`,
         params: {
             ...values.params,
             plugins: values.params?.plugins?.join(','),

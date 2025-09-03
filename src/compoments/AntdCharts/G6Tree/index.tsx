@@ -194,7 +194,7 @@ const TreeGraphComponent: React.FC<Props> = ({ data }) => {
         (oldNode.children || []).forEach((child) => {
             if (!newMap.has(child.id)) {
                 const node = graph.findById(child.id);
-                if (node) graph.removeItem(node);
+                if (node) graph.removeItem(node, true);
             }
         });
 
@@ -213,7 +213,7 @@ const TreeGraphComponent: React.FC<Props> = ({ data }) => {
         tree.collapsed = false;
         tree.children.forEach((child) => {
             if (child.children && child.children.length > 0)
-                child.collapsed = true;
+                child.collapsed = false;
         });
         return tree;
     };

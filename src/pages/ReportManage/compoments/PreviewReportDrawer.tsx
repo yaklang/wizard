@@ -36,11 +36,13 @@ const PreviewReportDrawer = forwardRef<
     const [blocks, setBlocks] = useSafeState<TReportTemplateProps['blocks']>(
         [],
     );
+    const reportTitleRef = useRef('');
 
     useImperativeHandle(ref, () => ({
-        open(block) {
+        open(block, report_title) {
             drawer.open();
             setBlocks(block);
+            reportTitleRef.current = report_title;
         },
     }));
 
@@ -74,7 +76,7 @@ const PreviewReportDrawer = forwardRef<
     const downloadPdf = () => {
         if (!divRef || !divRef.current) return;
         const div = divRef.current;
-        html2pdf().from(div).set(opt).save(); // 导出
+        html2pdf().from(div).set(opt(reportTitleRef.current)).save(); // 导出
     };
 
     return (

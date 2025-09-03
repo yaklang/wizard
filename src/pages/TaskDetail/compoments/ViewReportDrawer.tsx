@@ -8,14 +8,17 @@ import { ScriptDetailButton } from './ScriptDetailButton';
 import { useRequest } from 'ahooks';
 import { getTimelinRuntimeId } from '@/apis/taskDetail';
 
-const ViewReportDrawer: FC<{ runtime_id: string }> = ({ runtime_id }) => {
+const ViewReportDrawer: FC<{ runtime_id: string; task_id: string }> = ({
+    runtime_id,
+    task_id,
+}) => {
     const scriptDetailDrawerRef = useRef<UseDrawerRefType>(null);
 
     const { run, loading } = useRequest(getTimelinRuntimeId, {
         manual: true,
         onSuccess: async (value) => {
             const blocks = value?.data?.data?.data ?? [];
-            scriptDetailDrawerRef.current?.open(blocks);
+            scriptDetailDrawerRef.current?.open(blocks, task_id);
         },
         onError: async (err) => {
             message.destroy();

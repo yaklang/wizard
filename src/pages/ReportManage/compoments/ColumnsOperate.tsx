@@ -52,11 +52,11 @@ const ColumnsOperateRender: FC<{
         }
     };
 
-    const handPreviewReport = async () => {
+    const handPreviewReport = async (report_title: string) => {
         if (render?.report_id) {
             const { data } = await getTimelinId(render!.report_id);
             const block = data.data.data.blocks;
-            PreviewReportRef.current?.open(block);
+            PreviewReportRef.current?.open(block, report_title);
         } else {
             message.error('获取失败');
         }
@@ -71,7 +71,7 @@ const ColumnsOperateRender: FC<{
                             width: '32px',
                             borderRight: '1px solid #EAECF3',
                         }}
-                        onClick={() => handPreviewReport()}
+                        onClick={() => handPreviewReport(render?.report_title)}
                     />
                 </div>
             </Tooltip>

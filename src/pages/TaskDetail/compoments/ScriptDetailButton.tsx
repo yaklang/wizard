@@ -20,21 +20,23 @@ import html2pdf from 'html2pdf.js';
 import { EmailMoadl } from './EmialModal';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 
-export const opt = {
-    margin: [10, 5, 10, 5],
-    filename: 'report.pdf',
-    image: { type: 'jpeg', quality: 0.95 },
-    jsPDF: {
-        format: 'a4',
-    },
-    html2canvas: {
-        scale: 1.2,
-    },
-    pagebreak: {
-        // 自动分页控制属性
-        // mode: 'avoid-all',
-        after: '#cover',
-    },
+export const opt = (filename?: string) => {
+    return {
+        margin: [10, 5, 10, 5],
+        filename: filename ?? 'report.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        jsPDF: {
+            format: 'a4',
+        },
+        html2canvas: {
+            scale: 1.2,
+        },
+        pagebreak: {
+            // 自动分页控制属性
+            // mode: 'avoid-all',
+            after: '#cover',
+        },
+    };
 };
 
 const ScriptDetailButton = forwardRef<
@@ -51,10 +53,12 @@ const ScriptDetailButton = forwardRef<
     const [blocks, setBlocks] = useSafeState<TReportTemplateProps['blocks']>(
         [],
     );
+    const taskIdRef = useRef('');
 
     useImperativeHandle(ref, () => ({
-        async open(items) {
+        async open(items, task_id) {
             setBlocks(items?.blocks);
+            taskIdRef.current = task_id;
             drawer.open();
         },
     }));
@@ -92,7 +96,7 @@ const ScriptDetailButton = forwardRef<
     const downloadPdf = () => {
         if (!divRef || !divRef.current) return;
         const div = divRef.current;
-        html2pdf().from(div).set(opt).save(); // 导出
+        html2pdf().from(div).set(opt(taskIdRef.current)).save(); // 导出
     };
 
     return (

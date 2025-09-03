@@ -292,6 +292,7 @@ const TaskDetailSider: FC<TTaskDetailSiderProps> = ({
                                     </div>
                                     <ViewReportDrawer
                                         runtime_id={it.runtime_id}
+                                        task_id={it.task_id}
                                     />
                                 </div>
                             ))

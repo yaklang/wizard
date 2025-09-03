@@ -132,7 +132,6 @@ const Login = () => {
 
     const loginFn = async (values: FieldType) => {
         try {
-            console.log(values, 'values');
             await login(values)
                 .then(() => {
                     updatePower();
