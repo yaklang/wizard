@@ -695,7 +695,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                         required: true,
                                     },
                                 ]}
-                                initialValue="syn"
+                                initialValue="SYN+TCP"
                             >
                                 <Radio.Group
                                     optionType="button"
