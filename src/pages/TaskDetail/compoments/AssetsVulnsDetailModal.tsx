@@ -48,9 +48,9 @@ const AssetsVulnsDetailModal = forwardRef<
                                 </div>
                             </div>
                             <div className="ml-16 flex gap-4 items-center">
-                                <span className="text-xs font-normal flex">
-                                    URL:{' '}
-                                    <span className="color-[#85899E] text-clip max-w-1/3">
+                                <span className="text-xs font-normal flex items-center">
+                                    <span className="mr-1">URL:</span>
+                                    <span className="color-[#85899E] ">
                                         {' '}
                                         {info?.url ? (
                                             <Paragraph copyable>
@@ -92,37 +92,37 @@ const AssetsVulnsDetailModal = forwardRef<
 
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         IP
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.ip_addr || '-'}</div>
                     </Col>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         ID
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.id || '-'}</div>
                     </Col>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         端口
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.port || '-'}</div>
@@ -130,37 +130,37 @@ const AssetsVulnsDetailModal = forwardRef<
                 </Row>
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         Host
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.host || '-'}</div>
                     </Col>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         类型
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.risk_type_verbose || info?.risk_type}</div>
                     </Col>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         来源
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.from_yak_script || '漏洞检测'}</div>
@@ -168,37 +168,37 @@ const AssetsVulnsDetailModal = forwardRef<
                 </Row>
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         返连Token
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.reverse_token || '-'}</div>
                     </Col>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         Hash
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div>{info?.hash || '-'}</div>
                     </Col>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         验证状态
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={5}
                     >
                         <div
@@ -215,13 +215,13 @@ const AssetsVulnsDetailModal = forwardRef<
 
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         漏洞描述
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={21}
                     >
                         <div>{info?.detail?.Description || '-'}</div>
@@ -229,13 +229,13 @@ const AssetsVulnsDetailModal = forwardRef<
                 </Row>
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         解决方案
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={21}
                     >
                         <div>{info?.detail?.Solution || '-'}</div>
@@ -243,13 +243,13 @@ const AssetsVulnsDetailModal = forwardRef<
                 </Row>
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         Parameter
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={21}
                     >
                         <div>{info?.detail?.Parameter || '-'}</div>
@@ -257,13 +257,13 @@ const AssetsVulnsDetailModal = forwardRef<
                 </Row>
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={3}
                     >
                         Payload
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] min-h-10 py-3 px-4 border-[#EAECF3] border"
                         span={21}
                     >
                         <div>{info?.payload || '-'}</div>
@@ -271,13 +271,13 @@ const AssetsVulnsDetailModal = forwardRef<
                 </Row>
                 <Row>
                     <Col
-                        className="bg-[#F0F1F3] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F0F1F3] py-3 px-4 border-[#EAECF3] flex items-center border"
                         span={3}
                     >
                         详情
                     </Col>
                     <Col
-                        className="bg-[#F8F8F8] h-10 py-3 px-4 border-[#EAECF3] border"
+                        className="bg-[#F8F8F8] py-3 px-4 border-[#EAECF3] border"
                         span={21}
                     >
                         <div style={{ maxHeight: 180, overflow: 'auto' }}>

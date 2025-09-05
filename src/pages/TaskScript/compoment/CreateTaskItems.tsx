@@ -702,8 +702,8 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                     buttonStyle="solid"
                                     options={[
                                         { value: 'syn', label: 'SYN' },
-                                        { value: 'tcp', label: '指纹' },
-                                        { value: 'syn+tcp', label: 'SYN+指纹' },
+                                        { value: 'tcp', label: 'TCP' },
+                                        { value: 'syn+tcp', label: 'SYN+TCP' },
                                     ]}
                                 />
                             </Item>
