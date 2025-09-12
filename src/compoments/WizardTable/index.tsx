@@ -148,7 +148,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         ) {
             // 获取表格 DOM 节点
             const tableElement = tableContainerRef.current.querySelector(
-                '#table-container > .ant-table-wrapper',
+                ':scope > :nth-child(2)',
             );
             if (tableElement && !state.loading) {
                 const scrollHeight = tableElement.scrollHeight;
@@ -165,7 +165,7 @@ const WizardTable = <T extends AnyObject = AnyObject>(
         } else {
             setIsBottom(true);
         }
-    }, [height, dataSource]);
+    }, [height, dataSource, state.loading]);
 
     useUpdateEffect(() => {
         handleScrollToFirstRow();
