@@ -25,6 +25,7 @@ export const ReportTable: React.FC<ReportTableProp> = (props) => {
         const info: { [key: string]: any } = {
             key: `${index}`,
         };
+        // eslint-disable-next-line guard-for-in
         for (let i in item) {
             info[`name-${i}`] = item[i];
         }
@@ -39,7 +40,7 @@ export const ReportTable: React.FC<ReportTableProp> = (props) => {
                 columns={columns}
                 dataSource={dataSource}
                 pagination={false}
-            ></Table>
+            />
         </div>
     );
 };
@@ -54,12 +55,14 @@ export const FoldTable: React.FC<RiskTableProp> = (props) => {
     const [extendItem, setExtendItem] = useState<boolean>(true);
     useEffect(() => {
         let header: string[] = [];
+        // eslint-disable-next-line array-callback-return
         data.map((item, index) => {
             let newArr: any = Object.entries(item);
-            newArr.sort(function (a: any, b: any) {
+            newArr.sort((a: any, b: any) => {
                 return a[1].sort - b[1].sort;
             });
             let itemData: any = {};
+            // eslint-disable-next-line array-callback-return
             newArr.map((itemIn: any[], indexIn: number) => {
                 if (index === 0) {
                     header.push(itemIn[0]);
@@ -85,6 +88,7 @@ export const FoldTable: React.FC<RiskTableProp> = (props) => {
             header as string[]
         ).map((item, index) => {
             return {
+                // eslint-disable-next-line react/no-unstable-nested-components
                 title: () => {
                     if (index === 0) {
                         return (
@@ -132,7 +136,7 @@ export const FoldTable: React.FC<RiskTableProp> = (props) => {
                 dataSource={dataSource}
                 pagination={false}
                 onHeaderRow={() => headerRow}
-            ></Table>
+            />
         </div>
     );
 };
@@ -147,12 +151,14 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
     let header: string[] = [];
     let data: any[] = [];
     if (Array.isArray(content.data)) {
-        content.data.map((item: any, index: number) => {
+        // eslint-disable-next-line array-callback-return
+        content?.data?.map((item: any, index: number) => {
             let newArr = Object.entries(item);
-            newArr.sort(function (a: any, b: any) {
+            newArr.sort((a: any, b: any) => {
                 return a[1].sort - b[1].sort;
             });
             let itemData: any[] = [];
+            // eslint-disable-next-line array-callback-return
             newArr.map((itemIn: any) => {
                 if (index === 0) {
                     header.push(itemIn[0]);
@@ -173,6 +179,7 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
         return acc;
     }, {});
     const sortedArr = Object.values(result);
+    // eslint-disable-next-line array-callback-return
     sortedArr.map((item) => {
         if (Array.isArray(item)) {
             newData = [...newData, ...item];
@@ -220,6 +227,7 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
         const info: { [key: string]: any } = {
             key: `${index}`,
         };
+        // eslint-disable-next-line guard-for-in
         for (let i in item) {
             info[`name-${i}`] = item[i];
         }
@@ -234,7 +242,7 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
                 columns={columns}
                 dataSource={dataSource}
                 pagination={false}
-            ></Table>
+            />
         </div>
     );
 };
@@ -257,12 +265,14 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
     useEffect(() => {
         let header: string[] = [];
         let tableData: any[] = [];
-        data.map((item, index) => {
+        // eslint-disable-next-line array-callback-return
+        data?.map((item, index) => {
             let newArr: any = Object.entries(item);
-            newArr.sort(function (a: any, b: any) {
+            newArr.sort((a: any, b: any) => {
                 return a[1].sort - b[1].sort;
             });
             let itemData: any = {};
+            // eslint-disable-next-line array-callback-return
             newArr.map((itemIn: any[], indexIn: number) => {
                 if (index === 0) {
                     header.push(itemIn[0]);
@@ -304,7 +314,7 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
                 columns={columns}
                 dataSource={dataSource}
                 pagination={false}
-            ></Table>
+            />
         </div>
     );
 };
