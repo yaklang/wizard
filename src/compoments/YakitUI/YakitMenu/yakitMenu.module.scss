@@ -60,7 +60,7 @@
     // TODO：该处不确定取值
     --menu-active-color: var(--Colors-Use-Neutral-Text-1-Title);
     --menu-active-icon-color: #{fetch-color($type, "color-5")};
-    --menu-active-background: var(--Colors-Use-Main-Focus);
+    --menu-active-background: var(--Colors-Use-Blue-Focus);
     @include generateMenuSelect($type);
 }
 
@@ -286,7 +286,7 @@
             color: var(--menu-active-color);
         }
         .keys-style {
-            color: var(--Colors-Use-Main-On-Primary);
+            color: var(--Colors-Use-Blue-On-Primary);
         }
         .ant-#{$kind}menu-submenu-title {
             color: var(--menu-active-color);
