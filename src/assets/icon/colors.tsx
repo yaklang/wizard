@@ -158,6 +158,7 @@ export const SolidCloudpluginIcon = (props: Partial<IconProps>) => {
 const SolidOfficialplugin = () => {
     const id = uuidv4();
     return (
+<<<<<<< HEAD
         <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -177,6 +178,24 @@ const SolidOfficialplugin = () => {
                     y1="10.0007"
                     x2="18.0004"
                     y2="10.0007"
+=======
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none">
+            <path
+                d="M6.90323 4.36151L7.25051 4.53423L6.90322 4.36151L5.999 6.17967L5.09456 4.36105L4.77625 4.51935L5.09456 4.36105C4.96304 4.0966 4.69337 3.92825 4.39697 3.92825C3.81436 3.92825 3.44254 4.5421 3.69938 5.05854L5.21652 8.10923L5.21653 8.10924C5.53698 8.75354 6.45893 8.76158 6.78243 8.11117L6.78244 8.11116L8.29991 5.05977C8.55703 4.54276 8.1848 3.92825 7.60157 3.92825C7.30485 3.92825 7.03489 4.09678 6.90323 4.36151ZM5.88872 6.40142C5.88876 6.40135 5.88879 6.40127 5.88883 6.4012L5.88872 6.40141L5.88872 6.40142ZM5.6465 1.09523C5.86531 0.968224 6.1346 0.968224 6.3534 1.09523L10.0449 3.23799C10.2639 3.36514 10.4 3.60091 10.4 3.85722V8.14273C10.4 8.39904 10.2639 8.63481 10.0449 8.76196L6.3534 10.9047C6.1346 11.0317 5.86531 11.0317 5.6465 10.9047L1.95501 8.76196C1.73596 8.63481 1.59995 8.39904 1.59995 8.14273V3.85722C1.59995 3.60091 1.73596 3.36514 1.95501 3.23799L5.6465 1.09523Z"
+                // fill='url(#paint0_linear_16908_236791)'
+                fill={`url(#${id})`}
+                stroke="#31343F"
+                strokeWidth="0.8"
+            />
+            <defs>
+                <linearGradient
+                    // id='paint0_linear_16908_236791'
+                    id={id}
+                    x1="1.19818"
+                    y1="6.0004"
+                    x2="10.8002"
+                    y2="6.0004"
+>>>>>>> 38104b8 (feat: 引入yakit控件)
                     gradientUnits="userSpaceOnUse"
                 >
                     <stop stopColor="#FA931D" />
@@ -713,6 +732,7 @@ const FolderColor = () => {
 export const FolderColorIcon = (props: Partial<IconProps>) => {
     return <Icon component={FolderColor} {...props} />;
 };
+<<<<<<< HEAD
 
 /**
  * @description  Icon/Solid/ai
@@ -2145,3 +2165,5 @@ const OutlineSparklesColors = () => {
 export const OutlineSparklesColorsIcon = (props: Partial<IconProps>) => {
     return <Icon component={OutlineSparklesColors} {...props} />;
 };
+=======
+>>>>>>> 38104b8 (feat: 引入yakit控件)

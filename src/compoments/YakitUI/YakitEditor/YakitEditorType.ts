@@ -1,16 +1,23 @@
 import type * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
+<<<<<<< HEAD
 import type { Selection } from '@/pages/YakRunnerAuditCode/RunnerTabs/RunnerTabsType';
+=======
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 /** monaco-editor 相关接口 */
 export type YakitSelection = monacoEditor.Selection;
 export type YakitIMonacoEditor = monacoEditor.editor.IStandaloneCodeEditor;
 export type YakitIMonacoCodeEditor = monacoEditor.editor.ICodeEditor;
 export type YakitITextModel = monacoEditor.editor.ITextModel;
 export type YakitIModelDecoration = monacoEditor.editor.IModelDecoration;
+<<<<<<< HEAD
 export interface HighLightText {
     startOffset: number;
     highlightLength: number;
     hoverVal: string;
 }
+=======
+
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 export interface YakitEditorProps {
     /** @name 内容类型是否为字节码 */
     isBytes?: boolean;
@@ -52,6 +59,7 @@ export interface YakitEditorProps {
 
     /** @name 配置项-(存在此项则将字体/换行交由emiter更新) */
     editorId?: string;
+<<<<<<< HEAD
     /** @name 配置项-高亮显示配置 */
     highLightText?: (HighLightText | Selection)[];
     highLightClass?: string;
@@ -64,6 +72,8 @@ export interface YakitEditorProps {
     originalContentType?: string;
     fixContentTypeHoverMessage?: string;
     renderValidationDecorations?: 'on' | 'off' | 'editable';
+=======
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 }
 
 export interface OperationRecordRes {

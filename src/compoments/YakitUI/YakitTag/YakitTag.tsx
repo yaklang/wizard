@@ -107,7 +107,11 @@ export const CopyComponents: React.FC<CopyComponentsProps> = (props) => {
         return match({ loading, isShowSure })
             .with({ loading: true }, () => (
                 <LoadingOutlined
+<<<<<<< HEAD
                     style={{ color: 'var(--Colors-Use-Blue-Primary)' }}
+=======
+                    style={{ color: 'var(--Colors-Use-Main-Primary)' }}
+>>>>>>> 38104b8 (feat: 引入yakit控件)
                 />
             ))
             .with({ loading: false, isShowSure: true }, () => (
@@ -116,7 +120,11 @@ export const CopyComponents: React.FC<CopyComponentsProps> = (props) => {
             .with({ loading: false, isShowSure: false }, () => (
                 <DocumentDuplicateSvgIcon
                     style={{
+<<<<<<< HEAD
                         color: iconColor || 'var(--Colors-Use-Blue-Primary)',
+=======
+                        color: iconColor || 'var(--Colors-Use-Main-Primary)',
+>>>>>>> 38104b8 (feat: 引入yakit控件)
                     }}
                 />
             ))
