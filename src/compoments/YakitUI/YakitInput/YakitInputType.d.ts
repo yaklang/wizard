@@ -50,10 +50,15 @@ export interface InternalTextAreaProps extends TextAreaProps {
  * @param {string} wrapperClassName
  * @param {CSSProperties} wrapperStyle
  */
+<<<<<<< HEAD
 export interface InternalInputPasswordProps extends Omit<
     PasswordProps,
     'size'
 > {
+=======
+export interface InternalInputPasswordProps
+    extends Omit<PasswordProps, 'size'> {
+>>>>>>> 38104b8 (feat: 引入yakit控件)
     wrapperClassName?: string;
     size?: YakitSizeType;
     wrapperStyle?: React.CSSProperties;

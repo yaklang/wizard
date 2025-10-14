@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 import type { ReactNode } from 'react';
+=======
+import { ReactNode } from "react"
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 import {
     SolidYakitPluginIcon,
     SolidPluginYakMitmIcon,
@@ -7,7 +11,13 @@ import {
     SolidSparklesPluginIcon,
     SolidDocumentSearchPluginIcon,
     SolidCollectionPluginIcon,
+<<<<<<< HEAD
 } from '@/assets/icon/colors';
+=======
+    SolidCloudpluginIcon,
+    SolidPrivatepluginIcon
+} from "@/assets/icon/colors"
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 
 export const PortScanPluginTemplate: string = `/*
 端口扫描插件在每一次端口扫描的时候将会执行
@@ -56,7 +66,11 @@ type *MatchResult struct {
 }
 */
 
+<<<<<<< HEAD
 `;
+=======
+`
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 
 export const MITMPluginTemplate: string = `
 
@@ -86,7 +100,11 @@ mirrorNewWebsitePathParams = func(isHttps /*bool*/, url /*string*/, req /*[]byte
 }
 
 
+<<<<<<< HEAD
 `;
+=======
+`
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 
 export const NucleiPluginTemplate: string = `id: plugin-short-name
 info:
@@ -103,7 +121,11 @@ requests:
     - type: word
       words:
         - "abc"
+<<<<<<< HEAD
 `;
+=======
+`
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 
 export const CodecPluginTemplate = `# codec plugin
 
@@ -119,11 +141,16 @@ handle = func(origin /*string*/) {
     # handle your origin str
     return origin
 }
+<<<<<<< HEAD
 `;
+=======
+`
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 
 /** 插件类型对应的详细信息 */
 interface PluginTypeInfoProps {
     /** 插件类型名 */
+<<<<<<< HEAD
     name: string;
     /** 插件类型描述 */
     description: string;
@@ -135,11 +162,25 @@ interface PluginTypeInfoProps {
     content: string;
     /** 插件类型使用编程语言 */
     language: string;
+=======
+    name: string
+    /** 插件类型描述 */
+    description: string
+    /** 插件类型icon */
+    icon: ReactNode
+    /** 插件类型展示颜色 */
+    color: string
+    /** 插件类型默认源码 */
+    content: string
+    /** 插件类型使用编程语言 */
+    language: string
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 }
 
 /** @name 插件类型对应的详细信息 */
 export const pluginTypeToName: Record<string, PluginTypeInfoProps> = {
     yak: {
+<<<<<<< HEAD
         name: 'Yak 原生插件',
         description:
             '内置了众多网络安全常用库，可快速编写安全小工具，该原生模块只支持手动调用',
@@ -196,4 +237,57 @@ export const pluginTypeToName: Record<string, PluginTypeInfoProps> = {
 
 export function GetPluginLanguage(type: string): string {
     return pluginTypeToName[type]?.language || type;
+=======
+        name: "Yak 原生插件",
+        description: "内置了众多网络安全常用库，可快速编写安全小工具，该原生模块只支持手动调用",
+        icon: <SolidYakitPluginIcon />,
+        color: "warning",
+        content: "yakit.AutoInitYakit()\n\n# Input your code!\n\n",
+        language: "yak"
+    },
+    mitm: {
+        name: "Yak-MITM 模块",
+        description: "专用于 MITM 模块中的模块，编写 MITM 插件，可以轻松对经过的流量进行修改",
+        icon: <SolidPluginYakMitmIcon />,
+        color: "blue",
+        content: MITMPluginTemplate,
+        language: "yak"
+    },
+    "port-scan": {
+        name: "Yak-端口扫描",
+        description: "该插件会对目标进行端口扫描，再对扫描的指纹结果做进一步的处理，常用场景先指纹识别，再 Poc 检测",
+        icon: <SolidPluginProtScanIcon />,
+        color: "success",
+        content: PortScanPluginTemplate,
+        language: "yak"
+    },
+    codec: {
+        name: "Yak-Codec",
+        description: "Yakit 中的编解码模块，可以自定义实现所需要的编解码、加解密",
+        icon: <SolidSparklesPluginIcon />,
+        color: "purple",
+        content: CodecPluginTemplate,
+        language: "yak"
+    },
+    lua: {
+        name: "Lua 模块",
+        description: "监修中，无法使用",
+        icon: <SolidDocumentSearchPluginIcon />,
+        color: "bluePurple",
+        content: "",
+        language: "lua"
+    },
+    nuclei: {
+        name: "Nuclei YamI 模块",
+        description: "使用 YakVM 构建了一个沙箱，可以兼容执行 Nuclei DSL ，无感使用 Nuclei 自带的 Yaml 模板",
+        icon: <SolidCollectionPluginIcon />,
+        color: "cyan",
+        content: "# Add your nuclei formatted PoC!",
+        language: "yaml"
+    }
+}
+
+export function GetPluginLanguage(type: string): string {
+    return pluginTypeToName[type]?.language || type
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 }

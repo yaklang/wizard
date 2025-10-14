@@ -1,16 +1,25 @@
+<<<<<<< HEAD
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+=======
+import React, { useMemo, useRef, useState } from 'react';
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 import {} from 'antd';
 import {} from '@ant-design/icons';
 import styles from './YakitEditor.module.scss';
 import classNames from 'classnames';
 import ReactResizeDetector from 'react-resize-detector';
+<<<<<<< HEAD
 import MonacoEditor, { monaco } from 'react-monaco-editor';
+=======
+import MonacoEditor from 'react-monaco-editor';
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 // 编辑器 注册
 import '@/utils/monacoSpec/theme';
 import '@/utils/monacoSpec/fuzzHTTP';
 import '@/utils/monacoSpec/yakEditor';
 import '@/utils/monacoSpec/html';
 import type {
+<<<<<<< HEAD
     HighLightText,
     OperationRecord,
     YakitEditorProps,
@@ -24,6 +33,16 @@ import { randomString } from '@/utils';
 import { failed } from '@/utils/notification';
 import { editor as newEditor } from 'monaco-editor';
 import IModelDecoration = newEditor.IModelDecoration;
+=======
+    OperationRecord,
+    YakitEditorProps,
+    YakitIMonacoEditor,
+} from './YakitEditorType';
+import { GetPluginLanguage } from './type';
+import { useUpdateEffect } from 'ahooks';
+import { getRemoteValue, setRemoteValue } from '@/utils/kv';
+
+>>>>>>> 38104b8 (feat: 引入yakit控件)
 export const YakitEditor: React.FC<YakitEditorProps> = (props) => {
     const {
         isBytes = false,
@@ -42,6 +61,7 @@ export const YakitEditor: React.FC<YakitEditorProps> = (props) => {
         fontSize = 12,
         showLineBreaks = false,
         editorOperationRecord,
+<<<<<<< HEAD
         highLightText = [],
         highLightClass,
         highLightFind = [],
@@ -50,6 +70,8 @@ export const YakitEditor: React.FC<YakitEditorProps> = (props) => {
         originalContentType,
         fixContentTypeHoverMessage,
         renderValidationDecorations,
+=======
+>>>>>>> 38104b8 (feat: 引入yakit控件)
     } = props;
     const [editor, setEditor] = useState<YakitIMonacoEditor>();
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -100,6 +122,7 @@ export const YakitEditor: React.FC<YakitEditorProps> = (props) => {
             });
         }
     };
+<<<<<<< HEAD
 
     /**
      * editor编辑器的额外渲染功能:
@@ -512,6 +535,8 @@ export const YakitEditor: React.FC<YakitEditorProps> = (props) => {
         props.originalContentType,
     ]);
 
+=======
+>>>>>>> 38104b8 (feat: 引入yakit控件)
     return (
         <div
             className={classNames(
@@ -588,7 +613,10 @@ export const YakitEditor: React.FC<YakitEditorProps> = (props) => {
                             independentColorPoolPerBracketType: true,
                         },
                         fixedOverflowWidgets: true,
+<<<<<<< HEAD
                         renderValidationDecorations,
+=======
+>>>>>>> 38104b8 (feat: 引入yakit控件)
                     }}
                 />
             </div>
