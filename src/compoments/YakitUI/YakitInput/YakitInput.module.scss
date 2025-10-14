@@ -52,7 +52,7 @@
         }
 
         .ant-input:hover {
-            border-color: var(--Colors-Use-Main-Hover);
+            border-color: var(--Colors-Use-Blue-Hover);
         }
         .ant-input::placeholder {
             color: var(--Colors-Use-Neutral-Disable);
@@ -82,8 +82,8 @@
         .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover,
         .ant-input-affix-wrapper-focused,
         .ant-input-affix-wrapper:focus {
-            border-color: var(--Colors-Use-Main-Hover);
-            box-shadow: 0 0 0 2px var(--Colors-Use-Main-Focus);
+            border-color: var(--Colors-Use-Blue-Hover);
+            box-shadow: 0 0 0 2px var(--Colors-Use-Blue-Focus);
         }
     }
 
@@ -179,15 +179,15 @@
 
 // ========================== search ==========================
 .yakit-search-wrapper {
-    --search-box-shadow-color: var(--Colors-Use-Main-Focus);
+    --search-box-shadow-color: var(--Colors-Use-Blue-Focus);
 
-    --search-background-color: var(--Colors-Use-Main-Primary);
-    --search-background-hover-color: var(--Colors-Use-Main-Hover);
-    --search-background-focus-color: var(--Colors-Use-Main-Pressed);
+    --search-background-color: var(--Colors-Use-Blue-Primary);
+    --search-background-hover-color: var(--Colors-Use-Blue-Hover);
+    --search-background-focus-color: var(--Colors-Use-Blue-Pressed);
 
     --search-border-color: var(--Colors-Use-Neutral-Border);
-    --search-border-hover-color: var(--Colors-Use-Main-Hover);
-    --search-border-focus-color: var(--Colors-Use-Main-Pressed);
+    --search-border-hover-color: var(--Colors-Use-Blue-Hover);
+    --search-border-focus-color: var(--Colors-Use-Blue-Pressed);
 
     border-radius: 4px;
     height: 24px;
@@ -478,13 +478,13 @@
             color: var(--Colors-Use-Neutral-Text-1-Title);
         }
         .ant-input:hover {
-            border-color: var(--Colors-Use-Main-Hover);
+            border-color: var(--Colors-Use-Blue-Hover);
         }
 
         .ant-input:focus,
         .ant-input-focused {
-            border-color: var(--Colors-Use-Main-Hover);
-            box-shadow: 0 0 0 2px var(--Colors-Use-Main-Focus);
+            border-color: var(--Colors-Use-Blue-Hover);
+            box-shadow: 0 0 0 2px var(--Colors-Use-Blue-Focus);
         }
         .ant-input-suffix {
             .ant-input-show-count-suffix {
@@ -552,7 +552,7 @@
             color: var(--Colors-Use-Neutral-Disable);
         }
         .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover {
-            border-color: var(--Colors-Use-Main-Hover);
+            border-color: var(--Colors-Use-Blue-Hover);
         }
         .ant-input::placeholder {
             color: var(--Colors-Use-Neutral-Disable);
@@ -560,8 +560,8 @@
         }
         .ant-input-affix-wrapper:focus,
         .ant-input-affix-wrapper-focused {
-            border-color: var(--Colors-Use-Main-Primary);
-            box-shadow: 0 0 0 2px var(--Colors-Use-Main-Focus);
+            border-color: var(--Colors-Use-Blue-Primary);
+            box-shadow: 0 0 0 2px var(--Colors-Use-Blue-Focus);
         }
     }
 }

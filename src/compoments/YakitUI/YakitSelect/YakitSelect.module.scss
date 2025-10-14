@@ -1,18 +1,18 @@
 // ========================== select ==========================
 .yakit-select {
-    --select-box-shadow-color: var(--Colors-Use-Main-Focus);
-    --select-border-primary-color: var(--Colors-Use-Main-Hover);
+    --select-box-shadow-color: var(--Colors-Use-Blue-Focus);
+    --select-border-primary-color: var(--Colors-Use-Blue-Hover);
     --select-border-color: var(--Colors-Use-Neutral-Border);
 
-    --select-primary-font-color: var(--Colors-Use-Main-Bg);
+    --select-primary-font-color: var(--Colors-Use-Blue-Bg);
     --select-font-color: var(--Colors-Use-Neutral-Text-1-Title);
     --select-font-disabled-color: var(--Colors-Use-Neutral-Disable);
 
-    --select-background-color: var(--Colors-Use-Main-Focus);
+    --select-background-color: var(--Colors-Use-Blue-Focus);
     --select-background-disabled-color: var(--Colors-Use-Neutral-Bg);
     --select-background-white: var(--Colors-Use-Neutral-Bg);
 
-    --select-primary-icon-color: var(--Colors-Use-Main-Primary);
+    --select-primary-icon-color: var(--Colors-Use-Blue-Primary);
 
     font-weight: 400;
     font-size: 12px;
@@ -126,8 +126,8 @@
 
         .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
             font-weight: 400;
-            color: var(--Colors-Use-Main-Primary);
-            background: var(--Colors-Use-Main-Bg);
+            color: var(--Colors-Use-Blue-Primary);
+            background: var(--Colors-Use-Blue-Bg);
         }
 
         .yakit-select-notFound {
@@ -151,7 +151,7 @@
 }
 // ========================== mode tags ==========================
 .yakit-select-wrapper-tags {
-    --select-primary-icon-color: var(--Colors-Use-Main-Primary);
+    --select-primary-icon-color: var(--Colors-Use-Blue-Primary);
 
     :global {
         .ant-select-item-option-selected:not(.ant-select-item-option-disabled) .ant-select-item-option-state {
@@ -373,7 +373,7 @@
             width: 16px;
             height: 16px;
             margin-top: 4px;
-            color: var(--Colors-Use-Main-Primary);
+            color: var(--Colors-Use-Blue-Primary);
             &:hover {
                 color: var(--Colors-Use-Error-Primary);
             }
@@ -384,7 +384,7 @@
             width: 16px;
             height: 16px;
             margin-top: 4px;
-            color: var(--Colors-Use-Main-Primary);
+            color: var(--Colors-Use-Blue-Primary);
         }
     }
 }

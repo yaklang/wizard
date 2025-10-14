@@ -23,7 +23,7 @@
             color: var(--Colors-Use-Neutral-Text-1-Title);
             .yakit-button-outline2{
                 &:hover{
-                    border-color: var(--Colors-Use-Main-Primary);
+                    border-color: var(--Colors-Use-Blue-Primary);
                 }
             }
         }
@@ -50,7 +50,7 @@
 .yakit-drawer-icon {
     color: var(--Colors-Use-Neutral-Text-3-Secondary);
     &:hover {
-        color: var(--Colors-Use-Main-Primary);
+        color: var(--Colors-Use-Blue-Primary);
     }
     .yakit-drawer-remove-icon {
         svg {

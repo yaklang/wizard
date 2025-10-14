@@ -1,12 +1,12 @@
 .yakitTree {
-    --checkbox-active-color: var(--Colors-Use-Main-Pressed);
-    --checkbox-background-color: var(--Colors-Use-Main-Primary);
+    --checkbox-active-color: var(--Colors-Use-Blue-Pressed);
+    --checkbox-background-color: var(--Colors-Use-Blue-Primary);
     --checkbox-background-disabled-color: var(--Colors-Use-Neutral-Disable);
     --checkbox-border-color: var(--Colors-Use-Neutral-Border);
     --checkbox-border-disabled-color: var(--Colors-Use-Neutral-Disable);
-    --checkbox-border-primary-color: var(--Colors-Use-Main-Primary);
-    --checkbox-box-shadow-color: var(--Colors-Use-Main-Focus);
-    --checkbox-hover-color: var(--Colors-Use-Main-Hover);
+    --checkbox-border-primary-color: var(--Colors-Use-Blue-Primary);
+    --checkbox-box-shadow-color: var(--Colors-Use-Blue-Focus);
+    --checkbox-hover-color: var(--Colors-Use-Blue-Hover);
     .switcher-icon {
         color: var(--Colors-Use-Neutral-Text-3-Secondary);
         svg {
@@ -20,7 +20,7 @@
             color: var(--Colors-Use-Neutral-Text-1-Title);
         }
         .ant-tree-switcher-loading-icon {
-            color: var(--Colors-Use-Main-Primary);
+            color: var(--Colors-Use-Blue-Primary);
         }
         .ant-tree .ant-tree-node-content-wrapper:hover{
             background-color: var(--Colors-Use-Neutral-Bg-Hover);
@@ -140,10 +140,10 @@
         }
 
         .ant-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
-            color: var(--Colors-Use-Main-On-Primary);
-            background-color: var(--Colors-Use-Main-Primary);
+            color: var(--Colors-Use-Blue-On-Primary);
+            background-color: var(--Colors-Use-Blue-Primary);
             &:hover {
-                background-color: var(--Colors-Use-Main-Hover);
+                background-color: var(--Colors-Use-Blue-Hover);
             }
         }
     }

@@ -48,7 +48,7 @@
     margin-top: 2px;
 
     .dragger-help-active {
-        color: var(--Colors-Use-Main-Primary);
+        color: var(--Colors-Use-Blue-Primary);
         cursor: pointer;
         margin: 0 4px;
         .upload-icon {
@@ -67,7 +67,7 @@
     }
 
     .dragger-help-number {
-        color: var(--Colors-Use-Main-Primary);
+        color: var(--Colors-Use-Blue-Primary);
         cursor: pointer;
         margin: 0 4px;
         font-style: normal;
@@ -101,7 +101,7 @@
         margin: 0 5px;
     }
     .form-item-setting {
-        color: var(--Colors-Use-Main-Primary);
+        color: var(--Colors-Use-Blue-Primary);
         font-size: 14px;
         &-icon {
             svg {

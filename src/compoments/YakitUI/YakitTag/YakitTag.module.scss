@@ -33,7 +33,7 @@
             }
 
             &:hover {
-                color: var(--Colors-Use-Main-Primary);
+                color: var(--Colors-Use-Blue-Primary);
             }
         }
     }
@@ -194,8 +194,8 @@
 }
 
 .yakit-tag-main {
-    background: var(--Colors-Use-Main-Bg);
-    border-color: var(--Colors-Use-Main-Border);
+    background: var(--Colors-Use-Blue-Bg);
+    border-color: var(--Colors-Use-Blue-Border);
     color: var(--Colors-Use-Neutral-Text-1-Title);
 }
 
@@ -240,12 +240,12 @@
         }
 
         .ant-tag-checkable-checked {
-            background: var(--Colors-Use-Main-Primary);
-            color: var(--Colors-Use-Main-On-Primary);
+            background: var(--Colors-Use-Blue-Primary);
+            color: var(--Colors-Use-Blue-On-Primary);
         }
 
         .ant-tag-checkable:not(.ant-tag-checkable-checked):hover {
-            color: var(--Colors-Use-Main-Primary);
+            color: var(--Colors-Use-Blue-Primary);
         }
     }
 }

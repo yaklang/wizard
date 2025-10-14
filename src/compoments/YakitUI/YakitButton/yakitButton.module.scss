@@ -34,14 +34,14 @@
         border-color: fetch-color($type, "color-6");
     }
     &[disabled] {
-        background: var(--Colors-Use-Main-Border);
+        background: var(--Colors-Use-Blue-Border);
         color: var(--Colors-Use-Basic-Background);
-        border: var(--Colors-Use-Main-Border);
+        border: var(--Colors-Use-Blue-Border);
     }
     &[disabled]:hover {
-        background: var(--Colors-Use-Main-Border);
+        background: var(--Colors-Use-Blue-Border);
         color: var(--Colors-Use-Basic-Background);
-        border-color: var(--Colors-Use-Main-Border);
+        border-color: var(--Colors-Use-Blue-Border);
     }
 }
 
@@ -543,14 +543,14 @@
         border-color: fetch-color($type, "color-6");
     }
     &[disabled] {
-        background: var(--Colors-Use-Main-Border);
+        background: var(--Colors-Use-Blue-Border);
         color: var(--Colors-Use-Basic-Background);
-        border: var(--Colors-Use-Main-Border);
+        border: var(--Colors-Use-Blue-Border);
     }
     &[disabled]:hover {
-        background: var(--Colors-Use-Main-Border);
+        background: var(--Colors-Use-Blue-Border);
         color: var(--Colors-Use-Basic-Background);
-        border-color: var(--Colors-Use-Main-Border);
+        border-color: var(--Colors-Use-Blue-Border);
     }
 }
 

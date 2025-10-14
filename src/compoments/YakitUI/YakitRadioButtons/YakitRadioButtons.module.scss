@@ -1,6 +1,6 @@
 .yakit-radio-buttons-solid {
-    --yakit-solid-primary-font-color: var(--Colors-Use-Main-On-Primary);
-    --yakit-solid-primary-font-hover-color: var(--Colors-Use-Main-Hover);
+    --yakit-solid-primary-font-color: var(--Colors-Use-Blue-On-Primary);
+    --yakit-solid-primary-font-hover-color: var(--Colors-Use-Blue-Hover);
     display: inline-flex;
     align-items: center;
     :global {
@@ -25,17 +25,17 @@
 
 // ========================== middle ==========================
 .yakit-radio-buttons-middle {
-    --radio-buttons-box-shadow-color: var(--Colors-Use-Main-Focus);
-    --radio-buttons-border-color: var(--Colors-Use-Main-Primary);
-    --radio-buttons-border-hover-color: var(--Colors-Use-Main-Border);
-    --radio-buttons-border-active-color: var(--Colors-Use-Main-Pressed);
+    --radio-buttons-box-shadow-color: var(--Colors-Use-Blue-Focus);
+    --radio-buttons-border-color: var(--Colors-Use-Blue-Primary);
+    --radio-buttons-border-hover-color: var(--Colors-Use-Blue-Border);
+    --radio-buttons-border-active-color: var(--Colors-Use-Blue-Pressed);
 
-    --radio-buttons-primary-font-color: var(--Colors-Use-Main-Primary);
-    --radio-buttons-primary-font-hover-color: var(--Colors-Use-Main-Primary);
+    --radio-buttons-primary-font-color: var(--Colors-Use-Blue-Primary);
+    --radio-buttons-primary-font-hover-color: var(--Colors-Use-Blue-Primary);
 
-    --radio-buttons-background-color: var(--Colors-Use-Main-Primary);
-    --radio-buttons-background-hover-color: var(--Colors-Use-Main-Hover);
-    --radio-buttons-background-active-color: var(--Colors-Use-Main-Pressed);
+    --radio-buttons-background-color: var(--Colors-Use-Blue-Primary);
+    --radio-buttons-background-hover-color: var(--Colors-Use-Blue-Hover);
+    --radio-buttons-background-active-color: var(--Colors-Use-Blue-Pressed);
 
     :global {
         .ant-radio-button-wrapper:first-child {
