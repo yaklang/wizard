@@ -1,0 +1,37 @@
+import React, { useMemo } from 'react';
+import { Popover, type PopoverProps } from 'antd';
+import classNames from 'classnames';
+import styles from './yakitPopover.module.scss';
+
+export type YakitPopoverProp = PopoverProps;
+
+export const YakitPopover: React.FC<YakitPopoverProp> = React.memo((props) => {
+    const { children, overlayClassName, placement, ...resePopover } = props;
+
+    const direction = useMemo(() => {
+        if (!placement) return 'top';
+        if (['top', 'topLeft', 'topRight'].includes(placement)) return 'top';
+        if (['left', 'leftTop', 'leftBottom'].includes(placement))
+            return 'left';
+        if (['right', 'rightTop', 'rightBottom'].includes(placement))
+            return 'right';
+        if (['bottom', 'bottomLeft', 'bottomRight'].includes(placement))
+            return 'bottom';
+    }, [placement]);
+
+    return (
+        <Popover
+            {...resePopover}
+            overlayClassName={classNames(
+                styles['yakit-popover-wrapper'],
+                styles[`yakit-popover-${direction}-wrapper`],
+                {
+                    [overlayClassName || '']: !!overlayClassName,
+                },
+            )}
+            placement={placement}
+        >
+            {children}
+        </Popover>
+    );
+});

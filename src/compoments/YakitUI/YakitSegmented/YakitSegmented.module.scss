@@ -1,0 +1,25 @@
+.yakit-segmented-small-wrapper {
+    .yakit-segmented {
+        border-radius: 4px;
+        background: var(--Colors-Use-Neutral-Bg);
+        font-size: 12px;
+        color: var(--Colors-Use-Neutral-Text-1-Title);
+        :global {
+            .ant-segmented-item-selected {
+                color: var(--Colors-Use-Neutral-Text-1-Title);
+            }
+            .ant-segmented-item:hover,
+            .ant-segmented-item:focus {
+                color: var(--Colors-Use-Neutral-Text-1-Title);
+            }
+        }
+    }
+}
+
+.yakit-segmented-middle-wrapper{
+    :global{
+        .ant-segmented.ant-segmented-sm .ant-segmented-item-label{
+            line-height: 24px;
+        }
+    }
+}
