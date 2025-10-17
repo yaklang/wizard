@@ -1,0 +1,247 @@
+.hole-dispose-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.audit-result-history {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+// ---------- 插件日志各种类型对应样式 ----------
+.audit-result-history-opt {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    .arrow-icon {
+        position: absolute;
+        right: -10px;
+        color: var(--Colors-Use-Neutral-Border);
+        z-index: 9;
+    }
+    .icon-wrapper {
+        width: 24px;
+        height: 36px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        svg {
+            width: 24px;
+            height: 24px;
+        }
+    }
+    .line-tail {
+        width: 24px;
+        flex: 1;
+        position: relative;
+        .line-wrapper {
+            position: absolute;
+            top: -4px;
+            width: 100%;
+            height: calc(100% + 24px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            .line-top-dot {
+                width: 1px;
+                height: 1px;
+                background-color: var(--Colors-Use-Neutral-Bg);
+                border-top-left-radius: 50%;
+                border-top-right-radius: 50%;
+                overflow: hidden;
+            }
+            .line-style {
+                flex: 1;
+                width: 1px;
+                background-color: var(--Colors-Use-Neutral-Bg);
+            }
+            .line-bottom-dot {
+                width: 1px;
+                height: 1px;
+                background-color: var(--Colors-Use-Neutral-Bg);
+                border-bottom-left-radius: 50%;
+                border-bottom-right-radius: 50%;
+                overflow: hidden;
+            }
+        }
+    }
+    .hidden-line-tail {
+        display: none;
+    }
+}
+
+.audit-result-history-info {
+    flex: 1;
+    overflow: hidden;
+    .info-body {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .info-header {
+        padding: 4px 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--Colors-Use-Grey-Bg);
+        border: 1px solid var(--Colors-Use-Neutral-Border);
+        .header-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 20px;
+            .img-style {
+                background-color: var(--Colors-Use-Basic-Background);
+            }
+            .author-name {
+                white-space: nowrap;
+                color: var(--Colors-Use-Neutral-Text-1-Title);
+                margin-right: 4px;
+            }
+            .author-name + .log-content {
+                margin-left: 6px;
+            }
+            .role-tag + .log-content {
+                margin-left: 6px;
+            }
+            .log-content {
+                white-space: nowrap;
+                color: var(--plugin-log-type-content);
+            }
+            .log-content + .reply-name {
+                margin-left: 6px;
+            }
+            .log-time {
+                white-space: nowrap;
+                overflow: hidden;
+                color: var(--Colors-Use-Neutral-Text-3-Secondary);
+                margin-right: 4px;
+            }
+            .option {
+                display: flex;
+                flex: 1;
+                justify-content: end;
+            }
+        }
+        .header-operate {
+            display: flex;
+            align-items: center;
+            .divider-style {
+                width: 1px;
+                height: 12px;
+                background-color: var(--Colors-Use-Neutral-Border);
+            }
+            .reply-btn {
+                margin-left: 8px;
+            }
+        }
+    }
+    .info-header-line-additional {
+        border-radius: 4px 4px 0 0;
+    }
+    .info-additional {
+        padding: 10px 12px;
+        border-radius: 0 0 4px 4px;
+        border: 1px solid var(--Colors-Use-Neutral-Border);
+        border-top: 0;
+        background: var(--Colors-Use-Basic-Background);
+
+        .description-style {
+            width: 100%;
+            overflow: hidden;
+            --yakit-ellipsis-row: 3;
+
+            color: var(--Colors-Use-Neutral-Text-1-Title);
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 20px;
+        }
+
+        .comment-image-style {
+            width: 100%;
+        }
+
+        .comment-style {
+            margin-top: 20px;
+        }
+        .reply-style {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+            .reply-line {
+                width: 2px;
+                background-color: var(--Colors-Use-Neutral-Border);
+            }
+            .reply-content {
+                cursor: pointer;
+                overflow: hidden;
+                display: flex;
+                gap: 8px;
+                color: var(--Colors-Use-Neutral-Text-3-Secondary);
+                font-size: 12px;
+                font-weight: 400;
+                line-height: 16px;
+                .content-style {
+                    flex: 1;
+                    overflow: hidden;
+                }
+            }
+        }
+    }
+}
+
+.audit-result-history-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    .audit-result-history-list {
+        flex: 1;
+        overflow: auto;
+    }
+
+    .footer-textarea {
+        width: 100%;
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        border-radius: 4px;
+        border: 1px solid var(--Colors-Use-Neutral-Border);
+        cursor: text;
+        .select-wrapper {
+            display: flex;
+            align-items: center;
+            .label {
+            }
+            .option {
+                width: 280px;
+            }
+        }
+        .textarea-body {
+            padding: 0;
+        }
+        .right-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: end;
+        }
+    }
+    .footer-textarea:hover {
+        border-color: var(--Colors-Use-Main-Border);
+    }
+    .footer-textarea-focus {
+        border-color: var(--Colors-Use-Main-Border);
+        box-shadow: 0 0 0 2px var(--Colors-Use-Main-Focus);
+    }
+}
