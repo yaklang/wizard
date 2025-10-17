@@ -124,6 +124,16 @@ export interface AuditYakUrlProps {
     Query?: { Key: string; Value: any }[];
 }
 
+export interface AuditModalFormProps {
+    onCancel: () => void;
+    isExecuting: boolean;
+    onStartAudit: (v: DebugPluginRequest) => void;
+    form: FormInstance<any>;
+    isVerifyForm: boolean;
+    activeKey: string | string[] | undefined;
+    setActiveKey: (v: string | string[] | undefined) => void;
+}
+
 export interface AuditModalFormModalProps {
     onCancel: () => void;
     onSuccee: (path: string) => void;

@@ -21,6 +21,7 @@ import YakitTabs from '@/compoments/YakitUI/YakitTabs/YakitTabs';
 import { apiDebugPlugin, type DebugPluginRequest } from '@/pages/plugins/utils';
 
 import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
+import type { HTTPRequestBuilderParams } from '@/models/HTTPRequestBuilder';
 import { Progress } from 'antd';
 import type {
     AuditDetailItemProps,
@@ -204,7 +205,7 @@ export const AuditSearchModal: React.FC<AuditSearchProps> = memo((props) => {
             Code: '',
             PluginType: 'yak',
             Input: '',
-            HTTPRequestTemplate: {},
+            HTTPRequestTemplate: {} satisfies HTTPRequestBuilderParams,
             ExecParams: requestParamsExecParams,
             PluginName: 'SyntaxFlow Searcher',
         };

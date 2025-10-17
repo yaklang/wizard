@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type {
+import {
     GlobalFilterFunctionProps,
     GlobalFilterFunctionTreeProps,
 } from './GlobalFilterFunctionType';
@@ -15,6 +15,7 @@ import type { apiDebugPlugin, DebugPluginRequest } from '@/pages/plugins/utils';
 import type { HTTPRequestBuilderParams } from '@/models/HTTPRequestBuilder';
 import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 import type {
+    AuditNodeDetailProps,
     AuditNodeProps,
     AuditYakUrlProps,
 } from '../AuditCode/AuditCodeType';
@@ -125,7 +126,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
             try {
                 const list: AuditNodeProps[] = [];
                 startLog.forEach((item) => {
-                    if (item.data) {
+                    if (!!item.data) {
                         const jsonData = JSON.parse(item.data);
                         if (
                             !!jsonData &&
@@ -158,141 +159,127 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
         });
         const getChildData = useMemoizedFn(
             (page: number, id: string): Promise<void> => {
-                return new Promise((resolve, reject) => {
-                    (async () => {
-                        if (!id || !projectName) {
-                            reject(new Error('id or projectName is missing'));
-                            return;
-                        }
-                        const params: AuditYakUrlProps = {
-                            Schema: 'syntaxflow',
-                            Location: projectName,
-                            Path: `/output`,
-                            Query: [
-                                { Key: 'result_id', Value: id },
-                                { Key: 'have_range', Value: 'true' },
-                                { Key: 'use_verbose_name', Value: 'true' },
-                            ],
-                        };
-                        try {
-                            const result = await loadAuditFromYakURLRaw(
-                                params,
-                                undefined,
-                                page,
-                                10,
-                            );
-                            if (result) {
-                                const childData: AuditNodeProps[] = [];
-                                let isEnd = false;
-                                result.Resources.forEach((item, index) => {
-                                    if (item.VerboseType !== 'result_id') {
-                                        const {
-                                            ResourceType,
-                                            VerboseType,
-                                            ResourceName,
-                                            Size,
-                                            Extra,
-                                        } = item;
-                                        let value = `${index}`;
-                                        const arr = Extra.filter(
-                                            // eslint-disable-next-line max-nested-callbacks
-                                            (item) => item.Key === 'index',
-                                        );
-                                        if (arr.length > 0) {
-                                            value = arr[0].Value;
-                                        }
-                                        const newId = `${id}/${value}`;
-                                        childData.push({
-                                            parent: id,
-                                            id: newId,
-                                            name: ResourceName,
-                                            ResourceType,
-                                            VerboseType,
-                                            Size,
-                                            Extra,
-                                            depth: 2,
-                                            isLeaf: true,
-                                        });
-                                    } else {
-                                        isEnd = true;
+                return new Promise(async (resolve, reject) => {
+                    if (!id || !projectName) return reject();
+                    const params: AuditYakUrlProps = {
+                        Schema: 'syntaxflow',
+                        Location: projectName,
+                        Path: `/output`,
+                        Query: [
+                            { Key: 'result_id', Value: id },
+                            { Key: 'have_range', Value: 'true' },
+                            { Key: 'use_verbose_name', Value: 'true' },
+                        ],
+                    };
+                    try {
+                        const result = await loadAuditFromYakURLRaw(
+                            params,
+                            undefined,
+                            page,
+                            10,
+                        );
+                        if (result) {
+                            const childData: AuditNodeProps[] = [];
+                            let isEnd = false;
+                            result.Resources.forEach((item, index) => {
+                                if (item.VerboseType !== 'result_id') {
+                                    const {
+                                        ResourceType,
+                                        VerboseType,
+                                        ResourceName,
+                                        Size,
+                                        Extra,
+                                    } = item;
+                                    let value: string = `${index}`;
+                                    const arr = Extra.filter(
+                                        (item) => item.Key === 'index',
+                                    );
+                                    if (arr.length > 0) {
+                                        value = arr[0].Value;
                                     }
-                                });
-                                const loadId = `${id}/load`;
-                                if (!isEnd) {
+                                    const newId = `${id}/${value}`;
                                     childData.push({
                                         parent: id,
-                                        id: loadId,
-                                        name: '',
-                                        ResourceType: 'value',
-                                        VerboseType: '',
-                                        Size: 0,
-                                        Extra: [],
-                                        page: result.Page,
-                                        hasMore: true,
+                                        id: newId,
+                                        name: ResourceName,
+                                        ResourceType,
+                                        VerboseType,
+                                        Size,
+                                        Extra,
                                         depth: 2,
                                         isLeaf: true,
                                     });
                                 } else {
-                                    childData.push({
-                                        parent: null,
-                                        name: '已经到底啦~',
-                                        id: `${id}/111`,
-                                        depth: 1,
-                                        isBottom: true,
-                                        Extra: [],
-                                        ResourceType: '',
-                                        VerboseType: '',
-                                        Size: 0,
-                                    });
+                                    isEnd = true;
                                 }
-                                const newList = data.map((item) => {
-                                    if (item.id === id) {
-                                        return {
-                                            ...item,
-                                            children:
-                                                Number(result.Page) === 1
-                                                    ? childData
-                                                    : [
-                                                          ...(
-                                                              item.children ||
-                                                              []
-                                                          ).filter(
-                                                              // eslint-disable-next-line max-nested-callbacks
-                                                              (ele) =>
-                                                                  ele.id !==
-                                                                  loadId,
-                                                          ),
-                                                          ...childData,
-                                                      ],
-                                        };
-                                    }
-                                    return item;
+                            });
+                            const loadId = `${id}/load`;
+                            if (!isEnd) {
+                                childData.push({
+                                    parent: id,
+                                    id: loadId,
+                                    name: '',
+                                    ResourceType: 'value',
+                                    VerboseType: '',
+                                    Size: 0,
+                                    Extra: [],
+                                    page: result.Page,
+                                    hasMore: true,
+                                    depth: 2,
+                                    isLeaf: true,
                                 });
-                                setData(newList);
+                            } else {
+                                childData.push({
+                                    parent: null,
+                                    name: '已经到底啦~',
+                                    id: `${id}/111`,
+                                    depth: 1,
+                                    isBottom: true,
+                                    Extra: [],
+                                    ResourceType: '',
+                                    VerboseType: '',
+                                    Size: 0,
+                                });
                             }
-                            setTimeout(() => {
-                                resolve();
-                            }, 200);
-                        } catch (error) {
-                            reject(
-                                error instanceof Error
-                                    ? error
-                                    : new Error(String(error)),
-                            );
+                            const newList = data.map((item) => {
+                                if (item.id === id) {
+                                    return {
+                                        ...item,
+                                        children:
+                                            +result.Page === 1
+                                                ? childData
+                                                : [
+                                                      ...(
+                                                          item.children || []
+                                                      ).filter(
+                                                          (ele) =>
+                                                              ele.id !== loadId,
+                                                      ),
+                                                      ...childData,
+                                                  ],
+                                    };
+                                }
+                                return item;
+                            });
+                            setData(newList);
                         }
-                    })();
+                        setTimeout(() => {
+                            resolve();
+                        }, 200);
+                    } catch (error) {
+                        reject(error);
+                    }
                 });
             },
         );
 
         const onLoadData = useMemoizedFn((node) => {
-            if (node.parent === null)
-                return Promise.reject(new Error('Node parent is null'));
+            if (node.parent === null) return Promise.reject();
             return getChildData(1, node.id);
         });
         const loadTreeMore = useMemoizedFn(async (node: AuditNodeProps) => {
             if (node.parent && node.page) {
-                getChildData(Number(node.page) + 1, node.parent);
+                getChildData(+node.page + 1, node.parent);
             }
         });
 
@@ -319,30 +306,38 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                             停止
                         </YakitButton>
                     </div>
-                ) : queryPluginError ? (
-                    <div style={{ marginTop: 20 }}>
-                        <YakitEmpty
-                            title="引擎版本过低，请升级"
-                            description={queryPluginError}
-                        />
-                    </div>
-                ) : data.length > 0 ? (
-                    <GlobalFilterFunctionTree
-                        data={data}
-                        onLoadData={onLoadData}
-                        onSelect={() => {}}
-                        loadTreeMore={loadTreeMore}
-                    />
                 ) : (
-                    <div style={{ marginTop: 20 }}>
-                        <YakitEmpty
-                            title={
-                                !projectName
-                                    ? '请选择项目'
-                                    : '不支持此语言，请等待更新'
-                            }
-                        />
-                    </div>
+                    <>
+                        {queryPluginError ? (
+                            <div style={{ marginTop: 20 }}>
+                                <YakitEmpty
+                                    title="引擎版本过低，请升级"
+                                    description={queryPluginError}
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                {data.length > 0 ? (
+                                    <GlobalFilterFunctionTree
+                                        data={data}
+                                        onLoadData={onLoadData}
+                                        onSelect={() => {}}
+                                        loadTreeMore={loadTreeMore}
+                                    />
+                                ) : (
+                                    <div style={{ marginTop: 20 }}>
+                                        <YakitEmpty
+                                            title={
+                                                !projectName
+                                                    ? '请选择项目'
+                                                    : '不支持此语言，请等待更新'
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </>
                 )}
             </div>
         );
@@ -372,10 +367,12 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
                 setExpandedKeys([...arr]);
             },
         );
-        const handleSelect = useMemoizedFn((node: AuditNodeProps) => {
-            setFoucsedKey(node.id);
-            onJumpByCodeRange(node);
-        });
+        const handleSelect = useMemoizedFn(
+            (node: AuditNodeProps, detail?: AuditNodeDetailProps) => {
+                setFoucsedKey(node.id);
+                onJumpByCodeRange(node);
+            },
+        );
         const onSearch = useMemoizedFn((info: AuditNodeProps) => {
             setFoucsedKey(info.id);
             onSetSelectedSearchVal(info.name);
@@ -385,39 +382,41 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
             // 获取详情
             const getDetail = getDetailFun(info);
             return (
-                <div
-                    className={classNames(
-                        styles['global-filter-function-item'],
-                    )}
-                >
-                    <div className={styles['item-left']}>
-                        <div title={info.name} className={styles['name']}>
-                            {info.name}
+                <>
+                    <div
+                        className={classNames(
+                            styles['global-filter-function-item'],
+                        )}
+                    >
+                        <div className={styles['item-left']}>
+                            <div title={info.name} className={styles['name']}>
+                                {info.name}
+                            </div>
+                            {getDetail?.start_line && (
+                                <YakitTag size="small" color="info">
+                                    {getDetail?.start_line}
+                                </YakitTag>
+                            )}
                         </div>
-                        {getDetail?.start_line && (
-                            <YakitTag size="small" color="info">
-                                {getDetail?.start_line}
-                            </YakitTag>
+                        {info.isLeaf && (
+                            <div className={styles['item-right']}>
+                                <div
+                                    title={getDetail?.fileName}
+                                    className={styles['fileName']}
+                                >
+                                    {getDetail?.fileName}
+                                </div>
+                                <OutlineSearchIcon
+                                    className={styles['search-icon']}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSearch(info);
+                                    }}
+                                />
+                            </div>
                         )}
                     </div>
-                    {info.isLeaf && (
-                        <div className={styles['item-right']}>
-                            <div
-                                title={getDetail?.fileName}
-                                className={styles['fileName']}
-                            >
-                                {getDetail?.fileName}
-                            </div>
-                            <OutlineSearchIcon
-                                className={styles['search-icon']}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSearch(info);
-                                }}
-                            />
-                        </div>
-                    )}
-                </div>
+                </>
             );
         });
         return (
@@ -432,12 +431,11 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
                     }}
                     treeData={data}
                     blockNode={true}
-                    switcherIcon={null}
+                    switcherIcon={<></>}
                     expandedKeys={expandedKeys}
                     loadData={onLoadData}
                     // 解决重复打开一个节点时 能加载
                     loadedKeys={[]}
-                    // eslint-disable-next-line react/no-unstable-nested-components
                     titleRender={(nodeData) => {
                         return (
                             <AuditTreeNode
