@@ -1,0 +1,479 @@
+import React, { useEffect, useState } from 'react';
+import { useCreation, useMemoizedFn } from 'ahooks';
+import styles from './BottomEditorDetails.module.scss';
+import classNames from 'classnames';
+import type {
+    AuditResultDescribeProps,
+    BottomEditorDetailsProps,
+    JumpToAuditEditorProps,
+    RightBugAuditResultHeaderProps,
+    ShowItemType,
+} from './BottomEditorDetailsType';
+import { OutlineXIcon } from '@/assets/icon/outline';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import useStore from '../hooks/useStore';
+import emiter from '@/utils/eventBus/eventBus';
+import { PaperAirplaneIcon } from '@/assets/newIcon';
+import { RuleEditorBox } from './RuleEditorBox/RuleEditorBox';
+import useDispatcher from '../hooks/useDispatcher';
+import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
+import { HoleDispose } from './HoleDispose/HoleDispose';
+import type { CodeRangeProps } from '../RightAuditDetail/RightAuditDetail';
+import { getNameByPath } from '../utils';
+import type { Selection } from '../RunnerTabs/RunnerTabsType';
+import type {
+    OpenFileByPathProps,
+    QuerySSARisksResponse,
+    SSARisk,
+} from '../YakRunnerAuditCodeType';
+import {
+    IconSolidDefaultRiskIcon,
+    IconSolidHighRiskIcon,
+    IconSolidInfoRiskIcon,
+    IconSolidLowRiskIcon,
+    IconSolidMediumRiskIcon,
+    IconSolidSeriousIcon,
+} from '../icon';
+import { Descriptions, Divider } from 'antd';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
+import { formatTimestamp } from '@/utils/timeUtil';
+import MDEditor from '@uiw/react-md-editor';
+const { ipcRenderer } = window.require('electron');
+
+// 编辑器区域 展示详情（输出/语法检查/终端/帮助信息）
+export const BottomEditorDetails: React.FC<BottomEditorDetailsProps> = (
+    props,
+) => {
+    const { isShowEditorDetails, setEditorDetails, showItem, setShowItem } =
+        props;
+    const { projectName, auditExecuting } = useStore();
+    const { setAuditRule } = useDispatcher();
+    // 不再重新加载的元素
+    const [showType, setShowType] = useState<ShowItemType[]>([]);
+    // monaco输入内容
+    const [ruleEditor, setRuleEditor] = useState<string>('');
+    // 展示所需的BugHash
+    const [bugHash, setBugHash] = useState<string>('');
+    const [info, setInfo] = useState<SSARisk>();
+
+    // 数组去重
+    const filterItem = (arr: any) =>
+        arr.filter((item: any, index: number) => arr.indexOf(item) === index);
+
+    const onResetAuditRuleFun = useMemoizedFn((v: string) => {
+        setRuleEditor(v);
+    });
+
+    useEffect(() => {
+        emiter.on('onResetAuditRule', onResetAuditRuleFun);
+        return () => {
+            emiter.off('onResetAuditRule', onResetAuditRuleFun);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (showItem && isShowEditorDetails) {
+            if (showType.includes(showItem)) return;
+            setShowType((arr) => filterItem([...arr, showItem]));
+        }
+    }, [showItem, isShowEditorDetails]);
+
+    const onOpenBottomDetailFun = useMemoizedFn((v: string) => {
+        try {
+            const { type }: { type: ShowItemType } = JSON.parse(v);
+            setEditorDetails(true);
+            setShowItem(type);
+        } catch (error) {}
+    });
+
+    const onCodeAuditOpenBugDetailFun = useMemoizedFn((hash: string) => {
+        ipcRenderer
+            .invoke('QuerySSARisks', {
+                Filter: {
+                    Hash: [hash],
+                },
+            })
+            .then((res: QuerySSARisksResponse) => {
+                const { Data } = res;
+                if (Data.length > 0) {
+                    setInfo(Data[0]);
+                    setBugHash(hash);
+                }
+            })
+            .catch(() => {});
+    });
+
+    useEffect(() => {
+        emiter.on('onCodeAuditOpenBottomDetail', onOpenBottomDetailFun);
+        // 打开编译BUG详情
+        emiter.on('onCodeAuditOpenBugDetail', onCodeAuditOpenBugDetailFun);
+        return () => {
+            emiter.off('onCodeAuditOpenBottomDetail', onOpenBottomDetailFun);
+            emiter.off('onCodeAuditOpenBugDetail', onCodeAuditOpenBugDetailFun);
+        };
+    }, []);
+
+    const onAuditRuleSubmit = useMemoizedFn(() => {
+        if (!projectName || ruleEditor.length === 0) return;
+        setAuditRule && setAuditRule(ruleEditor);
+        emiter.emit('onAuditRuleSubmit', ruleEditor);
+    });
+
+    const onStopAuditRule = useMemoizedFn(() => {
+        emiter.emit('onStopAuditRule');
+    });
+
+    return (
+        <div className={styles['bottom-editor-details']}>
+            <div className={styles['header']}>
+                <div className={styles['select-box']}>
+                    <div
+                        className={classNames(styles['item'], {
+                            [styles['active-item']]: showItem === 'ruleEditor',
+                            [styles['no-active-item']]:
+                                showItem !== 'ruleEditor',
+                        })}
+                        onClick={() => setShowItem('ruleEditor')}
+                    >
+                        <div className={styles['title']}>规则编写</div>
+                    </div>
+                    <div
+                        className={classNames(styles['item'], {
+                            [styles['active-item']]: showItem === 'holeDetail',
+                            [styles['no-active-item']]:
+                                showItem !== 'holeDetail',
+                        })}
+                        onClick={() => setShowItem('holeDetail')}
+                    >
+                        <div className={styles['title']}>漏洞详情</div>
+                    </div>
+                    <div
+                        className={classNames(styles['item'], {
+                            [styles['active-item']]: showItem === 'holeDispose',
+                            [styles['no-active-item']]:
+                                showItem !== 'holeDispose',
+                        })}
+                        onClick={() => setShowItem('holeDispose')}
+                    >
+                        <div className={styles['title']}>漏洞处置</div>
+                    </div>
+                </div>
+                <div className={styles['extra']}>
+                    {showItem === 'ruleEditor' && auditExecuting ? (
+                        <YakitButton
+                            danger
+                            icon={<PaperAirplaneIcon />}
+                            onClick={onStopAuditRule}
+                        >
+                            暂停执行
+                        </YakitButton>
+                    ) : (
+                        <YakitButton
+                            icon={<PaperAirplaneIcon />}
+                            onClick={onAuditRuleSubmit}
+                            disabled={!projectName || ruleEditor.length === 0}
+                        >
+                            开始审计
+                        </YakitButton>
+                    )}
+                    <YakitButton
+                        type="text2"
+                        icon={<OutlineXIcon />}
+                        onClick={() => {
+                            setEditorDetails(false);
+                        }}
+                    />
+                </div>
+            </div>
+            <div className={styles['content']}>
+                {showType.includes('ruleEditor') && (
+                    <div
+                        className={classNames(styles['render-hideen'], {
+                            [styles['render-show']]: showItem === 'ruleEditor',
+                        })}
+                    >
+                        <RuleEditorBox
+                            ruleEditor={ruleEditor}
+                            setRuleEditor={setRuleEditor}
+                            disabled={auditExecuting}
+                            onAuditRuleSubmit={onAuditRuleSubmit}
+                        />
+                    </div>
+                )}
+                {showType.includes('holeDetail') && (
+                    <div
+                        className={classNames(styles['render-hideen'], {
+                            [styles['render-show']]: showItem === 'holeDetail',
+                        })}
+                    >
+                        {bugHash ? (
+                            // eslint-disable-next-line react/jsx-no-useless-fragment
+                            <>{info && <RightBugAuditResult info={info} />}</>
+                        ) : (
+                            <div className={styles['no-audit']}>
+                                <YakitEmpty title="暂无漏洞" />
+                            </div>
+                        )}
+                    </div>
+                )}
+                {showType.includes('holeDispose') && (
+                    <div
+                        className={classNames(styles['render-hideen'], {
+                            [styles['render-show']]: showItem === 'holeDispose',
+                        })}
+                    >
+                        {bugHash ? (
+                            <HoleDispose RiskHash={bugHash} info={info} />
+                        ) : (
+                            <div className={styles['no-audit']}>
+                                <YakitEmpty title="请选择漏洞进行处置" />
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+/** name字段里面的内容不可随意更改，与查询条件有关 */
+export const SeverityMapTag = [
+    {
+        key: ['info', 'fingerprint', 'infof', 'default'],
+        value: 'title-info',
+        name: '信息',
+        tag: 'success',
+    },
+    { key: ['low'], value: 'title-low', name: '低危', tag: 'warning' },
+    {
+        key: ['middle', 'warn', 'warning', 'medium'],
+        value: 'title-middle',
+        name: '中危',
+        tag: 'info',
+    },
+    { key: ['high'], value: 'title-high', name: '高危', tag: 'danger' },
+    {
+        key: ['fatal', 'critical', 'panic'],
+        value: 'title-fatal',
+        name: '严重',
+        tag: 'serious',
+    },
+];
+
+export const RightBugAuditResultHeader: React.FC<RightBugAuditResultHeaderProps> =
+    React.memo((props) => {
+        const { info, extra } = props;
+        const severityInfo = useCreation(() => {
+            const severity = SeverityMapTag.filter((item) =>
+                item.key.includes(info.Severity || ''),
+            )[0];
+            let icon = null;
+            switch (severity?.name) {
+                case '信息':
+                    icon = <IconSolidInfoRiskIcon />;
+                    break;
+                case '低危':
+                    icon = <IconSolidLowRiskIcon />;
+                    break;
+                case '中危':
+                    icon = <IconSolidMediumRiskIcon />;
+                    break;
+                case '高危':
+                    icon = <IconSolidHighRiskIcon />;
+                    break;
+                case '严重':
+                    icon = <IconSolidSeriousIcon />;
+                    break;
+                default:
+                    icon = <IconSolidDefaultRiskIcon />;
+                    break;
+            }
+            return {
+                icon,
+                tag: severity?.tag || 'default',
+                name: severity?.name || info?.Severity || '-',
+            };
+        }, [info.Severity]);
+
+        const onContext = useMemoizedFn(async () => {
+            try {
+                const item: CodeRangeProps = JSON.parse(info.CodeRange);
+                const { url, start_line, start_column, end_line, end_column } =
+                    item;
+                const name = await getNameByPath(url);
+                const highLightRange: Selection = {
+                    startLineNumber: start_line,
+                    startColumn: start_column,
+                    endLineNumber: end_line,
+                    endColumn: end_column,
+                };
+                const OpenFileByPathParams: OpenFileByPathProps = {
+                    params: {
+                        path: url,
+                        name,
+                        highLightRange,
+                    },
+                };
+                emiter.emit(
+                    'onCodeAuditOpenFileByPath',
+                    JSON.stringify(OpenFileByPathParams),
+                );
+                // 纯跳转行号
+                setTimeout(() => {
+                    const obj: JumpToAuditEditorProps = {
+                        selections: highLightRange,
+                        path: url,
+                        isSelect: false,
+                    };
+                    emiter.emit(
+                        'onCodeAuditJumpEditorDetail',
+                        JSON.stringify(obj),
+                    );
+                }, 100);
+            } catch (error) {}
+        });
+
+        return (
+            <div className={styles['content-heard']}>
+                <div className={styles['content-heard-left']}>
+                    <div className={styles['content-heard-severity']}>
+                        {severityInfo.icon}
+                        <span
+                            className={classNames(
+                                styles['content-heard-severity-name'],
+                                styles[`severity-${severityInfo.tag}`],
+                            )}
+                        >
+                            {severityInfo.name}
+                        </span>
+                    </div>
+                    <Divider
+                        type="vertical"
+                        style={{ height: 40, margin: '0 16px' }}
+                    />
+                    <div className={styles['content-heard-body']}>
+                        <div
+                            className={classNames(
+                                styles['content-heard-body-title'],
+                                styles['content-heard-body-title-click'],
+                                'content-ellipsis',
+                            )}
+                            onClick={onContext}
+                        >
+                            {info.Title || '-'}
+                        </div>
+                        <div
+                            className={styles['content-heard-body-description']}
+                            style={{ flexWrap: 'wrap' }}
+                        >
+                            <YakitTag color="info">ID:{info.Id}</YakitTag>
+                            <Divider
+                                type="vertical"
+                                style={{ height: 16, margin: '0 8px' }}
+                            />
+                            <span className={styles['description-port']}>
+                                所属项目:{info.ProgramName || '-'}
+                            </span>
+                            <Divider
+                                type="vertical"
+                                style={{ height: 16, margin: '0 8px' }}
+                            />
+                            <span className={styles['content-heard-body-time']}>
+                                发现时间:
+                                {!info.CreatedAt
+                                    ? '-'
+                                    : formatTimestamp(info.CreatedAt)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {extra && (
+                    <div className={styles['content-heard-right']}>{extra}</div>
+                )}
+            </div>
+        );
+    });
+
+export const RightBugAuditResult: React.FC<AuditResultDescribeProps> =
+    React.memo((props) => {
+        const { info, columnSize } = props;
+        const column = useCreation(() => {
+            if (columnSize) return columnSize;
+            return 1;
+        }, []);
+
+        const getRule = useMemoizedFn(() => {
+            const newInfo = info as any;
+            return newInfo?.FromYakScript || newInfo?.FromRule || '漏洞检测';
+        });
+
+        return (
+            <div
+                className={classNames(
+                    styles['yakit-risk-details-content'],
+                    'yakit-descriptions',
+                    {
+                        [styles['yakit-risk-details-content-no-border']]: true,
+                    },
+                )}
+            >
+                <RightBugAuditResultHeader info={info} />
+                <div className={styles['content-resize-second']}>
+                    <Descriptions
+                        bordered
+                        size="small"
+                        column={column}
+                        labelStyle={{ width: 120 }}
+                    >
+                        <Descriptions.Item label="类型">
+                            {(info?.RiskTypeVerbose || info.RiskType).replace(
+                                /NUCLEI-/g,
+                                '',
+                            )}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Hash">
+                            {info?.Hash || '-'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="扫描规则">
+                            {getRule()}
+                        </Descriptions.Item>
+                        <>
+                            <Descriptions.Item
+                                label="漏洞描述"
+                                span={column}
+                                contentStyle={{ whiteSpace: 'pre-wrap' }}
+                            >
+                                {info.Description ? (
+                                    <MDEditor.Markdown
+                                        className={classNames(
+                                            styles['md-content'],
+                                        )}
+                                        source={info.Description}
+                                    />
+                                ) : (
+                                    '-'
+                                )}
+                            </Descriptions.Item>
+                            <Descriptions.Item
+                                label="解决方案"
+                                span={column}
+                                contentStyle={{ whiteSpace: 'pre-wrap' }}
+                            >
+                                {info.Solution ? (
+                                    <MDEditor.Markdown
+                                        className={classNames(
+                                            styles['md-content'],
+                                        )}
+                                        source={info.Solution}
+                                    />
+                                ) : (
+                                    '-'
+                                )}
+                            </Descriptions.Item>
+                        </>
+                    </Descriptions>
+                    <div className={styles['no-more']}>暂无更多</div>
+                </div>
+            </div>
+        );
+    });
