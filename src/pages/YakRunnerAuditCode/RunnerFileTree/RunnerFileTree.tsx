@@ -54,9 +54,9 @@ import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
 
-// const GlobalFilterFunction = React.lazy(
-//     () => import('../GlobalFilterFunction/GlobalFilterFunction'),
-// );
+const GlobalFilterFunction = React.lazy(
+    () => import('../GlobalFilterFunction/GlobalFilterFunction'),
+);
 
 export const RunnerFileTree: React.FC<RunnerFileTreeProps> = memo((props) => {
     const { fileTreeLoad } = props;
@@ -312,7 +312,7 @@ export const RunnerFileTree: React.FC<RunnerFileTreeProps> = memo((props) => {
                     <div className={styles['compare-select-box']}>
                         <YakitCheckbox
                             checked={isShowCompare}
-                            onChange={(e: any) => {
+                            onChange={(e) => {
                                 setShowCompare(e.target.checked);
                             }}
                         >
@@ -489,7 +489,7 @@ export const RunnerFileTree: React.FC<RunnerFileTreeProps> = memo((props) => {
                                     />
                                 </div>
                             )}
-                            {/* {rendered.current.has(
+                            {rendered.current.has(
                                 'global-filtering-function',
                             ) && (
                                 <div
@@ -503,7 +503,7 @@ export const RunnerFileTree: React.FC<RunnerFileTreeProps> = memo((props) => {
                                         projectName={projectName}
                                     />
                                 </div>
-                            )} */}
+                            )}
                         </div>
                     </div>
                 </div>
