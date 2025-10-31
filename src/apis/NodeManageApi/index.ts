@@ -1,10 +1,7 @@
 import axios from '@/utils/axios';
+import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
 import type {
-    ResponseData,
-    TableRequestParams,
-    TableResponseData,
-} from '@/utils/commonTypes';
-import type {
+    PostHostAliveDetectionRunRequest,
     QueryPalmNodeParams,
     TPostNodesDownloadDataRunRequest,
 } from './type';
@@ -49,19 +46,11 @@ const postHostAliveDetectionRun = (data: {
     hosts: string;
     nodes_id: string[];
 }): Promise<
-    ResponseData<
-        TableRequestParams<{
-            list: Array<{ node: 'string'; result: Array<string> }>;
-        }>
-    >
+    ResponseData<TableResponseData<PostHostAliveDetectionRunRequest[]>>
 > =>
     axios.post<
         never,
-        ResponseData<
-            TableRequestParams<{
-                list: Array<{ node: 'string'; result: Array<string> }>;
-            }>
-        >
+        ResponseData<TableResponseData<PostHostAliveDetectionRunRequest[]>>
     >('/task/start/host-alive-detection/run', data);
 
 export {

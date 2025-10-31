@@ -24,8 +24,14 @@ interface NetworkPingTableProp {
     Ok: boolean;
 }
 
+interface PostHostAliveDetectionRunRequest {
+    node: 'string';
+    result: Array<string>;
+}
+
 export type {
     QueryPalmNodeParams,
     TPostNodesDownloadDataRunRequest,
     NetworkPingTableProp,
+    PostHostAliveDetectionRunRequest,
 };

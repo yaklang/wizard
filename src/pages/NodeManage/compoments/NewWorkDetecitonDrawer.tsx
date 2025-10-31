@@ -7,6 +7,8 @@ import NetWorkIcon from '../Icon/NetWorkIcon';
 import { Button, Input, Tooltip } from 'antd';
 import { postHostAliveDetectionRun } from '@/apis/NodeManageApi';
 import { useSafeState } from 'ahooks';
+import type { CreateTableProps } from '@/compoments/WizardTable/types';
+import type { PostHostAliveDetectionRunRequest } from '@/apis/NodeManageApi/type';
 
 const NetWorkIconNode: FC<{ node_ids: Array<string> }> = ({ node_ids }) => {
     const newWorkDetecitonDrawerRef = useRef<UseDrawerRefType>(null);
@@ -45,6 +47,20 @@ const NewWorkDetecitonDrawer = forwardRef<UseDrawerRefType>(
             },
         }));
 
+        const columns: CreateTableProps<
+            PostHostAliveDetectionRunRequest[]
+        >['columns'] = [
+            {
+                dataIndex: 'node',
+                title: '节点',
+            },
+            {
+                dataIndex: 'result',
+                title: '检测结果',
+                render: (value) => (value.length > 0 ? value.join('\n') : '-'),
+            },
+        ];
+
         return (
             <WizardDrawer
                 footer={null}
@@ -74,19 +90,18 @@ const NewWorkDetecitonDrawer = forwardRef<UseDrawerRefType>(
                     </div>
                     <WizardTable
                         page={page}
-                        columns={[]}
-                        rowKey="aa"
+                        columns={columns}
+                        rowKey="node"
                         request={async () => {
-                            // const data =
-                            await postHostAliveDetectionRun({
+                            const { data } = await postHostAliveDetectionRun({
                                 nodes_id: nodeIds,
                                 hosts,
                                 dns_timeout: 0.5,
                             });
                             return {
-                                list: [],
+                                list: data?.list ?? [],
                                 pagemeta: {
-                                    limit: 10,
+                                    limit: 1000,
                                     page: 1,
                                     total: 10,
                                     total_page: 1,
