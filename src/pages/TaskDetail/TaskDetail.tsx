@@ -111,10 +111,10 @@ const TaskDetail: FC = () => {
                     value: data.risk_num ?? 0,
                 },
                 // TODO 缺少字段
-                {
-                    label: '收集资产数',
-                    value: data.risk_num ?? 0,
-                },
+                // {
+                //     label: '收集资产数',
+                //     value: data.risk_num ?? 0,
+                // },
             ];
 
             const filterData: TDetailDatailOptions = combinationData.filter(
