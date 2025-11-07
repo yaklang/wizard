@@ -721,7 +721,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                     预设端口
                                                 </div>
                                             }
-                                            initialValue="all"
+                                            initialValue={['all']}
                                         >
                                             <Checkbox.Group
                                                 options={
@@ -944,7 +944,9 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                                     预设端口
                                                                 </div>
                                                             }
-                                                            initialValue="all"
+                                                            initialValue={[
+                                                                'all',
+                                                            ]}
                                                         >
                                                             <Checkbox.Group
                                                                 options={
