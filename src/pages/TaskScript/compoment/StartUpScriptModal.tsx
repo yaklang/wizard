@@ -41,6 +41,7 @@ const StartUpScriptModal = forwardRef<
     const [scriptGroupList, setScriptGroupList] = useSafeState<
         { value: string; label: string }[]
     >([]);
+    const [keywordPlaceholder, setKeywordPlaceholder] = useSafeState('');
     const [editObj, setEditObj] = useSafeState<
         Record<'headerGroupValue' | 'id', number>
     >({ id: 0, headerGroupValue: 0 });
@@ -183,9 +184,10 @@ const StartUpScriptModal = forwardRef<
                                     ? items.ip_list.join(',')
                                     : items.params?.target ||
                                       items.params?.keyword,
-                            'enable-cve-baseline': toBoolean(
-                                items.params?.['enable-cve-baseline'],
-                            ),
+                            'enable-cve-baseline': true,
+                            //     toBoolean(
+                            //     items.params?.['enable-cve-baseline'],
+                            // ),
                             'enable-brute': toBoolean(
                                 items.params?.['enable-brute'],
                             ),
@@ -202,6 +204,7 @@ const StartUpScriptModal = forwardRef<
                         },
                     };
                     form.setFieldsValue(targetSetFormData);
+                    setKeywordPlaceholder(items.description);
                     setScriptGroupList(scriptGroupList);
                     setEditObj({
                         id: items.id,
@@ -274,6 +277,7 @@ const StartUpScriptModal = forwardRef<
                             scriptGroupList,
                             status,
                             scannerDataList,
+                            keywordPlaceholder,
                         )}
                     />
                 </Form>

@@ -351,7 +351,7 @@ const ModifyTaskScript: FC = () => {
                                                 'prompt_args',
                                                 'enable-cve-baseline',
                                             ]}
-                                            initialValue={false}
+                                            initialValue={true}
                                         >
                                             <Switch />
                                         </Item>

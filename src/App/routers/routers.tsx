@@ -30,7 +30,7 @@ import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript
 import ActiChainDNS from '@/pages/ActiChainDNS';
 import ICMPSize from '@/pages/ICMPSize';
 import TCPLog from '@/pages/TCPLog';
-import MessageCollect from '@/pages/MessageCollect';
+// import MessageCollect from '@/pages/MessageCollect';
 import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/ReverseLinkServerFacadeServer';
 import GlobalReverseLink from '@/pages/ReverseLink';
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
@@ -123,12 +123,12 @@ const routers: RouteObjectRootMy[] = [
                         key: 'sensitive-message',
                         element: <SensitiveMessage />,
                     },
-                    {
-                        path: 'message-collect',
-                        name: '信息收集',
-                        key: 'message-collect',
-                        element: <MessageCollect />,
-                    },
+                    // {
+                    //     path: 'message-collect',
+                    //     name: '信息收集',
+                    //     key: 'message-collect',
+                    //     element: <MessageCollect />,
+                    // },
                 ],
             },
             {

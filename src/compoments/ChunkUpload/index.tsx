@@ -17,6 +17,7 @@ type ChunkUploadProps = UploadProps & {
     encryptionKey?: any;
     setFieldValue?: (name: any, value: any) => void;
     onlyNameBool?: boolean;
+    placeholder?: string;
 };
 
 const ChunkUpload: React.FC<ChunkUploadProps> = ({
@@ -29,6 +30,7 @@ const ChunkUpload: React.FC<ChunkUploadProps> = ({
     encryptionKey,
     setFieldValue,
     onlyNameBool,
+    placeholder,
     ...props
 }) => {
     const { token } = useLoginStore((state) => state);
@@ -115,7 +117,7 @@ const ChunkUpload: React.FC<ChunkUploadProps> = ({
         ))
         .with([P.nullish, 'textArea'], () => (
             <Input.TextArea
-                placeholder="请输入"
+                placeholder={placeholder ?? '请输入'}
                 onClick={(e) => e.stopPropagation()}
                 onPressEnter={(e) => e.stopPropagation()}
                 onChange={(e) => onChange?.(e.target.value)}
