@@ -1,6 +1,5 @@
 import { WizardModal } from '@/compoments';
 import { Button, Collapse, Form, message } from 'antd';
-import { showErrorMessage } from '@/utils/showErrorMessage';
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 import { randomString, toBoolean } from '@/utils';
@@ -12,21 +11,12 @@ import {
     postEditScriptTask,
     postTaskStart,
 } from '@/apis/task';
-import type {
-    StopOnRunTaskRequest,
-    TaskListRequest,
-    YakScriptParamFull,
-} from '@/apis/task/types';
+import type { StopOnRunTaskRequest } from '@/apis/task/types';
+import type { TaskListRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import type { UsePageRef } from '@/hooks/usePage';
 import { transformFormData } from '../data';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import {
-    buildParamFormItem,
-    getValueByType,
-    ParamsToGroupByGroupName,
-} from '../taskScript/helpers';
-import type { ScriptGroupOption, TaskScriptListItem } from '../types';
 
 export type TScannerDataList = {
     name?: string;
@@ -50,16 +40,13 @@ const StartUpScriptModal = forwardRef<
     const taskTypeRef = useRef(1);
 
     const [scriptGroupList, setScriptGroupList] = useSafeState<
-        ScriptGroupOption[]
+        { value: string; label: string }[]
     >([]);
     const [keywordPlaceholder, setKeywordPlaceholder] = useSafeState('');
     const [editObj, setEditObj] = useSafeState<StopOnRunTaskRequest>({
         task_id: 0,
         task_type: 0,
     });
-    const [scriptParameters, setScriptParameters] = useSafeState<
-        YakScriptParamFull[]
-    >([]);
 
     const status = useMemo(() => {
         if (localRefrech) {
@@ -68,12 +55,11 @@ const StartUpScriptModal = forwardRef<
         if (pageLoad) {
             return 'add';
         }
-        return undefined;
-    }, [localRefrech, pageLoad]);
+    }, []);
 
     const { run: TaskStearmRun } = useRequest(getTaskStream, {
         manual: true,
-        onError: () => showErrorMessage('加入实时更新失败'),
+        onError: () => message.error('加入实时更新失败'),
     });
 
     // 获取节点 请求
@@ -108,11 +94,11 @@ const StartUpScriptModal = forwardRef<
                 await pageLoad?.({ task_type: taskTypeRef.current });
                 await TaskStearmRun(data.id);
                 refreshAsync && (await refreshAsync());
-                closeModal();
+                model?.close();
             },
             onError: (err) => {
                 message.destroy();
-                showErrorMessage(err, '创建任务失败');
+                message.error(`错误: ${err.message}`);
             },
         },
     );
@@ -130,12 +116,12 @@ const StartUpScriptModal = forwardRef<
                 } else {
                     refreshAsync && (await refreshAsync());
                     message.success('修改成功');
-                    closeModal();
+                    model?.close();
                 }
             },
             onError: (err) => {
                 message.destroy();
-                showErrorMessage(err, '编辑任务失败');
+                message.error(`错误: ${err.message}`);
             },
         },
     );
@@ -163,89 +149,19 @@ const StartUpScriptModal = forwardRef<
                 refreshAsync && (await refreshAsync());
                 message.success('修改成功');
                 await TaskStearmRun(values.id);
-                closeModal();
+                model?.close();
             },
             onError: (err) => {
                 message.destroy();
-                showErrorMessage(err, '执行任务失败');
+                message.error(`错误: ${err.message}`);
             },
         },
     );
 
-    const resetFormState = () => {
-        form.resetFields();
-        setScriptParameters([]);
-    };
-
-    const closeModal = () => {
-        if (model?.close) {
-            model.close();
-        }
-        resetFormState();
-    };
-
     useImperativeHandle(ref, () => ({
-        async open(
-            items: TaskScriptListItem,
-            groupOptions: ScriptGroupOption[],
-        ) {
+        async open(items, scriptGroupList) {
             await runAsync()
                 .then(() => {
-                    const parameterList = Array.isArray(items?.parameter)
-                        ? items.parameter
-                        : [];
-                    const parameterDefaults = parameterList.reduce<
-                        Record<string, any>
-                    >((acc, param) => {
-                        const key = param.paramName;
-                        if (!key) return acc;
-                        acc[key] = getValueByType(
-                            param.paramValue,
-                            (param.typeVerbose || '').toLowerCase(),
-                        );
-                        return acc;
-                    }, {});
-                    const mergedParams: Record<string, any> = {
-                        ...parameterDefaults,
-                        ...(items.params ?? {}),
-                    };
-
-                    const normalizedPlugins = Array.isArray(
-                        mergedParams.plugins,
-                    )
-                        ? mergedParams.plugins
-                        : typeof mergedParams.plugins === 'string'
-                          ? mergedParams.plugins
-                                .split(',')
-                                .map((it: string) => it.trim())
-                                .filter(Boolean)
-                          : undefined;
-
-                    const hasIpList = Array.isArray(items?.ip_list)
-                        ? items.ip_list.length > 0
-                        : false;
-
-                    const normalizedParams = {
-                        ...mergedParams,
-                        target: hasIpList
-                            ? (items?.ip_list ?? []).join(',')
-                            : mergedParams.target || mergedParams.keyword,
-                        'enable-cve-baseline':
-                            typeof mergedParams['enable-cve-baseline'] ===
-                            'boolean'
-                                ? mergedParams['enable-cve-baseline']
-                                : true,
-                        'enable-brute': toBoolean(mergedParams['enable-brute']),
-                        'enable-web-login-brute':
-                            typeof mergedParams['enable-web-login-brute'] ===
-                            'boolean'
-                                ? mergedParams['enable-web-login-brute']
-                                : ['company_scan', 'login_brute_scan'].includes(
-                                      items?.script_type ?? '',
-                                  ),
-                        plugins: normalizedPlugins,
-                    };
-
                     const targetSetFormData = {
                         task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
                         ...items,
@@ -262,82 +178,45 @@ const StartUpScriptModal = forwardRef<
                                       dayjs.unix(items?.end_timestamp),
                                   ]
                                 : undefined,
-                        params: normalizedParams,
+                        params: {
+                            ...items.params,
+                            target:
+                                // 此处的 ip_list 字段 因为信息收集界面需要
+                                items?.ip_list?.length > 0
+                                    ? items.ip_list.join(',')
+                                    : items.params?.target ||
+                                      items.params?.keyword,
+                            'enable-cve-baseline': true,
+                            //     toBoolean(
+                            //     items.params?.['enable-cve-baseline'],
+                            // ),
+                            'enable-brute': toBoolean(
+                                items.params?.['enable-brute'],
+                            ),
+                            'enable-web-login-brute':
+                                items.script_type === 'company_scan' ||
+                                items.script_type === 'login_brute_scan'
+                                    ? true
+                                    : false,
+                            plugins:
+                                items.params?.plugins &&
+                                items.params?.plugins?.length > 0
+                                    ? items.params.plugins.split(',')
+                                    : undefined,
+                        },
                     };
-
                     form.setFieldsValue(targetSetFormData);
-                    setKeywordPlaceholder(items?.description ?? '');
-                    setScriptGroupList(groupOptions);
+                    setKeywordPlaceholder(items.description);
+                    setScriptGroupList(scriptGroupList);
                     setEditObj({
-                        task_id: items?.id ?? 0,
-                        task_type: items?.task_type ?? 0,
+                        task_id: items.id,
+                        task_type: items.task_type,
                     });
-                    setScriptParameters(parameterList);
                     model.open();
                 })
                 .catch((err) => console.error(err));
         },
     }));
-
-    const baseCollapseItems = CreateTaskItems(
-        title,
-        scriptTypeValue,
-        scriptGroupList,
-        status,
-        scannerDataList,
-        keywordPlaceholder,
-    );
-
-    const parameterCollapseItems = useMemo(() => {
-        if (!scriptParameters?.length) {
-            return [];
-        }
-        const groupedParams = ParamsToGroupByGroupName(scriptParameters);
-        if (!groupedParams.length) {
-            return [];
-        }
-        return [
-            {
-                key: 'script-params',
-                label: '脚本参数',
-                forceRender: true,
-                style: {
-                    borderBottom: '1px solid #EAECF3',
-                    borderRadius: '0px',
-                    marginBottom: '8px',
-                },
-                children: (
-                    <div className="space-y-4">
-                        {groupedParams.map((group) => {
-                            const groupKey = group.group || 'default';
-                            return (
-                                <div key={groupKey}>
-                                    <div className="mb-2 font-medium">
-                                        参数组: {groupKey}
-                                    </div>
-                                    {group.data && group.data.length > 0 ? (
-                                        group.data.map((param) =>
-                                            buildParamFormItem(
-                                                param,
-                                                ['params'],
-                                                groupKey,
-                                            ),
-                                        )
-                                    ) : (
-                                        <div className="text-xs text-[#85899E]">
-                                            暂无解析结果，检查脚本参数配置。
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                ),
-            },
-        ];
-    }, [scriptParameters]);
-
-    const collapseItems = [...baseCollapseItems, ...parameterCollapseItems];
 
     const onOk = async () => {
         try {
@@ -345,7 +224,6 @@ const StartUpScriptModal = forwardRef<
             taskTypeRef.current = values.sched_type;
 
             const resultData = transformFormData(values);
-            console.log(values, resultData, 'data');
 
             pageLoad && (await AddTaskRunAsync(resultData));
 
@@ -356,7 +234,7 @@ const StartUpScriptModal = forwardRef<
                 ?.join(',');
             if (errorFields) {
                 message.destroy();
-                showErrorMessage(errorFields, '表单校验错误');
+                message.error(errorFields);
             }
         }
     };
@@ -365,7 +243,13 @@ const StartUpScriptModal = forwardRef<
         <WizardModal
             footer={
                 <>
-                    <Button key="link" onClick={closeModal}>
+                    <Button
+                        key="link"
+                        onClick={() => {
+                            model.close();
+                            form.resetFields();
+                        }}
+                    >
                         取消
                     </Button>
                     <Button
@@ -381,24 +265,22 @@ const StartUpScriptModal = forwardRef<
             width={750}
             modal={model}
             title={title}
-            onClose={resetFormState}
+            onClose={() => form.resetFields()}
         >
             <div className="pb-2 px-6 overflow-auto max-h-[65vh]">
                 <Form form={form} layout="horizontal">
                     <Collapse
-                        key={
-                            scriptParameters?.length
-                                ? 'with-params'
-                                : 'no-params'
-                        }
-                        defaultActiveKey={
-                            scriptParameters?.length
-                                ? ['1', '2', 'script-params']
-                                : ['1', '2']
-                        }
+                        defaultActiveKey={['1', '2']}
                         bordered={true}
                         ghost
-                        items={collapseItems}
+                        items={CreateTaskItems(
+                            title,
+                            scriptTypeValue,
+                            scriptGroupList,
+                            status,
+                            scannerDataList,
+                            keywordPlaceholder,
+                        )}
                     />
                 </Form>
             </div>
