@@ -42,6 +42,8 @@ const ModifyTaskScript: FC = () => {
 
     const [form] = Form.useForm();
     const [scriptValue, setScriptValue] = useSafeState<string | undefined>('');
+    // watch script_type so we can hide/clear the right parameter column for yaklang
+    const scriptTypeValue = Form.useWatch('script_type', form);
 
     const state: StateProps = location.state || {}; // 获取传递的 record 数据
 
@@ -120,10 +122,21 @@ const ModifyTaskScript: FC = () => {
                             options={scriptTypeOption}
                             placeholder="请选择"
                             allowClear
+                            onChange={(value: string) => {
+                                // when selecting Yaklang script, clear parameter fields so right panel becomes empty
+                                if (value === 'yaklang') {
+                                    form.setFieldsValue({
+                                        param_files: undefined,
+                                    });
+                                    // clear prompt_args to make right panel empty for backend-driven form
+                                    form.setFieldsValue({
+                                        prompt_args: undefined,
+                                    });
+                                }
+                            }}
                         />
                     </Item>
                 </div>
-
                 <div className="w-3/5 border border-x-[#E9EBED] border-x-solid px-4 mx-4">
                     <WizardAceEditor
                         style={{ minHeight: '100%' }}
@@ -133,29 +146,74 @@ const ModifyTaskScript: FC = () => {
                 </div>
 
                 <div className="w-1/5 pt-4 overflow-y-auto h-full">
-                    <Item noStyle name="param_files" />
-                    <Item noStyle dependencies={['script_type']}>
-                        {({ setFieldValue, getFieldValue }) => {
-                            const scriptType = getFieldValue('script_type');
-                            return (
-                                <Item
-                                    label={
-                                        scriptType === 'weakinfo'
-                                            ? '关键词'
-                                            : '扫描目标'
-                                    }
-                                    name={
-                                        scriptType === 'weakinfo'
-                                            ? ['prompt_args', 'keyword']
-                                            : ['prompt_args', 'target']
-                                    }
-                                    extra={
-                                        <div className="flex items-center font-normal text-xs color-[#85899E]">
-                                            可将TXT、Excel文件拖入框内或
+                    {/* If Yaklang script is selected, keep the right-side parameters blank
+                        for backend-driven dynamic form rendering. */}
+                    {scriptTypeValue === 'yaklang' ? (
+                        <div className="h-full" />
+                    ) : (
+                        <>
+                            <Item noStyle name="param_files" />
+                            <Item noStyle dependencies={['script_type']}>
+                                {({ setFieldValue, getFieldValue }) => {
+                                    const scriptType =
+                                        getFieldValue('script_type');
+                                    return (
+                                        <Item
+                                            label={
+                                                scriptType === 'weakinfo'
+                                                    ? '关键词'
+                                                    : '扫描目标'
+                                            }
+                                            name={
+                                                scriptType === 'weakinfo'
+                                                    ? ['prompt_args', 'keyword']
+                                                    : ['prompt_args', 'target']
+                                            }
+                                            extra={
+                                                <div className="flex items-center font-normal text-xs color-[#85899E]">
+                                                    可将TXT、Excel文件拖入框内或
+                                                    <ChunkUpload
+                                                        url="/material/files"
+                                                        chunkSize={2}
+                                                        accept=".txt"
+                                                        maxCount={1}
+                                                        onChange={(
+                                                            fileName,
+                                                        ) => {
+                                                            setFieldValue(
+                                                                scriptType ===
+                                                                    'weakinfo'
+                                                                    ? [
+                                                                          'prompt_args',
+                                                                          'keyword',
+                                                                      ]
+                                                                    : [
+                                                                          'prompt_args',
+                                                                          'target',
+                                                                      ],
+                                                                fileName,
+                                                            );
+                                                            setFieldValue(
+                                                                'param_files',
+                                                                generateUniqueId(),
+                                                            );
+                                                        }}
+                                                    >
+                                                        <Button type="link">
+                                                            点击此处
+                                                        </Button>
+                                                    </ChunkUpload>
+                                                    上传
+                                                </div>
+                                            }
+                                        >
                                             <ChunkUpload
                                                 url="/material/files"
                                                 chunkSize={2}
                                                 accept=".txt"
+                                                childrenType="textArea"
+                                                encryptionKey="param_files"
+                                                setFieldValue={setFieldValue}
                                                 maxCount={1}
                                                 onChange={(fileName) => {
                                                     setFieldValue(
@@ -171,195 +229,176 @@ const ModifyTaskScript: FC = () => {
                                                               ],
                                                         fileName,
                                                     );
-                                                    setFieldValue(
-                                                        'param_files',
-                                                        generateUniqueId(),
-                                                    );
                                                 }}
-                                            >
-                                                <Button type="link">
-                                                    点击此处
-                                                </Button>
-                                            </ChunkUpload>
-                                            上传
-                                        </div>
-                                    }
-                                >
-                                    <ChunkUpload
-                                        url="/material/files"
-                                        chunkSize={2}
-                                        accept=".txt"
-                                        childrenType="textArea"
-                                        encryptionKey="param_files"
-                                        setFieldValue={setFieldValue}
-                                        maxCount={1}
-                                        onChange={(fileName) => {
-                                            setFieldValue(
-                                                scriptType === 'weakinfo'
-                                                    ? ['prompt_args', 'keyword']
-                                                    : ['prompt_args', 'target'],
-                                                fileName,
-                                            );
-                                        }}
-                                    />
-                                </Item>
-                            );
-                        }}
-                    </Item>
-
-                    <Item noStyle dependencies={['script_type']}>
-                        {({ getFieldValue }) => {
-                            const scriptType = getFieldValue('script_type');
-                            return (
-                                scriptType !== 'weakinfo' && (
-                                    <>
-                                        <Item noStyle dependencies={[]}>
-                                            {({ setFieldValue }) => {
-                                                return (
-                                                    <Item
-                                                        name={[
-                                                            'prompt_args',
-                                                            'preset-protes',
-                                                        ]}
-                                                        label={
-                                                            <div className="min-w-[124px] max-w-full">
-                                                                预设端口
-                                                            </div>
-                                                        }
-                                                    >
-                                                        <Checkbox.Group
-                                                            options={
-                                                                presetProtsGroupOptions
-                                                            }
-                                                            onChange={(e) => {
-                                                                const portsValue =
-                                                                    e
-                                                                        .map(
-                                                                            (
-                                                                                it,
-                                                                            ) =>
-                                                                                PresetPorts[
-                                                                                    it as keyof typeof PresetPorts
-                                                                                ],
-                                                                        )
-                                                                        .join();
-                                                                setFieldValue(
-                                                                    [
-                                                                        'prompt_args',
-                                                                        'ports',
-                                                                    ],
-                                                                    portsValue,
-                                                                );
-                                                                return e;
-                                                            }}
-                                                        />
-                                                    </Item>
-                                                );
-                                            }}
+                                            />
                                         </Item>
+                                    );
+                                }}
+                            </Item>
 
-                                        <Item noStyle dependencies={[]}>
-                                            {({ setFieldValue }) => (
+                            <Item noStyle dependencies={['script_type']}>
+                                {({ getFieldValue }) => {
+                                    const scriptType =
+                                        getFieldValue('script_type');
+                                    return (
+                                        scriptType !== 'weakinfo' && (
+                                            <>
+                                                <Item noStyle dependencies={[]}>
+                                                    {({ setFieldValue }) => {
+                                                        return (
+                                                            <Item
+                                                                name={[
+                                                                    'prompt_args',
+                                                                    'preset-protes',
+                                                                ]}
+                                                                label={
+                                                                    <div className="min-w-[124px] max-w-full">
+                                                                        预设端口
+                                                                    </div>
+                                                                }
+                                                            >
+                                                                <Checkbox.Group
+                                                                    options={
+                                                                        presetProtsGroupOptions
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) => {
+                                                                        const portsValue =
+                                                                            e
+                                                                                .map(
+                                                                                    (
+                                                                                        it,
+                                                                                    ) =>
+                                                                                        PresetPorts[
+                                                                                            it as keyof typeof PresetPorts
+                                                                                        ],
+                                                                                )
+                                                                                .join();
+                                                                        setFieldValue(
+                                                                            [
+                                                                                'prompt_args',
+                                                                                'ports',
+                                                                            ],
+                                                                            portsValue,
+                                                                        );
+                                                                        return e;
+                                                                    }}
+                                                                />
+                                                            </Item>
+                                                        );
+                                                    }}
+                                                </Item>
+
+                                                <Item noStyle dependencies={[]}>
+                                                    {({ setFieldValue }) => (
+                                                        <Item
+                                                            name={[
+                                                                'prompt_args',
+                                                                'ports',
+                                                            ]}
+                                                            label={
+                                                                <span>
+                                                                    扫描端口
+                                                                    <Popover
+                                                                        content="当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口"
+                                                                        trigger="hover"
+                                                                    >
+                                                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                                    </Popover>
+                                                                </span>
+                                                            }
+                                                        >
+                                                            <Input.TextArea
+                                                                placeholder="请输入扫描端口"
+                                                                style={{
+                                                                    width: '100%',
+                                                                }}
+                                                                rows={2}
+                                                                onChange={(
+                                                                    e,
+                                                                ) => {
+                                                                    const value =
+                                                                        e.target
+                                                                            .value;
+                                                                    const keys =
+                                                                        Object.keys(
+                                                                            PresetPorts,
+                                                                        ) as PresetKey[];
+                                                                    const match =
+                                                                        keys.filter(
+                                                                            (
+                                                                                key,
+                                                                            ) =>
+                                                                                value.includes(
+                                                                                    PresetPorts[
+                                                                                        key
+                                                                                    ],
+                                                                                ),
+                                                                        );
+
+                                                                    setFieldValue(
+                                                                        [
+                                                                            'prompt_args',
+                                                                            'preset-protes',
+                                                                        ],
+                                                                        match,
+                                                                    );
+                                                                    return value;
+                                                                }}
+                                                            />
+                                                        </Item>
+                                                    )}
+                                                </Item>
+
                                                 <Item
-                                                    name={[
-                                                        'prompt_args',
-                                                        'ports',
-                                                    ]}
                                                     label={
                                                         <span>
-                                                            扫描端口
+                                                            弱口令
                                                             <Popover
-                                                                content="当输入 1-65535 时，会分配 syn 和 tcp 扫描全端口"
+                                                                content="是否启用弱口令检测"
                                                                 trigger="hover"
                                                             >
                                                                 <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
                                                             </Popover>
                                                         </span>
                                                     }
+                                                    name={[
+                                                        'prompt_args',
+                                                        'enable-brute',
+                                                    ]}
+                                                    initialValue={false}
                                                 >
-                                                    <Input.TextArea
-                                                        placeholder="请输入扫描端口"
-                                                        style={{
-                                                            width: '100%',
-                                                        }}
-                                                        rows={2}
-                                                        onChange={(e) => {
-                                                            const value =
-                                                                e.target.value;
-                                                            const keys =
-                                                                Object.keys(
-                                                                    PresetPorts,
-                                                                ) as PresetKey[];
-                                                            const match =
-                                                                keys.filter(
-                                                                    (key) =>
-                                                                        value.includes(
-                                                                            PresetPorts[
-                                                                                key
-                                                                            ],
-                                                                        ),
-                                                                );
-
-                                                            setFieldValue(
-                                                                [
-                                                                    'prompt_args',
-                                                                    'preset-protes',
-                                                                ],
-                                                                match,
-                                                            );
-                                                            return value;
-                                                        }}
-                                                    />
+                                                    <Switch />
                                                 </Item>
-                                            )}
-                                        </Item>
 
-                                        <Item
-                                            label={
-                                                <span>
-                                                    弱口令
-                                                    <Popover
-                                                        content="是否启用弱口令检测"
-                                                        trigger="hover"
-                                                    >
-                                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                                    </Popover>
-                                                </span>
-                                            }
-                                            name={[
-                                                'prompt_args',
-                                                'enable-brute',
-                                            ]}
-                                            initialValue={false}
-                                        >
-                                            <Switch />
-                                        </Item>
-
-                                        <Item
-                                            label={
-                                                <span>
-                                                    CVE基线检查
-                                                    <Popover
-                                                        content="是否启用CVE基线检查"
-                                                        trigger="hover"
-                                                    >
-                                                        <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
-                                                    </Popover>
-                                                </span>
-                                            }
-                                            name={[
-                                                'prompt_args',
-                                                'enable-cve-baseline',
-                                            ]}
-                                            initialValue={true}
-                                        >
-                                            <Switch />
-                                        </Item>
-                                    </>
-                                )
-                            );
-                        }}
-                    </Item>
+                                                <Item
+                                                    label={
+                                                        <span>
+                                                            CVE基线检查
+                                                            <Popover
+                                                                content="是否启用CVE基线检查"
+                                                                trigger="hover"
+                                                            >
+                                                                <QuestionCircleOutlined className="color-[rgba(0,0,0,.45)] ml-1" />
+                                                            </Popover>
+                                                        </span>
+                                                    }
+                                                    name={[
+                                                        'prompt_args',
+                                                        'enable-cve-baseline',
+                                                    ]}
+                                                    initialValue={true}
+                                                >
+                                                    <Switch />
+                                                </Item>
+                                            </>
+                                        )
+                                    );
+                                }}
+                            </Item>
+                        </>
+                    )}
                 </div>
             </div>
         </Form>
