@@ -6,11 +6,12 @@ import { randomString, toBoolean } from '@/utils';
 import dayjs from 'dayjs';
 import {
     getNodeList,
-    getRunScriptTask,
+    getTaskRun,
     getTaskStream,
     postEditScriptTask,
     postTaskStart,
 } from '@/apis/task';
+import type { StopOnRunTaskRequest } from '@/apis/task/types';
 import type { TaskListRequest } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import type { UsePageRef } from '@/hooks/usePage';
@@ -42,9 +43,10 @@ const StartUpScriptModal = forwardRef<
         { value: string; label: string }[]
     >([]);
     const [keywordPlaceholder, setKeywordPlaceholder] = useSafeState('');
-    const [editObj, setEditObj] = useSafeState<
-        Record<'headerGroupValue' | 'id', number>
-    >({ id: 0, headerGroupValue: 0 });
+    const [editObj, setEditObj] = useSafeState<StopOnRunTaskRequest>({
+        task_id: 0,
+        task_type: 0,
+    });
 
     const status = useMemo(() => {
         if (localRefrech) {
@@ -107,8 +109,8 @@ const StartUpScriptModal = forwardRef<
         {
             manual: true,
             onSuccess: async () => {
-                const { headerGroupValue } = editObj;
-                if (headerGroupValue !== 3) {
+                const { task_type } = editObj;
+                if (task_type !== 3) {
                     ExecuteRunAsync();
                     return;
                 } else {
@@ -127,9 +129,9 @@ const StartUpScriptModal = forwardRef<
     // 编辑之后执行该任务 请求
     const { runAsync: ExecuteRunAsync, loading } = useRequest(
         async () => {
-            const result = await getRunScriptTask({
-                task_id: editObj.id,
-                task_type: editObj.headerGroupValue,
+            const result = await getTaskRun({
+                task_id: editObj.task_id,
+                task_type: editObj.task_type,
             });
 
             const { data } = result;
@@ -207,8 +209,8 @@ const StartUpScriptModal = forwardRef<
                     setKeywordPlaceholder(items.description);
                     setScriptGroupList(scriptGroupList);
                     setEditObj({
-                        id: items.id,
-                        headerGroupValue: items.headerGroupValue,
+                        task_id: items.id,
+                        task_type: items.task_type,
                     });
                     model.open();
                 })
