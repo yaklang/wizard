@@ -46,7 +46,7 @@ interface TTaskGroupResponse {
 }
 
 // 执行/取消 普通和定时任务请求参数
-interface StopOnRunTsakResponse {
+interface StopOnRunTaskRequest {
     task_id: number;
     task_type: number;
 }
@@ -137,6 +137,32 @@ type TPostRpcQueryYakPluginsRequest = Partial<{
     Type: string;
 }>;
 
+// 请求/响应：解析 Yaklang 脚本信息
+interface ThreatAnalysisScriptInformationRequest {
+    script_name?: string;
+    script_content?: string;
+}
+
+interface YakScriptParamFull {
+    // same with feild_name
+    paramName?: string;
+    // same with default_value
+    paramValue?: string;
+    typeVerbose?: string;
+    fieldVerbose?: string;
+    help?: string;
+    required?: boolean;
+    group?: string;
+    extraSetting?: string;
+    methodType?: string;
+    jsonSchema?: string;
+    uiSchema?: string;
+}
+
+interface ThreatAnalysisScriptInformationResponse {
+    cli_parameter?: YakScriptParamFull[];
+}
+
 interface TPostRpcQueryYakPluginsRequestTable<T> {
     list: T;
     groups: string[];
@@ -151,7 +177,7 @@ interface TPostRpcQueryYakPluginsRequestTable<T> {
 }
 
 // 添加/编辑任务模版请求参数
-interface TPostStorageTaskScriptResponse {
+interface TPostStorageTaskScriptRequest {
     script_name?: string;
     description?: string;
     script_type?: string;
@@ -170,23 +196,26 @@ interface TPostStorageTaskScriptResponse {
 
 // 获取 脚本 详情
 type TGetStroageDetailRequest = {
-    prompt_args: Pick<TPostStorageTaskScriptResponse, 'params'>;
-} & Omit<TPostStorageTaskScriptResponse, 'params'>;
+    prompt_args: Pick<TPostStorageTaskScriptRequest, 'params'>;
+} & Omit<TPostStorageTaskScriptRequest, 'params'>;
 
 export type {
     TaskGrounpResponse,
     TTaskGroupResponse,
     TaskListResponse,
     TaskListRequest,
-    StopOnRunTsakResponse,
+    StopOnRunTaskRequest,
     TGetAnalysisScriptReponse,
     TNodeListRequest,
     TPostTaskStartRequest,
     TPostRpcQueryYakPluginsParams,
     TPostRpcQueryYakPluginsRequest,
     TPostRpcQueryYakPluginsRequestTable,
-    TPostStorageTaskScriptResponse,
+    TPostStorageTaskScriptRequest,
     TGetStroageDetailRequest,
+    ThreatAnalysisScriptInformationRequest,
+    ThreatAnalysisScriptInformationResponse,
+    YakScriptParamFull,
 };
 
 export { TTaskListStatus };

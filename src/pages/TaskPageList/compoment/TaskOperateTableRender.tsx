@@ -9,7 +9,7 @@ import PlayCircleOutlined from '@/assets/task/TablePlayCircleOutlined';
 import TableFormOutlined from '@/assets/task/TableFormOutlined';
 import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import {
-    type StopOnRunTsakResponse,
+    type StopOnRunTaskRequest,
     type TaskListRequest,
     TTaskListStatus,
 } from '@/apis/task/types';
@@ -98,7 +98,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 
     //  执行
     const { loading, runAsync } = useRequest(
-        async (params: StopOnRunTsakResponse) => {
+        async (params: StopOnRunTaskRequest) => {
             const result = await getTaskRun(params);
             const { data } = result;
             return data;
@@ -132,7 +132,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 
     // 取消执行
     const { loading: stopRunning, runAsync: stopRunAsync } = useRequest(
-        async (params: StopOnRunTsakResponse) => {
+        async (params: StopOnRunTaskRequest) => {
             const result = await getTaskStop(params);
             const { data } = result;
             return data;
@@ -607,7 +607,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 
     // 取消执行
     const { loading: stopRunning, runAsync: stopRunAsync } = useRequest(
-        async (params: StopOnRunTsakResponse) => {
+        async (params: StopOnRunTaskRequest) => {
             const result = await getTaskStop(params);
             const { data } = result;
             return data;
@@ -643,7 +643,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 
     //  执行
     const { loading: starLoading, runAsync } = useRequest(
-        async (params: StopOnRunTsakResponse) => {
+        async (params: StopOnRunTaskRequest) => {
             const result = await getTaskRun(params);
             const { data } = result;
             return data;
