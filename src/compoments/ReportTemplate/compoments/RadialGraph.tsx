@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom';
-import G6, { Graph, Minimap } from '@antv/g6';
+import type { Graph } from '@antv/g6';
+import G6, { Minimap } from '@antv/g6';
 import './RadialGraph.css';
-import { GraphProps } from './GraphViewer';
+import type { GraphProps } from './GraphViewer';
 
 interface PalmRadialGraphEdge {
     source_node_id: string;
@@ -14,7 +14,7 @@ type PalmRadialGraphNode = any;
 // NodeConfig & Palm.G6GraphNode;
 
 export const RadialGraph: React.FC<GraphProps> = (g) => {
-    const ref = React.useRef(null);
+    const ref = React.useRef<HTMLDivElement | null>(null);
     let graph: Graph = null as unknown as Graph;
 
     const { nodes, edges } = g.data as {
@@ -24,7 +24,7 @@ export const RadialGraph: React.FC<GraphProps> = (g) => {
 
     useEffect(() => {
         let layout: any = {
-            //type: 'radial',
+            // type: 'radial',
             type: 'dagre',
             nodeSpacing: 30,
             maxIteration: 1000,
@@ -37,7 +37,7 @@ export const RadialGraph: React.FC<GraphProps> = (g) => {
         };
 
         if (!graph) {
-            const tag = ReactDOM.findDOMNode(ref.current) as HTMLElement;
+            const tag = ref.current as HTMLElement;
             const miniMap = new Minimap();
             graph = new G6.Graph({
                 container: tag,
@@ -95,8 +95,8 @@ export const RadialGraph: React.FC<GraphProps> = (g) => {
                         e.shape = 'modelRect';
                         let width = 0;
                         let lineTotal = 0;
-                        e.label.split('\n').map((item: any) => {
-                            if (!!item) {
+                        e.label.split('\n').forEach((item: any) => {
+                            if (item) {
                                 lineTotal++;
                             }
                             width =
