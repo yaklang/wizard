@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { ChunkUpload, WizardAceEditor } from '@/compoments';
 import { generateUniqueId } from '@/utils';
@@ -10,9 +10,15 @@ import {
     Input,
     message,
     Popover,
+    Collapse,
     Select,
     Switch,
 } from 'antd';
+import {
+    getValueByType,
+    ParamsToGroupByGroupName,
+    buildParamFormItem,
+} from './helpers';
 import {
     PresetPorts,
     presetProtsGroupOptions,
@@ -21,7 +27,15 @@ import {
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { postStorageTaskScript } from '@/apis/task';
+import {
+    postStorageTaskScript,
+    postThreatAnalysisScriptInformation,
+} from '@/apis/task';
+import type {
+    ThreatAnalysisScriptInformationResponse,
+    ThreatAnalysisScriptInformationRequest,
+    YakScriptParamFull,
+} from '@/apis/task/types';
 import type { TGetStroageDetailRequest } from '@/apis/task/types';
 
 const { Item } = Form;
@@ -44,6 +58,12 @@ const ModifyTaskScript: FC = () => {
     const [scriptValue, setScriptValue] = useSafeState<string | undefined>('');
     // watch script_type so we can hide/clear the right parameter column for yaklang
     const scriptTypeValue = Form.useWatch('script_type', form);
+    const [cliParams, setCliParams] = useSafeState<YakScriptParamFull[] | null>(
+        null,
+    );
+    const debounceTimer = useRef<number | null>(null);
+
+    /** helpers imported from ./helpers.tsx */
 
     const state: StateProps = location.state || {}; // 获取传递的 record 数据
 
@@ -57,6 +77,28 @@ const ModifyTaskScript: FC = () => {
             console.error(err);
         },
     });
+
+    // request to parse yaklang script info
+    const { loading: parseLoading, run: runFetch } = useRequest(
+        // cast to any to align with project's ResponseData wrapper
+        postThreatAnalysisScriptInformation as any,
+        {
+            manual: true,
+            onSuccess: (res: any) => {
+                try {
+                    console.log('Threat analysis response:', res);
+                    const info =
+                        res?.data as ThreatAnalysisScriptInformationResponse;
+                    setCliParams(info?.cli_parameter || []);
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+            onError: (err) => {
+                console.error('Failed to parse yaklang script:', err);
+            },
+        },
+    );
 
     const onSubmit = async () => {
         const formValue = await form.validateFields();
@@ -82,6 +124,48 @@ const ModifyTaskScript: FC = () => {
             setScriptValue(state.script);
         }
     }, []);
+
+    // when scriptValue stops changing, trigger parse for yaklang scripts
+    useEffect(() => {
+        if (scriptTypeValue !== 'yaklang') return;
+
+        if (debounceTimer.current) {
+            window.clearTimeout(debounceTimer.current);
+        }
+        // debounce for 800ms after last change
+        debounceTimer.current = window.setTimeout(() => {
+            const payload: ThreatAnalysisScriptInformationRequest = {
+                script_name: form.getFieldValue('name') || undefined,
+                script_content: scriptValue || undefined,
+            };
+            runFetch(payload as any);
+        }, 800);
+
+        return () => {
+            if (debounceTimer.current) {
+                window.clearTimeout(debounceTimer.current);
+            }
+        };
+    }, [scriptValue, scriptTypeValue]);
+
+    // initialize form values from cliParams when they arrive (for yaklang)
+    useEffect(() => {
+        if (scriptTypeValue !== 'yaklang') return;
+        if (!cliParams || cliParams.length === 0) return;
+
+        const existing = form.getFieldValue('prompt_args') || {};
+        const newVals: Record<string, any> = {};
+        cliParams.forEach((p) => {
+            const key = p.paramName || '';
+            const val = getValueByType(
+                p.paramValue,
+                (p.typeVerbose || '').toLowerCase(),
+            );
+            newVals[key] = val;
+        });
+
+        form.setFieldsValue({ prompt_args: { ...existing, ...newVals } });
+    }, [cliParams, scriptTypeValue]);
 
     return (
         <Form form={form} layout="vertical" className="h-full">
@@ -116,7 +200,7 @@ const ModifyTaskScript: FC = () => {
                     <Item
                         label="脚本类型"
                         name="script_type"
-                        initialValue="portAndVulScan"
+                        initialValue="yaklang"
                     >
                         <Select
                             options={scriptTypeOption}
@@ -149,7 +233,67 @@ const ModifyTaskScript: FC = () => {
                     {/* If Yaklang script is selected, keep the right-side parameters blank
                         for backend-driven dynamic form rendering. */}
                     {scriptTypeValue === 'yaklang' ? (
-                        <div className="h-full" />
+                        <div className="h-full flex flex-col">
+                            <div className="mb-2">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <Button
+                                            size="small"
+                                            type="primary"
+                                            onClick={() => {
+                                                const payload = {
+                                                    script_name:
+                                                        form.getFieldValue(
+                                                            'name',
+                                                        ) || undefined,
+                                                    script_content:
+                                                        scriptValue ||
+                                                        undefined,
+                                                };
+                                                runFetch(payload as any);
+                                            }}
+                                            loading={parseLoading}
+                                        >
+                                            获取参数
+                                        </Button>
+                                        {/* <Button size="small" type="default">执行</Button> */}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="overflow-auto p-2 text-sm h-full">
+                                <Collapse
+                                    ghost
+                                    defaultActiveKey={['default']}
+                                    items={ParamsToGroupByGroupName(
+                                        cliParams || [],
+                                    ).map(
+                                        (group: {
+                                            group: string;
+                                            data: any[];
+                                        }) => ({
+                                            key: group.group,
+                                            label: (
+                                                <div className="font-medium">
+                                                    参数组: {group.group}
+                                                </div>
+                                            ),
+                                            children:
+                                                group.data &&
+                                                group.data.length > 0 ? (
+                                                    group.data.map((p: any) =>
+                                                        buildParamFormItem(p),
+                                                    )
+                                                ) : (
+                                                    <div className="color-[#85899E]">
+                                                        暂无解析结果，点击“刷新参数”或编辑脚本以自动解析。
+                                                    </div>
+                                                ),
+                                        }),
+                                    )}
+                                />
+                            </div>
+                        </div>
                     ) : (
                         <>
                             <Item noStyle name="param_files" />
