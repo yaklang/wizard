@@ -131,12 +131,20 @@ const ModifyTaskScript: FC = () => {
 
         if (debounceTimer.current) {
             window.clearTimeout(debounceTimer.current);
+            debounceTimer.current = null;
         }
+
+        if (!scriptValue?.trim()) {
+            setCliParams([]);
+            form.setFieldsValue({ prompt_args: undefined });
+            return;
+        }
+
         // debounce for 800ms after last change
         debounceTimer.current = window.setTimeout(() => {
             const payload: ThreatAnalysisScriptInformationRequest = {
                 script_name: form.getFieldValue('name') || undefined,
-                script_content: scriptValue || undefined,
+                script_content: scriptValue,
             };
             runFetch(payload as any);
         }, 800);
@@ -241,14 +249,18 @@ const ModifyTaskScript: FC = () => {
                                             size="small"
                                             type="primary"
                                             onClick={() => {
+                                                if (!scriptValue?.trim()) {
+                                                    message.warning(
+                                                        '请先输入脚本内容',
+                                                    );
+                                                    return;
+                                                }
                                                 const payload = {
                                                     script_name:
                                                         form.getFieldValue(
                                                             'name',
                                                         ) || undefined,
-                                                    script_content:
-                                                        scriptValue ||
-                                                        undefined,
+                                                    script_content: scriptValue,
                                                 };
                                                 runFetch(payload as any);
                                             }}
