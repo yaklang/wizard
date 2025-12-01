@@ -12,7 +12,6 @@ import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
 import type { InputRef } from 'antd';
 import { Input, message, Modal, Spin } from 'antd';
-import { showErrorMessage } from '@/utils/showErrorMessage';
 import { useRequest, useSafeState } from 'ahooks';
 import {
     getScriptTaskGroup,
@@ -25,7 +24,6 @@ import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { TaskScriptListItem } from '../types';
-import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const { confirm } = Modal;
 
@@ -102,14 +100,14 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                         setDetailData(data);
                     })
                     .with('edit', (type) => {
-                        navigate(getRoutePath(RouteKey.TASK_SCRIPT_MODIFY), {
+                        navigate('modify-task-script', {
                             state: {
                                 type,
                                 ...data,
                             },
                         });
                     })
-                    .with(P.nullish, () => showErrorMessage('错误'))
+                    .with(P.nullish, () => message.error('错误'))
                     .exhaustive();
             },
         },

@@ -86,7 +86,7 @@ const ModifyTaskScript: FC = () => {
             manual: true,
             onSuccess: (res: any) => {
                 try {
-                    console.log('Threat analysis response:', res);
+                    // console.log('Threat analysis response:', res);
                     const info =
                         res?.data as ThreatAnalysisScriptInformationResponse;
                     setCliParams(info?.cli_parameter || []);
