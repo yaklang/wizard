@@ -1,16 +1,16 @@
 import { type FC, useRef } from 'react';
 
 import styles from '../../TaskScript/index.module.scss';
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { TaskScriptTags } from '@/pages/TaskScript/compoment/TaskScriptTags';
 import { Spin } from 'antd';
 import { useRequest } from 'ahooks';
 import { getScriptTaskGroup } from '@/apis/task';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { scriptTypeOption } from '@/pages/TaskScript/data';
+import type { TaskScriptListItem } from '@/pages/TaskScript/types';
 
 interface TCreateTaskScriptCard {
-    items: TGetAnalysisScriptReponse;
+    items: TaskScriptListItem;
     StartUpScriptModalRef: React.RefObject<UseModalRefType>;
     model1: any;
 }
@@ -20,7 +20,7 @@ const CreateTaskScriptCard: FC<TCreateTaskScriptCard> = ({
     StartUpScriptModalRef,
     model1,
 }) => {
-    const itemsRef = useRef();
+    const itemsRef = useRef<TaskScriptListItem>();
 
     // 获取 启动脚本任务 任务组参数
     const { run: runAsync, loading } = useRequest(

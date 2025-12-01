@@ -1,7 +1,4 @@
 import { type FC, useRef } from 'react';
-
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
-
 import styles from '../TaskScript/index.module.scss';
 
 import { Spin } from 'antd';
@@ -11,14 +8,15 @@ import { WizardModal } from '@/compoments';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { StartUpScriptModal } from '../TaskScript/compoment/StartUpScriptModal';
 import { TaskScriptTags } from './TaskScriptTags';
+import type { TaskScriptListItem } from '../TaskScript/types';
 
 export interface TTaskScriptCard {
-    items: { isCopy?: boolean } & TGetAnalysisScriptReponse;
-    refreshAsync: () => Promise<Partial<TGetAnalysisScriptReponse>[]>;
+    items: TaskScriptListItem;
+    refreshAsync: () => Promise<TaskScriptListItem[]>;
 }
 
 const TaskScriptCard: FC<TTaskScriptCard> = ({ items, refreshAsync }) => {
-    const itemsRef = useRef();
+    const itemsRef = useRef<TaskScriptListItem>();
     const [model1] = WizardModal.useModal();
 
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);

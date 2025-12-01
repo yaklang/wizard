@@ -40,13 +40,8 @@ export type TScriptGrounpList = Array<{ value: string; label: string }>;
 
 type TCreateTaskItemsProps = (
     title: string,
-    scriptTypeValue:
-        | 'portAndVulScan'
-        | 'weakinfo'
-        | 'company_scan'
-        | 'subdomain_scan'
-        | 'login_brute_scan',
-    scriptGroupList: TScriptGrounpList,
+    scriptTypeValue?: string,
+    scriptGroupList?: TScriptGrounpList,
     status?: 'edit' | 'add',
     scannerDataList?: TScannerDataList,
     keywordPlaceholder?: string,
@@ -60,7 +55,7 @@ const { Compact } = Space;
 const CreateTaskItems: TCreateTaskItemsProps = (
     title,
     scriptTypeValue,
-    scriptGroupList,
+    scriptGroupList = [],
     status,
     scannerDataList,
     keywordPlaceholder,

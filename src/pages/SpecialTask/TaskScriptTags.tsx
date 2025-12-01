@@ -3,11 +3,11 @@ import React, { useEffect, useRef } from 'react';
 import { Popover, Tag } from 'antd';
 import styles from '../TaskScript/index.module.scss';
 import { useSafeState } from 'ahooks';
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import type { GetAnalysisScriptResponse } from '@/apis/task/types';
 import { targetColorFn } from '../TaskScript/data';
 
 interface TaskScriptTagsProps {
-    tags: TGetAnalysisScriptReponse['tags'];
+    tags: GetAnalysisScriptResponse['tags'];
     script_name: string;
 }
 
@@ -15,7 +15,7 @@ const TaskScriptTags: React.FC<Partial<TaskScriptTagsProps>> = ({ tags }) => {
     const contentRef = useRef<HTMLDivElement | null>(null);
 
     const [tagItem, setTagItem] = useSafeState<
-        TGetAnalysisScriptReponse['tags']
+        GetAnalysisScriptResponse['tags']
     >([]);
 
     useEffect(() => {
