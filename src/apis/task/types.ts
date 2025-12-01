@@ -51,13 +51,22 @@ interface StopOnRunTaskRequest {
     task_type: number;
 }
 
-type TGetAnalysisScriptReponse = Partial<{
+type GetAnalysisScriptResponse = Partial<{
+    id: number;
     description: string;
     disallow_scheduled: boolean;
     script_type: string;
     tags: string[];
     script_name: string;
     target: string[];
+    sched_type: number;
+    start_timestamp: number;
+    end_timestamp: number;
+    task_type: number;
+    params: Record<string, any>;
+    prompt_args: Record<string, any>;
+    ip_list: string[];
+    parameter: YakScriptParamFull[];
 }>;
 
 type TNodeListRequest = Partial<{
@@ -205,7 +214,7 @@ export type {
     TaskListResponse,
     TaskListRequest,
     StopOnRunTaskRequest,
-    TGetAnalysisScriptReponse,
+    GetAnalysisScriptResponse,
     TNodeListRequest,
     TPostTaskStartRequest,
     TPostRpcQueryYakPluginsParams,
