@@ -8,11 +8,11 @@ import { Button, message, Popover } from 'antd';
 import { useRequest, useSafeState } from 'ahooks';
 
 import DeleteOutlined from './svg/DeleteOutlined';
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { deleteAnalysisScript } from '@/apis/task';
+import type { TaskScriptListItem } from '../types';
 
 const DeletePopover: FC<{
-    refreshAsync: () => Promise<TGetAnalysisScriptReponse[]>;
+    refreshAsync: () => Promise<TaskScriptListItem[]>;
     script_name?: string;
 }> = ({ refreshAsync, script_name }) => {
     const [open, setOpen] = useSafeState(false);

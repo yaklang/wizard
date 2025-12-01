@@ -3,7 +3,6 @@ import { type FC, useEffect, useRef } from 'react';
 import { match, P } from 'ts-pattern';
 
 import type { TGetStroageDetailRequest } from '@/apis/task/types';
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 
 import styles from '../index.module.scss';
 
@@ -24,16 +23,17 @@ import { StartUpScriptModal } from './StartUpScriptModal';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import type { TaskScriptListItem } from '../types';
 
 const { confirm } = Modal;
 
 export interface TTaskScriptCard {
-    items: { isCopy?: boolean } & TGetAnalysisScriptReponse;
+    items: TaskScriptListItem;
     setTaskScriptList: React.Dispatch<
-        React.SetStateAction<TTaskScriptCard['items'][]>
+        React.SetStateAction<TaskScriptListItem[]>
     >;
-    taskScriptList: TTaskScriptCard['items'][];
-    refreshAsync: () => Promise<Partial<TGetAnalysisScriptReponse>[]>;
+    taskScriptList: TaskScriptListItem[];
+    refreshAsync: () => Promise<TaskScriptListItem[]>;
 }
 
 const TaskScriptCard: FC<TTaskScriptCard> = ({
@@ -43,7 +43,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
     refreshAsync,
 }) => {
     const navigate = useNavigate();
-    const itemsRef = useRef();
+    const itemsRef = useRef<TaskScriptListItem>();
     const inputRef = useRef<InputRef>(null);
     const [model1] = WizardModal.useModal();
 

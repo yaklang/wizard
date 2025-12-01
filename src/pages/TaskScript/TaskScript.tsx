@@ -4,17 +4,17 @@ import { useRequest, useSafeState } from 'ahooks';
 import { getAnalysisScript } from '@/apis/task';
 import { Button, Input, Spin } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import type { TTaskScriptCard } from './compoment/TaskScirptCard';
 import { TaskScriptCard } from './compoment/TaskScirptCard';
 import { useNavigate } from 'react-router-dom';
 import { generateUniqueId } from '@/utils';
+import type { TaskScriptListItem } from './types';
 
 const TaskScript: FC = () => {
     const navigate = useNavigate();
 
     const [searchName, setSearchName] = useSafeState('');
     const [taskScriptList, setTaskScriptList] = useSafeState<
-        TTaskScriptCard['items'][]
+        TaskScriptListItem[]
     >([]);
 
     // 获取脚本列表
@@ -24,6 +24,7 @@ const TaskScript: FC = () => {
         refreshAsync,
     } = useRequest(async (script_name: string) => {
         const result = await getAnalysisScript({ script_name });
+        console.log('result', result);
         const {
             data: { list },
         } = result;

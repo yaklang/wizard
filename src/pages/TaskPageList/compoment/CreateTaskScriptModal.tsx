@@ -6,8 +6,8 @@ import { WizardModal } from '@/compoments';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { CreateTaskScriptCard } from './CreateTaskScriptCard';
+import type { TaskScriptListItem } from '@/pages/TaskScript/types';
 
 const CreateTaskScriptModal = forwardRef<
     UseModalRefType,
@@ -16,12 +16,10 @@ const CreateTaskScriptModal = forwardRef<
     const [model1] = WizardModal.useModal();
     const StartUpScriptModalRef = useRef<UseModalRefType>(null);
 
-    const [scriptData, setScriptData] = useSafeState<
-        TGetAnalysisScriptReponse[]
-    >([]);
+    const [scriptData, setScriptData] = useSafeState<TaskScriptListItem[]>([]);
 
     useImperativeHandle(ref, () => ({
-        open(scriptData: TGetAnalysisScriptReponse[]) {
+        open(scriptData: TaskScriptListItem[]) {
             setScriptData(scriptData);
             model1.open();
         },

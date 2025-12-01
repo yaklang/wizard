@@ -101,16 +101,21 @@ export const renderParamInput = (p: YakScriptParamFull) => {
 /**
  * Build a Form.Item for a parameter (label + name + input)
  */
-export const buildParamFormItem = (p: YakScriptParamFull) => {
+export const buildParamFormItem = (
+    p: YakScriptParamFull,
+    namePrefix: Array<string | number> = ['prompt_args'],
+    keyPrefix?: string,
+) => {
     const fieldKey = p.paramName || '';
     const label = p.fieldVerbose || p.paramName || '';
     const type = (p.typeVerbose || '').toLowerCase();
+    const itemKey = keyPrefix ? `${keyPrefix}-${fieldKey}` : fieldKey;
 
     return (
         <Form.Item
-            key={fieldKey}
+            key={itemKey}
             label={label}
-            name={['prompt_args', fieldKey]}
+            name={[...namePrefix, fieldKey]}
             valuePropName={type === 'boolean' ? 'checked' : 'value'}
         >
             {renderParamInput(p)}

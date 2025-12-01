@@ -11,7 +11,7 @@ import type {
     TaskListRequest,
     TaskListResponse,
     // TFetchProcessResponse,
-    TGetAnalysisScriptReponse,
+    GetAnalysisScriptResponse,
     TGetStroageDetailRequest,
     ThreatAnalysisScriptInformationRequest,
     ThreatAnalysisScriptInformationResponse,
@@ -102,10 +102,10 @@ const deleteTaskGroup = (
 // 获取脚本列表
 const getAnalysisScript = (params?: {
     script_name: string;
-}): Promise<ResponseData<TableResponseData<TGetAnalysisScriptReponse>>> =>
+}): Promise<ResponseData<TableResponseData<GetAnalysisScriptResponse>>> =>
     axios.get<
         never,
-        ResponseData<TableResponseData<TGetAnalysisScriptReponse>>
+        ResponseData<TableResponseData<GetAnalysisScriptResponse>>
     >('/threat/analysis/script', { params });
 
 // 添加删除 脚本列表 标签
