@@ -190,9 +190,9 @@ const postEditScriptTask = (
 const deleteAnalysisScript = (
     script_name: string,
 ): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(
-        `/threat/analysis/script?script_name=${script_name}`,
-    );
+    axios.delete<never, ResponseData<boolean>>('/threat/analysis/script', {
+        params: { script_name },
+    });
 
 // 添加/编辑任务模版
 const postStorageTaskScript = (
