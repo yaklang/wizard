@@ -83,10 +83,7 @@ axios.interceptors.response.use(
         }
         const data = response.data as any;
         message.destroy();
-        // 支持后端返回 message 或 reason 字段
-        showErrorMessage(
-            data?.message ?? data?.reason ?? '请求错误,请检查网络后重试',
-        );
+        showErrorMessage(data?.message ?? '请求错误,请检查网络后重试');
 
         return Promise.reject(response.data);
     },

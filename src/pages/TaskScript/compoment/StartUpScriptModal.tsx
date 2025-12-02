@@ -1,5 +1,6 @@
 import { WizardModal } from '@/compoments';
 import { Button, Collapse, Form, message } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
 import { randomString, toBoolean } from '@/utils';
@@ -72,7 +73,7 @@ const StartUpScriptModal = forwardRef<
 
     const { run: TaskStearmRun } = useRequest(getTaskStream, {
         manual: true,
-        onError: () => message.error('加入实时更新失败'),
+        onError: () => showErrorMessage('加入实时更新失败'),
     });
 
     // 获取节点 请求
@@ -111,7 +112,7 @@ const StartUpScriptModal = forwardRef<
             },
             onError: (err) => {
                 message.destroy();
-                message.error(`错误: ${err.message}`);
+                showErrorMessage(err, '创建任务失败');
             },
         },
     );
@@ -134,7 +135,7 @@ const StartUpScriptModal = forwardRef<
             },
             onError: (err) => {
                 message.destroy();
-                message.error(`错误: ${err.message}`);
+                showErrorMessage(err, '编辑任务失败');
             },
         },
     );
@@ -166,7 +167,7 @@ const StartUpScriptModal = forwardRef<
             },
             onError: (err) => {
                 message.destroy();
-                message.error(`错误: ${err.message}`);
+                showErrorMessage(err, '执行任务失败');
             },
         },
     );
@@ -354,7 +355,7 @@ const StartUpScriptModal = forwardRef<
                 ?.join(',');
             if (errorFields) {
                 message.destroy();
-                message.error(errorFields);
+                showErrorMessage(errorFields, '表单校验错误');
             }
         }
     };
