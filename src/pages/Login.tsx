@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Form, Input, message, Modal, Spin } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { useRequest, useSafeState } from 'ahooks';
 import useLoginStore from '@/App/store/loginStore';
 import permissionsSliceFn from '@/App/store/powerStore';
@@ -82,7 +83,7 @@ const Login = () => {
         },
         onError: () => {
             message.destroy();
-            message.error('登录失败');
+            showErrorMessage('登录失败');
         },
     });
 
@@ -140,7 +141,7 @@ const Login = () => {
                 .catch((err) => {
                     form.setFieldValue('verificationCode', undefined);
                     message.destroy();
-                    message.error(err.message);
+                    showErrorMessage(err);
                     run();
                 });
         } catch {

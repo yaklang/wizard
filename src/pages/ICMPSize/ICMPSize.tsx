@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Input, message, Spin, Table, Tag } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { copyToClipboard, randomString } from '@/utils';
@@ -76,7 +77,7 @@ const ICMPSize = () => {
             });
         },
         onerror: () => {
-            message.error(`连接失败`);
+            showErrorMessage('连接失败');
         },
     });
 

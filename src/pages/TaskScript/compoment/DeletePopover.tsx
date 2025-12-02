@@ -4,6 +4,7 @@ import { match, P } from 'ts-pattern';
 
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, message, Popover } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 
 import { useRequest, useSafeState } from 'ahooks';
 
@@ -33,10 +34,10 @@ const DeletePopover: FC<{
                     await run(value);
                 } catch (err) {
                     message.destroy();
-                    message.error('删除失败');
+                    showErrorMessage(err, '删除失败');
                 }
             })
-            .with(P.nullish, () => message.error('未获取当前脚本ID，请重试'))
+            .with(P.nullish, () => showErrorMessage('未获取当前脚本ID，请重试'))
             .exhaustive();
     };
     return (

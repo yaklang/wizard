@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import NoLoginPermissionImage from '@/assets/compoments/NoLoginPermission.png';
 import { Button, message } from 'antd';
+import showErrorMessage from '@/utils/showErrorMessage';
 import { useNavigate } from 'react-router-dom';
 import { useRequest } from 'ahooks';
 import { getLicense } from '@/apis/login';
@@ -29,7 +30,7 @@ const NoLoginPermission: FC = () => {
             },
             onError: () => {
                 message.destroy();
-                message.error('获取license失败，请联系系统管理员');
+                showErrorMessage('获取license失败，请联系系统管理员');
             },
         },
     );

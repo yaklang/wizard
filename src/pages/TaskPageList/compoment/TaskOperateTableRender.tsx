@@ -4,6 +4,7 @@ import { Button, message, Modal, Popover, Spin, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 import { useMemoizedFn, useRequest, useSafeState } from 'ahooks';
+import showErrorMessage from '@/utils/showErrorMessage';
 
 import PlayCircleOutlined from '@/assets/task/TablePlayCircleOutlined';
 import TableFormOutlined from '@/assets/task/TableFormOutlined';
@@ -64,7 +65,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
 
     const { run: TaskStearmRun } = useRequest(getTaskStream, {
         manual: true,
-        onError: () => message.error('加入实时更新失败'),
+        onError: () => showErrorMessage('加入实时更新失败'),
     });
 
     // 获取 启动脚本任务 任务组参数
@@ -91,7 +92,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
             onError(error) {
                 message.destroy();
-                message.error(error?.message ?? '获取失败');
+                showErrorMessage(error?.message ?? '获取失败');
             },
         },
     );
@@ -117,7 +118,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
             onError(error) {
                 message.destroy();
-                message.error(error?.message ?? '执行失败');
+                showErrorMessage(error?.message ?? '执行失败');
             },
         },
     );
@@ -126,7 +127,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         if (record.id) {
             await runAsync({ task_id: record.id, task_type: headerGroupValue });
         } else {
-            message.error('未获取到当前任务ID');
+            showErrorMessage('未获取到当前任务ID');
         }
     };
 
@@ -151,7 +152,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
             onError(error) {
                 message.destroy();
-                message.error(error?.message ?? '取消执行失败');
+                showErrorMessage(error?.message ?? '取消执行失败');
             },
         },
     );
@@ -164,7 +165,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 task_type: headerGroupValue,
             });
         } else {
-            message.error('未获取到当前任务ID');
+            showErrorMessage('未获取到当前任务ID');
         }
     };
 
@@ -196,7 +197,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             message.success('删除成功');
             setOpen((val) => ({ ...val, delete: false }));
         } else {
-            message.error('未获取到当前任务ID');
+            showErrorMessage('未获取到当前任务ID');
         }
     };
 
@@ -221,7 +222,7 @@ const PublicAndExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 runAsyncGroup();
             });
         } else {
-            message.error('未获取到当行数据ID');
+            showErrorMessage('未获取到当行数据ID');
         }
     };
 
@@ -601,7 +602,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             message.success('删除成功');
             setOpen((val) => ({ ...val, delete: false }));
         } else {
-            message.error('未获取到当前任务ID');
+            showErrorMessage('未获取到当前任务ID');
         }
     };
 
@@ -625,7 +626,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
             onError(error) {
                 message.destroy();
-                message.error(error?.message ?? '取消执行失败');
+                showErrorMessage(error?.message ?? '取消执行失败');
             },
         },
     );
@@ -637,7 +638,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 task_type: headerGroupValue,
             });
         } else {
-            message.error('未获取到当前任务ID');
+            showErrorMessage('未获取到当前任务ID');
         }
     };
 
@@ -661,7 +662,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
             },
             onError(error) {
                 message.destroy();
-                message.error(error?.message ?? '执行失败');
+                showErrorMessage(error?.message ?? '执行失败');
             },
         },
     );
@@ -670,7 +671,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
         if (record.id) {
             await runAsync({ task_id: record.id, task_type: headerGroupValue });
         } else {
-            message.error('未获取到当前任务ID');
+            showErrorMessage('未获取到当前任务ID');
         }
     };
 
@@ -705,7 +706,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 runAsyncGroup();
             });
         } else {
-            message.error('未获取到当行数据ID');
+            showErrorMessage('未获取到当行数据ID');
         }
     };
 

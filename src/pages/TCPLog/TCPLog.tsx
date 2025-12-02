@@ -4,6 +4,7 @@ import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { copyToClipboard, randomString } from '@/utils';
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Input, message, Modal, Spin, Table, Tag } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import useListenWidth from '@/hooks/useListenHeight';
 import { useRequest, useSafeState } from 'ahooks';
 import { useEventSource } from '@/hooks';
@@ -98,7 +99,7 @@ const TCPLog = () => {
             });
         },
         onerror: () => {
-            message.error(`连接失败`);
+            showErrorMessage('连接失败');
         },
     });
 

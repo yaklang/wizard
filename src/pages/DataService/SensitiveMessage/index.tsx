@@ -8,6 +8,7 @@ import type { TSensitiveMessageResponse } from '@/apis/reportManage/types';
 import { WizardTable } from '@/compoments';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { message, Select } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import CopyOutlined from '@/pages/TaskDetail/compoments/utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
 import { useRequest, useSafeState } from 'ahooks';
@@ -170,7 +171,7 @@ const SensitiveInfoStatus = ({ value, id }: { value: number; id: number }) => {
             message.success('修改成功');
         },
         onError: () => {
-            message.error('修改失败，请重试');
+            showErrorMessage('修改失败，请重试');
         },
     });
 

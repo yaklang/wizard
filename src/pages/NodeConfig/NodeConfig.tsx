@@ -6,6 +6,7 @@ import { CloseOutlined } from '@ant-design/icons';
 import HeaderBg from './images/headerBg.png';
 import { useRequest, useSafeState } from 'ahooks';
 import { Button, Form, Input, message, Radio, Select, Spin } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { getFileExists } from '@/apis/NodeConfigApi';
 import { copyToClipboard } from '@/utils';
 
@@ -43,7 +44,7 @@ const NodeConfig: FC = () => {
                 setRunCode(str);
             });
         } catch {
-            message.error(
+            showErrorMessage(
                 isHost ? '主机节点未找到' : 'docker compose文件未找到',
             );
         }

@@ -6,6 +6,7 @@ import axios from '@/utils/axios';
 import type { UploadProps } from 'antd/lib';
 import { match, P } from 'ts-pattern';
 import { generateUniqueId } from '@/utils';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 
 type ChunkUploadProps = UploadProps & {
     url: string;
@@ -60,7 +61,7 @@ const ChunkUpload: React.FC<ChunkUploadProps> = ({
             });
         } catch (error) {
             message.destroy();
-            message.error('上传失败');
+            showErrorMessage('上传失败');
             throw error;
         }
     };
@@ -88,7 +89,7 @@ const ChunkUpload: React.FC<ChunkUploadProps> = ({
                 })
                 .catch(() => {
                     message.destroy();
-                    message.error('上传失败');
+                    showErrorMessage('上传失败');
                     setLoading(false);
                 });
         };

@@ -6,6 +6,7 @@ import { useEventSource } from '@/hooks';
 import { SyncOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { Button, Input, message, Progress } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import {
     forwardRef,
     useEffect,
@@ -49,9 +50,7 @@ const CveDifferUpdateModal = forwardRef<
             if (errorMessage === 'sse未连接') {
                 message.info('sse未连接，请重试');
             } else {
-                message.error(
-                    error.message ? `更新失败: ${error.message}` : '更新失败',
-                );
+                showErrorMessage(error, '更新失败');
             }
         },
     });
@@ -71,7 +70,7 @@ const CveDifferUpdateModal = forwardRef<
         },
         onError: (error) => {
             message.destroy();
-            message.error(`断开连接失败: ${error.message}`);
+            showErrorMessage(error, '断开连接失败');
         },
     });
 
@@ -87,7 +86,7 @@ const CveDifferUpdateModal = forwardRef<
             }));
         },
         onerror: () => {
-            message.error(`连接失败`);
+            showErrorMessage('连接失败');
         },
     });
 

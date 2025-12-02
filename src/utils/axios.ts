@@ -1,6 +1,7 @@
 import { Modal, message } from 'antd';
 import type { AxiosResponse, AxiosError } from 'axios';
 import Axios from 'axios';
+import showErrorMessage from '@/utils/showErrorMessage';
 import useLoginStore from '@/App/store/loginStore';
 import { getLoginOut } from '@/apis/login';
 
@@ -45,7 +46,7 @@ axios.interceptors.response.use(
             switch (data?.code) {
                 case noAuthCode:
                     message.destroy();
-                    message.error('登录已过期');
+                    showErrorMessage('登录已过期');
                     store.outLogin();
                     throw console.error('登录已过期');
                 case roleLoseEfficacy:
@@ -82,7 +83,7 @@ axios.interceptors.response.use(
         }
         const data = response.data as any;
         message.destroy();
-        message.error(data?.message ?? '请求错误,请检查网络后重试');
+        showErrorMessage(data?.message ?? '请求错误,请检查网络后重试');
 
         return Promise.reject(response.data);
     },
