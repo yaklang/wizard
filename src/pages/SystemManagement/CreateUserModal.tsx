@@ -16,6 +16,7 @@ import {
     Modal,
     Typography,
 } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { forwardRef, useImperativeHandle } from 'react';
 import { match } from 'ts-pattern';
 import type { User } from '@/apis/SystemManagementApi/types';
@@ -72,7 +73,7 @@ const CreateUserModal = forwardRef<
         },
         onError: (err) => {
             message.destroy();
-            message.error(err.message);
+            showErrorMessage(err);
         },
     });
 

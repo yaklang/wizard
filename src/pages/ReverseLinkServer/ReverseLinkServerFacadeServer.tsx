@@ -4,6 +4,7 @@ import type { CreateTableProps } from '@/compoments/WizardTable/types';
 import { copyToClipboard } from '@/utils';
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, message, Spin, Switch, Table, Tag } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import useListenWidth from '@/hooks/useListenHeight';
 import { useMemoizedFn, useRequest, useSafeState } from 'ahooks';
 import { useEventSource } from '@/hooks';
@@ -57,7 +58,7 @@ const ReverseLinkServerFacadeServer = () => {
             },
             onError: (error) => {
                 message.destroy();
-                message.error(error.message);
+                showErrorMessage(error);
                 navigate('/acti-chain/reverse-link-server', {
                     state: { formValues },
                 });
@@ -107,7 +108,7 @@ const ReverseLinkServerFacadeServer = () => {
             });
         },
         onerror: () => {
-            message.error(`连接失败`);
+            showErrorMessage('连接失败');
         },
     });
 

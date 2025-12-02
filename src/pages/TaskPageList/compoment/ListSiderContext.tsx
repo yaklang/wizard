@@ -11,6 +11,7 @@ import { Input, message, Modal, Spin } from 'antd';
 import { postTaskGrounp } from '@/apis/task';
 import { useForm } from 'antd/es/form/Form';
 import { DeleteTaskGroupConfig } from './DeleteTaskGroupModal';
+import showErrorMessage from '@/utils/showErrorMessage';
 
 interface TListSiderContext {
     siderContextList: Array<{
@@ -54,7 +55,7 @@ const ListSiderContext: FC<TListSiderContext> = ({
         onError: (error) => {
             message.destroy();
             setPreTaskGroupName(undefined);
-            message.error(error.message ?? '新建任务组失败');
+            showErrorMessage(error.message ?? '新建任务组失败');
             setSiderContextList((values) => values.filter((it) => !it.isEdit));
         },
     });

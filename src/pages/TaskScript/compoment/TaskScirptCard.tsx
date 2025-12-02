@@ -12,6 +12,7 @@ import { DeletePopover } from './DeletePopover';
 import { TaskScriptTags } from './TaskScriptTags';
 import type { InputRef } from 'antd';
 import { Input, message, Modal, Spin } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { useRequest, useSafeState } from 'ahooks';
 import {
     getScriptTaskGroup,
@@ -107,7 +108,7 @@ const TaskScriptCard: FC<TTaskScriptCard> = ({
                             },
                         });
                     })
-                    .with(P.nullish, () => message.error('错误'))
+                    .with(P.nullish, () => showErrorMessage('错误'))
                     .exhaustive();
             },
         },

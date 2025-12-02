@@ -5,7 +5,8 @@ import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { WizardAceEditor, WizardDrawer } from '@/compoments';
 import { useEventSource } from '@/hooks';
 import { useSafeState } from 'ahooks';
-import { message, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import showErrorMessage from '@/utils/showErrorMessage';
 import LogIcon from '../Icon/LogIcon';
 
 const LogIconNode: FC = () => {
@@ -86,7 +87,7 @@ const ViewLogDrawer = forwardRef<UseDrawerRefType>((_, ref): ReactNode => {
             startReading();
         },
         onerror: (error) => {
-            message.error(`连接失败: ${error.msg}`);
+            showErrorMessage(`连接失败: ${error.msg}`);
         },
     });
 

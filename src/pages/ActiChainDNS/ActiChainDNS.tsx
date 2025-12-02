@@ -4,6 +4,7 @@ import { adjustTimestamp, DNSLogOptions } from './compoments/data';
 import { useMemoizedFn, useRequest, useSafeState } from 'ahooks';
 import type { TableProps } from 'antd';
 import { Button, message, Select, Switch, Table, Tag } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { copyToClipboard, randomString } from '@/utils';
 import { WizardAceEditor } from '@/compoments';
 import {
@@ -94,7 +95,7 @@ const ActiChainDNS = () => {
                           dnsMode: initialize.dnsMode,
                           UseLocal: initialize.UseLocal ?? false,
                       })
-                    : message.error('token 不存在');
+                    : showErrorMessage('token 不存在');
             },
             onError: async () => {
                 await disconnect();
@@ -136,7 +137,7 @@ const ActiChainDNS = () => {
             });
         },
         onerror: () => {
-            message.error(`连接失败`);
+            showErrorMessage('连接失败');
         },
     });
 
