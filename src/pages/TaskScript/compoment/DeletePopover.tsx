@@ -4,15 +4,16 @@ import { match, P } from 'ts-pattern';
 
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, message, Popover } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 
 import { useRequest, useSafeState } from 'ahooks';
 
 import DeleteOutlined from './svg/DeleteOutlined';
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
 import { deleteAnalysisScript } from '@/apis/task';
+import type { TaskScriptListItem } from '../types';
 
 const DeletePopover: FC<{
-    refreshAsync: () => Promise<TGetAnalysisScriptReponse[]>;
+    refreshAsync: () => Promise<TaskScriptListItem[]>;
     script_name?: string;
 }> = ({ refreshAsync, script_name }) => {
     const [open, setOpen] = useSafeState(false);
@@ -33,10 +34,10 @@ const DeletePopover: FC<{
                     await run(value);
                 } catch (err) {
                     message.destroy();
-                    message.error('删除失败');
+                    showErrorMessage(err, '删除失败');
                 }
             })
-            .with(P.nullish, () => message.error('未获取当前脚本ID，请重试'))
+            .with(P.nullish, () => showErrorMessage('未获取当前脚本ID，请重试'))
             .exhaustive();
     };
     return (

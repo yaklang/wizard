@@ -6,11 +6,11 @@ import { CloseOutlined, PlusOutlined } from '@ant-design/icons';
 import styles from '../index.module.scss';
 import { targetColorFn } from '../data';
 import { useSafeState, useUpdateEffect } from 'ahooks';
-import type { TGetAnalysisScriptReponse } from '@/apis/task/types';
+import type { GetAnalysisScriptResponse } from '@/apis/task/types';
 import { postAnalysisScript } from '@/apis/task';
 
 interface TaskScriptTagsProps {
-    tags: TGetAnalysisScriptReponse['tags'];
+    tags: GetAnalysisScriptResponse['tags'];
     script_name: string;
 }
 
@@ -22,7 +22,7 @@ const TaskScriptTags: React.FC<Partial<TaskScriptTagsProps>> = ({
     const inputRef = useRef<InputRef>(null);
 
     const [tagItem, setTagItem] = useSafeState<
-        TGetAnalysisScriptReponse['tags']
+        GetAnalysisScriptResponse['tags']
     >([]);
 
     useEffect(() => {

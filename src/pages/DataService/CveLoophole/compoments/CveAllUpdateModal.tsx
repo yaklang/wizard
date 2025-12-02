@@ -6,6 +6,7 @@ import { useEventSource } from '@/hooks';
 import { SyncOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { message, Progress } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import {
     forwardRef,
     useEffect,
@@ -40,7 +41,7 @@ const CveAllUpdateModal = forwardRef<
         manual: true,
         onError: () => {
             message.destroy();
-            message.error(`更新失败`);
+            showErrorMessage('更新失败');
         },
     });
     const { runAsync: offlineUpdateRunAsync } = useRequest(
@@ -49,7 +50,7 @@ const CveAllUpdateModal = forwardRef<
             manual: true,
             onError: () => {
                 message.destroy();
-                message.error(`更新失败`);
+                showErrorMessage('更新失败');
             },
         },
     );
@@ -66,7 +67,7 @@ const CveAllUpdateModal = forwardRef<
         },
         onError: (error) => {
             message.destroy();
-            message.error(`断开连接失败: ${error.message}`);
+            showErrorMessage(error, '断开连接失败');
         },
     });
 
@@ -82,7 +83,7 @@ const CveAllUpdateModal = forwardRef<
             }));
         },
         onerror: () => {
-            message.error(`连接失败`);
+            showErrorMessage('连接失败');
         },
     });
 

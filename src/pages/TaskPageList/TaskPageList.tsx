@@ -1,5 +1,6 @@
 import { useEffect, useRef, type FC } from 'react';
 import { Button, message, Radio, Spin } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 
 import { WizardTable } from '@/compoments';
 import { useRequest, useSafeState, useUpdateEffect } from 'ahooks';
@@ -52,7 +53,7 @@ const TaskPageList: FC = () => {
                 });
         },
         onerror: (error) => {
-            message.error('连接超时，重连中');
+            showErrorMessage('连接超时，重连中');
             console.error('SSE error:', error);
         },
     });

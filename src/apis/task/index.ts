@@ -6,18 +6,20 @@ import type {
     // TGetTimeLineRuntimeMessage,
 } from '@/utils/commonTypes';
 import type {
-    StopOnRunTsakResponse,
+    StopOnRunTaskRequest,
     TaskGrounpResponse,
     TaskListRequest,
     TaskListResponse,
     // TFetchProcessResponse,
-    TGetAnalysisScriptReponse,
+    GetAnalysisScriptResponse,
     TGetStroageDetailRequest,
+    ThreatAnalysisScriptInformationRequest,
+    ThreatAnalysisScriptInformationResponse,
     TNodeListRequest,
     TPostRpcQueryYakPluginsParams,
     TPostRpcQueryYakPluginsRequest,
     TPostRpcQueryYakPluginsRequestTable,
-    TPostStorageTaskScriptResponse,
+    TPostStorageTaskScriptRequest,
     TPostTaskStartRequest,
     TTaskGroupResponse,
 } from './types';
@@ -50,16 +52,16 @@ const getScriptTaskGroup = (): Promise<
 
 // 执行普通 / 定时任务
 const getTaskRun = (
-    params: StopOnRunTsakResponse,
+    params: StopOnRunTaskRequest,
 ): Promise<ResponseData<TaskListRequest>> =>
     axios.get<never, ResponseData<TaskListRequest>>(
-        `/task/start/batch-invoking-script/run`,
+        '/task/start/batch-invoking-script/run',
         { params },
     );
 
 // 取消执行普通 / 定时任务
 const getTaskStop = (
-    params: StopOnRunTsakResponse,
+    params: StopOnRunTaskRequest,
 ): Promise<ResponseData<TaskListRequest>> =>
     axios.get<never, ResponseData<TaskListRequest>>(
         `/task/stop/batch-invoking-script-task`,
@@ -100,10 +102,10 @@ const deleteTaskGroup = (
 // 获取脚本列表
 const getAnalysisScript = (params?: {
     script_name: string;
-}): Promise<ResponseData<TableResponseData<TGetAnalysisScriptReponse>>> =>
+}): Promise<ResponseData<TableResponseData<GetAnalysisScriptResponse>>> =>
     axios.get<
         never,
-        ResponseData<TableResponseData<TGetAnalysisScriptReponse>>
+        ResponseData<TableResponseData<GetAnalysisScriptResponse>>
     >('/threat/analysis/script', { params });
 
 // 添加删除 脚本列表 标签
@@ -114,6 +116,15 @@ const postAnalysisScript = (
     }>,
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>('/threat/analysis/script ', data);
+
+// 解析 Yaklang 脚本信息（后端返回参数描述以便前端动态渲染）
+const postThreatAnalysisScriptInformation = (
+    data: ThreatAnalysisScriptInformationRequest,
+): Promise<ResponseData<ThreatAnalysisScriptInformationResponse>> =>
+    axios.post<never, ResponseData<ThreatAnalysisScriptInformationResponse>>(
+        '/threat/analysis/script/infomation',
+        data,
+    );
 
 //  获取 创建脚本任务 执行节点列表
 const getNodeList = (): Promise<
@@ -175,27 +186,17 @@ const postEditScriptTask = (
         data,
     );
 
-// 编辑任务确定后执行
-const getRunScriptTask = (params: {
-    task_id: number;
-    task_type: number;
-}): Promise<ResponseData<TaskListRequest>> =>
-    axios.get<never, ResponseData<TaskListRequest>>(
-        '/task/start/batch-invoking-script/run',
-        { params },
-    );
-
 // 删除 脚本
 const deleteAnalysisScript = (
     script_name: string,
 ): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(
-        `/threat/analysis/script?script_name=${script_name}`,
-    );
+    axios.delete<never, ResponseData<boolean>>('/threat/analysis/script', {
+        params: { script_name },
+    });
 
 // 添加/编辑任务模版
 const postStorageTaskScript = (
-    data: TPostStorageTaskScriptResponse,
+    data: TPostStorageTaskScriptRequest,
     force: boolean,
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(
@@ -228,10 +229,10 @@ export {
     getTaskStartEditDispaly,
     deleteAnalysisScript,
     postEditScriptTask,
-    getRunScriptTask,
     postStorageTaskScript,
     deleteScriptTask,
     getStroageDetail,
     getTaskStream,
     getSubtaskSteam,
+    postThreatAnalysisScriptInformation,
 };

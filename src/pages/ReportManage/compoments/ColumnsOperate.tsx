@@ -6,6 +6,7 @@ import type { ReportItem } from '@/apis/reportManage/types';
 import { DownloadOutlinedIcon } from '@/assets/report/DownloadOutlinedIcon';
 import { FileOutlinedIcon } from '@/assets/report/FileOutlinedIcon';
 import { Button, message, Popover, Tooltip } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import { deleteProts, getTimelinId } from '@/apis/reportManage';
@@ -48,7 +49,7 @@ const ColumnsOperateRender: FC<{
             message.success('删除成功');
         } else {
             message.destroy();
-            message.error('请求错误，请重试');
+            showErrorMessage('请求错误，请重试');
         }
     };
 
@@ -58,7 +59,7 @@ const ColumnsOperateRender: FC<{
             const block = data.data.data.blocks;
             PreviewReportRef.current?.open(block, report_title);
         } else {
-            message.error('获取失败');
+            showErrorMessage('获取失败');
         }
     };
 

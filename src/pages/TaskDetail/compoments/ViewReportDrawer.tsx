@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useRef } from 'react';
 import { Button, message } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 
 import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 
@@ -22,7 +23,7 @@ const ViewReportDrawer: FC<{ runtime_id: string; task_id: string }> = ({
         },
         onError: async (err) => {
             message.destroy();
-            message.error(err?.message ?? '请求失败');
+            showErrorMessage(err, '请求失败');
         },
     });
 

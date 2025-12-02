@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useEffect } from 'react';
 import { Button, Form, Input, message } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRequest } from 'ahooks';
 import { postLicense } from '@/apis/login';
@@ -21,7 +22,7 @@ const License: FC = () => {
         },
         onError: (error) => {
             message.destroy();
-            message.error('上传失败: ' + error.message);
+            showErrorMessage(error, '上传失败');
         },
     });
 

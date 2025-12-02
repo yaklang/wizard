@@ -3,6 +3,7 @@ import useLoginStore from '@/App/store/loginStore';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { noAuthCode } from '@/utils/axios';
 import { message } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { getLoginOut } from '@/apis/login';
 
 interface SSEHooksError {
@@ -66,13 +67,13 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
             const code = e.status;
             if (code === noAuthCode) {
                 message.destroy();
-                message.error('登录已过期');
+                showErrorMessage('登录已过期');
                 es.close();
                 await getLoginOut();
                 store.outLogin();
             } else if (code === 500) {
                 message.destroy();
-                message.error('连接异常，请刷新页面后重试');
+                showErrorMessage('连接异常，请刷新页面后重试');
                 es.close();
             } else {
                 setRetryCount((prevCount) => prevCount + 1); // 增加失败次数
@@ -80,7 +81,7 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
                     options?.maxRetries &&
                     retryCount + 1 >= options.maxRetries
                 ) {
-                    message.error('最大重试次数已达到，停止尝试连接');
+                    showErrorMessage('最大重试次数已达到，停止尝试连接');
                     es.close();
                 } else {
                     options?.onerror?.({

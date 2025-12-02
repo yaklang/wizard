@@ -4,11 +4,12 @@ import { useRequest, useSafeState } from 'ahooks';
 import { getAnalysisScript } from '@/apis/task';
 import { Spin } from 'antd';
 import { generateUniqueId } from '@/utils';
-import { TaskScriptCard, type TTaskScriptCard } from './TaskScirptCard';
+import { TaskScriptCard } from './TaskScirptCard';
+import type { TaskScriptListItem } from '../TaskScript/types';
 
 const CreateTask: FC = () => {
     const [taskScriptList, setTaskScriptList] = useSafeState<
-        TTaskScriptCard['items'][]
+        TaskScriptListItem[]
     >([]);
 
     // 获取脚本列表
