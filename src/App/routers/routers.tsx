@@ -38,6 +38,10 @@ import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 import CodecEntry from '@/pages/Codec';
 import SpecialTask from '@/pages/SpecialTask';
 import CreateTask from '@/pages/CreateTask';
+import ProjectManagement from '@/pages/ProjecManagement';
+import RuleManagement from '@/pages/RuleManagement';
+import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
+import VulnerabilityManagement from '@/pages/ValnerabilityManagement';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -248,6 +252,45 @@ const routers: RouteObjectRootMy[] = [
                         path: 'global-reverse-link',
                         key: 'system-global-reverse-link',
                         element: <GlobalReverseLink />,
+                    },
+                ],
+            },
+            {
+                path: 'static-analysis',
+                name: '静态代码分析',
+                key: 'static-analysis',
+                icon: <ApiOutlinedIcon />,
+                children: [
+                    {
+                        path: 'project-management',
+                        name: '项目管理',
+                        key: 'static-project',
+                        element: <ProjectManagement />,
+                    },
+                    {
+                        path: 'rule-management',
+                        name: '规则管理',
+                        key: 'static-rule',
+                        children: [
+                            {
+                                index: true,
+                                element: <RuleManagement />,
+                            },
+                            {
+                                path: 'create',
+                                key: 'static-rule-create',
+                                element: <RuleEditor />,
+                                name: '新建规则',
+                                hidden: true,
+                                parentpath: '/static-analysis/rule-management',
+                            },
+                        ],
+                    },
+                    {
+                        path: 'vuln-management',
+                        name: '漏洞管理',
+                        key: 'static-vuln',
+                        element: <VulnerabilityManagement />,
                     },
                 ],
             },
