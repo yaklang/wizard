@@ -10,21 +10,18 @@ import {
     Spin,
     Switch,
     message,
-    Modal,
 } from 'antd';
 import { WizardAceEditor } from '@/compoments';
 import { useRequest } from 'ahooks';
 import {
     fetchSyntaxFlowRule,
     postSyntaxFlowRule,
-    deleteSyntaxFlowRule,
 } from '@/apis/SyntaxFlowRuleApi';
 import type {
     TSyntaxFlowAlertDesc,
     TSyntaxFlowRule,
     TSyntaxFlowRuleRequest,
 } from '@/apis/SyntaxFlowRuleApi/type';
-import { ROUTES } from '@/utils/routeMap';
 
 const severityOptions = [
     { label: 'Info', value: 'info' },
@@ -93,7 +90,7 @@ const RuleEditor = () => {
                 message.success(
                     editorState.mode === 'edit' ? '规则已保存' : '规则已创建',
                 );
-                navigate(ROUTES.RULE_MANAGEMENT);
+                navigate('/static-analysis/rule-management');
             },
             onError: () => {
                 message.error('保存规则失败，请重试');
@@ -136,7 +133,7 @@ const RuleEditor = () => {
         if (editorState.mode === 'edit') {
             if (!editorState.rule_id && !editorState.rule_name) {
                 message.error('缺少规则标识，无法进入编辑模式');
-                navigate(ROUTES.RULE_MANAGEMENT);
+                navigate('/static-analysis/rule-management');
                 return;
             }
             loadDetail({
@@ -150,36 +147,6 @@ const RuleEditor = () => {
             } as any);
         }
     }, [editorState, form, loadDetail, navigate]);
-
-    const { loading: deleting, runAsync: deleteRule } = useRequest(
-        deleteSyntaxFlowRule,
-        {
-            manual: true,
-            onSuccess: () => {
-                message.success('删除成功');
-                navigate(ROUTES.RULE_MANAGEMENT);
-            },
-            onError: () => {
-                message.error('删除失败');
-            },
-        },
-    );
-
-    const handleDelete = () => {
-        Modal.confirm({
-            title: '确认删除该规则？',
-            content: '删除后无法恢复',
-            okText: '删除',
-            okButtonProps: { danger: true },
-            onOk: async () => {
-                const params: { rule_id?: string; rule_name?: string } = {};
-                if (editorState.rule_id) params.rule_id = editorState.rule_id;
-                else if (editorState.rule_name)
-                    params.rule_name = editorState.rule_name;
-                await deleteRule(params);
-            },
-        });
-    };
 
     const handleSubmit = async () => {
         try {
@@ -221,16 +188,7 @@ const RuleEditor = () => {
                         {editorState.mode === 'edit' ? '编辑规则' : '新建规则'}
                     </div>
                     <Space>
-                        {editorState.mode === 'edit' && (
-                            <Button
-                                danger
-                                onClick={handleDelete}
-                                loading={deleting}
-                            >
-                                删除
-                            </Button>
-                        )}
-                        <Button onClick={() => navigate(ROUTES.GO_BACK)}>返回</Button>
+                        <Button onClick={() => navigate(-1)}>返回</Button>
                         <Button
                             type="primary"
                             onClick={handleSubmit}
