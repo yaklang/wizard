@@ -4,7 +4,6 @@ import type {
     AuditCodeProps,
     AuditHistoryListRefProps,
     AuditNodeSearchItemProps,
-    AuditModalFormProps,
     AuditNodeDetailProps,
     AuditNodeProps,
     AuditTreeNodeProps,
@@ -15,35 +14,21 @@ import type {
 } from './AuditCodeType';
 import classNames from 'classnames';
 import styles from './AuditCode.module.scss';
-import type { YakScript } from '@/pages/invoker/schema';
-import { Form, Progress, Slider, Tooltip, Tree } from 'antd';
+import { Form, Progress, Tooltip, Tree } from 'antd';
 import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
-import { ExtraParamsNodeByType } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/PluginExecuteExtraParams';
-import { FormContentItemByType } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeard';
-import type { YakParamProps } from '@/pages/plugins/pluginsType';
 import {
-    getValueByType,
-    getYakExecutorParam,
-    ParamsToGroupByGroupName,
-} from '@/pages/plugins/editDetails/utils';
-import {
-    useDebounceFn,
     useGetState,
     useInterval,
     useMemoizedFn,
     useSize,
     useUpdateEffect,
 } from 'ahooks';
-import { grpcFetchLocalPluginDetail } from '@/pages/pluginHub/utils/grpc';
 import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
-import { apiDebugPlugin, type DebugPluginRequest } from '@/pages/plugins/utils';
-import type { HTTPRequestBuilderParams } from '@/models/HTTPRequestBuilder';
 import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
-import { failed, warn, yakitNotify } from '@/utils/notification';
-import { randomString } from '@/utils/randomUtil';
-import type { FormExtraSettingProps } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeardType';
+import { failed, yakitNotify } from '@/utils/notification';
+
 import useStore from '../hooks/useStore';
-import { loadAuditFromYakURLRaw } from '../utils';
+import { getNameByPath, loadAuditFromYakURLRaw } from '../utils';
 import {
     OutlineBugIcon,
     OutlineChevronrightIcon,
@@ -74,24 +59,15 @@ import type {
 } from '../YakRunnerAuditCodeType';
 import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput';
 import type { CodeRangeProps } from '../RightAuditDetail/RightAuditDetail';
-import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 import type { JumpToAuditEditorProps } from '../BottomEditorDetails/BottomEditorDetailsType';
-import { YakitDragger } from '@/compoments/YakitUI/YakitForm/YakitForm';
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
-import { PluginExecuteLog } from '@/pages/plugins/operator/pluginExecuteResult/PluginExecuteResult';
 import useDispatcher from '../hooks/useDispatcher';
 import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
-import YakitCollapse from '@/compoments/YakitUI/YakitCollapse/YakitCollapse';
-import { AgentConfigModal } from '@/pages/mitm/MITMServerStartForm/MITMServerStartForm';
-import { YakitAutoComplete } from '@/compoments/YakitUI/YakitAutoComplete/YakitAutoComplete';
 import type { Selection } from '../RunnerTabs/RunnerTabsType';
 import { FileDefault, FileSuffix, KeyToIcon } from '../FileTree/icon';
 import { RiskTree } from '../RunnerFileTree/RunnerFileTree';
-import { getNameByPath } from '@/pages/yakRunner/utils';
-import cloneDeep from 'lodash/cloneDeep';
 import { StringToUint8Array } from '@/utils/str';
-const { YakitPanel } = YakitCollapse;
+import { randomString } from '@/utils/randomUtil';
 
 const { ipcRenderer } = window.require('electron');
 
@@ -989,11 +965,11 @@ export const AuditCode: React.FC<AuditCodeProps> = (props) => {
     );
 
     const tokenRef = useRef<string>(randomString(40));
-    const logInfoRef = useRef<StreamResult.Log[]>([]);
+    const logInfoRef = useRef<any[]>([]);
     const progressRef = useRef<number>(0);
     const [resultInfo, setResultInfo] = useState<{
         progress: number;
-        logState: StreamResult.Log[];
+        logState: any[];
     }>();
     const [interval, setInterval] = useState<number | undefined>();
     const [streamInfo, debugPluginStreamEvent] = useHoldGRPCStream({
@@ -1053,40 +1029,40 @@ export const AuditCode: React.FC<AuditCodeProps> = (props) => {
 
     // 流式审计 PS:流式审计成功后，根据result_id走正常结构查询
     const onAuditStreamRuleSubmitFun = useMemoizedFn(async (textArea = '') => {
-        if (!textArea) {
-            warn('请输入规则');
-            return;
-        }
-        logInfoRef.current = [];
-        progressRef.current = 0;
-        debugPluginStreamEvent.reset();
-        const requestParams: DebugPluginRequest = {
-            Code: '',
-            PluginType: 'yak',
-            Input: '',
-            HTTPRequestTemplate: {} satisfies HTTPRequestBuilderParams,
-            ExecParams: [
-                {
-                    Key: 'programName',
-                    Value: projectName || '',
-                },
-                {
-                    Key: 'ruleContext',
-                    Value: textArea,
-                },
-            ],
-            PluginName: 'SyntaxFlow 规则执行',
-        };
-        apiDebugPlugin({ params: requestParams, token: tokenRef.current })
-            .then(() => {
-                setAuditExecuting && setAuditExecuting(true);
-                setOnlyFileTree(false);
-                debugPluginStreamEvent.start();
-                setInterval(500);
-            })
-            .catch(() => {
-                onAuditRuleSubmitFun(textArea);
-            });
+        // if (!textArea) {
+        //     warn('请输入规则');
+        //     return;
+        // }
+        // logInfoRef.current = [];
+        // progressRef.current = 0;
+        // debugPluginStreamEvent.reset();
+        // const requestParams: DebugPluginRequest = {
+        //     Code: '',
+        //     PluginType: 'yak',
+        //     Input: '',
+        //     HTTPRequestTemplate: {} satisfies HTTPRequestBuilderParams,
+        //     ExecParams: [
+        //         {
+        //             Key: 'programName',
+        //             Value: projectName || '',
+        //         },
+        //         {
+        //             Key: 'ruleContext',
+        //             Value: textArea,
+        //         },
+        //     ],
+        //     PluginName: 'SyntaxFlow 规则执行',
+        // };
+        // apiDebugPlugin({ params: requestParams, token: tokenRef.current })
+        //     .then(() => {
+        //         setAuditExecuting && setAuditExecuting(true);
+        //         setOnlyFileTree(false);
+        //         debugPluginStreamEvent.start();
+        //         setInterval(500);
+        //     })
+        //     .catch(() => {
+        //         onAuditRuleSubmitFun(textArea);
+        //     });
     });
 
     const onCancelAuditStream = () => {
@@ -1228,13 +1204,13 @@ export const AuditCode: React.FC<AuditCodeProps> = (props) => {
                     <>
                         {auditExecuting ? (
                             <div className={styles['audit-log']}>
-                                <PluginExecuteLog
+                                {/* <PluginExecuteLog
                                     loading={auditExecuting}
                                     messageList={resultInfo?.logState || []}
                                     wrapperClassName={
                                         styles['audit-log-wrapper']
                                     }
-                                />
+                                /> */}
                             </div>
                         ) : (
                             <>
@@ -1282,303 +1258,6 @@ export const AuditCode: React.FC<AuditCodeProps> = (props) => {
                     onCancel={() => setRemoveVisible(false)}
                 />
             </div>
-        </YakitSpin>
-    );
-};
-
-export const AuditModalForm: React.FC<AuditModalFormProps> = (props) => {
-    const {
-        onCancel,
-        onStartAudit,
-        form,
-        isVerifyForm,
-        activeKey,
-        setActiveKey,
-    } = props;
-    const [loading, setLoading] = useState<boolean>(true);
-    const [plugin, setPlugin] = useState<YakScript>();
-    const [agentConfigModalVisible, setAgentConfigModalVisible] =
-        useState<boolean>(false);
-
-    // 获取参数
-    const handleFetchParams = useDebounceFn(
-        useMemoizedFn(async () => {
-            try {
-                const newPlugin = await grpcFetchLocalPluginDetail(
-                    { Name: 'SSA 项目探测' },
-                    true,
-                );
-                setLoading(false);
-                setPlugin(newPlugin);
-            } catch (error) {}
-        }),
-        { wait: 300 },
-    ).run;
-
-    useEffect(() => {
-        handleFetchParams();
-    }, []);
-
-    /** 填充表单默认值 */
-    const handleInitFormValue = useMemoizedFn((arr: YakParamProps[]) => {
-        // 表单内数据
-        let formData: any = {};
-        if (form) formData = form.getFieldsValue() || {};
-        let defaultValue = { ...formData };
-        let newFormValue = {};
-        arr.forEach((ele) => {
-            let initValue =
-                formData[ele.Field] || ele.Value || ele.DefaultValue;
-            const value = getValueByType(initValue, ele.TypeVerbose);
-            newFormValue = {
-                ...newFormValue,
-                [ele.Field]: value,
-            };
-        });
-        form.setFieldsValue({
-            ...cloneDeep(defaultValue || {}),
-            ...newFormValue,
-        });
-    });
-
-    /** 选填参数 */
-    const groupParams = useMemo(() => {
-        const arr =
-            plugin?.Params.filter(
-                (item: any) => !item.Required && (item.Group || '').length > 0,
-            ) || [];
-
-        return ParamsToGroupByGroupName(arr);
-    }, [plugin?.Params]);
-
-    /** 必填参数（头部展示） */
-    const groupParamsHeader = useMemo(() => {
-        const arr =
-            plugin?.Params.filter(
-                (item: any) => item.Required && (item.Group || '').length > 0,
-            ) || [];
-        handleInitFormValue(arr);
-        return ParamsToGroupByGroupName(arr);
-    }, [plugin?.Params]);
-
-    /** 自定义控件数据 */
-    const customParams = useMemo(() => {
-        const defalut: FormExtraSettingProps = {
-            double: false,
-            data: [],
-        };
-        try {
-            const arr =
-                plugin?.Params.filter((item: any) => !item.Required) || [];
-            const customArr = arr.filter(
-                (item: any) => (item.Group || '').length === 0,
-            );
-            // 项目分片
-            const peephole =
-                customArr.find((item: any) => item.Field === 'peephole')
-                    ?.ExtraSetting || '{}';
-            const language =
-                customArr.find((item: any) => item.Field === 'language')
-                    ?.ExtraSetting || '{}';
-
-            const peepholeArr: FormExtraSettingProps = JSON.parse(peephole) || {
-                double: false,
-                data: [],
-            };
-            const languageArr: FormExtraSettingProps = JSON.parse(language) || {
-                double: false,
-                data: [],
-            };
-            return {
-                peepholeArr,
-                languageArr,
-            };
-        } catch (error) {
-            return {
-                peepholeArr: defalut,
-                languageArr: defalut,
-            };
-        }
-    }, [plugin?.Params]);
-
-    const onStartExecute = useMemoizedFn(() => {
-        if (form && plugin) {
-            form.validateFields()
-                .then(async (value: any) => {
-                    const requestParams: DebugPluginRequest = {
-                        Code: plugin.Content,
-                        PluginType: plugin.Type,
-                        Input: value['Input'] || '',
-                        HTTPRequestTemplate:
-                            {} satisfies HTTPRequestBuilderParams,
-                        ExecParams: [],
-                        PluginName: '',
-                    };
-
-                    requestParams.ExecParams = getYakExecutorParam({
-                        ...value,
-                    });
-                    if (customParams.peepholeArr.data.length > 0) {
-                        requestParams.ExecParams = requestParams.ExecParams.map(
-                            (item: any) => {
-                                if (item.Key === 'peephole') {
-                                    return {
-                                        ...item,
-                                        Value: customParams.peepholeArr?.data[
-                                            item.Value
-                                        ]?.value,
-                                    };
-                                }
-                                return item;
-                            },
-                        );
-                    }
-                    onStartAudit(requestParams);
-                })
-                .catch(() => {});
-        }
-    });
-
-    return (
-        <YakitSpin spinning={loading}>
-            <Form
-                style={{ padding: 16 }}
-                form={form}
-                size="small"
-                labelCol={{ span: 6 }}
-                wrapperCol={{ span: 18 }}
-                labelWrap={true}
-                validateMessages={{
-                    /* eslint-disable no-template-curly-in-string */
-                    required: '${label} 是必填字段',
-                }}
-                className={styles['audit-modal-form']}
-            >
-                <Form.Item
-                    name="target"
-                    label="项目路径"
-                    rules={[{ required: true, message: '请输入项目路径' }]}
-                >
-                    <YakitDragger
-                        isShowPathNumber={false}
-                        selectType="all"
-                        renderType="textarea"
-                        multiple={false}
-                        help="可将项目文件拖入框内或点击此处"
-                        disabled={false}
-                        // accept=""
-                    />
-                </Form.Item>
-
-                {groupParamsHeader.length > 0 && (
-                    <>
-                        {groupParamsHeader.map((item: any) =>
-                            item.data?.map((formItem: any) => (
-                                <React.Fragment
-                                    key={formItem.Field + formItem.FieldVerbose}
-                                >
-                                    <FormContentItemByType
-                                        item={formItem}
-                                        pluginType="yak"
-                                    />
-                                </React.Fragment>
-                            )),
-                        )}
-                    </>
-                )}
-
-                {groupParams.length > 0 && (
-                    <>
-                        <div className={styles['additional-params-divider']}>
-                            <div className={styles['text-style']}>
-                                额外参数 (非必填)
-                            </div>
-                            <div className={styles['divider-style']} />
-                        </div>
-                        <YakitCollapse
-                            className={styles['extra-params-divider']}
-                            activeKey={activeKey}
-                            onChange={(v) => {
-                                setActiveKey(v);
-                            }}
-                        >
-                            <YakitPanel key="defalut" header="参数组">
-                                <Form.Item name="language" label="语言">
-                                    <YakitSelect
-                                        options={customParams.languageArr.data}
-                                    />
-                                </Form.Item>
-                                <Form.Item
-                                    name="proxy"
-                                    label="代理"
-                                    extra={
-                                        <div
-                                            className={
-                                                styles[
-                                                    'agent-down-stream-proxy'
-                                                ]
-                                            }
-                                            onClick={() =>
-                                                setAgentConfigModalVisible(true)
-                                            }
-                                        >
-                                            配置代理认证
-                                        </div>
-                                    }
-                                >
-                                    <YakitAutoComplete placeholder="例如 http://127.0.0.1:7890 或者 socks5://127.0.0.1:7890" />
-                                </Form.Item>
-                                <Form.Item
-                                    name="peephole"
-                                    label="编译速度"
-                                    help="小文件无需配置，大文件可根据需求选择，速度越快，精度越小"
-                                >
-                                    <Slider
-                                        style={{ width: 300 }}
-                                        dots
-                                        min={0}
-                                        max={3}
-                                        tipFormatter={(value) => {
-                                            switch (value) {
-                                                case 0:
-                                                    return '关闭，精度IV';
-                                                case 1:
-                                                    return '慢速，精度III';
-                                                case 2:
-                                                    return '中速，精度II';
-                                                case 3:
-                                                    return '快速，精度I';
-                                                default:
-                                                    return value;
-                                            }
-                                        }}
-                                    />
-                                </Form.Item>
-                            </YakitPanel>
-                        </YakitCollapse>
-                        <ExtraParamsNodeByType
-                            extraParamsGroup={groupParams}
-                            pluginType="yak"
-                            isDefaultActiveKey={false}
-                        />
-                    </>
-                )}
-            </Form>
-            <div className={styles['audit-form-footer']}>
-                <YakitButton type="outline2" onClick={onCancel}>
-                    取消
-                </YakitButton>
-                <YakitButton onClick={onStartExecute} loading={isVerifyForm}>
-                    {isVerifyForm ? '正在校验' : '开始编译'}
-                </YakitButton>
-            </div>
-            <AgentConfigModal
-                agentConfigModalVisible={agentConfigModalVisible}
-                onCloseModal={() => setAgentConfigModalVisible(false)}
-                generateURL={(url: any) => {
-                    form.setFieldsValue({ proxy: url });
-                }}
-            />
         </YakitSpin>
     );
 };
