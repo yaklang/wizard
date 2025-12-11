@@ -1,6 +1,7 @@
 import React, { type ReactNode, useMemo } from 'react';
 import { useMemoizedFn } from 'ahooks';
-import { Menu, type MenuProps, Tooltip } from 'antd';
+import { Menu, Tooltip } from 'antd';
+import type { MenuProps } from 'antd';
 import { OutlineChevronrightIcon } from '@/assets/icon/outline';
 
 import classNames from 'classnames';
