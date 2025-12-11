@@ -40,7 +40,7 @@ import CreateTask from '@/pages/CreateTask';
 import ProjectManagement from '@/pages/ProjecManagement';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
-import VulnerabilityManagement from '@/pages/ValnerabilityManagement';
+import { SSARiskList, SSARiskDetail } from '@/pages/SSARisk';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -278,10 +278,23 @@ const routers: RouteObjectRootMy[] = [
                         ],
                     },
                     {
-                        path: 'vuln-management',
+                        path: 'ssa-risk',
                         name: '漏洞管理',
-                        key: 'static-vuln',
-                        element: <VulnerabilityManagement />,
+                        key: 'static-ssa-risk',
+                        children: [
+                            {
+                                index: true,
+                                element: <SSARiskList />,
+                            },
+                            {
+                                path: 'detail',
+                                key: 'static-ssa-risk-detail',
+                                element: <SSARiskDetail />,
+                                name: '风险详情',
+                                hidden: true,
+                                parentpath: '/static-analysis/ssa-risk',
+                            },
+                        ],
                     },
                 ],
             },
