@@ -9,9 +9,6 @@ import type {
     TSSARiskExportData,
     TSSARiskImportResult,
     TSSARiskFilterOptions,
-    TSSARiskAuditInfo,
-    TSSARiskRelatedFiles,
-    TSSARiskFileContent,
 } from './type';
 
 // GET /ssa/risk/filter-options - 获取筛选选项
@@ -104,44 +101,3 @@ export const importSSARisks = async (
         throw error;
     }
 };
-
-// DELETE /ssa/risk/clear - 清空所有 SSA 风险
-export const clearSSARisks = (): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>('/ssa/risk/clear');
-
-// GET /ssa/risk/audit - 获取 SSA 风险审计信息
-export const getSSARiskAudit = (
-    hash: string,
-    signal?: AbortSignal,
-): Promise<ResponseData<TSSARiskAuditInfo>> =>
-    axios.get<never, ResponseData<TSSARiskAuditInfo>>('/ssa/risk/audit', {
-        params: { hash },
-        signal,
-    });
-
-// GET /ssa/risk/audit/files - 获取风险关联的文件列表
-export const getSsaRiskAuditFiles = (
-    hash: string,
-    signal?: AbortSignal,
-): Promise<ResponseData<TSSARiskRelatedFiles>> =>
-    axios.get<never, ResponseData<TSSARiskRelatedFiles>>(
-        '/ssa/risk/audit/files',
-        {
-            params: { hash },
-            signal,
-        },
-    );
-
-// GET /ssa/risk/audit/file/content - 获取指定文件的内容
-export const getSsaRiskFileContent = (
-    hash: string,
-    filePath: string,
-    signal?: AbortSignal,
-): Promise<ResponseData<TSSARiskFileContent>> =>
-    axios.get<never, ResponseData<TSSARiskFileContent>>(
-        '/ssa/risk/audit/file/content',
-        {
-            params: { hash, file_path: filePath },
-            signal,
-        },
-    );

@@ -95,7 +95,6 @@ export interface TSSARiskQueryParams {
     is_read?: boolean;
     ignore?: boolean;
     runtime_id?: string;
-    task_id?: string; // ✅ 新增 task_id 筛选
     result_id?: number;
 }
 
@@ -154,70 +153,4 @@ export interface TSSARiskImportResult {
     skipped?: number;
     failed?: number;
     message?: string;
-}
-
-// 主要文件信息类型（不含完整内容）
-export interface TMainFile {
-    path: string; // 文件路径
-    language: string; // 编程语言
-    line: number; // 代码行号
-}
-
-// 代码范围信息
-export interface TCodeRange {
-    url: string;
-    start_column: number;
-    start_line: number;
-    end_column: number;
-    end_line: number;
-    source_code_start?: number;
-}
-
-// 图节点信息
-export interface TGraphNodeInfo {
-    node_id: string;
-    ir_code: string;
-    source_code: string;
-    source_code_start?: number;
-    code_range?: TCodeRange;
-}
-
-// SSA 风险审计信息类型
-export interface TSSARiskAuditInfo {
-    risk?: TSSARisk; // SSARisk 基本信息
-    node_id?: string; // SSA 节点 ID
-    graph?: string; // 数据流图（DOT 格式）
-    graph_info?: TGraphNodeInfo[]; // 图节点详细信息
-    graph_path?: string; // 审计路径 JSON（[[nodeId1, nodeId2], ...]）
-    message?: string; // 告警信息
-    program_name?: string; // 项目名称（用于后续文件树查询）
-    main_file?: TMainFile; // 主要文件信息（不含完整内容）
-}
-
-// 关联文件信息（后端返回的扁平列表）
-export interface TRelatedFile {
-    name: string; // 文件名
-    path: string; // 完整相对路径（如 src/main/java/XXE.java）
-    size?: number; // 文件大小（字节）
-}
-
-// 关联文件列表响应类型
-export interface TSSARiskRelatedFiles {
-    files?: TRelatedFile[]; // 文件列表
-}
-
-// 文件树节点类型（前端构建目录树用）
-export interface TFileTreeNode {
-    name: string; // 文件/目录名
-    path: string; // 完整路径
-    type: 'file' | 'dir'; // 类型
-    size?: number; // 文件大小（字节）
-    children?: TFileTreeNode[]; // 子节点
-}
-
-// 文件内容类型
-export interface TSSARiskFileContent {
-    path: string; // 文件路径
-    content: string; // 文件内容
-    size?: number; // 文件大小
 }
