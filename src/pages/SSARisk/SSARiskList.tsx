@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     Card,
     Table,
@@ -25,15 +25,12 @@ import {
     exportSSARisks,
     importSSARisks,
     getSSARiskFilterOptions,
-    clearSSARisks,
 } from '@/apis/SSARiskApi';
 import type {
     TSSARisk,
     TSSARiskQueryParams,
     TSSARiskFilterOptions,
 } from '@/apis/SSARiskApi/type';
-
-import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const { Search } = Input;
 
@@ -59,7 +56,6 @@ const severityLabelMap: Record<string, string> = {
 
 const SSARiskList: React.FC = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<TSSARisk[]>([]);
     const [total, setTotal] = useState(0);
@@ -72,14 +68,8 @@ const SSARiskList: React.FC = () => {
         {},
     );
 
-    // 从 URL 参数中读取初始筛选条件
-    const taskIdFromUrl = searchParams.get('task_id');
-    const projectNameFromUrl = searchParams.get('project_name');
-
     // 筛选条件
-    const [filters, setFilters] = useState<TSSARiskQueryParams>({
-        task_id: taskIdFromUrl || undefined,
-    });
+    const [filters, setFilters] = useState<TSSARiskQueryParams>({});
 
     // 加载筛选选项
     const fetchFilterOptions = useCallback(async () => {
@@ -124,16 +114,6 @@ const SSARiskList: React.FC = () => {
         fetchFilterOptions();
     }, [fetchFilterOptions]);
 
-    // ✅ 监听 URL 参数变化，自动更新筛选条件
-    useEffect(() => {
-        if (taskIdFromUrl) {
-            setFilters((prev) => ({
-                ...prev,
-                task_id: taskIdFromUrl,
-            }));
-        }
-    }, [taskIdFromUrl]);
-
     useEffect(() => {
         fetchList(1, 10, filters);
     }, [fetchList, filters]);
@@ -142,30 +122,6 @@ const SSARiskList: React.FC = () => {
         const newPage = pagination.current ?? 1;
         const newLimit = pagination.pageSize ?? 10;
         fetchList(newPage, newLimit, filters);
-    };
-
-    const handleClearAll = async () => {
-        Modal.confirm({
-            title: '确认清空漏洞',
-            content: '确定要清空所有的代码审计漏洞吗？此操作不可恢复。',
-            okText: '确认清空',
-            okType: 'danger',
-            cancelText: '取消',
-            onOk: async () => {
-                try {
-                    setLoading(true);
-                    const res = await clearSSARisks();
-                    if (res) {
-                        message.success('清空成功');
-                        fetchList(1, limit, filters);
-                    }
-                } catch (err) {
-                    message.error('清空失败');
-                } finally {
-                    setLoading(false);
-                }
-            },
-        });
     };
 
     const handleDelete = async (record: TSSARisk) => {
@@ -238,7 +194,7 @@ const SSARiskList: React.FC = () => {
                 console.error('标记已读失败', err);
             }
         }
-        navigate(getRoutePath(RouteKey.SSA_RISK_DETAIL), {
+        navigate('/static-analysis/ssa-risk/detail', {
             state: { id: record.id },
         });
     };
@@ -402,29 +358,16 @@ const SSARiskList: React.FC = () => {
         {
             title: '操作',
             key: 'action',
-            width: 150,
+            width: 80,
             render: (_, record) => (
-                <div style={{ display: 'flex', gap: '4px' }}>
-                    <Button
-                        type="link"
-                        size="small"
-                        onClick={() =>
-                            navigate(
-                                `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?hash=${record.hash}`,
-                            )
-                        }
-                    >
-                        审计
+                <Popconfirm
+                    title="确认删除吗？"
+                    onConfirm={() => handleDelete(record)}
+                >
+                    <Button type="link" size="small" danger>
+                        删除
                     </Button>
-                    <Popconfirm
-                        title="确认删除吗？"
-                        onConfirm={() => handleDelete(record)}
-                    >
-                        <Button type="link" size="small" danger>
-                            删除
-                        </Button>
-                    </Popconfirm>
-                </div>
+                </Popconfirm>
             ),
         },
     ];
@@ -438,16 +381,7 @@ const SSARiskList: React.FC = () => {
         <div className="p-4">
             <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <div className="text-lg font-bold">
-                        <Space>
-                            代码审计风险
-                            {taskIdFromUrl && (
-                                <Tag color="blue">
-                                    任务: {projectNameFromUrl || taskIdFromUrl}
-                                </Tag>
-                            )}
-                        </Space>
-                    </div>
+                    <div className="text-lg font-bold">代码审计风险</div>
                     <Space>
                         <Search
                             placeholder="搜索标题"
@@ -508,14 +442,6 @@ const SSARiskList: React.FC = () => {
                                 导入漏洞
                             </Button>
                         </Upload>
-                        <Button
-                            danger
-                            type="primary"
-                            onClick={handleClearAll}
-                            loading={loading}
-                        >
-                            清空漏洞
-                        </Button>
                     </Space>
                 </div>
 
