@@ -1,2 +1,2 @@
-import { ProjectManagement } from './ProjectManagement';
-export default ProjectManagement;
+export { ProjectManagement } from './ProjectManagement';
+export { ProjectEditor } from './ProjectEditor';
