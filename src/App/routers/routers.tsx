@@ -38,7 +38,8 @@ import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 import CodecEntry from '@/pages/Codec';
 import SpecialTask from '@/pages/SpecialTask';
 import CreateTask from '@/pages/CreateTask';
-import ProjectManagement from '@/pages/ProjecManagement';
+import { ProjectManagement, ProjectEditor } from '@/pages/ProjecManagement';
+import CreateSSAProject from '@/pages/ProjecManagement/CreateSSAProject';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import { SSARiskList, SSARiskDetail } from '@/pages/SSARisk';
@@ -274,7 +275,30 @@ const routers: RouteObjectRootMy[] = [
                         path: 'project-management',
                         name: '项目管理',
                         key: 'static-project',
-                        element: <ProjectManagement />,
+                        children: [
+                            {
+                                index: true,
+                                element: <ProjectManagement />,
+                            },
+                            {
+                                path: 'create',
+                                key: 'static-project-create',
+                                element: <CreateSSAProject />,
+                                name: '新建项目',
+                                hidden: true,
+                                parentpath:
+                                    '/static-analysis/project-management',
+                            },
+                            {
+                                path: 'edit',
+                                key: 'static-project-edit',
+                                element: <ProjectEditor />,
+                                name: '编辑项目',
+                                hidden: true,
+                                parentpath:
+                                    '/static-analysis/project-management',
+                            },
+                        ],
                     },
                     {
                         path: 'rule-management',

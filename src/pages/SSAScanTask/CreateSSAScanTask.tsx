@@ -1,22 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Select, Space, Spin, message } from 'antd';
+import { Button, Card, Form, Input, Select, Space, Spin, message } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
-import { scanSSAProject } from '@/apis/SSAScanTaskApi';
-import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
+import { createSSAScanTask } from '@/apis/SSAScanTaskApi';
+import type { TSSAScanTaskRequest } from '@/apis/SSAScanTaskApi/type';
 import { getSSAProjects } from '@/apis/SSAProjectApi';
 import { getNodeManage } from '@/apis/NodeManageApi';
-import { ROUTES } from '@/utils/routeMap';
-
-interface FormValues {
-    project_id: number;
-    node_id?: string;
-    rule_groups?: string[];
-}
 
 const CreateSSAScanTask = () => {
     const navigate = useNavigate();
-    const [form] = Form.useForm<FormValues>();
+    const [form] = Form.useForm<TSSAScanTaskRequest>();
 
     const { data: projectsData, loading: loadingProjects } = useRequest(
         async () => {
@@ -41,24 +34,15 @@ const CreateSSAScanTask = () => {
     });
 
     const { loading: submitting, runAsync: submitTask } = useRequest(
-        async (values: FormValues) => {
-            const { project_id, node_id, rule_groups } = values;
-            const payload: TSSAScanRequest = {};
-            if (node_id) payload.node_id = node_id;
-            if (rule_groups && rule_groups.length > 0)
-                payload.rule_groups = rule_groups;
-            return scanSSAProject(project_id, payload);
-        },
+        async (payload: TSSAScanTaskRequest) => createSSAScanTask(payload),
         {
             manual: true,
             onSuccess: () => {
-                message.success('扫描任务已创建');
-                navigate(ROUTES.PROJECT_LIST);
+                message.success('任务创建成功');
+                navigate('/static-analysis/project-management'); // Redirect to project list or task list (if we had one)
             },
-            onError: (err: any) => {
-                message.error(
-                    `创建失败: ${err.msg || err.message || '未知错误'}`,
-                );
+            onError: (err) => {
+                message.error(`创建失败: ${err.message || '未知错误'}`);
             },
         },
     );
@@ -73,7 +57,7 @@ const CreateSSAScanTask = () => {
     };
 
     const handleBack = () => {
-        navigate(ROUTES.GO_BACK);
+        navigate(-1);
     };
 
     return (
@@ -105,14 +89,27 @@ const CreateSSAScanTask = () => {
                         layout="vertical"
                         form={form}
                         style={{ maxWidth: 800 }}
+                        initialValues={{
+                            task_name: '',
+                            target_url: '',
+                        }}
                     >
+                        <Form.Item
+                            label="任务名称"
+                            name="task_name"
+                            rules={[
+                                { required: true, message: '请输入任务名称' },
+                            ]}
+                        >
+                            <Input placeholder="请输入任务名称" />
+                        </Form.Item>
+
                         <Form.Item
                             label="关联项目"
                             name="project_id"
                             rules={[
                                 { required: true, message: '请选择关联项目' },
                             ]}
-                            tooltip="选择要扫描的 SSA 项目"
                         >
                             <Select
                                 placeholder="请选择关联项目"
@@ -127,24 +124,36 @@ const CreateSSAScanTask = () => {
                         </Form.Item>
 
                         <Form.Item
+                            label="扫描目标 (Git URL)"
+                            name="target_url"
+                            rules={[
+                                { required: true, message: '请输入 Git URL' },
+                                { type: 'url', message: '请输入有效的 URL' },
+                            ]}
+                            tooltip="请输入 Git 仓库地址，例如：https://github.com/example/repo.git"
+                        >
+                            <Input placeholder="请输入 Git URL" />
+                        </Form.Item>
+
+                        <Form.Item
                             label="规则组"
                             name="rule_groups"
-                            tooltip="选择要使用的规则组，留空则使用所有规则"
+                            tooltip="输入规则组 ID 并回车"
                         >
                             <Select
                                 mode="tags"
-                                placeholder="输入规则组名称（可选）"
+                                placeholder="输入规则组 ID"
                                 notFoundContent={null}
                             />
                         </Form.Item>
 
                         <Form.Item
                             label="执行节点"
-                            name="node_id"
-                            tooltip="指定执行该任务的节点，留空则自动分配"
+                            name="scanner"
+                            tooltip="如果不选择，将自动调度"
                         >
                             <Select
-                                placeholder="请选择执行节点（可选）"
+                                placeholder="请选择执行节点 (可选)"
                                 options={nodesData}
                                 allowClear
                                 showSearch
