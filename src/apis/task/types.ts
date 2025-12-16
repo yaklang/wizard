@@ -58,6 +58,7 @@ type TGetAnalysisScriptReponse = Partial<{
     tags: string[];
     script_name: string;
     target: string[];
+    // prompt_args: Record<string, string>;
 }>;
 
 type TNodeListRequest = Partial<{

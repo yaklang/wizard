@@ -12,7 +12,7 @@ import {
     InputNumber,
 } from 'antd';
 import { match } from 'ts-pattern';
-import { NodeCard } from './NodeCard';
+// import { NodeCard } from './NodeCard';
 import { AddPlugins } from './AddPlugins';
 import { createRules } from '@/utils';
 import {
@@ -32,10 +32,11 @@ import dayjs from 'dayjs';
 import { useMemo, useRef } from 'react';
 import type { ItemType } from 'antd/es/menu/interface';
 import { AddSelectSearch } from './AddSelectSearch';
+import { NodeCard } from './NodeCard';
 
 type PresetKey = keyof typeof PresetPorts;
 
-type TScriptGrounpList = Array<{ value: string; label: string }>;
+export type TScriptGrounpList = Array<{ value: string; label: string }>;
 
 type TCreateTaskItemsProps = (
     title: string,

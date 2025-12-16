@@ -222,6 +222,7 @@ const StartUpScriptModal = forwardRef<
             taskTypeRef.current = values.sched_type;
 
             const resultData = transformFormData(values);
+            console.log(values, resultData, 'data');
 
             pageLoad && (await AddTaskRunAsync(resultData));
 

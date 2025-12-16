@@ -36,6 +36,7 @@ import GlobalReverseLink from '@/pages/ReverseLink';
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
 import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 import CodecEntry from '@/pages/Codec';
+import SpecialTask from '@/pages/SpecialTask';
 import CreateTask from '@/pages/CreateTask';
 
 // 继承路由接口，增加name字段
@@ -64,12 +65,20 @@ const routers: RouteObjectRootMy[] = [
                 icon: <TaskCenterIcon />,
                 children: [
                     {
-                        path: 'create-task',
-                        key: 'create-task',
-                        name: '新建任务',
+                        path: 'new-create-task',
+                        key: 'new-create-task',
+                        name: '新建扫描',
                         element: <CreateTask />,
                         hidden: false,
-                        parentpath: '/task/create-task',
+                        parentpath: '/task/new-create-task',
+                    },
+                    {
+                        path: 'special-task',
+                        key: 'special-task',
+                        name: '专项扫描',
+                        element: <SpecialTask />,
+                        hidden: false,
+                        parentpath: '/task/special-task',
                     },
                     {
                         path: 'task-list',

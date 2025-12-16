@@ -8,9 +8,10 @@ type TScriptGrounpList = Array<{ value: string; label: string }>;
 
 interface AddSelectSearchProps {
     scriptGroupListRef: React.MutableRefObject<TScriptGrounpList | undefined>;
-    scriptGroupList: TScriptGrounpList;
+    scriptGroupList?: TScriptGrounpList;
     onChange?: (value: string | number) => void;
     value?: string | number;
+    loading?: boolean;
 }
 
 const AddSelectSearch: FC<AddSelectSearchProps> = ({
@@ -18,9 +19,10 @@ const AddSelectSearch: FC<AddSelectSearchProps> = ({
     scriptGroupList,
     onChange,
     value,
+    loading = false,
 }) => {
     const [copyScriptGroupList, setCopyScriptGroupList] =
-        useSafeState<TScriptGrounpList>([]);
+        useSafeState<TScriptGrounpList>();
 
     const delayOnSearch = (value: string) => {
         setCopyScriptGroupList((list) => {
@@ -52,6 +54,7 @@ const AddSelectSearch: FC<AddSelectSearchProps> = ({
             showSearch
             optionFilterProp="label"
             value={value}
+            loading={loading}
             onBlur={() => {
                 const targetScriptGroup =
                     scriptGroupListRef.current?.filter((item) => item.label) ??
