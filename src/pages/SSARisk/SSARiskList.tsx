@@ -25,6 +25,7 @@ import {
     exportSSARisks,
     importSSARisks,
     getSSARiskFilterOptions,
+    clearSSARisks,
 } from '@/apis/SSARiskApi';
 import type {
     TSSARisk,
@@ -122,6 +123,30 @@ const SSARiskList: React.FC = () => {
         const newPage = pagination.current ?? 1;
         const newLimit = pagination.pageSize ?? 10;
         fetchList(newPage, newLimit, filters);
+    };
+
+    const handleClearAll = async () => {
+        Modal.confirm({
+            title: '确认清空漏洞',
+            content: '确定要清空所有的代码审计漏洞吗？此操作不可恢复。',
+            okText: '确认清空',
+            okType: 'danger',
+            cancelText: '取消',
+            onOk: async () => {
+                try {
+                    setLoading(true);
+                    const res = await clearSSARisks();
+                    if (res) {
+                        message.success('清空成功');
+                        fetchList(1, limit, filters);
+                    }
+                } catch (err) {
+                    message.error('清空失败');
+                } finally {
+                    setLoading(false);
+                }
+            },
+        });
     };
 
     const handleDelete = async (record: TSSARisk) => {
@@ -442,6 +467,14 @@ const SSARiskList: React.FC = () => {
                                 导入漏洞
                             </Button>
                         </Upload>
+                        <Button
+                            danger
+                            type="primary"
+                            onClick={handleClearAll}
+                            loading={loading}
+                        >
+                            清空漏洞
+                        </Button>
                     </Space>
                 </div>
 
