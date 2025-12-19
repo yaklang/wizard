@@ -101,3 +101,7 @@ export const importSSARisks = async (
         throw error;
     }
 };
+
+// DELETE /ssa/risk/clear - 清空所有 SSA 风险
+export const clearSSARisks = (): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>('/ssa/risk/clear');
