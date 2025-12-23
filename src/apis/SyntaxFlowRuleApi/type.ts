@@ -87,4 +87,20 @@ export type {
     TSyntaxFlowRule,
     TSyntaxFlowRuleRequest,
     TSyntaxFlowRuleListResponse,
+    TAsyncTaskStatusResponse,
+    TAsyncTaskLog,
 };
+
+interface TAsyncTaskLog {
+    level?: string;
+    message?: string;
+    timestamp_nano?: number;
+}
+
+interface TAsyncTaskStatusResponse {
+    is_executing?: boolean;
+    is_finished?: boolean;
+    log?: TAsyncTaskLog[];
+    progress_percent?: number;
+    error?: string;
+}
