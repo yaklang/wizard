@@ -4,6 +4,7 @@ import type {
     TSyntaxFlowRule,
     TSyntaxFlowRuleListResponse,
     TSyntaxFlowRuleRequest,
+    TAsyncTaskStatusResponse,
 } from './type';
 
 // GET /syntaxflow/rule
@@ -72,12 +73,25 @@ const exportSyntaxFlowRules = (params: {
 // POST /syntaxflow/rule/import
 const importSyntaxFlowRules = (
     data: FormData,
-): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>(`/syntaxflow/rule/import`, data, {
+    config?: { onUploadProgress?: (progressEvent: any) => void },
+): Promise<ResponseData<string>> =>
+    axios.post<never, ResponseData<string>>(`/syntaxflow/rule/import`, data, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
+        ...config,
     });
+
+// GET /async/task/status
+const getAsyncTaskStatus = (
+    taskId: string,
+): Promise<ResponseData<TAsyncTaskStatusResponse>> =>
+    axios.get<never, ResponseData<TAsyncTaskStatusResponse>>(
+        `/async/task/status`,
+        {
+            params: { task_id: taskId },
+        },
+    );
 
 export {
     getSyntaxFlowRules,
@@ -86,4 +100,5 @@ export {
     fetchSyntaxFlowRule,
     exportSyntaxFlowRules,
     importSyntaxFlowRules,
+    getAsyncTaskStatus,
 };

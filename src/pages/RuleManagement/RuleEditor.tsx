@@ -10,12 +10,14 @@ import {
     Spin,
     Switch,
     message,
+    Modal,
 } from 'antd';
 import { WizardAceEditor } from '@/compoments';
 import { useRequest } from 'ahooks';
 import {
     fetchSyntaxFlowRule,
     postSyntaxFlowRule,
+    deleteSyntaxFlowRule,
 } from '@/apis/SyntaxFlowRuleApi';
 import type {
     TSyntaxFlowAlertDesc,
@@ -148,6 +150,36 @@ const RuleEditor = () => {
         }
     }, [editorState, form, loadDetail, navigate]);
 
+    const { loading: deleting, runAsync: deleteRule } = useRequest(
+        deleteSyntaxFlowRule,
+        {
+            manual: true,
+            onSuccess: () => {
+                message.success('删除成功');
+                navigate('/static-analysis/rule-management');
+            },
+            onError: () => {
+                message.error('删除失败');
+            },
+        },
+    );
+
+    const handleDelete = () => {
+        Modal.confirm({
+            title: '确认删除该规则？',
+            content: '删除后无法恢复',
+            okText: '删除',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                const params: { rule_id?: string; rule_name?: string } = {};
+                if (editorState.rule_id) params.rule_id = editorState.rule_id;
+                else if (editorState.rule_name)
+                    params.rule_name = editorState.rule_name;
+                await deleteRule(params);
+            },
+        });
+    };
+
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
@@ -188,6 +220,15 @@ const RuleEditor = () => {
                         {editorState.mode === 'edit' ? '编辑规则' : '新建规则'}
                     </div>
                     <Space>
+                        {editorState.mode === 'edit' && (
+                            <Button
+                                danger
+                                onClick={handleDelete}
+                                loading={deleting}
+                            >
+                                删除
+                            </Button>
+                        )}
                         <Button onClick={() => navigate(-1)}>返回</Button>
                         <Button
                             type="primary"
