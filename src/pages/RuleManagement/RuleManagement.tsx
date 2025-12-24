@@ -46,6 +46,7 @@ import {
     deleteSyntaxFlowRule,
     exportSyntaxFlowRules,
     importSyntaxFlowRules,
+    createRuleSnapshot,
 } from '@/apis/SyntaxFlowRuleApi';
 import type { TSyntaxFlowRule } from '@/apis/SyntaxFlowRuleApi/type';
 
@@ -264,6 +265,28 @@ const RuleManagement: React.FC = () => {
         });
     };
 
+    const handlePublishSnapshot = async () => {
+        Modal.confirm({
+            title: '发布规则快照',
+            content: '将当前所有规则发布为快照，供扫描节点同步使用。确认发布？',
+            okText: '发布',
+            onOk: async () => {
+                try {
+                    const res = await createRuleSnapshot();
+                    if (res.code === 200 && res.data) {
+                        message.success(
+                            `快照发布成功！版本: ${res.data.version}, 规则数: ${res.data.rule_count}`,
+                        );
+                    } else {
+                        message.error(res.msg || '发布失败');
+                    }
+                } catch (err) {
+                    message.error('发布快照出错');
+                }
+            },
+        });
+    };
+
     const handleEdit = (record: TSyntaxFlowRule) => {
         if (!record.rule_id && !record.rule_name) {
             message.warning('该规则缺少唯一标识，无法编辑');
@@ -410,6 +433,17 @@ const RuleManagement: React.FC = () => {
                             </Button>
                             <Button danger onClick={handleClearRules}>
                                 清空规则
+                            </Button>
+                            <Button
+                                type="default"
+                                style={{
+                                    backgroundColor: '#52c41a',
+                                    borderColor: '#52c41a',
+                                    color: '#fff',
+                                }}
+                                onClick={handlePublishSnapshot}
+                            >
+                                发布快照
                             </Button>
                             <Button type="primary" onClick={handleCreate}>
                                 新增规则
