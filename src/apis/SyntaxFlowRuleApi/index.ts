@@ -93,6 +93,17 @@ const getAsyncTaskStatus = (
         },
     );
 
+// POST /syntaxflow/rules/snapshot - 创建规则快照（发布给节点同步）
+const createRuleSnapshot = (
+    note?: string,
+): Promise<
+    ResponseData<{ version: string; hash: string; rule_count: number }>
+> =>
+    axios.post<
+        never,
+        ResponseData<{ version: string; hash: string; rule_count: number }>
+    >(`/syntaxflow/rules/snapshot`, { note });
+
 export {
     getSyntaxFlowRules,
     postSyntaxFlowRule,
@@ -101,4 +112,5 @@ export {
     exportSyntaxFlowRules,
     importSyntaxFlowRules,
     getAsyncTaskStatus,
+    createRuleSnapshot,
 };
