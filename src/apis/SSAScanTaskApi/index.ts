@@ -1,11 +1,15 @@
 import axios from '@/utils/axios';
 import type { ResponseData } from '@/utils/commonTypes';
-import type { TSSAScanTask, TSSAScanTaskRequest } from './type';
+import type { TSSAScanRequest, TSSATaskResponse } from './type';
 
-// POST /ssa-tasks/create
-const createSSAScanTask = (
-    data: TSSAScanTaskRequest,
-): Promise<ResponseData<TSSAScanTask>> =>
-    axios.post<never, ResponseData<TSSAScanTask>>(`/ssa-tasks/create`, data);
+// POST /ssa/project/{id}/scan
+const scanSSAProject = (
+    projectId: number,
+    data?: TSSAScanRequest,
+): Promise<ResponseData<TSSATaskResponse>> =>
+    axios.post<never, ResponseData<TSSATaskResponse>>(
+        `/ssa/project/${projectId}/scan`,
+        data || {},
+    );
 
-export { createSSAScanTask };
+export { scanSSAProject };
