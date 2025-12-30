@@ -14,7 +14,7 @@ import {
 import { PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
-import { createSSAScanTask } from '@/apis/SSAScanTaskApi';
+import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 
 const { Search } = Input;
@@ -163,11 +163,9 @@ const ProjectManagement: React.FC = () => {
     const handleScan = async (record: TSSAProject) => {
         if (!record.id) return;
         try {
-            await createSSAScanTask({
-                task_name: '', // Backend will generate
-                project_id: record.id,
-                target_url: '', // Backend will fetch
-                rule_groups: [], // Optional
+            await scanSSAProject(record.id, {
+                // node_id 可选，不传则由后端自动分配
+                // rule_groups 可选，使用默认规则集
             });
             message.success('扫描任务已创建');
         } catch (err: any) {

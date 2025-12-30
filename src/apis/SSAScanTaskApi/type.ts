@@ -1,15 +1,11 @@
-export interface TSSAScanTaskRequest {
-    task_name: string;
-    project_id?: number | null;
-    target_url: string;
+// SSA 扫描请求参数
+export interface TSSAScanRequest {
     rule_groups?: string[];
-    scanner?: string;
+    node_id?: string;
 }
 
-export interface TSSAScanTask {
+// SSA 任务响应
+export interface TSSATaskResponse {
     task_id: string;
-    task_name: string;
     status: string;
-    target_url: string;
-    created_at: number;
 }
