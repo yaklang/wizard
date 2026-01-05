@@ -266,7 +266,7 @@ const ProjectManagement: React.FC = () => {
         {
             title: '操作',
             key: 'action',
-            width: 200,
+            width: 280,
             fixed: 'right',
             render: (_, record) => (
                 <Space>
@@ -277,6 +277,16 @@ const ProjectManagement: React.FC = () => {
                         onClick={() => handleScan(record)}
                     >
                         扫描
+                    </Button>
+                    <Button
+                        size="small"
+                        onClick={() =>
+                            navigate(
+                                `/static-analysis/task-list?project_id=${record.id}`,
+                            )
+                        }
+                    >
+                        查看任务
                     </Button>
                     <Button size="small" onClick={() => handleEdit(record)}>
                         编辑
