@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Card,
     Table,
@@ -56,6 +56,7 @@ const severityLabelMap: Record<string, string> = {
 
 const SSARiskList: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<TSSARisk[]>([]);
     const [total, setTotal] = useState(0);
@@ -68,8 +69,14 @@ const SSARiskList: React.FC = () => {
         {},
     );
 
+    // 从 URL 参数中读取初始筛选条件
+    const taskIdFromUrl = searchParams.get('task_id');
+    const projectNameFromUrl = searchParams.get('project_name');
+
     // 筛选条件
-    const [filters, setFilters] = useState<TSSARiskQueryParams>({});
+    const [filters, setFilters] = useState<TSSARiskQueryParams>({
+        task_id: taskIdFromUrl || undefined,
+    });
 
     // 加载筛选选项
     const fetchFilterOptions = useCallback(async () => {
@@ -113,6 +120,16 @@ const SSARiskList: React.FC = () => {
     useEffect(() => {
         fetchFilterOptions();
     }, [fetchFilterOptions]);
+
+    // ✅ 监听 URL 参数变化，自动更新筛选条件
+    useEffect(() => {
+        if (taskIdFromUrl) {
+            setFilters((prev) => ({
+                ...prev,
+                task_id: taskIdFromUrl,
+            }));
+        }
+    }, [taskIdFromUrl]);
 
     useEffect(() => {
         fetchList(1, 10, filters);
@@ -381,7 +398,16 @@ const SSARiskList: React.FC = () => {
         <div className="p-4">
             <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <div className="text-lg font-bold">代码审计风险</div>
+                    <div className="text-lg font-bold">
+                        <Space>
+                            代码审计风险
+                            {taskIdFromUrl && (
+                                <Tag color="blue">
+                                    任务: {projectNameFromUrl || taskIdFromUrl}
+                                </Tag>
+                            )}
+                        </Space>
+                    </div>
                     <Space>
                         <Search
                             placeholder="搜索标题"
