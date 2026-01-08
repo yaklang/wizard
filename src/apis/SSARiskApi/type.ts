@@ -155,3 +155,43 @@ export interface TSSARiskImportResult {
     failed?: number;
     message?: string;
 }
+
+// 代码文件类型
+export interface TCodeFile {
+    path: string;
+    content: string;
+    language: string;
+}
+
+// SSA 风险审计信息类型
+export interface TSSARiskAuditInfo {
+    risk?: TSSARisk; // SSARisk 基本信息
+    node_id?: string; // SSA 节点 ID
+    graph?: string; // 数据流图（DOT 格式）
+    graph_info?: any; // 图信息（JSON）
+    graph_path?: string; // 审计路径
+    message?: string; // 告警信息
+    code_files?: TCodeFile[]; // 相关代码文件
+}
+
+// 文件树项类型
+export interface TFileTreeItem {
+    name: string; // 文件/目录名
+    path: string; // 完整路径
+    type: 'file' | 'dir'; // 类型
+    size?: number; // 文件大小
+    children?: TFileTreeItem[]; // 子项（用于前端构建树）
+}
+
+// 文件树响应类型
+export interface TSSARiskFileTree {
+    items?: TFileTreeItem[]; // 文件/目录列表
+}
+
+// 文件内容类型
+export interface TSSARiskFileContent {
+    path: string; // 文件路径
+    content: string; // 文件内容
+    language: string; // 编程语言
+    size?: number; // 文件大小
+}

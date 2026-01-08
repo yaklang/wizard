@@ -400,16 +400,29 @@ const SSARiskList: React.FC = () => {
         {
             title: '操作',
             key: 'action',
-            width: 80,
+            width: 150,
             render: (_, record) => (
-                <Popconfirm
-                    title="确认删除吗？"
-                    onConfirm={() => handleDelete(record)}
-                >
-                    <Button type="link" size="small" danger>
-                        删除
+                <div style={{ display: 'flex', gap: '4px' }}>
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() =>
+                            navigate(
+                                `/static-analysis/ssa-risk/audit?hash=${record.hash}`,
+                            )
+                        }
+                    >
+                        审计
                     </Button>
-                </Popconfirm>
+                    <Popconfirm
+                        title="确认删除吗？"
+                        onConfirm={() => handleDelete(record)}
+                    >
+                        <Button type="link" size="small" danger>
+                            删除
+                        </Button>
+                    </Popconfirm>
+                </div>
             ),
         },
     ];

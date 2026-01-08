@@ -39,10 +39,9 @@
         overflow: hidden;
         min-height: 0;
 
-        // 左侧文件树 - 参考 YakRunner FileTree 组件样式
+        // 左侧文件树
         .file-tree-panel {
             width: 280px;
-            min-width: 200px;
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
@@ -54,128 +53,25 @@
 
                 .ant-card-head {
                     flex-shrink: 0;
-                    padding: 0 12px;
-                    min-height: 36px;
-                    border-bottom: 1px solid #f0f0f0;
-                    
-                    .ant-card-head-title {
-                        font-size: 13px;
-                        font-weight: 500;
-                        padding: 8px 0;
-                    }
                 }
 
                 .ant-card-body {
                     flex: 1;
                     overflow-y: auto;
-                    overflow-x: hidden;
-                    padding: 4px 0 4px 4px;
+                    padding: 12px;
 
                     &::-webkit-scrollbar {
                         width: 6px;
                     }
 
                     &::-webkit-scrollbar-thumb {
-                        background: #e8e8e8;
+                        background: #d9d9d9;
                         border-radius: 3px;
 
                         &:hover {
-                            background: #d9d9d9;
+                            background: #bfbfbf;
                         }
                     }
-
-                    // 隐藏原生 Tree 样式，使用自定义节点
-                    .ant-tree {
-                        background: transparent;
-                        
-                        .ant-tree-indent-unit {
-                            width: 0;
-                        }
-                        
-                        .ant-tree-switcher {
-                            display: none;
-                        }
-                        
-                        .ant-tree-treenode {
-                            padding: 0;
-                            background: transparent;
-                        }
-                        
-                        .ant-tree-node-content-wrapper {
-                            padding: 0;
-                            min-height: auto;
-                            line-height: normal;
-                            border-radius: 0;
-                            background: transparent !important;
-                            
-                            &:hover {
-                                background: transparent !important;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 自定义文件树节点
-            .file-tree-node {
-                display: flex;
-                align-items: center;
-                padding: 3px 8px 3px 8px;
-                cursor: pointer;
-                gap: 2px;
-                border-radius: 4px;
-                margin-right: 4px;
-
-                &:hover {
-                    background-color: #f5f5f5;
-                }
-
-                &.node-selected {
-                    background-color: #e6f4ff;
-                    border: 1px solid #1890ff;
-                    padding: 2px 7px 2px 7px;
-                }
-
-                .node-switcher {
-                    width: 16px;
-                    height: 16px;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    flex-shrink: 0;
-                    
-                    svg {
-                        width: 12px;
-                        height: 12px;
-                        color: #8c8c8c;
-                        transition: transform 0.2s;
-                    }
-                    
-                    &.expanded svg {
-                        transform: rotate(90deg);
-                    }
-                }
-
-                .node-icon {
-                    width: 16px;
-                    height: 16px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-shrink: 0;
-                    margin-right: 6px;
-                    font-size: 14px;
-                }
-
-                .node-name {
-                    flex: 1;
-                    font-size: 12px;
-                    font-weight: 500;
-                    line-height: 16px;
-                    color: #262626;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
                 }
             }
 
@@ -183,7 +79,6 @@
                 text-align: center;
                 padding: 40px 0;
                 color: #999;
-                font-size: 13px;
             }
         }
 
@@ -214,22 +109,9 @@
                     .ant-card-body {
                         flex: 1;
                         padding: 0;
-                        overflow: auto;
-
-                        // 覆盖 YakCodemirror 的高度限制
-                        > div {
-                            height: 100%;
-                            
-                            .CodeMirror {
-                                height: auto !important;
-                                max-height: none !important;
-                                min-height: 100%;
-                            }
-                            
-                            .CodeMirror-scroll {
-                                overflow: auto !important;
-                            }
-                        }
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
                     }
                 }
 
@@ -395,41 +277,47 @@
                             margin-bottom: 0;
                         }
                     }
+
+                    .graph-path-section {
+                        margin-top: 8px;
+
+                        .path-list {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+                        }
+
+                        .path-item {
+                            padding: 8px;
+                            background: #fafafa;
+                            border-radius: 4px;
+                            border: 1px solid #f0f0f0;
+
+                            .path-nodes {
+                                margin-top: 8px;
+                                padding: 8px;
+                                background: #fff;
+                                border-radius: 4px;
+                                font-size: 12px;
+                                line-height: 1.8;
+                                word-break: break-all;
+                            }
+                        }
+                    }
                 }
             }
 
-            // 下栏：数据流图 - 新样式
+            // 下栏：数据流图
             .dataflow-graph-panel {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
-                min-height: 300px;
+                min-height: 0;
 
                 .panel-card {
                     height: 100%;
                     display: flex;
                     flex-direction: column;
-
-                    .ant-card-head-title {
-                        .graph-card-title {
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-
-                            .help-icon {
-                                display: inline-flex;
-                                align-items: center;
-                                justify-content: center;
-                                width: 16px;
-                                height: 16px;
-                                background: #e6e6e6;
-                                color: #666;
-                                border-radius: 50%;
-                                font-size: 10px;
-                                cursor: help;
-                            }
-                        }
-                    }
 
                     .ant-card-body {
                         flex: 1;
@@ -440,46 +328,28 @@
 
                 .dataflow-graph-content {
                     height: 100%;
-                    position: relative;
-                    overflow: hidden;
-                    background: #fafafa;
+                    overflow: auto;
 
-                    .svg-container {
-                        width: 100%;
-                        height: 100%;
-                        overflow: hidden;
-                        cursor: grab;
+                    .graph-content {
+                        background: #f5f5f5;
+                        padding: 12px;
+                        font-size: 12px;
+                        font-family: 'Courier New', 'Consolas', monospace;
+                        white-space: pre;
+                        line-height: 1.5;
+                        margin: 0;
+                        min-height: 100%;
 
-                        &:active {
-                            cursor: grabbing;
+                        &::-webkit-scrollbar {
+                            width: 6px;
+                            height: 6px;
                         }
 
-                        svg {
-                            display: block;
-                            transition: transform 0.1s ease-out;
-
-                            // 节点样式
-                            g.node {
-                                cursor: pointer;
-
-                                &:hover {
-                                    ellipse, polygon {
-                                        stroke: #1890ff;
-                                        stroke-width: 2px;
-                                    }
-                                }
-
-                                &.selected-node {
-                                    ellipse, polygon {
-                                        stroke: #1890ff;
-                                        stroke-width: 3px;
-                                        fill: #e6f7ff;
-                                    }
-                                }
-                            }
+                        &::-webkit-scrollbar-thumb {
+                            background: #bfbfbf;
+                            border-radius: 3px;
                         }
                     }
-
                 }
             }
 
@@ -499,88 +369,6 @@
             align-items: center;
             color: #999;
             font-size: 14px;
-        }
-    }
-
-    // 路径节点列表样式 - 放在顶层确保生效
-    .path-nodes {
-        border: 1px solid #e8e8e8;
-        border-radius: 6px;
-        overflow: hidden;
-        margin-top: 8px;
-        
-        .path-node {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: all 0.15s;
-            gap: 10px;
-            border-bottom: 1px solid #f0f0f0;
-            background: #fff;
-            
-            &:last-child {
-                border-bottom: none;
-            }
-            
-            &:nth-child(odd) {
-                background: #fafafa;
-            }
-            
-            &:hover {
-                background: #e6f7ff;
-            }
-            
-            &.selected {
-                background: #bae7ff;
-                
-                .node-index {
-                    background: #1890ff;
-                    color: #fff;
-                }
-            }
-            
-            .node-index {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                min-width: 20px;
-                height: 20px;
-                background: #d9d9d9;
-                color: #595959;
-                border-radius: 50%;
-                font-size: 11px;
-                font-weight: 600;
-                flex-shrink: 0;
-            }
-            
-            .node-ir {
-                flex: 1;
-                min-width: 0;
-                font-family: 'SF Mono', Consolas, 'Courier New', monospace;
-                font-size: 13px;
-                color: #1f1f1f;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                font-weight: 500;
-            }
-            
-            .node-file {
-                flex-shrink: 0;
-                padding: 3px 8px;
-                background: #f6ffed;
-                border: 1px solid #b7eb8f;
-                border-radius: 4px;
-                font-size: 11px;
-                color: #389e0d;
-                white-space: nowrap;
-                font-weight: 500;
-                
-                &:hover {
-                    background: #d9f7be;
-                }
-            }
         }
     }
 }
