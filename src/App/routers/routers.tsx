@@ -43,6 +43,7 @@ import CreateSSAProject from '@/pages/ProjecManagement/CreateSSAProject';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import { SSARiskList, SSARiskDetail } from '@/pages/SSARisk';
+import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
 
 // 继承路由接口，增加name字段
@@ -334,6 +335,14 @@ const routers: RouteObjectRootMy[] = [
                                 key: 'static-ssa-risk-detail',
                                 element: <SSARiskDetail />,
                                 name: '风险详情',
+                                hidden: true,
+                                parentpath: '/static-analysis/ssa-risk',
+                            },
+                            {
+                                path: 'audit',
+                                key: 'static-ssa-risk-audit',
+                                element: <SSARiskAudit />,
+                                name: '风险审计',
                                 hidden: true,
                                 parentpath: '/static-analysis/ssa-risk',
                             },
