@@ -6,7 +6,6 @@ import {
     CloseCircleIcon,
     ExclamationOutlineIcon,
 } from '@/assets/newIcon';
-import '../theme/componentsTheme/notification.scss';
 
 export const warn = (msg: React.ReactNode) => {
     yakitNotify('warning', msg);
