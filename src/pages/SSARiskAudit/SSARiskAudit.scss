@@ -1,0 +1,374 @@
+.ssa-risk-audit-loading {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.ssa-risk-audit-empty {
+    text-align: center;
+    padding: 60px 0;
+    color: #999;
+    font-size: 16px;
+}
+
+.ssa-risk-audit {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f0f2f5;
+    padding: 16px;
+    overflow: hidden;
+
+    .audit-header {
+        margin-bottom: 16px;
+        flex-shrink: 0;
+
+        .risk-meta {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+        }
+    }
+
+    .audit-content {
+        flex: 1;
+        display: flex;
+        gap: 12px;
+        overflow: hidden;
+        min-height: 0;
+
+        // 左侧文件树
+        .file-tree-panel {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+
+            .panel-card {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+
+                .ant-card-head {
+                    flex-shrink: 0;
+                }
+
+                .ant-card-body {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 12px;
+
+                    &::-webkit-scrollbar {
+                        width: 6px;
+                    }
+
+                    &::-webkit-scrollbar-thumb {
+                        background: #d9d9d9;
+                        border-radius: 3px;
+
+                        &:hover {
+                            background: #bfbfbf;
+                        }
+                    }
+                }
+            }
+
+            .empty {
+                text-align: center;
+                padding: 40px 0;
+                color: #999;
+            }
+        }
+
+        // 中间面板（代码编辑器 + 详情处置）
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+            overflow: hidden;
+
+            // 代码编辑器
+            .code-editor-panel {
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: column;
+
+                .panel-card {
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+
+                    .ant-card-head {
+                        flex-shrink: 0;
+                    }
+
+                    .ant-card-body {
+                        flex: 1;
+                        padding: 0;
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                }
+
+                .code-fallback {
+                    height: 100%;
+                    overflow: auto;
+                    background: #1e1e1e;
+
+                    pre {
+                        margin: 0;
+                        padding: 16px;
+                        color: #d4d4d4;
+                        font-size: 14px;
+                        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                        line-height: 1.6;
+                    }
+                }
+
+                .empty {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100%;
+                    color: #999;
+                    font-size: 16px;
+                }
+            }
+
+            // 详情和处置面板
+            .detail-dispose-panel {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+
+                .panel-card {
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+
+                    .ant-card-body {
+                        flex: 1;
+                        overflow-y: auto;
+                        padding: 16px;
+
+                        &::-webkit-scrollbar {
+                            width: 6px;
+                        }
+
+                        &::-webkit-scrollbar-thumb {
+                            background: #d9d9d9;
+                            border-radius: 3px;
+
+                            &:hover {
+                                background: #bfbfbf;
+                            }
+                        }
+                    }
+                }
+
+                // Tab 内容样式
+                .detail-tab-content,
+                .dispose-tab-content {
+                    .ant-typography {
+                        margin-bottom: 8px;
+                    }
+
+                    .info-section {
+                        margin-bottom: 16px;
+                    }
+
+                    .description-section,
+                    .solution-section {
+                        margin-bottom: 16px;
+
+                        h5 {
+                            margin-bottom: 12px;
+                            font-size: 14px;
+                            font-weight: 600;
+                        }
+                    }
+
+                    .ant-form-item:last-child {
+                        margin-bottom: 0;
+                    }
+
+                    // 处置选项样式
+                    .ant-radio-wrapper {
+                        display: flex;
+                        align-items: center;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        transition: all 0.3s;
+
+                        &:hover {
+                            background: #f5f5f5;
+                        }
+
+                        .ant-tag {
+                            margin-right: 8px;
+                        }
+                    }
+
+                    .ant-radio-wrapper-checked {
+                        background: #e6f7ff;
+                        border: 1px solid #1890ff;
+                    }
+                }
+            }
+        }
+
+        // 右侧面板（审计结果 + 数据流图）
+        .right-panel {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+            overflow: hidden;
+
+            // 上栏：审计结果
+            .audit-result-panel {
+                height: 280px;
+                display: flex;
+                flex-direction: column;
+                flex-shrink: 0;
+
+                .panel-card {
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+
+                    .ant-card-body {
+                        flex: 1;
+                        overflow-y: auto;
+                        padding: 16px;
+
+                        &::-webkit-scrollbar {
+                            width: 6px;
+                        }
+
+                        &::-webkit-scrollbar-thumb {
+                            background: #d9d9d9;
+                            border-radius: 3px;
+
+                            &:hover {
+                                background: #bfbfbf;
+                            }
+                        }
+                    }
+                }
+
+                .audit-result-content {
+                    .result-item {
+                        margin-bottom: 16px;
+
+                        &:last-child {
+                            margin-bottom: 0;
+                        }
+
+                        .ant-typography-paragraph {
+                            margin-top: 8px;
+                            margin-bottom: 0;
+                        }
+                    }
+
+                    .graph-path-section {
+                        margin-top: 8px;
+
+                        .path-list {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+                        }
+
+                        .path-item {
+                            padding: 8px;
+                            background: #fafafa;
+                            border-radius: 4px;
+                            border: 1px solid #f0f0f0;
+
+                            .path-nodes {
+                                margin-top: 8px;
+                                padding: 8px;
+                                background: #fff;
+                                border-radius: 4px;
+                                font-size: 12px;
+                                line-height: 1.8;
+                                word-break: break-all;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 下栏：数据流图
+            .dataflow-graph-panel {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+
+                .panel-card {
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+
+                    .ant-card-body {
+                        flex: 1;
+                        overflow: hidden;
+                        padding: 0;
+                    }
+                }
+
+                .dataflow-graph-content {
+                    height: 100%;
+                    overflow: auto;
+
+                    .graph-content {
+                        background: #f5f5f5;
+                        padding: 12px;
+                        font-size: 12px;
+                        font-family: 'Courier New', 'Consolas', monospace;
+                        white-space: pre;
+                        line-height: 1.5;
+                        margin: 0;
+                        min-height: 100%;
+
+                        &::-webkit-scrollbar {
+                            width: 6px;
+                            height: 6px;
+                        }
+
+                        &::-webkit-scrollbar-thumb {
+                            background: #bfbfbf;
+                            border-radius: 3px;
+                        }
+                    }
+                }
+            }
+
+            .empty {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 40px 20px;
+                color: #999;
+                text-align: center;
+            }
+        }
+
+        .empty {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #999;
+            font-size: 14px;
+        }
+    }
+}
