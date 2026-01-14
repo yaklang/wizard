@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Card,
@@ -17,7 +17,18 @@ import {
     Tree,
     Tabs,
 } from 'antd';
-import { FileOutlined, CheckOutlined } from '@ant-design/icons';
+import {
+    CheckOutlined,
+    RightOutlined,
+    FileOutlined,
+    FolderOutlined,
+    FolderOpenOutlined,
+    FileTextOutlined,
+    SettingOutlined,
+    CodeOutlined,
+    Html5Outlined,
+    FileMarkdownOutlined,
+} from '@ant-design/icons';
 import {
     getSSARiskAudit,
     getSsaRiskAuditFiles,
@@ -26,11 +37,11 @@ import {
 } from '@/apis/SSARiskApi';
 import type {
     TSSARiskAuditInfo,
-    TFileTreeItem,
+    TRelatedFile,
+    TFileTreeNode,
     TSSARiskFileContent,
 } from '@/apis/SSARiskApi/type';
-import MonacoEditor from 'react-monaco-editor';
-import '@/utils/monacoSpec/theme';
+import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
 import './SSARiskAudit.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -80,7 +91,8 @@ const SSARiskAudit: React.FC = () => {
 
     const [loading, setLoading] = useState(false);
     const [auditInfo, setAuditInfo] = useState<TSSARiskAuditInfo | null>(null);
-    const [fileTree, setFileTree] = useState<TFileTreeItem[]>([]);
+    const [fileTree, setFileTree] = useState<TFileTreeNode[]>([]);
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [selectedFilePath, setSelectedFilePath] = useState<string>('');
     const [fileContent, setFileContent] = useState<TSSARiskFileContent | null>(
         null,
@@ -88,6 +100,98 @@ const SSARiskAudit: React.FC = () => {
     const [loadingFile, setLoadingFile] = useState(false);
     const [disposing, setDisposing] = useState(false);
     const editorHeight = 400;
+
+    // 从扁平文件列表构建目录树
+    const buildFileTree = (files: TRelatedFile[]): TFileTreeNode[] => {
+        const root: { [key: string]: TFileTreeNode } = {};
+
+        files.forEach((file) => {
+            const parts = file.path.split('/');
+            let current = root;
+
+            parts.forEach((part, index) => {
+                const isFile = index === parts.length - 1;
+                const currentPath = parts.slice(0, index + 1).join('/');
+
+                if (!current[part]) {
+                    current[part] = {
+                        name: part,
+                        path: currentPath,
+                        type: isFile ? 'file' : 'dir',
+                        size: isFile ? file.size : undefined,
+                        children: isFile ? undefined : [],
+                    };
+                }
+
+                if (!isFile) {
+                    // 进入子目录
+                    const children = current[part].children || [];
+                    const childMap: { [key: string]: TFileTreeNode } = {};
+                    children.forEach((child) => {
+                        childMap[child.name] = child;
+                    });
+                    current = childMap;
+                    // 更新 children
+                    current[part] = current[part] || {
+                        name: parts[index + 1],
+                        path: parts.slice(0, index + 2).join('/'),
+                        type: index + 1 === parts.length - 1 ? 'file' : 'dir',
+                        children: [],
+                    };
+                }
+            });
+        });
+
+        // 直接从文件列表构建
+        const treeMap = new Map<string, TFileTreeNode>();
+
+        files.forEach((file) => {
+            const parts = file.path.split('/');
+            let currentPath = '';
+
+            parts.forEach((part, index) => {
+                const isFile = index === parts.length - 1;
+                currentPath = currentPath ? `${currentPath}/${part}` : part;
+
+                if (!treeMap.has(currentPath)) {
+                    treeMap.set(currentPath, {
+                        name: part,
+                        path: currentPath,
+                        type: isFile ? 'file' : 'dir',
+                        size: isFile ? file.size : undefined,
+                        children: isFile ? undefined : [],
+                    });
+                }
+
+                // 添加到父节点的 children
+                if (index > 0) {
+                    const parentPath = parts.slice(0, index).join('/');
+                    const parent = treeMap.get(parentPath);
+                    if (parent && parent.children) {
+                        const child = treeMap.get(currentPath)!;
+                        if (
+                            !parent.children.find((c) => c.path === child.path)
+                        ) {
+                            parent.children.push(child);
+                        }
+                    }
+                }
+            });
+        });
+
+        // 返回根级节点
+        const rootNodes: TFileTreeNode[] = [];
+        treeMap.forEach((node, path) => {
+            if (!path.includes('/')) {
+                rootNodes.push(node);
+            }
+        });
+
+        return rootNodes.sort((a, b) => {
+            if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+            return a.name.localeCompare(b.name);
+        });
+    };
 
     const fetchAuditInfo = async () => {
         if (!hash) {
@@ -113,18 +217,36 @@ const SSARiskAudit: React.FC = () => {
         }
     };
 
-    // 获取文件树
+    // 获取文件列表并构建树
     const fetchFileTree = async () => {
         if (!hash) return;
 
         try {
             const res = await getSsaRiskAuditFiles(hash);
-            if (res?.data?.items) {
-                setFileTree(res.data.items);
+            if (res?.data?.files && res.data.files.length > 0) {
+                // 从扁平列表构建目录树
+                const tree = buildFileTree(res.data.files);
+                setFileTree(tree);
+
+                // 收集所有目录的 key 用于默认展开
+                const collectDirKeys = (nodes: TFileTreeNode[]): string[] => {
+                    let keys: string[] = [];
+                    nodes.forEach((node) => {
+                        if (node.type === 'dir') {
+                            keys.push(node.path);
+                            if (node.children) {
+                                keys = keys.concat(
+                                    collectDirKeys(node.children),
+                                );
+                            }
+                        }
+                    });
+                    return keys;
+                };
+                setExpandedKeys(collectDirKeys(tree));
+
                 // 默认选中第一个文件
-                const firstFile = res.data.items.find(
-                    (item) => item.type === 'file',
-                );
+                const firstFile = res.data.files[0];
                 if (firstFile) {
                     setSelectedFilePath(firstFile.path);
                     fetchFileContent(firstFile.path);
@@ -139,30 +261,36 @@ const SSARiskAudit: React.FC = () => {
     };
 
     // 获取文件内容
-    const fetchFileContent = async (filePath: string) => {
-        if (!hash || !filePath) return;
+    const fetchFileContent = useCallback(
+        async (filePath: string) => {
+            if (!hash || !filePath) return;
 
-        setLoadingFile(true);
-        try {
-            const res = await getSsaRiskFileContent(hash, filePath);
-            if (res?.data) {
-                setFileContent(res.data);
+            setLoadingFile(true);
+            try {
+                const res = await getSsaRiskFileContent(hash, filePath);
+                if (res?.data) {
+                    setFileContent(res.data);
+                }
+            } catch (err: any) {
+                console.error('Failed to fetch file content:', err);
+                message.error(
+                    `加载文件内容失败: ${err.message || '请检查后端接口'}`,
+                );
+            } finally {
+                setLoadingFile(false);
             }
-        } catch (err: any) {
-            console.error('Failed to fetch file content:', err);
-            message.error(
-                `加载文件内容失败: ${err.message || '请检查后端接口'}`,
-            );
-        } finally {
-            setLoadingFile(false);
-        }
-    };
+        },
+        [hash],
+    );
 
     // 处理文件选择
-    const handleFileSelect = (filePath: string) => {
-        setSelectedFilePath(filePath);
-        fetchFileContent(filePath);
-    };
+    const handleFileSelect = useCallback(
+        (filePath: string) => {
+            setSelectedFilePath(filePath);
+            fetchFileContent(filePath);
+        },
+        [fetchFileContent],
+    );
 
     useEffect(() => {
         console.log('Component mounted, hash:', hash);
@@ -200,16 +328,136 @@ const SSARiskAudit: React.FC = () => {
         }
     };
 
-    // 构建 Ant Design Tree 数据
-    const buildTreeData = (items: TFileTreeItem[]) => {
-        return items.map((item) => ({
-            title: item.name,
-            key: item.path,
-            icon: item.type === 'file' ? <FileOutlined /> : null,
-            isLeaf: item.type === 'file',
-            data: item,
+    // 根据文件扩展名获取图标和颜色
+    const getFileIconConfig = useCallback(
+        (
+            fileName: string,
+            isFolder: boolean,
+            isExpanded: boolean,
+        ): { icon: React.ReactNode; color: string } => {
+            if (isFolder) {
+                return isExpanded
+                    ? { icon: <FolderOpenOutlined />, color: '#faad14' }
+                    : { icon: <FolderOutlined />, color: '#faad14' };
+            }
+
+            const ext = fileName.split('.').pop()?.toLowerCase() || '';
+
+            // 根据扩展名返回对应图标和颜色
+            const iconMap: Record<
+                string,
+                { icon: React.ReactNode; color: string }
+            > = {
+                java: { icon: <CodeOutlined />, color: '#e76f00' },
+                class: { icon: <CodeOutlined />, color: '#5382a1' },
+                jar: { icon: <CodeOutlined />, color: '#e76f00' },
+                js: { icon: <CodeOutlined />, color: '#f7df1e' },
+                ts: { icon: <CodeOutlined />, color: '#3178c6' },
+                tsx: { icon: <CodeOutlined />, color: '#61dafb' },
+                jsx: { icon: <CodeOutlined />, color: '#61dafb' },
+                py: { icon: <CodeOutlined />, color: '#3776ab' },
+                go: { icon: <CodeOutlined />, color: '#00add8' },
+                rs: { icon: <CodeOutlined />, color: '#dea584' },
+                c: { icon: <CodeOutlined />, color: '#555555' },
+                cpp: { icon: <CodeOutlined />, color: '#00599c' },
+                h: { icon: <CodeOutlined />, color: '#555555' },
+                cs: { icon: <CodeOutlined />, color: '#239120' },
+                php: { icon: <CodeOutlined />, color: '#777bb4' },
+                rb: { icon: <CodeOutlined />, color: '#cc342d' },
+                swift: { icon: <CodeOutlined />, color: '#fa7343' },
+                kt: { icon: <CodeOutlined />, color: '#7f52ff' },
+                html: { icon: <Html5Outlined />, color: '#e34c26' },
+                htm: { icon: <Html5Outlined />, color: '#e34c26' },
+                css: { icon: <FileTextOutlined />, color: '#264de4' },
+                scss: { icon: <FileTextOutlined />, color: '#cf649a' },
+                less: { icon: <FileTextOutlined />, color: '#1d365d' },
+                json: { icon: <FileTextOutlined />, color: '#cbcb41' },
+                xml: { icon: <FileTextOutlined />, color: '#e37933' },
+                yml: { icon: <FileTextOutlined />, color: '#cb171e' },
+                yaml: { icon: <FileTextOutlined />, color: '#cb171e' },
+                md: { icon: <FileMarkdownOutlined />, color: '#083fa1' },
+                txt: { icon: <FileTextOutlined />, color: '#8c8c8c' },
+                log: { icon: <FileTextOutlined />, color: '#8c8c8c' },
+                sh: { icon: <CodeOutlined />, color: '#89e051' },
+                bat: { icon: <CodeOutlined />, color: '#c1f12e' },
+                sql: { icon: <CodeOutlined />, color: '#e38c00' },
+                properties: { icon: <SettingOutlined />, color: '#8c8c8c' },
+                conf: { icon: <SettingOutlined />, color: '#8c8c8c' },
+                config: { icon: <SettingOutlined />, color: '#8c8c8c' },
+            };
+
+            return iconMap[ext] || { icon: <FileOutlined />, color: '#8c8c8c' };
+        },
+        [],
+    );
+
+    // 构建 Ant Design Tree 数据（递归处理 children，添加 depth）
+    const buildTreeData = (nodes: TFileTreeNode[], depth = 1): any[] => {
+        return nodes.map((node) => ({
+            key: node.path,
+            isLeaf: node.type === 'file',
+            children:
+                node.children && node.children.length > 0
+                    ? buildTreeData(node.children, depth + 1)
+                    : undefined,
+            data: { ...node, depth },
         }));
     };
+
+    // Tree 节点渲染
+    const renderTreeTitle = useCallback(
+        (nodeData: any) => {
+            const { data } = nodeData;
+            const isFolder = data.type === 'dir';
+            const isExpanded = expandedKeys.includes(data.path);
+            const isSelected = selectedFilePath === data.path;
+            const depth = data.depth || 1;
+            const iconConfig = getFileIconConfig(
+                data.name,
+                isFolder,
+                isExpanded,
+            );
+
+            const handleClick = () => {
+                if (isFolder) {
+                    if (isExpanded) {
+                        setExpandedKeys(
+                            expandedKeys.filter((k: string) => k !== data.path),
+                        );
+                    } else {
+                        setExpandedKeys([...expandedKeys, data.path]);
+                    }
+                } else {
+                    handleFileSelect(data.path);
+                }
+            };
+
+            return (
+                <div
+                    className={`file-tree-node ${isSelected ? 'node-selected' : ''}`}
+                    style={{ paddingLeft: (depth - 1) * 16 + 8 }}
+                    onClick={handleClick}
+                    title={data.path}
+                >
+                    {isFolder && (
+                        <div
+                            className={`node-switcher ${isExpanded ? 'expanded' : ''}`}
+                        >
+                            <RightOutlined />
+                        </div>
+                    )}
+                    <span
+                        className="node-icon"
+                        style={{ color: iconConfig.color }}
+                    >
+                        {iconConfig.icon}
+                    </span>
+                    <span className="node-name">{data.name}</span>
+                </div>
+            );
+        },
+        [expandedKeys, selectedFilePath, handleFileSelect, getFileIconConfig],
+    );
 
     // 添加调试信息
     console.log('Render state:', { loading, hasAuditInfo: !!auditInfo, hash });
@@ -267,15 +515,11 @@ const SSARiskAudit: React.FC = () => {
                     <Card title="代码文件" size="small" className="panel-card">
                         {treeData.length > 0 ? (
                             <Tree
-                                showIcon
-                                defaultExpandAll
+                                blockNode
                                 treeData={treeData}
+                                expandedKeys={expandedKeys}
                                 selectedKeys={[selectedFilePath]}
-                                onSelect={(_, info: any) => {
-                                    if (info.node.data?.type === 'file') {
-                                        handleFileSelect(info.node.data.path);
-                                    }
-                                }}
+                                titleRender={renderTreeTitle}
                             />
                         ) : (
                             <div className="empty">暂无文件</div>
@@ -324,25 +568,14 @@ const SSARiskAudit: React.FC = () => {
                                         </div>
                                     }
                                 >
-                                    <MonacoEditor
-                                        height="100%"
-                                        language={
-                                            fileContent.language || 'java'
-                                        }
+                                    <YakCodemirror
+                                        fileName={fileContent.path}
                                         value={
                                             fileContent.content ||
                                             '// 暂无代码内容'
                                         }
-                                        options={{
-                                            readOnly: true,
-                                            minimap: { enabled: true },
-                                            fontSize: 14,
-                                            lineNumbers: 'on',
-                                            scrollBeyondLastLine: false,
-                                            automaticLayout: true,
-                                            wordWrap: 'on',
-                                            theme: 'kurior',
-                                        }}
+                                        readOnly={true}
+                                        theme="solarized"
                                     />
                                 </ErrorBoundary>
                             ) : (

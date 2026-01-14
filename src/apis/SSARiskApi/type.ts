@@ -156,11 +156,11 @@ export interface TSSARiskImportResult {
     message?: string;
 }
 
-// 代码文件类型
-export interface TCodeFile {
-    path: string;
-    content: string;
-    language: string;
+// 主要文件信息类型（不含完整内容）
+export interface TMainFile {
+    path: string; // 文件路径
+    language: string; // 编程语言
+    line: number; // 代码行号
 }
 
 // SSA 风险审计信息类型
@@ -171,27 +171,34 @@ export interface TSSARiskAuditInfo {
     graph_info?: any; // 图信息（JSON）
     graph_path?: string; // 审计路径
     message?: string; // 告警信息
-    code_files?: TCodeFile[]; // 相关代码文件
+    program_name?: string; // 项目名称（用于后续文件树查询）
+    main_file?: TMainFile; // 主要文件信息（不含完整内容）
 }
 
-// 文件树项类型
-export interface TFileTreeItem {
+// 关联文件信息（后端返回的扁平列表）
+export interface TRelatedFile {
+    name: string; // 文件名
+    path: string; // 完整相对路径（如 src/main/java/XXE.java）
+    size?: number; // 文件大小（字节）
+}
+
+// 关联文件列表响应类型
+export interface TSSARiskRelatedFiles {
+    files?: TRelatedFile[]; // 文件列表
+}
+
+// 文件树节点类型（前端构建目录树用）
+export interface TFileTreeNode {
     name: string; // 文件/目录名
     path: string; // 完整路径
     type: 'file' | 'dir'; // 类型
-    size?: number; // 文件大小
-    children?: TFileTreeItem[]; // 子项（用于前端构建树）
-}
-
-// 文件树响应类型
-export interface TSSARiskFileTree {
-    items?: TFileTreeItem[]; // 文件/目录列表
+    size?: number; // 文件大小（字节）
+    children?: TFileTreeNode[]; // 子节点
 }
 
 // 文件内容类型
 export interface TSSARiskFileContent {
     path: string; // 文件路径
     content: string; // 文件内容
-    language: string; // 编程语言
     size?: number; // 文件大小
 }
