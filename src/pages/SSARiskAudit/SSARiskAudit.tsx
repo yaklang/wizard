@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Card,
@@ -16,6 +16,8 @@ import {
     Space,
     Tree,
     Tabs,
+    Tooltip,
+    Collapse,
 } from 'antd';
 import {
     CheckOutlined,
@@ -28,6 +30,8 @@ import {
     CodeOutlined,
     Html5Outlined,
     FileMarkdownOutlined,
+    ZoomInOutlined,
+    ZoomOutOutlined,
 } from '@ant-design/icons';
 import {
     getSSARiskAudit,
@@ -40,8 +44,10 @@ import type {
     TRelatedFile,
     TFileTreeNode,
     TSSARiskFileContent,
+    TGraphNodeInfo,
 } from '@/apis/SSARiskApi/type';
 import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
+import { instance } from '@viz-js/viz';
 import './SSARiskAudit.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -100,6 +106,21 @@ const SSARiskAudit: React.FC = () => {
     const [loadingFile, setLoadingFile] = useState(false);
     const [disposing, setDisposing] = useState(false);
     const editorHeight = 400;
+
+    // DOT 图相关状态
+    const svgBoxRef = useRef<HTMLDivElement>(null);
+    const svgRef = useRef<SVGSVGElement | null>(null);
+    const [graphScale, setGraphScale] = useState(1);
+    const [graphOffset, setGraphOffset] = useState({ x: 0, y: 0 });
+    const [dragging, setDragging] = useState(false);
+    const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+    // 代码高亮相关状态
+    const [codeHighlight, setCodeHighlight] = useState<{
+        from: { line: number; ch: number };
+        to: { line: number; ch: number };
+    } | null>(null);
 
     // 从扁平文件列表构建目录树
     const buildFileTree = (files: TRelatedFile[]): TFileTreeNode[] => {
@@ -262,20 +283,23 @@ const SSARiskAudit: React.FC = () => {
 
     // 获取文件内容
     const fetchFileContent = useCallback(
-        async (filePath: string) => {
-            if (!hash || !filePath) return;
+        async (filePath: string): Promise<boolean> => {
+            if (!hash || !filePath) return false;
 
             setLoadingFile(true);
             try {
                 const res = await getSsaRiskFileContent(hash, filePath);
                 if (res?.data) {
                     setFileContent(res.data);
+                    return true;
                 }
+                return false;
             } catch (err: any) {
                 console.error('Failed to fetch file content:', err);
                 message.error(
                     `加载文件内容失败: ${err.message || '请检查后端接口'}`,
                 );
+                return false;
             } finally {
                 setLoadingFile(false);
             }
@@ -299,6 +323,334 @@ const SSARiskAudit: React.FC = () => {
             fetchFileTree();
         }
     }, [hash]);
+
+    // 根据节点 ID 获取节点信息
+    const getNodeInfo = useCallback(
+        (nodeId: string): TGraphNodeInfo | undefined => {
+            if (!auditInfo?.graph_info) return undefined;
+            return auditInfo.graph_info.find((info) => info.node_id === nodeId);
+        },
+        [auditInfo?.graph_info],
+    );
+
+    // 从完整 URL 中提取相对路径（移除 programName 前缀）
+    const extractRelativePath = useCallback(
+        (url: string, programName?: string): string => {
+            if (!url) return '';
+
+            // URL 格式可能是：/programName/src/main/java/... 或 programName/src/main/java/...
+            let path = url;
+
+            // 移除开头的斜杠
+            if (path.startsWith('/')) {
+                path = path.substring(1);
+            }
+
+            // 如果有 programName，尝试移除它
+            if (programName) {
+                // 转义 programName 中的正则特殊字符
+                const escapedName = programName.replace(
+                    /[.*+?^${}()|[\]\\]/g,
+                    '\\$&',
+                );
+                const regex = new RegExp(`^${escapedName}/`);
+                if (regex.test(path)) {
+                    path = path.replace(regex, '');
+                } else {
+                    // 尝试匹配第一个斜杠之前的内容（可能是 programName）
+                    const firstSlash = path.indexOf('/');
+                    if (firstSlash > 0) {
+                        path = path.substring(firstSlash + 1);
+                    }
+                }
+            } else {
+                // 如果没有 programName，假设第一段是 programName
+                const firstSlash = path.indexOf('/');
+                if (firstSlash > 0) {
+                    path = path.substring(firstSlash + 1);
+                }
+            }
+
+            return path;
+        },
+        [],
+    );
+
+    // 跳转到代码位置并高亮
+    const jumpToCodeLocation = useCallback(
+        async (nodeInfo: TGraphNodeInfo) => {
+            if (!nodeInfo.code_range) return;
+
+            const codeRange = nodeInfo.code_range;
+            // 从完整 URL 提取相对路径
+            const filePath = extractRelativePath(
+                codeRange.url,
+                auditInfo?.program_name,
+            );
+
+            if (!filePath) {
+                console.warn('无法提取文件路径:', codeRange.url);
+                return;
+            }
+
+            // 更新选中的文件路径
+            setSelectedFilePath(filePath);
+
+            // 先获取文件内容
+            if (filePath !== fileContent?.path) {
+                const success = await fetchFileContent(filePath);
+                if (!success) return;
+            }
+
+            // 计算高亮位置
+            const sourceCodeStart =
+                nodeInfo.source_code_start || codeRange.source_code_start || 1;
+            const highlightRange = {
+                from: {
+                    line: codeRange.start_line - sourceCodeStart + 1,
+                    ch: codeRange.start_column || 1,
+                },
+                to: {
+                    line: codeRange.end_line - sourceCodeStart + 1,
+                    ch: codeRange.end_column || 100,
+                },
+            };
+
+            // 先清除旧高亮，再设置新高亮
+            setCodeHighlight(null);
+
+            // 延迟设置高亮，确保文件内容已渲染
+            setTimeout(() => {
+                setCodeHighlight(highlightRange);
+            }, 200);
+        },
+        [
+            fileContent?.path,
+            fetchFileContent,
+            extractRelativePath,
+            auditInfo?.program_name,
+        ],
+    );
+
+    // DOT 图节点点击处理
+    const handleGraphNodeClick = useCallback(
+        (event: MouseEvent) => {
+            const target = event.target as Element;
+            const nodeElement = target.closest('g.node');
+            if (!nodeElement) return;
+
+            const titleElement = nodeElement.querySelector('title');
+            if (!titleElement) return;
+
+            const nodeId = titleElement.textContent;
+            if (!nodeId) return;
+
+            setSelectedNodeId(nodeId);
+
+            // 获取节点信息并跳转
+            const nodeInfo = getNodeInfo(nodeId);
+            if (nodeInfo) {
+                jumpToCodeLocation(nodeInfo);
+            }
+
+            // 高亮选中的节点
+            if (svgRef.current) {
+                // 清除之前的高亮
+                svgRef.current.querySelectorAll('g.node').forEach((node) => {
+                    node.classList.remove('selected-node');
+                });
+                // 添加新的高亮
+                nodeElement.classList.add('selected-node');
+            }
+        },
+        [getNodeInfo, jumpToCodeLocation],
+    );
+
+    // 渲染 DOT 图
+    useEffect(() => {
+        if (!auditInfo?.graph || !svgBoxRef.current) return;
+
+        const graphStr = auditInfo.graph;
+        instance().then((viz) => {
+            try {
+                const svg = viz.renderSVGElement(graphStr, {});
+                svgRef.current = svg;
+
+                // 清空容器
+                while (svgBoxRef.current?.firstChild) {
+                    svgBoxRef.current.removeChild(svgBoxRef.current.firstChild);
+                }
+
+                // 添加 SVG
+                svgBoxRef.current?.appendChild(svg);
+
+                // 添加点击事件
+                svg.addEventListener('click', handleGraphNodeClick);
+
+                // 设置初始样式
+                svg.style.cursor = 'grab';
+                svg.style.transformOrigin = 'center center';
+            } catch (err) {
+                console.error('Failed to render DOT graph:', err);
+            }
+        });
+
+        return () => {
+            if (svgRef.current) {
+                svgRef.current.removeEventListener(
+                    'click',
+                    handleGraphNodeClick,
+                );
+            }
+        };
+    }, [auditInfo?.graph, handleGraphNodeClick]);
+
+    // 更新 SVG 变换
+    useEffect(() => {
+        if (svgRef.current) {
+            svgRef.current.style.transform = `scale(${graphScale}) translate(${graphOffset.x}px, ${graphOffset.y}px)`;
+            svgRef.current.style.cursor = dragging ? 'grabbing' : 'grab';
+        }
+    }, [graphScale, graphOffset, dragging]);
+
+    // 图放大
+    const handleGraphZoomIn = () => setGraphScale((prev) => prev + 0.2);
+
+    // 图缩小
+    const handleGraphZoomOut = () =>
+        setGraphScale((prev) => Math.max(0.2, prev - 0.2));
+
+    // 图拖动
+    const handleGraphMouseDown = (e: React.MouseEvent) => {
+        setDragging(true);
+        dragStartRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleGraphMouseUp = () => {
+        setDragging(false);
+        dragStartRef.current = null;
+    };
+
+    const handleGraphMouseMove = (e: React.MouseEvent) => {
+        if (dragging && dragStartRef.current) {
+            const dx = e.clientX - dragStartRef.current.x;
+            const dy = e.clientY - dragStartRef.current.y;
+            setGraphOffset((prev) => ({
+                x: prev.x + dx / graphScale,
+                y: prev.y + dy / graphScale,
+            }));
+            dragStartRef.current = { x: e.clientX, y: e.clientY };
+        }
+    };
+
+    const handleGraphWheel = (e: React.WheelEvent) => {
+        if (e.deltaY > 0) {
+            setGraphScale((prev) => Math.max(0.2, prev - 0.1));
+        } else {
+            setGraphScale((prev) => prev + 0.1);
+        }
+    };
+
+    // 解引号处理
+    const unescapeIrCode = useCallback((code: string): string => {
+        if (!code) return '';
+        let result = code
+            .replace(/\\"/g, '"') // 转义引号 \" -> "
+            .replace(/\\n/g, ' ') // 换行转空格
+            .replace(/\\t/g, ' ') // tab转空格
+            .trim();
+        // 去掉首尾引号
+        if (result.startsWith('"') && result.endsWith('"')) {
+            result = result.slice(1, -1);
+        }
+        return result;
+    }, []);
+
+    // 解析审计路径并渲染
+    const renderAuditPath = useCallback(() => {
+        if (!auditInfo?.graph_path) return null;
+
+        try {
+            const paths: string[][] = JSON.parse(auditInfo.graph_path);
+            if (!Array.isArray(paths) || paths.length === 0) return null;
+
+            return (
+                <Collapse
+                    defaultActiveKey={['0']}
+                    className="audit-path-collapse"
+                    expandIconPosition="start"
+                    items={paths.map((path, pathIndex) => ({
+                        key: String(pathIndex),
+                        label: (
+                            <span className="path-header">
+                                路径{pathIndex + 1}
+                            </span>
+                        ),
+                        children: (
+                            <div className="path-nodes">
+                                {path.map((nodeId, nodeIndex) => {
+                                    const nodeInfo = getNodeInfo(nodeId);
+                                    const fullPath =
+                                        nodeInfo?.code_range?.url || '';
+                                    const fileName =
+                                        fullPath.split('/').pop() || '';
+                                    const lineNum =
+                                        nodeInfo?.code_range?.start_line;
+                                    const irCode = unescapeIrCode(
+                                        nodeInfo?.ir_code || nodeId,
+                                    );
+                                    const fileLocation = lineNum
+                                        ? `${fileName}:${lineNum}`
+                                        : fileName;
+
+                                    return (
+                                        <div
+                                            key={nodeIndex}
+                                            className={`path-node ${selectedNodeId === nodeId ? 'selected' : ''}`}
+                                            onClick={() => {
+                                                setSelectedNodeId(nodeId);
+                                                if (nodeInfo) {
+                                                    jumpToCodeLocation(
+                                                        nodeInfo,
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            <span className="node-index">
+                                                {nodeIndex + 1}
+                                            </span>
+                                            <span className="node-ir">
+                                                {irCode}
+                                            </span>
+                                            {fileLocation && (
+                                                <Tooltip
+                                                    title={fullPath}
+                                                    placement="topRight"
+                                                >
+                                                    <span className="node-file">
+                                                        {fileLocation}
+                                                    </span>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ),
+                    }))}
+                />
+            );
+        } catch (e) {
+            console.error('Failed to parse graph_path:', e);
+            return <Text type="secondary">{auditInfo.graph_path}</Text>;
+        }
+    }, [
+        auditInfo?.graph_path,
+        getNodeInfo,
+        selectedNodeId,
+        jumpToCodeLocation,
+        unescapeIrCode,
+    ]);
 
     // 处置风险
     const handleDispose = async (values: any) => {
@@ -576,6 +928,7 @@ const SSARiskAudit: React.FC = () => {
                                         }
                                         readOnly={true}
                                         theme="solarized"
+                                        highLight={codeHighlight || undefined}
                                     />
                                 </ErrorBoundary>
                             ) : (
@@ -868,35 +1221,77 @@ const SSARiskAudit: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* 审计路径 */}
-                                {auditInfo.graph_path ? (
-                                    <div className="result-item">
-                                        <Text strong>审计路径：</Text>
-                                        <div className="graph-path-section">
-                                            {renderGraphPath(
-                                                auditInfo.graph_path,
-                                            )}
+                                {/* 审计路径 - 使用新的树形结构 */}
+                                <div className="result-item audit-path-section">
+                                    <Text strong>审计路径：</Text>
+                                    {auditInfo.graph_path ? (
+                                        renderAuditPath()
+                                    ) : (
+                                        <div className="empty">
+                                            暂无审计路径
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="empty">暂无审计路径</div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </Card>
                     </div>
 
-                    {/* 下栏：数据流图 */}
+                    {/* 下栏：数据流图 - 使用 viz-js 渲染 */}
                     <div className="dataflow-graph-panel">
                         <Card
-                            title="数据流图 (DOT)"
+                            title={
+                                <div className="graph-card-title">
+                                    <span>Syntax Flow 审计过程</span>
+                                    <Tooltip
+                                        title={
+                                            <div>
+                                                <div>
+                                                    黑色箭头代表数据流分析路径
+                                                </div>
+                                                <div>
+                                                    红色箭头代表跨数据流分析路径
+                                                </div>
+                                                <div>紫色节点代表审计结果</div>
+                                                <div>
+                                                    点击节点可跳转到代码位置
+                                                </div>
+                                            </div>
+                                        }
+                                    >
+                                        <span className="help-icon">?</span>
+                                    </Tooltip>
+                                </div>
+                            }
                             size="small"
                             className="panel-card"
+                            extra={
+                                <Space size="small">
+                                    <Button
+                                        type="text"
+                                        size="small"
+                                        icon={<ZoomInOutlined />}
+                                        onClick={handleGraphZoomIn}
+                                    />
+                                    <Button
+                                        type="text"
+                                        size="small"
+                                        icon={<ZoomOutOutlined />}
+                                        onClick={handleGraphZoomOut}
+                                    />
+                                </Space>
+                            }
                         >
                             <div className="dataflow-graph-content">
                                 {auditInfo.graph ? (
-                                    <pre className="graph-content">
-                                        {auditInfo.graph}
-                                    </pre>
+                                    <div
+                                        className="svg-container"
+                                        ref={svgBoxRef}
+                                        onMouseDown={handleGraphMouseDown}
+                                        onMouseUp={handleGraphMouseUp}
+                                        onMouseMove={handleGraphMouseMove}
+                                        onMouseLeave={handleGraphMouseUp}
+                                        onWheel={handleGraphWheel}
+                                    />
                                 ) : (
                                     <div className="empty">暂无数据流图</div>
                                 )}
@@ -946,41 +1341,6 @@ const getDisposeStatusColor = (status?: string): string => {
     if (status === '存疑') return 'orange';
     if (status === '未处置') return 'default';
     return 'blue';
-};
-
-// 辅助函数：渲染审计路径
-const renderGraphPath = (graphPathStr: string): React.ReactNode => {
-    try {
-        const paths = JSON.parse(graphPathStr);
-        if (Array.isArray(paths) && paths.length > 0) {
-            return (
-                <div className="path-list">
-                    {paths.map((path: any, index: number) => (
-                        <div key={index} className="path-item">
-                            <Tag color="blue">路径 {index + 1}</Tag>
-                            {Array.isArray(path) ? (
-                                <div className="path-nodes">
-                                    {path.map((node: string, i: number) => (
-                                        <React.Fragment key={i}>
-                                            <Text code>{node}</Text>
-                                            {i < path.length - 1 && (
-                                                <span> → </span>
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-                                </div>
-                            ) : (
-                                <Text>{String(path)}</Text>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-    } catch (e) {
-        // 解析失败，直接显示原始字符串
-    }
-    return <Text>{graphPathStr}</Text>;
 };
 
 // 导出带错误边界的组件
