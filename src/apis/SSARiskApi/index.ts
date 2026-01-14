@@ -10,7 +10,7 @@ import type {
     TSSARiskImportResult,
     TSSARiskFilterOptions,
     TSSARiskAuditInfo,
-    TSSARiskFileTree,
+    TSSARiskRelatedFiles,
     TSSARiskFileContent,
 } from './type';
 
@@ -119,16 +119,18 @@ export const getSSARiskAudit = (
         signal,
     });
 
-// GET /ssa/risk/audit/files - 获取风险相关的文件树
+// GET /ssa/risk/audit/files - 获取风险关联的文件列表
 export const getSsaRiskAuditFiles = (
     hash: string,
-    path?: string,
     signal?: AbortSignal,
-): Promise<ResponseData<TSSARiskFileTree>> =>
-    axios.get<never, ResponseData<TSSARiskFileTree>>('/ssa/risk/audit/files', {
-        params: { hash, path },
-        signal,
-    });
+): Promise<ResponseData<TSSARiskRelatedFiles>> =>
+    axios.get<never, ResponseData<TSSARiskRelatedFiles>>(
+        '/ssa/risk/audit/files',
+        {
+            params: { hash },
+            signal,
+        },
+    );
 
 // GET /ssa/risk/audit/file/content - 获取指定文件的内容
 export const getSsaRiskFileContent = (
