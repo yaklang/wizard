@@ -163,13 +163,32 @@ export interface TMainFile {
     line: number; // 代码行号
 }
 
+// 代码范围信息
+export interface TCodeRange {
+    url: string;
+    start_column: number;
+    start_line: number;
+    end_column: number;
+    end_line: number;
+    source_code_start?: number;
+}
+
+// 图节点信息
+export interface TGraphNodeInfo {
+    node_id: string;
+    ir_code: string;
+    source_code: string;
+    source_code_start?: number;
+    code_range?: TCodeRange;
+}
+
 // SSA 风险审计信息类型
 export interface TSSARiskAuditInfo {
     risk?: TSSARisk; // SSARisk 基本信息
     node_id?: string; // SSA 节点 ID
     graph?: string; // 数据流图（DOT 格式）
-    graph_info?: any; // 图信息（JSON）
-    graph_path?: string; // 审计路径
+    graph_info?: TGraphNodeInfo[]; // 图节点详细信息
+    graph_path?: string; // 审计路径 JSON（[[nodeId1, nodeId2], ...]）
     message?: string; // 告警信息
     program_name?: string; // 项目名称（用于后续文件树查询）
     main_file?: TMainFile; // 主要文件信息（不含完整内容）
