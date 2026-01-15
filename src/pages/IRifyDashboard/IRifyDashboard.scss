@@ -1,0 +1,440 @@
+// IRify Dashboard Styles - Light/Dark Theme Support
+
+// Dark theme colors
+$dark-bg: #0D1117;
+$dark-bg-container: #161B22;
+$dark-bg-elevated: #21262D;
+$dark-border: #30363D;
+$dark-text: #E6EDF3;
+$dark-text-secondary: #8B949E;
+$dark-text-muted: #6E7681;
+
+// Light theme colors
+$light-bg: #F8FAFC;
+$light-bg-container: #FFFFFF;
+$light-bg-elevated: #F1F5F9;
+$light-border: #E2E8F0;
+$light-text: #1E293B;
+$light-text-secondary: #64748B;
+$light-text-muted: #94A3B8;
+
+// Accent color
+$accent: #00D9FF;
+$accent-secondary: #4F46E5;
+
+.irify-dashboard {
+    padding: 24px;
+    min-height: 100vh;
+    transition: background 0.3s ease;
+
+    &.dark { background: $dark-bg; }
+    &.light { background: $light-bg; }
+}
+
+// Header
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+
+    .header-content {
+        .header-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0;
+            font-family: 'JetBrains Mono', monospace;
+
+            .dark & { color: $dark-text; }
+            .light & { color: $light-text; }
+
+            .bracket { color: $accent; }
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            margin-top: 4px;
+
+            .dark & { color: $dark-text-secondary; }
+            .light & { color: $light-text-secondary; }
+        }
+    }
+
+    .create-btn {
+        background: linear-gradient(135deg, $accent-secondary 0%, $accent 100%);
+        border: none;
+        box-shadow: 0 0 20px rgba($accent, 0.3);
+        font-weight: 600;
+
+        &:hover {
+            box-shadow: 0 0 30px rgba($accent, 0.5);
+            transform: translateY(-2px);
+        }
+    }
+}
+
+// Workflow Stepper
+.workflow-section {
+    margin-bottom: 32px;
+}
+
+.workflow-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+
+    .dark & {
+        background: linear-gradient(135deg, rgba($dark-bg-elevated, 0.8) 0%, rgba($dark-bg-container, 0.8) 100%);
+        border: 1px solid $dark-border;
+    }
+
+    .light & {
+        background: linear-gradient(135deg, rgba($light-bg-container, 0.9) 0%, rgba($light-bg-elevated, 0.9) 100%);
+        border: 1px solid $light-border;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .step-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+
+            .dark & {
+                background: $dark-bg-elevated;
+                border: 2px solid $dark-border;
+                color: $dark-text-secondary;
+            }
+
+            .light & {
+                background: $light-bg-elevated;
+                border: 2px solid $light-border;
+                color: $light-text-secondary;
+            }
+        }
+
+        .step-content {
+            .step-title {
+                font-size: 16px;
+                font-weight: 600;
+
+                .dark & { color: $dark-text-secondary; }
+                .light & { color: $light-text-secondary; }
+            }
+
+            .step-desc {
+                font-size: 12px;
+
+                .dark & { color: $dark-text-muted; }
+                .light & { color: $light-text-muted; }
+            }
+        }
+
+        &.active {
+            .step-icon {
+                border-color: $accent;
+                box-shadow: 0 0 20px rgba($accent, 0.4);
+                color: $accent;
+                animation: pulse 2s infinite;
+            }
+
+            .step-title {
+                .dark & { color: $dark-text; }
+                .light & { color: $light-text; }
+            }
+        }
+
+        &.completed {
+            .step-icon {
+                background: linear-gradient(135deg, $accent-secondary 0%, $accent 100%);
+                border-color: transparent;
+                color: white;
+            }
+
+            .step-title {
+                .dark & { color: $dark-text; }
+                .light & { color: $light-text; }
+            }
+        }
+    }
+
+    .step-connector {
+        width: 80px;
+        height: 2px;
+        margin: 0 16px;
+        position: relative;
+        transition: all 0.3s ease;
+
+        .dark & { background: $dark-border; }
+        .light & { background: $light-border; }
+
+        &.completed {
+            background: linear-gradient(90deg, $accent-secondary, $accent);
+        }
+    }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba($accent, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba($accent, 0); }
+    100% { box-shadow: 0 0 0 0 rgba($accent, 0); }
+}
+
+// Stats Cards
+.stats-section {
+    margin-bottom: 24px;
+}
+
+.stats-card {
+    border-radius: 16px !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+
+    .dark & {
+        background: $dark-bg-container !important;
+        border: 1px solid $dark-border !important;
+    }
+
+    .light & {
+        background: $light-bg-container !important;
+        border: 1px solid $light-border !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    &:hover {
+        border-color: $accent !important;
+        box-shadow: 0 4px 24px rgba($accent, 0.15);
+        transform: translateY(-4px);
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+
+    &.projects-card::before { background: linear-gradient(90deg, $accent-secondary, $accent); }
+    &.scans-card::before { background: linear-gradient(90deg, $accent, #3FB950); }
+    &.vulns-card::before { background: linear-gradient(90deg, #FF7A45, #FF4D4F); }
+
+    .stats-icon {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        font-size: 48px;
+
+        .dark & { color: rgba(255, 255, 255, 0.05); }
+        .light & { color: rgba(0, 0, 0, 0.03); }
+    }
+
+    .ant-statistic-title {
+        font-size: 14px;
+
+        .dark & { color: $dark-text-secondary; }
+        .light & { color: $light-text-secondary; }
+    }
+
+    .stats-action {
+        margin-top: 16px;
+        color: $accent;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+}
+
+// Activity Cards
+.content-section {
+    margin-bottom: 24px;
+}
+
+.activity-card {
+    border-radius: 16px !important;
+    height: 100%;
+
+    .dark & {
+        background: $dark-bg-container !important;
+        border: 1px solid $dark-border !important;
+
+        .ant-card-head { border-bottom: 1px solid $dark-border; }
+    }
+
+    .light & {
+        background: $light-bg-container !important;
+        border: 1px solid $light-border !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+        .ant-card-head { border-bottom: 1px solid $light-border; }
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+
+        .dark & { color: $dark-text; }
+        .light & { color: $light-text; }
+    }
+}
+
+.activity-list {
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+
+        .dark & { border-bottom: 1px solid $dark-bg-elevated; }
+        .light & { border-bottom: 1px solid $light-bg-elevated; }
+
+        &:last-child { border-bottom: none; }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+
+            .dark & { background: $dark-bg-elevated; }
+            .light & { background: $light-bg-elevated; }
+        }
+
+        .activity-content {
+            flex: 1;
+
+            .activity-title {
+                font-size: 14px;
+                font-weight: 500;
+
+                .dark & { color: $dark-text; }
+                .light & { color: $light-text; }
+            }
+
+            .activity-meta {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 4px;
+
+                .activity-time {
+                    font-size: 12px;
+
+                    .dark & { color: $dark-text-muted; }
+                    .light & { color: $light-text-muted; }
+                }
+            }
+        }
+    }
+}
+
+// Severity Summary
+.severity-summary {
+    .severity-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+
+        .severity-label {
+            width: 80px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+
+            .dark & { color: $dark-text-secondary; }
+            .light & { color: $light-text-secondary; }
+
+            .severity-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+            }
+        }
+
+        .severity-bar-container {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+
+            .dark & { background: $dark-bg-elevated; }
+            .light & { background: $light-bg-elevated; }
+        }
+
+        .severity-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .severity-count {
+            width: 40px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+
+            .dark & { color: $dark-text; }
+            .light & { color: $light-text; }
+        }
+    }
+}
+
+// Quick Start Card
+.quick-start-card {
+    background: linear-gradient(135deg, rgba($accent-secondary, 0.15) 0%, rgba($accent, 0.15) 100%) !important;
+    border: 1px solid rgba($accent, 0.3) !important;
+    border-radius: 16px !important;
+    margin-top: 24px;
+
+    .quick-start-content {
+        text-align: center;
+        padding: 40px;
+
+        .quick-start-icon {
+            font-size: 64px;
+            color: $accent;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+
+            .dark & { color: $dark-text; }
+            .light & { color: $light-text; }
+        }
+
+        p {
+            font-size: 14px;
+            margin-bottom: 24px;
+
+            .dark & { color: $dark-text-secondary; }
+            .light & { color: $light-text-secondary; }
+        }
+    }
+}

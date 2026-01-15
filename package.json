@@ -5,7 +5,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite --port 4173",
+        "dev:irify": "vite --port 4174 --mode irify.development",
         "build": "tsc && vite build",
+        "build:irify": "tsc && vite build --mode irify.production --outDir dist-irify",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview",
         "prepare": "husky install",
