@@ -1,0 +1,393 @@
+// IRify Dark Theme Styles
+// Cybersecurity-inspired visual design with glowing accents
+
+// Color Variables
+$irify-bg-base: #0D1117;
+$irify-bg-container: #161B22;
+$irify-bg-elevated: #21262D;
+$irify-accent: #00D9FF;
+$irify-accent-secondary: #4F46E5;
+$irify-text: #E6EDF3;
+$irify-text-secondary: #8B949E;
+$irify-border: #30363D;
+
+// Global dark mode body styling
+body.irify-mode {
+    background-color: $irify-bg-base;
+    color: $irify-text;
+}
+
+// IRify specific styles
+.irify-app {
+    min-height: 100vh;
+    background: $irify-bg-base;
+    
+    // Custom scrollbar
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: $irify-bg-container;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: $irify-border;
+        border-radius: 4px;
+        
+        &:hover {
+            background: $irify-text-secondary;
+        }
+    }
+}
+
+// Glassmorphism card effect
+.irify-glass-card {
+    background: rgba($irify-bg-container, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba($irify-border, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    
+    &:hover {
+        border-color: rgba($irify-accent, 0.3);
+        box-shadow: 0 4px 24px rgba($irify-accent, 0.1);
+    }
+}
+
+// Glowing accent effects
+.irify-glow {
+    box-shadow: 0 0 20px rgba($irify-accent, 0.3);
+}
+
+.irify-glow-text {
+    text-shadow: 0 0 10px rgba($irify-accent, 0.5);
+}
+
+// Primary button with glow effect
+.irify-btn-primary {
+    background: linear-gradient(135deg, $irify-accent-secondary 0%, $irify-accent 100%);
+    border: none;
+    box-shadow: 0 0 20px rgba($irify-accent, 0.4);
+    transition: all 0.3s ease;
+    
+    &:hover {
+        box-shadow: 0 0 30px rgba($irify-accent, 0.6);
+        transform: translateY(-2px);
+    }
+}
+
+// Stats card styling
+.irify-stats-card {
+    background: linear-gradient(135deg, rgba($irify-bg-elevated, 0.9) 0%, rgba($irify-bg-container, 0.9) 100%);
+    border: 1px solid $irify-border;
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, $irify-accent-secondary, $irify-accent);
+    }
+    
+    .stats-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: $irify-text;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .stats-label {
+        font-size: 14px;
+        color: $irify-text-secondary;
+        margin-top: 8px;
+    }
+}
+
+// Workflow stepper styling
+.irify-workflow-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 32px;
+    
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        
+        .step-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: $irify-bg-elevated;
+            border: 2px solid $irify-border;
+            transition: all 0.3s ease;
+            
+            svg {
+                width: 28px;
+                height: 28px;
+                color: $irify-text-secondary;
+            }
+        }
+        
+        .step-label {
+            font-size: 14px;
+            color: $irify-text-secondary;
+        }
+        
+        &.active,
+        &.completed {
+            .step-icon {
+                border-color: $irify-accent;
+                box-shadow: 0 0 20px rgba($irify-accent, 0.4);
+                
+                svg {
+                    color: $irify-accent;
+                }
+            }
+            
+            .step-label {
+                color: $irify-text;
+            }
+        }
+        
+        &.completed .step-icon {
+            background: linear-gradient(135deg, $irify-accent-secondary, $irify-accent);
+            
+            svg {
+                color: white;
+            }
+        }
+    }
+    
+    .step-connector {
+        width: 80px;
+        height: 2px;
+        background: $irify-border;
+        position: relative;
+        
+        &.active {
+            background: linear-gradient(90deg, $irify-accent, $irify-border);
+        }
+        
+        &.completed {
+            background: $irify-accent;
+        }
+    }
+}
+
+// Sidebar navigation
+.irify-sidebar {
+    background: $irify-bg-base;
+    border-right: 1px solid $irify-border;
+    
+    .logo {
+        padding: 20px 16px;
+        border-bottom: 1px solid $irify-border;
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: $irify-text;
+            font-family: 'JetBrains Mono', monospace;
+            
+            .bracket {
+                color: $irify-accent;
+            }
+        }
+    }
+    
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        margin: 4px 8px;
+        border-radius: 8px;
+        color: $irify-text-secondary;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            background: $irify-bg-elevated;
+            color: $irify-text;
+        }
+        
+        &.active {
+            background: rgba($irify-accent, 0.15);
+            color: $irify-accent;
+            
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 24px;
+                background: $irify-accent;
+                border-radius: 0 2px 2px 0;
+            }
+        }
+    }
+}
+
+// Activity feed
+.irify-activity-feed {
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid $irify-border;
+        
+        &:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: $irify-bg-elevated;
+            flex-shrink: 0;
+        }
+        
+        .activity-content {
+            flex: 1;
+            
+            .activity-title {
+                font-size: 14px;
+                color: $irify-text;
+            }
+            
+            .activity-time {
+                font-size: 12px;
+                color: $irify-text-secondary;
+                margin-top: 4px;
+            }
+        }
+    }
+}
+
+// Severity badges
+.irify-severity-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    
+    &.critical {
+        background: rgba(#FF4D4F, 0.15);
+        color: #FF4D4F;
+        border: 1px solid rgba(#FF4D4F, 0.3);
+    }
+    
+    &.high {
+        background: rgba(#FF7A45, 0.15);
+        color: #FF7A45;
+        border: 1px solid rgba(#FF7A45, 0.3);
+    }
+    
+    &.middle {
+        background: rgba(#FFC53D, 0.15);
+        color: #FFC53D;
+        border: 1px solid rgba(#FFC53D, 0.3);
+    }
+    
+    &.low {
+        background: rgba(#52C41A, 0.15);
+        color: #52C41A;
+        border: 1px solid rgba(#52C41A, 0.3);
+    }
+    
+    &.info {
+        background: rgba(#1890FF, 0.15);
+        color: #1890FF;
+        border: 1px solid rgba(#1890FF, 0.3);
+    }
+}
+
+// Code preview styling
+.irify-code-preview {
+    background: $irify-bg-base;
+    border: 1px solid $irify-border;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    .code-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px;
+        background: $irify-bg-elevated;
+        border-bottom: 1px solid $irify-border;
+        
+        .file-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: $irify-text-secondary;
+        }
+    }
+    
+    .code-content {
+        padding: 16px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-x: auto;
+    }
+}
+
+// Pulse animation for active scans
+@keyframes irify-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba($irify-accent, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba($irify-accent, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba($irify-accent, 0);
+    }
+}
+
+.irify-pulse {
+    animation: irify-pulse 2s infinite;
+}
+
+// Fade in animation
+@keyframes irify-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.irify-fade-in {
+    animation: irify-fade-in 0.3s ease-out;
+}
