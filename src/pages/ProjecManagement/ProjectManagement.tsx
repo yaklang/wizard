@@ -16,6 +16,7 @@ import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
+import { ROUTES, getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const { Search } = Input;
 
@@ -128,13 +129,13 @@ const ProjectManagement: React.FC = () => {
     };
 
     const handleEdit = (record: TSSAProject) => {
-        navigate('/static-analysis/project-management/edit', {
+        navigate(getRoutePath(RouteKey.PROJECT_EDIT, { id: record.id || '' }), {
             state: { id: record.id },
         });
     };
 
     const handleCreate = () => {
-        navigate('/static-analysis/project-management/create');
+        navigate(ROUTES.PROJECT_CREATE);
     };
 
     const handleSearch = (value: string) => {
@@ -149,7 +150,7 @@ const ProjectManagement: React.FC = () => {
 
     const handleViewRisks = (record: TSSAProject) => {
         // 跳转到漏洞列表并筛选该项目
-        navigate('/static-analysis/ssa-risk', {
+        navigate(ROUTES.SSA_RISK, {
             state: { program_name: record.project_name },
         });
     };
@@ -282,7 +283,7 @@ const ProjectManagement: React.FC = () => {
                         size="small"
                         onClick={() =>
                             navigate(
-                                `/static-analysis/task-list?project_id=${record.id}`,
+                                `${getRoutePath(RouteKey.TASK_LIST)}?project_id=${record.id}`,
                             )
                         }
                     >

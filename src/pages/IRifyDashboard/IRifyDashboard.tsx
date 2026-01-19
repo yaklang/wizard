@@ -20,6 +20,7 @@ import { useTheme } from '@/theme';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 import './IRifyDashboard.scss';
 
@@ -117,7 +118,7 @@ const IRifyDashboard: React.FC = () => {
                     type="primary"
                     size="large"
                     icon={<PlusOutlined />}
-                    onClick={() => navigate('/projects/create')}
+                    onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECT_CREATE))}
                     className="create-btn"
                 >
                     新建项目
@@ -186,7 +187,7 @@ const IRifyDashboard: React.FC = () => {
                 <Col xs={24} sm={8}>
                     <Card
                         className="stats-card projects-card"
-                        onClick={() => navigate('/projects')}
+                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECTS))}
                     >
                         <div className="stats-icon">
                             <FolderOutlined />
@@ -204,7 +205,7 @@ const IRifyDashboard: React.FC = () => {
                 <Col xs={24} sm={8}>
                     <Card
                         className="stats-card scans-card"
-                        onClick={() => navigate('/scans')}
+                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_SCANS))}
                     >
                         <div className="stats-icon">
                             <ThunderboltOutlined />
@@ -222,7 +223,7 @@ const IRifyDashboard: React.FC = () => {
                 <Col xs={24} sm={8}>
                     <Card
                         className="stats-card vulns-card"
-                        onClick={() => navigate('/vulnerabilities')}
+                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_VULNERABILITIES))}
                     >
                         <div className="stats-icon">
                             <BugOutlined />
@@ -253,7 +254,7 @@ const IRifyDashboard: React.FC = () => {
                         extra={
                             <Button
                                 type="link"
-                                onClick={() => navigate('/scans')}
+                                onClick={() => navigate(getRoutePath(RouteKey.IRIFY_SCANS))}
                             >
                                 查看全部
                             </Button>
@@ -343,7 +344,7 @@ const IRifyDashboard: React.FC = () => {
                                 <Button
                                     type="primary"
                                     icon={<RocketOutlined />}
-                                    onClick={() => navigate('/projects')}
+                                    onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECTS))}
                                 >
                                     开始第一次扫描
                                 </Button>
@@ -364,7 +365,7 @@ const IRifyDashboard: React.FC = () => {
                         extra={
                             <Button
                                 type="link"
-                                onClick={() => navigate('/vulnerabilities')}
+                                onClick={() => navigate(getRoutePath(RouteKey.IRIFY_VULNERABILITIES))}
                             >
                                 查看全部
                             </Button>
@@ -432,7 +433,7 @@ const IRifyDashboard: React.FC = () => {
                             type="primary"
                             size="large"
                             icon={<PlusOutlined />}
-                            onClick={() => navigate('/projects/create')}
+                            onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECT_CREATE))}
                         >
                             创建第一个项目
                         </Button>

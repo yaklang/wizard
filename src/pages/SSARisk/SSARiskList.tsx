@@ -33,11 +33,9 @@ import type {
     TSSARiskFilterOptions,
 } from '@/apis/SSARiskApi/type';
 
-const { Search } = Input;
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
-// Detect app mode for route generation
-const APP_MODE = import.meta.env.VITE_APP_MODE;
-const isIRify = APP_MODE === 'irify';
+const { Search } = Input;
 
 // 严重程度颜色映射
 const severityColorMap: Record<string, string> = {
@@ -240,10 +238,7 @@ const SSARiskList: React.FC = () => {
                 console.error('标记已读失败', err);
             }
         }
-        const detailPath = isIRify
-            ? `/vulnerabilities/${record.id}`
-            : '/static-analysis/ssa-risk/detail';
-        navigate(detailPath, {
+        navigate(getRoutePath(RouteKey.SSA_RISK_DETAIL), {
             state: { id: record.id },
         });
     };
@@ -415,9 +410,7 @@ const SSARiskList: React.FC = () => {
                         size="small"
                         onClick={() =>
                             navigate(
-                                isIRify
-                                    ? `/vulnerabilities/audit?hash=${record.hash}`
-                                    : `/static-analysis/ssa-risk/audit?hash=${record.hash}`,
+                                `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?hash=${record.hash}`,
                             )
                         }
                     >

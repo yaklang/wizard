@@ -48,6 +48,7 @@ import type {
 } from '@/apis/SSARiskApi/type';
 import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
 import { instance } from '@viz-js/viz';
+import { ROUTES } from '@/utils/routeMap';
 import './SSARiskAudit.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -1177,7 +1178,7 @@ const SSARiskAudit: React.FC = () => {
                                                             </Button>
                                                             <Button
                                                                 onClick={() =>
-                                                                    navigate(-1)
+                                                                    navigate(ROUTES.GO_BACK)
                                                                 }
                                                             >
                                                                 返回列表

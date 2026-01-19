@@ -37,6 +37,7 @@ import type {
     YakScriptParamFull,
 } from '@/apis/task/types';
 import type { TGetStroageDetailRequest } from '@/apis/task/types';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const { Item } = Form;
 const { TextArea } = Input;
@@ -71,7 +72,7 @@ const ModifyTaskScript: FC = () => {
         manual: true,
         onSuccess: async () => {
             message.success(state.type === 'add' ? '创建成功' : '编辑成功');
-            navigate('/task/special-task');
+            navigate(getRoutePath(RouteKey.TASK_SCRIPT_LIST));
         },
         onError: (err) => {
             console.error(err);

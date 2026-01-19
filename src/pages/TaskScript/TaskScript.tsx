@@ -8,6 +8,7 @@ import { TaskScriptCard } from './compoment/TaskScirptCard';
 import { useNavigate } from 'react-router-dom';
 import { generateUniqueId } from '@/utils';
 import type { TaskScriptListItem } from './types';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const TaskScript: FC = () => {
     const navigate = useNavigate();
@@ -69,7 +70,7 @@ const TaskScript: FC = () => {
                     <Button
                         type="primary"
                         onClick={() =>
-                            navigate('modify-task-script', {
+                            navigate(getRoutePath(RouteKey.TASK_SCRIPT_MODIFY), {
                                 state: {
                                     type: 'add',
                                 },

@@ -49,6 +49,7 @@ import {
     createRuleSnapshot,
 } from '@/apis/SyntaxFlowRuleApi';
 import type { TSyntaxFlowRule } from '@/apis/SyntaxFlowRuleApi/type';
+import { ROUTES } from '@/utils/routeMap';
 
 const RuleManagement: React.FC = () => {
     const navigate = useNavigate();
@@ -292,7 +293,7 @@ const RuleManagement: React.FC = () => {
             message.warning('该规则缺少唯一标识，无法编辑');
             return;
         }
-        navigate('/static-analysis/rule-management/create', {
+        navigate(ROUTES.RULE_EDITOR, {
             state: {
                 mode: 'edit',
                 rule_id: record.rule_id,
@@ -302,7 +303,7 @@ const RuleManagement: React.FC = () => {
     };
 
     const handleCreate = () => {
-        navigate('/static-analysis/rule-management/create', {
+        navigate(ROUTES.RULE_EDITOR, {
             state: { mode: 'add' },
         });
     };

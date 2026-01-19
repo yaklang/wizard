@@ -27,6 +27,7 @@ import type { TSSATask } from '@/apis/SSAScanTaskApi/type';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
@@ -341,7 +342,7 @@ const TaskList: React.FC = () => {
                         icon={<EyeOutlined />}
                         onClick={() =>
                             navigate(
-                                `/static-analysis/ssa-risk?task_id=${record.task_id}&project_name=${record.project_name}`,
+                                `${getRoutePath(RouteKey.SSA_RISK)}?task_id=${record.task_id}&project_name=${record.project_name}`,
                             )
                         }
                     >
@@ -417,7 +418,7 @@ const TaskList: React.FC = () => {
                             type="primary"
                             onClick={() =>
                                 navigate(
-                                    `/static-analysis?project_id=${projectId}`,
+                                    `${getRoutePath(RouteKey.STATIC_ANALYSIS_HOME)}?project_id=${projectId}`,
                                 )
                             }
                         >
