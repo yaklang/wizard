@@ -24,6 +24,7 @@ import type {
     TSyntaxFlowRule,
     TSyntaxFlowRuleRequest,
 } from '@/apis/SyntaxFlowRuleApi/type';
+import { ROUTES } from '@/utils/routeMap';
 
 const severityOptions = [
     { label: 'Info', value: 'info' },
@@ -92,7 +93,7 @@ const RuleEditor = () => {
                 message.success(
                     editorState.mode === 'edit' ? '规则已保存' : '规则已创建',
                 );
-                navigate('/static-analysis/rule-management');
+                navigate(ROUTES.RULE_MANAGEMENT);
             },
             onError: () => {
                 message.error('保存规则失败，请重试');
@@ -135,7 +136,7 @@ const RuleEditor = () => {
         if (editorState.mode === 'edit') {
             if (!editorState.rule_id && !editorState.rule_name) {
                 message.error('缺少规则标识，无法进入编辑模式');
-                navigate('/static-analysis/rule-management');
+                navigate(ROUTES.RULE_MANAGEMENT);
                 return;
             }
             loadDetail({
@@ -156,7 +157,7 @@ const RuleEditor = () => {
             manual: true,
             onSuccess: () => {
                 message.success('删除成功');
-                navigate('/static-analysis/rule-management');
+                navigate(ROUTES.RULE_MANAGEMENT);
             },
             onError: () => {
                 message.error('删除失败');
@@ -229,7 +230,7 @@ const RuleEditor = () => {
                                 删除
                             </Button>
                         )}
-                        <Button onClick={() => navigate(-1)}>返回</Button>
+                        <Button onClick={() => navigate(ROUTES.GO_BACK)}>返回</Button>
                         <Button
                             type="primary"
                             onClick={handleSubmit}

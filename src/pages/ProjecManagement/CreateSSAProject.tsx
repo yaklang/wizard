@@ -14,6 +14,7 @@ import {
 import { UploadOutlined } from '@ant-design/icons';
 import { postSSAProject as createSSAProject } from '@/apis/SSAProjectApi';
 import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
+import { ROUTES } from '@/utils/routeMap';
 
 const { Step } = Steps;
 const { TextArea } = Input;
@@ -368,7 +369,8 @@ const CreateSSAProject: React.FC = () => {
             setLoading(true);
             await createSSAProject(finalData);
             message.success('项目创建成功');
-            navigate('/static-analysis/project-management');
+            // Navigate based on APP_MODE
+            navigate(ROUTES.PROJECT_LIST);
         } catch (error: any) {
             message.error(`创建失败: ${error.msg || error.message}`);
         } finally {

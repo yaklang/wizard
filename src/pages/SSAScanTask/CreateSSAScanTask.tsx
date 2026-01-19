@@ -6,6 +6,7 @@ import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
 import { getSSAProjects } from '@/apis/SSAProjectApi';
 import { getNodeManage } from '@/apis/NodeManageApi';
+import { ROUTES } from '@/utils/routeMap';
 
 interface FormValues {
     project_id: number;
@@ -52,7 +53,7 @@ const CreateSSAScanTask = () => {
             manual: true,
             onSuccess: () => {
                 message.success('扫描任务已创建');
-                navigate('/static-analysis/project-management');
+                navigate(ROUTES.PROJECT_LIST);
             },
             onError: (err: any) => {
                 message.error(
@@ -72,7 +73,7 @@ const CreateSSAScanTask = () => {
     };
 
     const handleBack = () => {
-        navigate(-1);
+        navigate(ROUTES.GO_BACK);
     };
 
     return (

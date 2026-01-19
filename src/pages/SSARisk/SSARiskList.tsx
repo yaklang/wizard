@@ -33,6 +33,8 @@ import type {
     TSSARiskFilterOptions,
 } from '@/apis/SSARiskApi/type';
 
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
+
 const { Search } = Input;
 
 // Detect app mode for route generation
@@ -240,10 +242,7 @@ const SSARiskList: React.FC = () => {
                 console.error('标记已读失败', err);
             }
         }
-        const detailPath = isIRify
-            ? `/vulnerabilities/${record.id}`
-            : '/static-analysis/ssa-risk/detail';
-        navigate(detailPath, {
+        navigate(getRoutePath(RouteKey.SSA_RISK_DETAIL), {
             state: { id: record.id },
         });
     };
@@ -415,9 +414,7 @@ const SSARiskList: React.FC = () => {
                         size="small"
                         onClick={() =>
                             navigate(
-                                isIRify
-                                    ? `/vulnerabilities/audit?hash=${record.hash}`
-                                    : `/static-analysis/ssa-risk/audit?hash=${record.hash}`,
+                                `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?hash=${record.hash}`,
                             )
                         }
                     >

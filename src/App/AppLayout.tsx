@@ -10,6 +10,7 @@ import { useRequest, useSafeState } from 'ahooks';
 
 import routers from './routers/routers';
 import { useNetworkStatus, usePermissionsSlice } from '@/hooks';
+import { ROUTES } from '@/utils/routeMap';
 
 import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
 // import login_logo from '@/assets/compoments/login_logo.png';
@@ -78,11 +79,11 @@ const AppLayout = () => {
     }, [locations.pathname]);
 
     useEffect(() => {
-        !status && navigate('/network-err', { replace: true });
+        !status && navigate(ROUTES.NETWORK_ERROR, { replace: true });
     }, [status]);
 
     useEffect(() => {
-        license && navigate('/license', { state: { license } });
+        license && navigate(ROUTES.LICENSE, { state: { license } });
     }, [license]);
 
     // const timeoutRef = useRef<number | null>(null);

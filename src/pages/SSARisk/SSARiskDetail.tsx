@@ -14,6 +14,8 @@ import { useRequest } from 'ahooks';
 import { fetchSSARisk, batchUpdateSSARisks } from '@/apis/SSARiskApi';
 import type { TSSARisk } from '@/apis/SSARiskApi/type';
 
+import { ROUTES } from '@/utils/routeMap';
+
 interface LocationState {
     id?: number;
     hash?: string;
@@ -221,7 +223,7 @@ const SSARiskDetail = () => {
         }
     }, [riskData, loadDetail]);
 
-    const handleGoBack = useCallback(() => navigate(-1), [navigate]);
+    const handleGoBack = useCallback(() => navigate(ROUTES.GO_BACK), [navigate]);
 
     return (
         <div className="p-4">

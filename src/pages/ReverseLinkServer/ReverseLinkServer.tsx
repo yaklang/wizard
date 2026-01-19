@@ -8,6 +8,7 @@ import { copyToClipboard } from '@/utils';
 import { useRequest } from 'ahooks';
 import { useEffect } from 'react';
 import reverseLinkServerStore from '@/App/store/reverseLinkServerStore';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const { Item } = Form;
 
@@ -25,7 +26,7 @@ const ReverseLinkServer = () => {
     useEffect(() => {
         if (isConnected) {
             tryRestoreConnection().then(() =>
-                navigate(`facade-server`, {
+                navigate(getRoutePath(RouteKey.FACADE_SERVER), {
                     state: { lastParam },
                 }),
             );
@@ -52,7 +53,7 @@ const ReverseLinkServer = () => {
         const formValues = await form.validateFields();
         await runAsync({ ...formValues, Token: uuid });
         await starReverseServer({ ...formValues, Token: uuid });
-        navigate(`facade-server`, {
+        navigate(getRoutePath(RouteKey.FACADE_SERVER), {
             state: { formValues },
         });
     };
