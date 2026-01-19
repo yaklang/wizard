@@ -68,6 +68,11 @@ const irifyRouters: RouteObject[] = [
                         path: ':id/audit',
                         element: <SSARiskAudit />,
                     },
+                    {
+                        // Standalone audit route for hash-based access
+                        path: 'audit',
+                        element: <SSARiskAudit />,
+                    },
                 ],
             },
             // Scans

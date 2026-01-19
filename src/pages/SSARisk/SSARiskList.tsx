@@ -35,6 +35,10 @@ import type {
 
 const { Search } = Input;
 
+// Detect app mode for route generation
+const APP_MODE = import.meta.env.VITE_APP_MODE;
+const isIRify = APP_MODE === 'irify';
+
 // 严重程度颜色映射
 const severityColorMap: Record<string, string> = {
     critical: 'red',
@@ -236,7 +240,10 @@ const SSARiskList: React.FC = () => {
                 console.error('标记已读失败', err);
             }
         }
-        navigate('/static-analysis/ssa-risk/detail', {
+        const detailPath = isIRify
+            ? `/vulnerabilities/${record.id}`
+            : '/static-analysis/ssa-risk/detail';
+        navigate(detailPath, {
             state: { id: record.id },
         });
     };
@@ -408,7 +415,9 @@ const SSARiskList: React.FC = () => {
                         size="small"
                         onClick={() =>
                             navigate(
-                                `/static-analysis/ssa-risk/audit?hash=${record.hash}`,
+                                isIRify
+                                    ? `/vulnerabilities/audit?hash=${record.hash}`
+                                    : `/static-analysis/ssa-risk/audit?hash=${record.hash}`,
                             )
                         }
                     >
