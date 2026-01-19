@@ -12,6 +12,7 @@ import { WizardAceEditor } from '@/compoments';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getTunnelServer } from '@/apis/ActiChainApi';
 import reverseLinkServerStore from '@/App/store/reverseLinkServerStore';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const DefaultType: { text: string; value: string }[] = [
     { value: 'rmi', text: 'RMI连接' },
@@ -59,7 +60,7 @@ const ReverseLinkServerFacadeServer = () => {
             onError: (error) => {
                 message.destroy();
                 showErrorMessage(error);
-                navigate('/acti-chain/reverse-link-server', {
+                navigate(getRoutePath(RouteKey.REVERSE_LINK_SERVER), {
                     state: { formValues },
                 });
             },
@@ -232,7 +233,7 @@ const ReverseLinkServerFacadeServer = () => {
                             setDataSource([]);
                             await disconnect();
                             await closeReverseServer();
-                            navigate('/acti-chain/reverse-link-server', {
+                            navigate(getRoutePath(RouteKey.REVERSE_LINK_SERVER), {
                                 state: { formValues },
                             });
                         }}
