@@ -95,8 +95,8 @@ export const CodeViewer: React.FC<CodeViewerProps> = (p) => {
                             ch: number;
                         };
                     }[] = [];
-                    (p.highlightKeywords || []).map((i) => {
-                        p.value.split('\n').map((lineValue, index) => {
+                    (p.highlightKeywords || []).forEach((i) => {
+                        p.value.split('\n').forEach((lineValue, index) => {
                             let startIndex = 0;
                             do {
                                 let iStart = lineValue.indexOf(i, startIndex);
@@ -118,7 +118,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = (p) => {
                             } while (true);
                         });
                     });
-                    pairs.map((i) => {
+                    pairs.forEach((i) => {
                         editor.markText(i.start, i.end, {
                             className: 'codemirror-highlighted',
                         });

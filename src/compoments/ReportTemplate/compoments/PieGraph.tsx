@@ -1,8 +1,8 @@
 import React from 'react';
 import { PieChart } from 'bizcharts';
 
-import { GraphProps } from './GraphViewer';
-import { Palm } from '@/gen/schema';
+import type { GraphProps } from './GraphViewer';
+import type { Palm } from '@/gen/schema';
 
 export interface PieGraphProps extends GraphProps {
     hideLabel?: boolean;
@@ -22,8 +22,8 @@ export const PieGraph: React.FC<PieGraphProps> = (graph) => {
                 }}
                 height={graph.height || 400}
                 width={graph.width || 400}
-                angleField={'value'}
-                colorField={'x'}
+                angleField="value"
+                colorField="x"
                 forceFit={true}
                 data={data.elements}
                 radius={0.8}

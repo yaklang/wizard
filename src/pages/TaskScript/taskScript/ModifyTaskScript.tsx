@@ -116,7 +116,6 @@ const ModifyTaskScript: FC = () => {
 
     useEffect(() => {
         if (state.type === 'edit') {
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             form.setFieldsValue({
                 ...state,
                 name: state?.script_name,

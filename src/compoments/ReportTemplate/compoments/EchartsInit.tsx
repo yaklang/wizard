@@ -115,7 +115,7 @@ export const StackedVerticalBar: React.FC<StackedVerticalBarProps> = (
             let medium = null;
             let high = null;
             let low = null;
-            list.map((itemIn: any) => {
+            list.forEach((itemIn: any) => {
                 switch (itemIn.key) {
                     case 'CRITICAL':
                         critical = itemIn.value;
@@ -156,7 +156,7 @@ export const StackedVerticalBar: React.FC<StackedVerticalBarProps> = (
             <div
                 className="echart-item echart-item-stacked-vertical-bar"
                 ref={chartRef}
-            ></div>
+            />
         </div>
     );
 };
@@ -171,7 +171,7 @@ export const HollowPie: React.FC<HollowPieProps> = (props) => {
     const ref = useRef(null);
     const size = useSize(ref);
     const newData = data.filter(
-        (item) => item.direction != 'center' && item.value !== 0,
+        (item) => item.direction !== 'center' && item.value !== 0,
     );
     const centerData = data.filter((item) => item.direction === 'center') || [
         { name: '资产', value: 0 },
@@ -296,7 +296,7 @@ export const HollowPie: React.FC<HollowPieProps> = (props) => {
                 const itemValue = newData.filter(
                     (item) => item.name === name,
                 )[0].value;
-                return '{name|' + name + ':} ' + '{value|' + itemValue + '}';
+                return `{name|${name}:} {value|${itemValue}}`;
             } catch (error) {
                 return '';
             }
@@ -322,7 +322,7 @@ export const HollowPie: React.FC<HollowPieProps> = (props) => {
             <div
                 className="echart-item echart-item-hollow-pie"
                 ref={chartRef}
-            ></div>
+            />
         </div>
     );
 };
@@ -396,7 +396,7 @@ export const MultiPie: React.FC<MultiPieProps> = (props) => {
     useEffect(() => {
         let series: any[] = [];
         if (Array.isArray(data)) {
-            data.map((item, index) => {
+            data.forEach((item, index) => {
                 let symbolSize = 0;
                 let height = 0;
                 let numOrder = 7.3;
@@ -457,8 +457,8 @@ export const MultiPie: React.FC<MultiPieProps> = (props) => {
                     symbol: 'circle',
                     emphasis: {
                         disable: false,
-                        scale: false, //不缩放
-                        scaleSize: 0, //为了防止失效直接设置未0
+                        scale: false, // 不缩放
+                        scaleSize: 0, // 为了防止失效直接设置未0
                     },
                     itemStyle: {
                         normal: {
@@ -503,10 +503,7 @@ export const MultiPie: React.FC<MultiPieProps> = (props) => {
     }, [size?.width]);
     return (
         <div className="echarts-box" ref={ref}>
-            <div
-                className="echart-item echart-item-multi-pie"
-                ref={chartRef}
-            ></div>
+            <div className="echart-item echart-item-multi-pie" ref={chartRef} />
         </div>
     );
 };
@@ -655,10 +652,10 @@ export const NightingleRose: React.FC<NightingleRoseProps> = (props) => {
             optionRef.current.series[0].data = value || [];
             // @ts-ignore
             const myChart = echarts.init(chartRef.current);
-            //先解绑事件，防止事件重复触发
+            // 先解绑事件，防止事件重复触发
             myChart.off('click');
             myChart.off('legendselectchanged');
-            myChart.on('click', function (params) {
+            myChart.on('click', (params) => {
                 setDetails({
                     // @ts-ignore
                     name: params?.data?.name || '',
@@ -675,29 +672,29 @@ export const NightingleRose: React.FC<NightingleRoseProps> = (props) => {
             };
         }
     }, [size?.width]);
+    if (!Array.isArray(data)) {
+        return null;
+    }
+
     return (
-        <>
-            {Array.isArray(data) && (
-                <div className="echarts-box" ref={ref}>
-                    <div
-                        className="echart-item echart-item-nightingle-rose"
-                        ref={chartRef}
-                    ></div>
-                    {details && (
-                        <div className="echart-detail">
-                            <div className="echart-detail-item">
-                                <div className="echart-detail-item-title">
-                                    {details.name}
-                                </div>
-                                <div className="echart-detail-item-content">
-                                    {details.content}
-                                </div>
-                            </div>
+        <div className="echarts-box" ref={ref}>
+            <div
+                className="echart-item echart-item-nightingle-rose"
+                ref={chartRef}
+            />
+            {details && (
+                <div className="echart-detail">
+                    <div className="echart-detail-item">
+                        <div className="echart-detail-item-title">
+                            {details.name}
                         </div>
-                    )}
+                        <div className="echart-detail-item-content">
+                            {details.content}
+                        </div>
+                    </div>
                 </div>
             )}
-        </>
+        </div>
     );
 };
 
@@ -712,9 +709,9 @@ export const EchartsCard: React.FC<EchartsCardProps> = (props) => {
         <>
             <div className="echarts-card-head">{dataTitle}</div>
             <div className="echarts-card">
-                {dataSource.map((item: any) => {
+                {dataSource.map((item: any, index: number) => {
                     return (
-                        <div className="echarts-card-item">
+                        <div key={index} className="echarts-card-item">
                             <div className="echarts-card-title">
                                 {item.key_verbose || item.key}
                             </div>

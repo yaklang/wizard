@@ -148,8 +148,7 @@ export declare namespace Palm {
         result: string[];
     }
     export interface UpdateBatchInvokingScriptTask
-        extends TaskBase,
-            SchedTaskBase {
+        extends TaskBase, SchedTaskBase {
         concurrent?: number;
         params?: KVPair[];
         param_files?: KVPair[];
@@ -530,8 +529,7 @@ export declare namespace Palm {
         data: ScanFingerprintTask[];
     }
     export interface ScanFingerprintTask
-        extends GormBaseModel,
-            NewScanFingerprintTask {
+        extends GormBaseModel, NewScanFingerprintTask {
         schedule_tasks: string[];
         async_tasks: string[];
     }
@@ -597,8 +595,7 @@ export declare namespace Palm {
         data: RssSubscriptionSource[];
     }
     export interface RssSubscriptionSource
-        extends NewRssSubscriptionSource,
-            GormBaseModel {}
+        extends NewRssSubscriptionSource, GormBaseModel {}
     export interface RssBriefingToTicketRequest {
         briefing_id: number;
         reason: string;
@@ -1123,8 +1120,7 @@ export declare namespace Palm {
         subtask_succeeded_count: number;
     }
     export interface NewBatchInvokingScriptTask
-        extends TaskBase,
-            SchedTaskBase {
+        extends TaskBase, SchedTaskBase {
         concurrent: number;
         params: KVPair[];
         param_files?: KVPair[];
@@ -1210,8 +1206,7 @@ export declare namespace Palm {
         data: MutateRequestTemplate[];
     }
     export interface MutateRequestTemplate
-        extends NewMutateRequestTemplate,
-            GormBaseModel {}
+        extends NewMutateRequestTemplate, GormBaseModel {}
     export interface MonitorResult {
         type: string;
         data: string;
@@ -1300,8 +1295,7 @@ export declare namespace Palm {
         data: HTTPRequestForMutating[];
     }
     export interface HTTPRequestForMutating
-        extends GormBaseModel,
-            NewHTTPRequestForMutating {
+        extends GormBaseModel, NewHTTPRequestForMutating {
         expr?: string;
         name: string;
         tags: string[];
@@ -1486,8 +1480,7 @@ export declare namespace Palm {
         data: FalconWeightConfig[];
     }
     export interface FalconWeightConfig
-        extends GormBaseModel,
-            NewFalconWeightConfig {}
+        extends GormBaseModel, NewFalconWeightConfig {}
     export interface FalconWebsitesResponse extends Paging {
         data: FalconWebsite[];
     }
@@ -1544,26 +1537,22 @@ export declare namespace Palm {
         data: FalconMonitorTask[];
     }
     export interface FalconMonitorTask
-        extends GormBaseModel,
-            NewFalconMonitorTask {}
+        extends GormBaseModel, NewFalconMonitorTask {}
     export interface FalconMonitorGroupsResponse extends Paging {
         data: FalconMonitorGroup[];
     }
     export interface FalconMonitorGroup
-        extends GormBaseModel,
-            NewFalconMonitorGroup {}
+        extends GormBaseModel, NewFalconMonitorGroup {}
     export interface FalconGitMonitorTasksResponse extends Paging {
         data: FalconGitMonitorTask[];
     }
     export interface FalconGitMonitorTask
-        extends GormBaseModel,
-            NewFalconGitMonitorTask {}
+        extends GormBaseModel, NewFalconGitMonitorTask {}
     export interface FalconGitLeakRecordsResponse extends Paging {
         data: FalconGitLeakRecord[];
     }
     export interface FalconGitLeakRecord
-        extends GormBaseModel,
-            NewFalconGitLeakRecord {}
+        extends GormBaseModel, NewFalconGitLeakRecord {}
     export interface FalconGithubTextMatches {
         property: string;
         fragment: string;
@@ -1598,8 +1587,7 @@ export declare namespace Palm {
         data: FalconBlackListKeyword[];
     }
     export interface FalconBlackListKeyword
-        extends GormBaseModel,
-            NewFalconBlackListKeyword {}
+        extends GormBaseModel, NewFalconBlackListKeyword {}
     export interface DropDescriptionResponse extends Paging {
         data: DropDescription[];
     }
@@ -1892,8 +1880,7 @@ export declare namespace Palm {
         data: BatchInvokingScriptTaskRuntime[];
     }
     export interface BatchInvokingScriptTaskRuntime
-        extends GormBaseModel,
-            NewBatchInvokingScriptTaskRuntime {}
+        extends GormBaseModel, NewBatchInvokingScriptTaskRuntime {}
     export interface BatchInvokingScriptTaskGroupsResponse extends Paging {
         data: BatchInvokingScriptTaskGroupsResponseData[];
     }
@@ -1902,8 +1889,7 @@ export declare namespace Palm {
         task_ids?: string[];
     }
     export interface BatchInvokingScriptTask
-        extends GormBaseModel,
-            NewBatchInvokingScriptTask {
+        extends GormBaseModel, NewBatchInvokingScriptTask {
         schedule_id?: string;
         interval_seconds?: number;
         status?: string;
@@ -1912,8 +1898,7 @@ export declare namespace Palm {
         data: BatchInvokingScriptSubTask[];
     }
     export interface BatchInvokingScriptSubTask
-        extends GormBaseModel,
-            NewBatchInvokingScriptSubTask {}
+        extends GormBaseModel, NewBatchInvokingScriptSubTask {}
     export interface BarGraphElement {
         name: string;
         value: number;

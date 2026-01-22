@@ -1,7 +1,7 @@
 import React from 'react';
 import { Axis, Chart, Geom, Tooltip } from 'bizcharts';
-import { GraphProps } from './GraphViewer';
-import { Palm } from '@/gen/schema';
+import type { GraphProps } from './GraphViewer';
+import type { Palm } from '@/gen/schema';
 
 export const PunchCard: React.FC<GraphProps> = (graph) => {
     const data = graph.data as Palm.PunchCardGraph;
