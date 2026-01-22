@@ -26,7 +26,9 @@ export const ReportTable: React.FC<ReportTableProp> = (props) => {
             key: `${index}`,
         };
         for (let i in item) {
-            info[`name-${i}`] = item[i];
+            if (Object.prototype.hasOwnProperty.call(item, i)) {
+                info[`name-${i}`] = item[i];
+            }
         }
         return info;
     });
@@ -39,7 +41,22 @@ export const ReportTable: React.FC<ReportTableProp> = (props) => {
                 columns={columns}
                 dataSource={dataSource}
                 pagination={false}
-            ></Table>
+            />
+        </div>
+    );
+};
+
+const TitleComponent = ({
+    extendItem,
+    item,
+}: {
+    extendItem: boolean;
+    item: string;
+}) => {
+    return (
+        <div>
+            {extendItem ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
+            <span style={{ paddingLeft: 4 }}>{item}</span>
         </div>
     );
 };
@@ -54,13 +71,13 @@ export const FoldTable: React.FC<RiskTableProp> = (props) => {
     const [extendItem, setExtendItem] = useState<boolean>(true);
     useEffect(() => {
         let header: string[] = [];
-        data.map((item, index) => {
+        data.forEach((item, index) => {
             let newArr: any = Object.entries(item);
-            newArr.sort(function (a: any, b: any) {
+            newArr.sort((a: any, b: any) => {
                 return a[1].sort - b[1].sort;
             });
             let itemData: any = {};
-            newArr.map((itemIn: any[], indexIn: number) => {
+            newArr.forEach((itemIn: any[], indexIn: number) => {
                 if (index === 0) {
                     header.push(itemIn[0]);
                 }
@@ -81,25 +98,18 @@ export const FoldTable: React.FC<RiskTableProp> = (props) => {
     }, [extendItem]);
 
     const columns = useMemo(() => {
+        const titleFn = (item: string, index: number) => {
+            if (index === 0) {
+                return <TitleComponent extendItem={extendItem} item={item} />;
+            }
+            return item;
+        };
+
         const initColumns: { title: any; dataIndex: string; key: string }[] = (
             header as string[]
         ).map((item, index) => {
             return {
-                title: () => {
-                    if (index === 0) {
-                        return (
-                            <div>
-                                {extendItem ? (
-                                    <MinusSquareOutlined />
-                                ) : (
-                                    <PlusSquareOutlined />
-                                )}
-                                <span style={{ paddingLeft: 4 }}>{item}</span>
-                            </div>
-                        );
-                    }
-                    return item;
-                },
+                title: () => titleFn(item, index),
                 dataIndex: `name-${index}`,
                 key: `name-${index}`,
                 render: (text: any) => {
@@ -132,7 +142,7 @@ export const FoldTable: React.FC<RiskTableProp> = (props) => {
                 dataSource={dataSource}
                 pagination={false}
                 onHeaderRow={() => headerRow}
-            ></Table>
+            />
         </div>
     );
 };
@@ -147,13 +157,13 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
     let header: string[] = [];
     let data: any[] = [];
     if (Array.isArray(content.data)) {
-        content.data.map((item: any, index: number) => {
+        content.data.forEach((item: any, index: number) => {
             let newArr = Object.entries(item);
-            newArr.sort(function (a: any, b: any) {
+            newArr.sort((a: any, b: any) => {
                 return a[1].sort - b[1].sort;
             });
             let itemData: any[] = [];
-            newArr.map((itemIn: any) => {
+            newArr.forEach((itemIn: any) => {
                 if (index === 0) {
                     header.push(itemIn[0]);
                 }
@@ -173,7 +183,7 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
         return acc;
     }, {});
     const sortedArr = Object.values(result);
-    sortedArr.map((item) => {
+    sortedArr.forEach((item) => {
         if (Array.isArray(item)) {
             newData = [...newData, ...item];
         }
@@ -221,7 +231,9 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
             key: `${index}`,
         };
         for (let i in item) {
-            info[`name-${i}`] = item[i];
+            if (Object.prototype.hasOwnProperty.call(item, i)) {
+                info[`name-${i}`] = item[i];
+            }
         }
         return info;
     });
@@ -234,7 +246,7 @@ export const ReportMergeTable: React.FC<ReportMergeTableProp> = (props) => {
                 columns={columns}
                 dataSource={dataSource}
                 pagination={false}
-            ></Table>
+            />
         </div>
     );
 };
@@ -257,13 +269,13 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
     useEffect(() => {
         let header: string[] = [];
         let tableData: any[] = [];
-        data.map((item, index) => {
+        data.forEach((item, index) => {
             let newArr: any = Object.entries(item);
-            newArr.sort(function (a: any, b: any) {
+            newArr.sort((a: any, b: any) => {
                 return a[1].sort - b[1].sort;
             });
             let itemData: any = {};
-            newArr.map((itemIn: any[], indexIn: number) => {
+            newArr.forEach((itemIn: any[], indexIn: number) => {
                 if (index === 0) {
                     header.push(itemIn[0]);
                 }
@@ -304,7 +316,7 @@ export const RiskTable: React.FC<RiskTableProp> = (props) => {
                 columns={columns}
                 dataSource={dataSource}
                 pagination={false}
-            ></Table>
+            />
         </div>
     );
 };

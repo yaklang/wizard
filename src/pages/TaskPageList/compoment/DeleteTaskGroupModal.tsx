@@ -23,7 +23,6 @@ const DeleteTaskGroupConfig = (
     groupTaskList: Array<Record<string, string>>,
     name: string,
     refreshAsync: <T>() => Promise<T>,
-    // eslint-disable-next-line max-params
 ) => {
     return {
         title: (

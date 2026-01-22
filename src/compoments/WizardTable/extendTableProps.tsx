@@ -1,6 +1,6 @@
 /* eslint-disable no-unsafe-optional-chaining */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-/* eslint-disable max-params */
+
 import React, { type Dispatch, useCallback, useEffect, useRef } from 'react';
 import { match, P } from 'ts-pattern';
 
@@ -77,7 +77,7 @@ const extendTableProps = (
                 acc[key] = key in state.filter ? state.filter[key] : undefined; // 优先取 state.filter 中的值
                 return acc;
             },
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+
             {} as Record<string, any>,
         );
 
@@ -109,7 +109,6 @@ const extendTableProps = (
                     };
                 }
                 return acc;
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             }, {} as TSelectedRowKeys) ?? {};
         setSelectedRowKeys(rowSelectionValues);
         selectedRef.current = rowSelectionValues;

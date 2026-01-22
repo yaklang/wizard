@@ -233,9 +233,12 @@ const ReverseLinkServerFacadeServer = () => {
                             setDataSource([]);
                             await disconnect();
                             await closeReverseServer();
-                            navigate(getRoutePath(RouteKey.REVERSE_LINK_SERVER), {
-                                state: { formValues },
-                            });
+                            navigate(
+                                getRoutePath(RouteKey.REVERSE_LINK_SERVER),
+                                {
+                                    state: { formValues },
+                                },
+                            );
                         }}
                         className="flex items-center gap-2"
                     >

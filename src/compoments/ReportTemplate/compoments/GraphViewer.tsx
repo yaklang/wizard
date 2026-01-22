@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { Palm } from '@/gen/schema';
+import type { Palm } from '@/gen/schema';
 import { handleAxiosError } from './utils/queryGraphAPI';
 import { Button, Empty, Form, Spin } from 'antd';
 import { InputInteger } from './utils/InputUtils';
@@ -46,7 +46,9 @@ export const getGraphDataById = (
     axios
         .get<Palm.GraphInfo>('/graph/data', { params: { id } })
         .then((r) => {
-            onRsp({ ...r.data } as Graph);
+            const graphData = r.data;
+            const mergedData = { ...graphData, data: graphData.data };
+            onRsp(mergedData as Graph);
         })
         .catch(handleAxiosError)
         .finally(f);
@@ -81,24 +83,22 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({
     return (
         <Spin spinning={loading}>
             <div style={{ marginTop: 10, overflow: 'auto' }}>
-                {hideFrameSize ? (
-                    <></>
-                ) : (
+                {hideFrameSize ? null : (
                     <>
-                        <Form layout={'inline'} size={'small'}>
+                        <Form layout="inline" size="small">
                             <InputInteger
-                                label={'输入宽'}
+                                label="输入宽"
                                 value={graphWidth}
                                 setValue={setWidth}
                             />
                             <InputInteger
-                                label={'输入高'}
+                                label="输入高"
                                 value={graphHeight}
                                 setValue={setHeight}
                             />
                             {showBigGraphButton && (
                                 <Button
-                                    type={'primary'}
+                                    type="primary"
                                     onClick={createGraphViewByModal(id)}
                                 >
                                     查看大图
@@ -116,7 +116,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({
                         onClick={onClick}
                     />
                 ) : (
-                    <Empty description={'暂无图例数据'} />
+                    <Empty description="暂无图例数据" />
                 )}
             </div>
         </Spin>
@@ -198,12 +198,12 @@ const Graph: React.FC<GraphProps> = (graph) => {
                 </div>
             );
         case 'date-heatmap':
-            return <div style={{ overflow: 'auto' }}></div>;
+            return <div style={{ overflow: 'auto' }} />;
         default:
             return (
                 <Empty
                     description={
-                        <div className={'div-left'}>
+                        <div className="div-left">
                             <ReactJson src={graph || {}} />
                         </div>
                     }

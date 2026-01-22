@@ -70,11 +70,14 @@ const TaskScript: FC = () => {
                     <Button
                         type="primary"
                         onClick={() =>
-                            navigate(getRoutePath(RouteKey.TASK_SCRIPT_MODIFY), {
-                                state: {
-                                    type: 'add',
+                            navigate(
+                                getRoutePath(RouteKey.TASK_SCRIPT_MODIFY),
+                                {
+                                    state: {
+                                        type: 'add',
+                                    },
                                 },
-                            })
+                            )
                         }
                     >
                         <PlusOutlined />

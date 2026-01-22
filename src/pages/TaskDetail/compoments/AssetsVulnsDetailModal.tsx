@@ -15,7 +15,6 @@ const AssetsVulnsDetailModal = forwardRef<
     {
         title: string;
     }
-    // eslint-disable-next-line complexity
 >(({ title }, ref) => {
     const [model] = WizardModal.useModal();
     const [info, setInfo] = useSafeState<TGetAssetsVulnsResponse>();

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
+import type {
     GlobalFilterFunctionProps,
     GlobalFilterFunctionTreeProps,
 } from './GlobalFilterFunctionType';
@@ -15,7 +15,6 @@ import type { apiDebugPlugin, DebugPluginRequest } from '@/pages/plugins/utils';
 import type { HTTPRequestBuilderParams } from '@/models/HTTPRequestBuilder';
 import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 import type {
-    AuditNodeDetailProps,
     AuditNodeProps,
     AuditYakUrlProps,
 } from '../AuditCode/AuditCodeType';
@@ -126,7 +125,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
             try {
                 const list: AuditNodeProps[] = [];
                 startLog.forEach((item) => {
-                    if (!!item.data) {
+                    if (item.data) {
                         const jsonData = JSON.parse(item.data);
                         if (
                             !!jsonData &&
@@ -159,60 +158,76 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
         });
         const getChildData = useMemoizedFn(
             (page: number, id: string): Promise<void> => {
-                return new Promise(async (resolve, reject) => {
-                    if (!id || !projectName) return reject();
-                    const params: AuditYakUrlProps = {
-                        Schema: 'syntaxflow',
-                        Location: projectName,
-                        Path: `/output`,
-                        Query: [
-                            { Key: 'result_id', Value: id },
-                            { Key: 'have_range', Value: 'true' },
-                            { Key: 'use_verbose_name', Value: 'true' },
-                        ],
+                if (!id || !projectName)
+                    return Promise.reject(
+                        new Error('Missing id or projectName'),
+                    );
+
+                const params: AuditYakUrlProps = {
+                    Schema: 'syntaxflow',
+                    Location: projectName,
+                    Path: `/output`,
+                    Query: [
+                        { Key: 'result_id', Value: id },
+                        { Key: 'have_range', Value: 'true' },
+                        { Key: 'use_verbose_name', Value: 'true' },
+                    ],
+                };
+
+                const processItem = (
+                    item: any,
+                    index: number,
+                    id: string,
+                ): AuditNodeProps | null => {
+                    if (item.VerboseType === 'result_id') return null;
+
+                    const {
+                        ResourceType,
+                        VerboseType,
+                        ResourceName,
+                        Size,
+                        Extra,
+                    } = item;
+                    let value = `${index}`;
+                    const arr = Extra.filter(
+                        (item: any) => item.Key === 'index',
+                    );
+                    if (arr.length > 0) {
+                        value = arr[0].Value;
+                    }
+                    const newId = `${id}/${value}`;
+                    return {
+                        parent: id,
+                        id: newId,
+                        name: ResourceName,
+                        ResourceType,
+                        VerboseType,
+                        Size,
+                        Extra,
+                        depth: 2,
+                        isLeaf: true,
                     };
-                    try {
-                        const result = await loadAuditFromYakURLRaw(
-                            params,
-                            undefined,
-                            page,
-                            10,
-                        );
+                };
+
+                return loadAuditFromYakURLRaw(params, undefined, page, 10)
+                    .then((result) => {
                         if (result) {
                             const childData: AuditNodeProps[] = [];
                             let isEnd = false;
-                            result.Resources.forEach((item, index) => {
-                                if (item.VerboseType !== 'result_id') {
-                                    const {
-                                        ResourceType,
-                                        VerboseType,
-                                        ResourceName,
-                                        Size,
-                                        Extra,
-                                    } = item;
-                                    let value: string = `${index}`;
-                                    const arr = Extra.filter(
-                                        (item) => item.Key === 'index',
+                            result.Resources.forEach(
+                                (item: any, index: number) => {
+                                    const processed = processItem(
+                                        item,
+                                        index,
+                                        id,
                                     );
-                                    if (arr.length > 0) {
-                                        value = arr[0].Value;
+                                    if (processed) {
+                                        childData.push(processed);
+                                    } else {
+                                        isEnd = true;
                                     }
-                                    const newId = `${id}/${value}`;
-                                    childData.push({
-                                        parent: id,
-                                        id: newId,
-                                        name: ResourceName,
-                                        ResourceType,
-                                        VerboseType,
-                                        Size,
-                                        Extra,
-                                        depth: 2,
-                                        isLeaf: true,
-                                    });
-                                } else {
-                                    isEnd = true;
-                                }
-                            });
+                                },
+                            );
                             const loadId = `${id}/load`;
                             if (!isEnd) {
                                 childData.push({
@@ -241,20 +256,21 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                                     Size: 0,
                                 });
                             }
-                            const newList = data.map((item) => {
+                            const newList = data.map((item: any) => {
                                 if (item.id === id) {
+                                    const existingChildren =
+                                        item.children || [];
+                                    const filteredChildren =
+                                        existingChildren.filter(
+                                            (ele: any) => ele.id !== loadId,
+                                        );
                                     return {
                                         ...item,
                                         children:
-                                            +result.Page === 1
+                                            Number(result.Page) === 1
                                                 ? childData
                                                 : [
-                                                      ...(
-                                                          item.children || []
-                                                      ).filter(
-                                                          (ele) =>
-                                                              ele.id !== loadId,
-                                                      ),
+                                                      ...filteredChildren,
                                                       ...childData,
                                                   ],
                                     };
@@ -263,23 +279,22 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                             });
                             setData(newList);
                         }
-                        setTimeout(() => {
-                            resolve();
-                        }, 200);
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
+                        return Promise.resolve();
+                    })
+                    .catch((error) => {
+                        return Promise.reject(error);
+                    });
             },
         );
 
         const onLoadData = useMemoizedFn((node) => {
-            if (node.parent === null) return Promise.reject();
+            if (node.parent === null)
+                return Promise.reject(new Error('Parent is null'));
             return getChildData(1, node.id);
         });
         const loadTreeMore = useMemoizedFn(async (node: AuditNodeProps) => {
             if (node.parent && node.page) {
-                getChildData(+node.page + 1, node.parent);
+                getChildData(Number(node.page) + 1, node.parent);
             }
         });
 
@@ -293,7 +308,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                             trailColor="var(--Colors-Use-Neutral-Bg)"
                             percent={Math.floor(
                                 (streamInfo.progressState.map(
-                                    (item) => item.progress,
+                                    (item: any) => item.progress,
                                 )[0] || 0) * 100,
                             )}
                         />
@@ -306,38 +321,30 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                             停止
                         </YakitButton>
                     </div>
+                ) : queryPluginError ? (
+                    <div style={{ marginTop: 20 }}>
+                        <YakitEmpty
+                            title="引擎版本过低，请升级"
+                            description={queryPluginError}
+                        />
+                    </div>
+                ) : data.length > 0 ? (
+                    <GlobalFilterFunctionTree
+                        data={data}
+                        onLoadData={onLoadData}
+                        onSelect={() => {}}
+                        loadTreeMore={loadTreeMore}
+                    />
                 ) : (
-                    <>
-                        {queryPluginError ? (
-                            <div style={{ marginTop: 20 }}>
-                                <YakitEmpty
-                                    title="引擎版本过低，请升级"
-                                    description={queryPluginError}
-                                />
-                            </div>
-                        ) : (
-                            <>
-                                {data.length > 0 ? (
-                                    <GlobalFilterFunctionTree
-                                        data={data}
-                                        onLoadData={onLoadData}
-                                        onSelect={() => {}}
-                                        loadTreeMore={loadTreeMore}
-                                    />
-                                ) : (
-                                    <div style={{ marginTop: 20 }}>
-                                        <YakitEmpty
-                                            title={
-                                                !projectName
-                                                    ? '请选择项目'
-                                                    : '不支持此语言，请等待更新'
-                                            }
-                                        />
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </>
+                    <div style={{ marginTop: 20 }}>
+                        <YakitEmpty
+                            title={
+                                !projectName
+                                    ? '请选择项目'
+                                    : '不支持此语言，请等待更新'
+                            }
+                        />
+                    </div>
                 )}
             </div>
         );
@@ -345,6 +352,30 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
 );
 
 export default GlobalFilterFunction;
+
+const AuditTreeNodeWrapper = React.memo(
+    (props: {
+        info: any;
+        foucsedKey: string;
+        expandedKeys: string[];
+        onSelected: (node: AuditNodeProps) => void;
+        onExpanded: (expanded: boolean, node: AuditNodeProps) => void;
+        loadTreeMore: (node: AuditNodeProps) => void;
+        customizeContent: (info: AuditNodeProps) => JSX.Element;
+    }) => {
+        return (
+            <AuditTreeNode
+                info={props.info}
+                foucsedKey={props.foucsedKey}
+                expandedKeys={props.expandedKeys}
+                onSelected={props.onSelected}
+                onExpanded={props.onExpanded}
+                loadTreeMore={props.loadTreeMore}
+                customizeContent={props.customizeContent}
+            />
+        );
+    },
+);
 
 const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
     React.memo((props) => {
@@ -367,58 +398,66 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
                 setExpandedKeys([...arr]);
             },
         );
-        const handleSelect = useMemoizedFn(
-            (node: AuditNodeProps, detail?: AuditNodeDetailProps) => {
-                setFoucsedKey(node.id);
-                onJumpByCodeRange(node);
-            },
-        );
+        const handleSelect = useMemoizedFn((node: AuditNodeProps) => {
+            setFoucsedKey(node.id);
+            onJumpByCodeRange(node);
+        });
         const onSearch = useMemoizedFn((info: AuditNodeProps) => {
             setFoucsedKey(info.id);
             onSetSelectedSearchVal(info.name);
             emiter.emit('onOpenSearchModal');
         });
         const customizeContent = useMemoizedFn((info: AuditNodeProps) => {
-            // 获取详情
             const getDetail = getDetailFun(info);
             return (
-                <>
-                    <div
-                        className={classNames(
-                            styles['global-filter-function-item'],
-                        )}
-                    >
-                        <div className={styles['item-left']}>
-                            <div title={info.name} className={styles['name']}>
-                                {info.name}
-                            </div>
-                            {getDetail?.start_line && (
-                                <YakitTag size="small" color="info">
-                                    {getDetail?.start_line}
-                                </YakitTag>
-                            )}
+                <div
+                    className={classNames(
+                        styles['global-filter-function-item'],
+                    )}
+                >
+                    <div className={styles['item-left']}>
+                        <div title={info.name} className={styles['name']}>
+                            {info.name}
                         </div>
-                        {info.isLeaf && (
-                            <div className={styles['item-right']}>
-                                <div
-                                    title={getDetail?.fileName}
-                                    className={styles['fileName']}
-                                >
-                                    {getDetail?.fileName}
-                                </div>
-                                <OutlineSearchIcon
-                                    className={styles['search-icon']}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSearch(info);
-                                    }}
-                                />
-                            </div>
+                        {getDetail?.start_line && (
+                            <YakitTag size="small" color="info">
+                                {getDetail?.start_line}
+                            </YakitTag>
                         )}
                     </div>
-                </>
+                    {info.isLeaf && (
+                        <div className={styles['item-right']}>
+                            <div
+                                title={getDetail?.fileName}
+                                className={styles['fileName']}
+                            >
+                                {getDetail?.fileName}
+                            </div>
+                            <OutlineSearchIcon
+                                className={styles['search-icon']}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSearch(info);
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
             );
         });
+
+        const renderTitle = useMemoizedFn((nodeData: any) => (
+            <AuditTreeNodeWrapper
+                info={nodeData}
+                foucsedKey={foucsedKey}
+                expandedKeys={expandedKeys}
+                onSelected={handleSelect}
+                onExpanded={handleExpand}
+                loadTreeMore={loadTreeMore}
+                customizeContent={customizeContent}
+            />
+        ));
+
         return (
             <div ref={wrapper} className={classNames(styles['audit-tree'])}>
                 <Tree
@@ -431,25 +470,14 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
                     }}
                     treeData={data}
                     blockNode={true}
-                    switcherIcon={<></>}
+                    switcherIcon={null}
                     expandedKeys={expandedKeys}
                     loadData={onLoadData}
-                    // 解决重复打开一个节点时 能加载
                     loadedKeys={[]}
-                    titleRender={(nodeData) => {
-                        return (
-                            <AuditTreeNode
-                                info={nodeData}
-                                foucsedKey={foucsedKey}
-                                expandedKeys={expandedKeys}
-                                onSelected={handleSelect}
-                                onExpanded={handleExpand}
-                                loadTreeMore={loadTreeMore}
-                                customizeContent={customizeContent}
-                            />
-                        );
-                    }}
+                    titleRender={renderTitle}
                 />
             </div>
         );
     });
+
+export default GlobalFilterFunction;

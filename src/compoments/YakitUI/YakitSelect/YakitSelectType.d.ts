@@ -34,8 +34,11 @@ export interface YakitSelectProps<
 }
 export type YakitSelectOptionProps = OptionProps;
 
-export interface YakitSelectCacheDataHistoryProps
-    extends Omit<CacheDataHistoryProps, 'options', 'defaultValue'> {
+export interface YakitSelectCacheDataHistoryProps extends Omit<
+    CacheDataHistoryProps,
+    'options',
+    'defaultValue'
+> {
     options?: OptionType;
     defaultValue: string[];
 }

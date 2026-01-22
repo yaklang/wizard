@@ -223,7 +223,10 @@ const SSARiskDetail = () => {
         }
     }, [riskData, loadDetail]);
 
-    const handleGoBack = useCallback(() => navigate(ROUTES.GO_BACK), [navigate]);
+    const handleGoBack = useCallback(
+        () => navigate(ROUTES.GO_BACK),
+        [navigate],
+    );
 
     return (
         <div className="p-4">

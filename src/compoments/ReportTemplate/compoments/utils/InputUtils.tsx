@@ -1,14 +1,7 @@
-import {
-    AutoComplete,
-    CheckboxOptionType,
-    Form,
-    Input,
-    InputNumber,
-    Radio,
-    Select,
-} from 'antd';
-import { FormItemProps } from 'antd/lib';
-import { CSSProperties } from 'react';
+import type { CheckboxOptionType } from 'antd';
+import { AutoComplete, Form, Input, InputNumber, Radio, Select } from 'antd';
+import type { FormItemProps } from 'antd/lib';
+import type { CSSProperties } from 'react';
 import TimeRange from '../TimeRange';
 
 const { Item } = Form;
@@ -28,7 +21,7 @@ export interface InputItemProps {
     required?: boolean;
     help?: string;
 
-    setValue?(s: string): any;
+    setValue?: (s: string) => any;
 
     autoComplete?: string[];
     type?: LiteralUnion<
@@ -88,21 +81,19 @@ export const InputItem: React.FC<InputItemProps> = (props) => {
                     })}
                 />
             ) : props.textarea ? (
-                <>
-                    <Input.TextArea
-                        style={{ width: props.width }}
-                        rows={props.textareaRow}
-                        cols={props.textareaCol}
-                        required={!!props.required}
-                        disabled={!!props.disable}
-                        placeholder={props.placeholder}
-                        allowClear={true}
-                        value={props.value}
-                        onChange={(e) =>
-                            props.setValue && props.setValue(e.target.value)
-                        }
-                    />
-                </>
+                <Input.TextArea
+                    style={{ width: props.width }}
+                    rows={props.textareaRow}
+                    cols={props.textareaCol}
+                    required={!!props.required}
+                    disabled={!!props.disable}
+                    placeholder={props.placeholder}
+                    allowClear={true}
+                    value={props.value}
+                    onChange={(e) =>
+                        props.setValue && props.setValue(e.target.value)
+                    }
+                />
             ) : (
                 <Input
                     style={{ width: props.width }}
@@ -151,7 +142,7 @@ export interface MultiSelectForStringProps extends InputBase {
 
     defaultSep?: string;
 
-    setValue(s: string): any;
+    setValue: (s: string) => any;
 
     maxTagTextLength?: number;
     placeholder?: string;
@@ -179,14 +170,17 @@ export const ManyMultiSelectForString: React.FC<MultiSelectForStringProps> = (
                 mode={p.mode || 'multiple'}
                 value={value}
                 maxTagTextLength={20}
-                onChange={(value, _) => {
+                onChange={(value) => {
                     p.setValue(value.join(sep) || '');
                 }}
                 placeholder={p.placeholder}
             >
                 {p.data.map((i) => {
                     return (
-                        <Select.Option value={i.value.toString()}>
+                        <Select.Option
+                            key={i.value.toString()}
+                            value={i.value.toString()}
+                        >
                             {i?.label?.toString()}
                         </Select.Option>
                     );
@@ -208,7 +202,7 @@ export interface SelectOneProps extends InputBase {
     help?: string;
     colon?: boolean;
     placeholder?: string;
-    setValue?(a: any): any;
+    setValue?: (a: any) => any;
 
     data: SelectOneItemProps[];
     formItemStyle?: CSSProperties;
@@ -233,6 +227,7 @@ export const SelectOne: React.FC<SelectOneProps> = (p) => {
             >
                 {p.data.map((e) => (
                     <Radio.Button
+                        key={e.value}
                         // type={current == e.value ? "primary" : undefined}
                         disabled={
                             (p.value === e.value ? false : !!p.disabled) ||
@@ -255,15 +250,15 @@ export interface InputNumberProps extends InputBase {
     value?: number;
     disable?: boolean;
 
-    setValue(value: number): any;
+    setValue: (value: number) => any;
 }
 
 export const InputInteger: React.FC<InputNumberProps> = (p) => {
     return (
         <Item label={p.label}>
             <InputNumber
-                size={'middle'}
-                width={'100%'}
+                size="middle"
+                width="100%"
                 disabled={p.disable}
                 min={p.min}
                 max={p.max}

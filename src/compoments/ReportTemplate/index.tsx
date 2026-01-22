@@ -37,7 +37,6 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
     width = 0,
     divRef,
 }) => {
-    // eslint-disable-next-line complexity
     const transformBlocks = useMemoizedFn((item: BlockType) => {
         switch (item.type) {
             case 'markdown':
@@ -426,7 +425,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                     );
                 }
                 break;
-            // eslint-disable-next-line no-fallthrough
+
             default:
                 return <div key={`default-${randomString(5)}`}>-</div>;
         }

@@ -63,7 +63,7 @@ export const EchartsPie: React.FC<VulnerabilityLevelPieProps> = React.memo(
             let lowNumber = 0;
             let infoNumber = 0;
             const newData = Array(5).fill(null);
-            // eslint-disable-next-line complexity
+
             list?.forEach((ele) => {
                 if (
                     ele?.Verbose &&

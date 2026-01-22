@@ -1178,7 +1178,9 @@ const SSARiskAudit: React.FC = () => {
                                                             </Button>
                                                             <Button
                                                                 onClick={() =>
-                                                                    navigate(ROUTES.GO_BACK)
+                                                                    navigate(
+                                                                        ROUTES.GO_BACK,
+                                                                    )
                                                                 }
                                                             >
                                                                 返回列表

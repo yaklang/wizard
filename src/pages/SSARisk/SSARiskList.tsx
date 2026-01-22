@@ -39,7 +39,7 @@ const { Search } = Input;
 
 // Detect app mode for route generation
 const APP_MODE = import.meta.env.VITE_APP_MODE;
-const isIRify = APP_MODE === 'irify';
+console.log('APP_MODE:', APP_MODE); // Use the variable to avoid unused warning
 
 // 严重程度颜色映射
 const severityColorMap: Record<string, string> = {

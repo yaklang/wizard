@@ -1,4 +1,3 @@
-/* eslint-disable max-nested-callbacks */
 import type { MarkerSeverity, MarkerTag } from 'monaco-editor';
 import {
     MarkerSeverity as MarkerSeverityValue,

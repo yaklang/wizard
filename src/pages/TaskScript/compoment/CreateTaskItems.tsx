@@ -58,7 +58,6 @@ const CreateTaskItems: TCreateTaskItemsProps = (
     status,
     scannerDataList,
     keywordPlaceholder,
-    // eslint-disable-next-line max-params
 ) => {
     const starTimeRf = useRef<Dayjs | null>();
 
@@ -1006,8 +1005,7 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                                 {
                                                                     message:
                                                                         '请输入扫描端口',
-                                                                    required:
-                                                                        true,
+                                                                    required: true,
                                                                 },
                                                             ]}
                                                             className="ml-9"

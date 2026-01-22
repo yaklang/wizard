@@ -230,7 +230,9 @@ const RuleEditor = () => {
                                 删除
                             </Button>
                         )}
-                        <Button onClick={() => navigate(ROUTES.GO_BACK)}>返回</Button>
+                        <Button onClick={() => navigate(ROUTES.GO_BACK)}>
+                            返回
+                        </Button>
                         <Button
                             type="primary"
                             onClick={handleSubmit}

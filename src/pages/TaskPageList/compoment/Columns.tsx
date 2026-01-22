@@ -41,7 +41,6 @@ const CommonTasksColumns = (
             >
         >
     >,
-    // eslint-disable-next-line max-params
 ): CreateTableProps<TaskListRequest>['columns'] => {
     const navigate = useNavigate();
 
