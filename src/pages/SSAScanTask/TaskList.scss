@@ -1,0 +1,171 @@
+.ssa-task-list {
+    background-color: #f0f2f5;
+    padding: 24px;
+    min-height: 100vh;
+
+    .ant-tabs-nav {
+        background: #fff;
+        padding: 0 24px;
+        margin-bottom: 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .filter-bar {
+        background: #fff;
+        padding: 24px;
+        margin-bottom: 16px;
+        border-radius: 0 0 2px 2px;
+
+        .ant-form-item {
+            margin-bottom: 16px;
+        }
+    }
+
+    .list-actions {
+        margin-bottom: 16px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .task-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .task-card {
+        background: #fff;
+        padding: 20px 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s;
+
+        &:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-main-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            flex: 1;
+
+            .task-status-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                margin-top: 6px;
+                
+                &.status-success { background: #52c41a; }
+                &.status-running { background: #1890ff; }
+                &.status-pending { background: #d9d9d9; }
+                &.status-failed { background: #ff4d4f; }
+            }
+
+            .task-details {
+                .task-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 8px;
+
+                    .task-title {
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #1890ff;
+                        cursor: pointer;
+                    }
+
+                    .task-line-count {
+                        color: #8c8c8c;
+                        font-size: 14px;
+                    }
+                }
+
+                .task-status-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 24px;
+                    margin-bottom: 12px;
+
+                    .status-label {
+                        color: #595959;
+                        .status-text {
+                            color: #52c41a;
+                            font-weight: 500;
+                            margin-left: 4px;
+                        }
+                    }
+                }
+
+                .task-meta-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 8px 32px;
+                    color: #8c8c8c;
+                    font-size: 12px;
+
+                    .meta-item {
+                        span {
+                            color: #595959;
+                            margin-left: 4px;
+                        }
+                    }
+                }
+            }
+        }
+
+        .task-stats-actions {
+            display: flex;
+            align-items: center;
+            gap: 48px;
+
+            .vulnerability-stats {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+
+                .stat-label {
+                    color: #595959;
+                    font-size: 14px;
+                }
+
+                .stat-boxes {
+                    display: flex;
+                    gap: 4px;
+
+                    .stat-box {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 2px 8px;
+                        border-radius: 2px;
+                        color: #fff;
+                        font-size: 12px;
+                        min-width: 50px;
+                        justify-content: center;
+
+                        &.high { background: #ff4d4f; }
+                        &.medium { background: #fa8c16; }
+                        &.low { background: #ffec3d; color: #595959; }
+                        &.total { background: #bfbfbf; }
+                    }
+                }
+            }
+
+            .action-buttons {
+                display: flex;
+                gap: 16px;
+
+                .ant-btn-link {
+                    padding: 0;
+                    height: auto;
+                    font-size: 14px;
+                }
+            }
+        }
+    }
+}
