@@ -4,8 +4,10 @@ import { Button, type ButtonProps } from 'antd';
 import styles from './yakitButton.module.scss';
 import classNames from 'classnames';
 
-export interface YakitButtonProp
-    extends Omit<ButtonProps, 'size' | 'type' | 'ghost' | 'shape'> {
+export interface YakitButtonProp extends Omit<
+    ButtonProps,
+    'size' | 'type' | 'ghost' | 'shape'
+> {
     type?:
         | 'primary'
         | 'secondary2'

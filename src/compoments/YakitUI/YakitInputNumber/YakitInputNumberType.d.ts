@@ -26,7 +26,9 @@ export interface YakitInputNumberProps extends Omit<InputNumberProps, 'size'> {
  * @description: 两种方式的数字输入
  * @augments InputNumberProps 继承antd的InputNumber默认属性
  */
-export interface YakitInputNumberHorizontalProps
-    extends Omit<InputNumberProps, 'size' | 'bordered'> {
+export interface YakitInputNumberHorizontalProps extends Omit<
+    InputNumberProps,
+    'size' | 'bordered'
+> {
     size?: YakitSizeType;
 }
