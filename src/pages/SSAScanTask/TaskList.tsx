@@ -18,7 +18,7 @@ import {
     CheckCircleOutlined,
     SyncOutlined,
     ExclamationCircleOutlined,
-    EyeOutlined,
+    AuditOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -334,19 +334,21 @@ const TaskList: React.FC = () => {
             fixed: 'right',
             render: (_, record: TSSATask) => (
                 <Space>
-                    {/* 查看漏洞按钮 */}
-                    <Button
-                        type="link"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        onClick={() =>
-                            navigate(
-                                `/static-analysis/ssa-risk?task_id=${record.task_id}&project_name=${record.project_name}`,
-                            )
-                        }
-                    >
-                        漏洞
-                    </Button>
+                    {/* 缺陷审计按钮 - 只在任务完成后显示 */}
+                    {record.status === 'completed' && (
+                        <Button
+                            type="link"
+                            size="small"
+                            icon={<AuditOutlined />}
+                            onClick={() =>
+                                navigate(
+                                    `/static-analysis/ssa-risk/audit?task_id=${record.task_id}&program_name=${record.project_name}`,
+                                )
+                            }
+                        >
+                            缺陷审计
+                        </Button>
+                    )}
                     {/* 取消按钮 */}
                     {record.status === 'running' ||
                     record.status === 'compiling' ||

@@ -42,7 +42,7 @@ import { ProjectManagement, ProjectEditor } from '@/pages/ProjecManagement';
 import CreateSSAProject from '@/pages/ProjecManagement/CreateSSAProject';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
-import { SSARiskList, SSARiskDetail } from '@/pages/SSARisk';
+// SSARisk pages removed - now using SSARiskAudit
 import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
 
@@ -327,22 +327,10 @@ const routers: RouteObjectRootMy[] = [
                         key: 'static-ssa-risk',
                         children: [
                             {
-                                index: true,
-                                element: <SSARiskList />,
-                            },
-                            {
-                                path: 'detail',
-                                key: 'static-ssa-risk-detail',
-                                element: <SSARiskDetail />,
-                                name: '风险详情',
-                                hidden: true,
-                                parentpath: '/static-analysis/ssa-risk',
-                            },
-                            {
                                 path: 'audit',
                                 key: 'static-ssa-risk-audit',
                                 element: <SSARiskAudit />,
-                                name: '风险审计',
+                                name: '缺陷审计',
                                 hidden: true,
                                 parentpath: '/static-analysis/ssa-risk',
                             },
