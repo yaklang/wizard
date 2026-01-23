@@ -37,7 +37,6 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
     width = 0,
     divRef,
 }) => {
-    // eslint-disable-next-line complexity
     const transformBlocks = useMemoizedFn((item: BlockType) => {
         switch (item.type) {
             case 'markdown':

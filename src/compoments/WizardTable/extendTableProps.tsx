@@ -1,6 +1,6 @@
 /* eslint-disable no-unsafe-optional-chaining */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-/* eslint-disable max-params */
+
 import React, { type Dispatch, useCallback, useEffect, useRef } from 'react';
 import { match, P } from 'ts-pattern';
 

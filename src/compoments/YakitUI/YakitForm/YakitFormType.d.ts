@@ -39,15 +39,10 @@ export interface YakitDraggerProps extends FileDraggerProps {
     accept?: string;
 }
 
-export interface YakitDraggerContentProps
-    extends Omit<
-        YakitDragger,
-        | 'showUploadList'
-        | 'directory'
-        | 'multiple'
-        | 'beforeUpload'
-        | 'onChange'
-    > {
+export interface YakitDraggerContentProps extends Omit<
+    YakitDragger,
+    'showUploadList' | 'directory' | 'multiple' | 'beforeUpload' | 'onChange'
+> {
     /** textarea的props */
     textareaProps?: InternalTextAreaProps;
     size?: YakitSizeType;

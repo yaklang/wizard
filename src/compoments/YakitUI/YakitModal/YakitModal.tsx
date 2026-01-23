@@ -6,11 +6,10 @@ import classNames from 'classnames';
 
 import styles from './yakitModal.module.scss';
 
-export interface YakitModalProp
-    extends Omit<
-        ModalProps,
-        'style' | 'cancelButtonProps' | 'okButtonProps' | 'okType'
-    > {
+export interface YakitModalProp extends Omit<
+    ModalProps,
+    'style' | 'cancelButtonProps' | 'okButtonProps' | 'okType'
+> {
     headerStyle?: CSSProperties;
     footerStyle?: CSSProperties;
 
