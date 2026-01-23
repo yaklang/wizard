@@ -24,7 +24,6 @@ import {
     Tabs,
     Tooltip,
     Collapse,
-    Timeline,
 } from 'antd';
 import {
     CheckOutlined,
@@ -172,7 +171,7 @@ const SSARiskAudit: React.FC = () => {
     const [dragging, setDragging] = useState(false);
     const dragStartRef = useRef<{ x: number; y: number } | null>(null);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState('detail');
+    const [activeTab, setActiveTab] = useState('dispose');
 
     // 代码高亮相关状态
     const [codeHighlight, setCodeHighlight] = useState<{
@@ -336,29 +335,37 @@ const SSARiskAudit: React.FC = () => {
     }, [taskId, programName]);
 
     // 获取处置历史
-    const fetchDisposalHistory = useCallback(async () => {
-        if (!auditInfo?.risk?.id) return;
-        setLoadingHistory(true);
-        try {
-            const res = await getSSARiskDisposals({
-                risk_id: auditInfo.risk.id,
-            });
-            if (res.code === 200 && res.data?.list) {
-                setDisposalHistory(res.data.list);
+    const fetchDisposalHistory = useCallback(
+        async (riskId?: number) => {
+            const targetRiskId = riskId || auditInfo?.risk?.id;
+            if (!targetRiskId) return;
+
+            setLoadingHistory(true);
+            try {
+                const res = await getSSARiskDisposals({
+                    risk_id: targetRiskId,
+                });
+                if (res.code === 200 && res.data?.list) {
+                    setDisposalHistory(res.data.list);
+                }
+            } catch (err) {
+                console.error('Failed to fetch disposal history:', err);
+            } finally {
+                setLoadingHistory(false);
             }
-        } catch (err) {
-            console.error('Failed to fetch disposal history:', err);
-        } finally {
-            setLoadingHistory(false);
-        }
-    }, [auditInfo?.risk?.id]);
+        },
+        [auditInfo?.risk?.id],
+    );
 
     // 当审计信息变化时，获取处置历史
     useEffect(() => {
         if (auditInfo?.risk?.id) {
             fetchDisposalHistory();
+        } else {
+            // 如果没有 risk id，清空历史记录
+            setDisposalHistory([]);
         }
-    }, [auditInfo?.risk?.id, fetchDisposalHistory]);
+    }, [auditInfo?.risk?.id]);
 
     const fetchAuditInfo = async (targetHash?: string) => {
         const hashToUse = targetHash || hash;
@@ -581,6 +588,10 @@ const SSARiskAudit: React.FC = () => {
     // 当选中的风险变化时，加载对应的审计信息
     useEffect(() => {
         if (isTaskMode && selectedRiskHash) {
+            // 立即清空旧数据，避免显示上一个漏洞的信息
+            setDisposalHistory([]);
+            setAuditInfo(null);
+
             fetchAuditInfo(selectedRiskHash);
             fetchFileTree(selectedRiskHash);
         }
@@ -1122,10 +1133,6 @@ const SSARiskAudit: React.FC = () => {
             });
             message.success('处置成功');
 
-            // 刷新当前审计信息和历史
-            await fetchAuditInfo();
-            fetchDisposalHistory();
-
             // 如果是任务模式，更新列表中的状态并尝试跳转到下一个
             if (isTaskMode) {
                 // 更新列表中的状态
@@ -1153,13 +1160,27 @@ const SSARiskAudit: React.FC = () => {
 
                     if (nextPending && nextPending.hash) {
                         message.info('自动跳转到下一个待处置漏洞');
+                        // 立即清空旧数据，避免短暂显示上一个漏洞的处置历史
+                        setDisposalHistory([]);
+                        setAuditInfo(null);
                         setSelectedRiskHash(nextPending.hash);
-                        // 切换回详情页，方便继续审计
-                        setActiveTab('detail');
+                        // 保持在处置页，方便继续审计
+                        setActiveTab('dispose');
                     } else {
                         message.info('已完成当前列表所有漏洞的处置');
+                        // 没有下一个漏洞，刷新当前漏洞的信息和历史
+                        await fetchAuditInfo();
+                        fetchDisposalHistory();
                     }
+                } else {
+                    // 找不到当前漏洞索引，刷新当前漏洞的信息和历史
+                    await fetchAuditInfo();
+                    fetchDisposalHistory();
                 }
+            } else {
+                // 非任务模式，刷新当前审计信息和历史
+                await fetchAuditInfo();
+                fetchDisposalHistory();
             }
         } catch (err: any) {
             message.error(`处置失败: ${err.message}`);
@@ -2196,76 +2217,142 @@ const SSARiskAudit: React.FC = () => {
                                                         </div>
                                                     ) : disposalHistory.length >
                                                       0 ? (
-                                                        <Timeline
-                                                            mode="left"
-                                                            className="disposal-timeline"
-                                                        >
+                                                        <div className="disposal-history-list">
                                                             {disposalHistory.map(
-                                                                (item) => (
-                                                                    <Timeline.Item
-                                                                        key={
-                                                                            item.id
-                                                                        }
-                                                                        label={
-                                                                            <Text type="secondary">
-                                                                                {item.created_at
-                                                                                    ? new Date(
-                                                                                          item.created_at *
+                                                                (
+                                                                    item,
+                                                                    index,
+                                                                ) => {
+                                                                    const timeAgo =
+                                                                        item.created_at
+                                                                            ? (() => {
+                                                                                  const now =
+                                                                                      Date.now();
+                                                                                  const diff =
+                                                                                      Math.floor(
+                                                                                          (now -
+                                                                                              item.created_at *
+                                                                                                  1000) /
                                                                                               1000,
-                                                                                      ).toLocaleString()
-                                                                                    : '-'}
-                                                                            </Text>
-                                                                        }
-                                                                        dot={
-                                                                            <ClockCircleOutlined />
-                                                                        }
-                                                                        color={getDisposeStatusColor(
-                                                                            item.status,
-                                                                        )}
-                                                                    >
-                                                                        <Card
-                                                                            size="small"
-                                                                            className="history-card"
+                                                                                      );
+                                                                                  if (
+                                                                                      diff <
+                                                                                      60
+                                                                                  )
+                                                                                      return '刚刚';
+                                                                                  if (
+                                                                                      diff <
+                                                                                      3600
+                                                                                  )
+                                                                                      return `${Math.floor(diff / 60)}分钟前`;
+                                                                                  if (
+                                                                                      diff <
+                                                                                      86400
+                                                                                  )
+                                                                                      return `${Math.floor(diff / 3600)}小时前`;
+                                                                                  if (
+                                                                                      diff <
+                                                                                      2592000
+                                                                                  )
+                                                                                      return `${Math.floor(diff / 86400)}天前`;
+                                                                                  return new Date(
+                                                                                      item.created_at *
+                                                                                          1000,
+                                                                                  ).toLocaleDateString();
+                                                                              })()
+                                                                            : '-';
+
+                                                                    return (
+                                                                        <div
+                                                                            key={
+                                                                                item.id
+                                                                            }
+                                                                            className="history-item"
                                                                         >
-                                                                            <div className="history-header">
-                                                                                <Tag
-                                                                                    color={getDisposeStatusColor(
-                                                                                        item.status,
-                                                                                    )}
-                                                                                >
-                                                                                    {convertDisposalStatusToDisplay(
-                                                                                        item.status,
-                                                                                    )}
-                                                                                </Tag>
-                                                                                <Space>
-                                                                                    <UserOutlined />
-                                                                                    <Text
-                                                                                        strong
-                                                                                    >
-                                                                                        审计员
-                                                                                    </Text>
-                                                                                </Space>
+                                                                            <div className="history-timeline-dot">
+                                                                                <div
+                                                                                    className={`dot ${getDisposeStatusColor(item.status)}`}
+                                                                                />
+                                                                                {index <
+                                                                                    disposalHistory.length -
+                                                                                        1 && (
+                                                                                    <div className="timeline-line" />
+                                                                                )}
                                                                             </div>
-                                                                            {item.comment && (
-                                                                                <div className="history-comment">
-                                                                                    <Paragraph
-                                                                                        ellipsis={{
-                                                                                            rows: 3,
-                                                                                            expandable:
-                                                                                                true,
+                                                                            <div className="history-content">
+                                                                                <div className="history-meta">
+                                                                                    <Space
+                                                                                        size="small"
+                                                                                        style={{
+                                                                                            flexWrap:
+                                                                                                'wrap',
                                                                                         }}
                                                                                     >
-                                                                                        {
-                                                                                            item.comment
-                                                                                        }
-                                                                                    </Paragraph>
+                                                                                        <Tag
+                                                                                            color={getDisposeStatusColor(
+                                                                                                item.status,
+                                                                                            )}
+                                                                                            style={{
+                                                                                                fontWeight: 600,
+                                                                                                fontSize: 13,
+                                                                                            }}
+                                                                                        >
+                                                                                            {convertDisposalStatusToDisplay(
+                                                                                                item.status,
+                                                                                            )}
+                                                                                        </Tag>
+                                                                                        <Text
+                                                                                            type="secondary"
+                                                                                            style={{
+                                                                                                fontSize: 12,
+                                                                                            }}
+                                                                                        >
+                                                                                            <UserOutlined
+                                                                                                style={{
+                                                                                                    marginRight: 4,
+                                                                                                }}
+                                                                                            />
+                                                                                            {item.auditor ||
+                                                                                                '未知'}
+                                                                                        </Text>
+                                                                                        <Text
+                                                                                            type="secondary"
+                                                                                            style={{
+                                                                                                fontSize: 12,
+                                                                                            }}
+                                                                                        >
+                                                                                            <ClockCircleOutlined
+                                                                                                style={{
+                                                                                                    marginRight: 4,
+                                                                                                }}
+                                                                                            />
+                                                                                            {
+                                                                                                timeAgo
+                                                                                            }
+                                                                                        </Text>
+                                                                                    </Space>
                                                                                 </div>
-                                                                            )}
-                                                                        </Card>
-                                                                    </Timeline.Item>
-                                                                ),
+                                                                                {item.comment && (
+                                                                                    <div className="history-comment-bubble">
+                                                                                        <Paragraph
+                                                                                            style={{
+                                                                                                marginBottom: 0,
+                                                                                                whiteSpace:
+                                                                                                    'pre-wrap',
+                                                                                            }}
+                                                                                        >
+                                                                                            {
+                                                                                                item.comment
+                                                                                            }
+                                                                                        </Paragraph>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                },
                                                             )}
-                                                        </Timeline>
+                                                        </div>
                                                     ) : (
                                                         <div
                                                             style={{

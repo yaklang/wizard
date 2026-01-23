@@ -241,6 +241,7 @@ export interface TSSARiskDisposal {
     status?: string;
     comment?: string;
     task_id?: string;
+    auditor?: string; // 处置人
 }
 
 // 处置列表响应类型

@@ -18,17 +18,39 @@
     display: flex;
     flex-direction: column;
     background: #f0f2f5;
-    padding: 16px;
+    padding: 12px;
     overflow: hidden;
 
     .audit-header {
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         flex-shrink: 0;
 
+        // 压缩卡片内边距
+        .ant-card-body {
+            padding: 12px 16px;
+        }
+
+        // 压缩标题高度
+        h4.ant-typography {
+            margin-bottom: 4px;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
         .risk-meta {
-            margin-top: 12px;
+            margin-top: 4px;
             display: flex;
             align-items: center;
+            font-size: 12px;
+            line-height: 1.5;
+
+            .ant-typography {
+                font-size: 12px;
+            }
+
+            .ant-divider {
+                margin: 0 8px;
+            }
         }
     }
 
@@ -704,39 +726,122 @@
                         border: 1px solid #1890ff;
                     }
 
-                    // 处置历史样式
-                    .disposal-timeline {
-                        margin-top: 16px;
-                        padding-left: 8px;
+                    // 处置历史样式 - 现代化审计日志风格
+                    .disposal-history-list {
+                        margin-top: 8px;
 
-                        .ant-timeline-item-label {
-                            width: 140px !important;
-                            text-align: left !important;
-                        }
+                        .history-item {
+                            display: flex;
+                            gap: 16px;
+                            padding: 16px 0;
+                            position: relative;
 
-                        .ant-timeline-item-content {
-                            margin-left: 150px !important;
-                        }
-
-                        .history-card {
-                            border: 1px solid #f0f0f0;
-                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-                            margin-bottom: 8px;
-
-                            .history-header {
-                                display: flex;
-                                align-items: center;
-                                justify-content: space-between;
-                                margin-bottom: 8px;
+                            &:first-child {
+                                padding-top: 0;
                             }
 
-                            .history-comment {
-                                background: #fafafa;
-                                padding: 8px 12px;
-                                border-radius: 4px;
-                                font-size: 13px;
-                                color: #595959;
-                                border-left: 3px solid #d9d9d9;
+                            .history-timeline-dot {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                flex-shrink: 0;
+                                padding-top: 4px;
+
+                                .dot {
+                                    width: 12px;
+                                    height: 12px;
+                                    border-radius: 50%;
+                                    border: 2px solid #fff;
+                                    box-shadow: 0 0 0 2px #e8e8e8;
+                                    flex-shrink: 0;
+                                    z-index: 2;
+                                    background: #e8e8e8;
+
+                                    &.red {
+                                        background: #ff4d4f;
+                                        box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+                                    }
+
+                                    &.green {
+                                        background: #52c41a;
+                                        box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+                                    }
+
+                                    &.orange {
+                                        background: #faad14;
+                                        box-shadow: 0 0 0 2px rgba(250, 173, 20, 0.2);
+                                    }
+
+                                    &.default {
+                                        background: #d9d9d9;
+                                        box-shadow: 0 0 0 2px rgba(217, 217, 217, 0.2);
+                                    }
+
+                                    &.blue {
+                                        background: #1890ff;
+                                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+                                    }
+                                }
+
+                                .timeline-line {
+                                    width: 2px;
+                                    flex: 1;
+                                    background: linear-gradient(
+                                        to bottom,
+                                        #e8e8e8 0%,
+                                        transparent 100%
+                                    );
+                                    margin-top: 4px;
+                                    min-height: 24px;
+                                }
+                            }
+
+                            .history-content {
+                                flex: 1;
+                                min-width: 0;
+
+                                .history-meta {
+                                    margin-bottom: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                }
+
+                                .history-comment-bubble {
+                                    background: #f9f9f9;
+                                    border: 1px solid #e8e8e8;
+                                    border-radius: 8px;
+                                    padding: 12px 16px;
+                                    position: relative;
+                                    font-size: 13px;
+                                    line-height: 1.6;
+                                    color: #262626;
+                                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+                                    &::before {
+                                        content: '';
+                                        position: absolute;
+                                        left: -8px;
+                                        top: 12px;
+                                        width: 0;
+                                        height: 0;
+                                        border-top: 6px solid transparent;
+                                        border-bottom: 6px solid transparent;
+                                        border-right: 8px solid #e8e8e8;
+                                    }
+
+                                    &::after {
+                                        content: '';
+                                        position: absolute;
+                                        left: -7px;
+                                        top: 12px;
+                                        width: 0;
+                                        height: 0;
+                                        border-top: 6px solid transparent;
+                                        border-bottom: 6px solid transparent;
+                                        border-right: 8px solid #f9f9f9;
+                                    }
+                                }
                             }
                         }
                     }
@@ -783,7 +888,7 @@
                                 flex-shrink: 0;
                                 box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
                                 display: flex;
-                                justify-content: flex-end; // 将按钮推向右侧
+                                justify-content: flex-end;
                             }
                         }
                     }
