@@ -221,3 +221,27 @@ export interface TSSARiskFileContent {
     content: string; // 文件内容
     size?: number; // 文件大小
 }
+
+// 处置请求类型
+export interface TSSARiskDisposalRequest {
+    id?: number; // 处置ID（更新时需要）
+    ssa_risk_id: number; // 风险ID
+    status: string; // 处置状态：not_set, not_issue, suspicious, is_issue
+    comment?: string; // 处置评论
+    task_id?: string; // 任务ID
+}
+
+// 处置响应类型
+export interface TSSARiskDisposal {
+    id?: number;
+    created_at?: number;
+    updated_at?: number;
+    ssa_risk_id?: number;
+    risk_feature_hash?: string;
+    status?: string;
+    comment?: string;
+    task_id?: string;
+}
+
+// 处置列表响应类型
+export type TSSARiskDisposalListResponse = TableResponseData<TSSARiskDisposal>;

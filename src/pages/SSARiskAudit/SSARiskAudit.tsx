@@ -44,7 +44,7 @@ import {
     getSSARiskAudit,
     getSsaRiskAuditFiles,
     getSsaRiskFileContent,
-    updateSSARisk,
+    postSSARiskDisposal,
     getSSARisks,
 } from '@/apis/SSARiskApi';
 import type {
@@ -1071,13 +1071,15 @@ const SSARiskAudit: React.FC = () => {
 
         setDisposing(true);
         try {
-            await updateSSARisk({
-                id: auditInfo.risk.id,
-                latest_disposal_status: values.disposal_status,
-                // 评论可以存储到描述字段或者单独的评论字段
-                description: values.comment
-                    ? `${auditInfo.risk.description || ''}\n\n[处置评论] ${values.comment}`
-                    : auditInfo.risk.description,
+            // 映射前端状态值到后端状态值
+            const backendStatus = convertDisposalStatusToBackend(
+                values.disposal_status,
+            );
+
+            await postSSARiskDisposal({
+                ssa_risk_id: auditInfo.risk.id,
+                status: backendStatus,
+                comment: values.comment || '',
             });
             message.success('处置成功');
 
@@ -1805,10 +1807,11 @@ const SSARiskAudit: React.FC = () => {
                                                                             ?.latest_disposal_status,
                                                                     )}
                                                                 >
-                                                                    {auditInfo
-                                                                        .risk
-                                                                        ?.latest_disposal_status ||
-                                                                        '未处置'}
+                                                                    {convertDisposalStatusToDisplay(
+                                                                        auditInfo
+                                                                            .risk
+                                                                            ?.latest_disposal_status,
+                                                                    )}
                                                                 </Tag>
                                                             </Descriptions.Item>
                                                             <Descriptions.Item
@@ -1929,9 +1932,11 @@ const SSARiskAudit: React.FC = () => {
                                                         onFinish={handleDispose}
                                                         initialValues={{
                                                             disposal_status:
-                                                                auditInfo.risk
-                                                                    ?.latest_disposal_status ||
-                                                                '未处置',
+                                                                convertDisposalStatusToDisplay(
+                                                                    auditInfo
+                                                                        .risk
+                                                                        ?.latest_disposal_status,
+                                                                ),
                                                         }}
                                                     >
                                                         <Form.Item
@@ -2260,13 +2265,46 @@ const getSeverityColor = (severity?: string): string => {
     return 'default';
 };
 
+// 辅助函数：将后端状态值转换为前端显示的中文值
+const convertDisposalStatusToDisplay = (status?: string): string => {
+    if (!status) return '未处置';
+    const statusMap: Record<string, string> = {
+        is_issue: '有问题',
+        not_issue: '没问题',
+        suspicious: '存疑',
+        not_set: '未处置',
+        // 兼容旧的中文值
+        有问题: '有问题',
+        确认漏洞: '有问题',
+        没问题: '没问题',
+        误报: '没问题',
+        存疑: '存疑',
+        未处置: '未处置',
+    };
+    return statusMap[status] || '未处置';
+};
+
+// 辅助函数：将前端显示的中文值转换为后端状态值
+const convertDisposalStatusToBackend = (status: string): string => {
+    const statusMap: Record<string, string> = {
+        有问题: 'is_issue',
+        确认漏洞: 'is_issue',
+        没问题: 'not_issue',
+        误报: 'not_issue',
+        存疑: 'suspicious',
+        未处置: 'not_set',
+    };
+    return statusMap[status] || 'not_set';
+};
+
 // 辅助函数：获取处置状态的颜色
 const getDisposeStatusColor = (status?: string): string => {
     if (!status) return 'default';
-    if (status === '有问题' || status === '确认漏洞') return 'red';
-    if (status === '没问题' || status === '误报') return 'green';
-    if (status === '存疑') return 'orange';
-    if (status === '未处置') return 'default';
+    const displayStatus = convertDisposalStatusToDisplay(status);
+    if (displayStatus === '有问题') return 'red';
+    if (displayStatus === '没问题') return 'green';
+    if (displayStatus === '存疑') return 'orange';
+    if (displayStatus === '未处置') return 'default';
     return 'blue';
 };
 
