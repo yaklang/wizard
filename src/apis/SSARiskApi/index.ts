@@ -12,6 +12,9 @@ import type {
     TSSARiskAuditInfo,
     TSSARiskRelatedFiles,
     TSSARiskFileContent,
+    TSSARiskDisposalRequest,
+    TSSARiskDisposal,
+    TSSARiskDisposalListResponse,
 } from './type';
 
 // GET /ssa/risk/filter-options - 获取筛选选项
@@ -145,3 +148,48 @@ export const getSsaRiskFileContent = (
             signal,
         },
     );
+
+// POST /ssa/risk/disposal - 创建或更新 SSA 风险处置
+export const postSSARiskDisposal = (
+    data: TSSARiskDisposalRequest,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>('/ssa/risk/disposal', data);
+
+// GET /ssa/risk/disposal - 查询 SSA 风险处置列表
+export const getSSARiskDisposals = (
+    params?: {
+        page?: number;
+        limit?: number;
+        risk_id?: number;
+        task_id?: string;
+    },
+    signal?: AbortSignal,
+): Promise<ResponseData<TSSARiskDisposalListResponse>> =>
+    axios.get<never, ResponseData<TSSARiskDisposalListResponse>>(
+        '/ssa/risk/disposal',
+        {
+            params,
+            signal,
+        },
+    );
+
+// GET /ssa/risk/disposal/fetch - 获取单个 SSA 风险处置详情
+export const getSSARiskDisposal = (
+    id: number,
+    signal?: AbortSignal,
+): Promise<ResponseData<TSSARiskDisposal>> =>
+    axios.get<never, ResponseData<TSSARiskDisposal>>(
+        '/ssa/risk/disposal/fetch',
+        {
+            params: { id },
+            signal,
+        },
+    );
+
+// DELETE /ssa/risk/disposal - 删除 SSA 风险处置
+export const deleteSSARiskDisposal = (
+    id: number,
+): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>('/ssa/risk/disposal', {
+        params: { id },
+    });
