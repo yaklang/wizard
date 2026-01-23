@@ -1,6 +1,7 @@
 import { WizardModal } from '@/compoments';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { Button, Form, Input, message } from 'antd';
+import showErrorMessage from '@/utils/showErrorMessage';
 import { forwardRef, useImperativeHandle } from 'react';
 import type { UsePageRef } from '@/hooks/usePage';
 import type { Palm } from '@/gen/schema';
@@ -21,7 +22,7 @@ const EditNodeModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
                 message.success('编辑成功');
             },
             onError: () => {
-                message.error('编辑失败，请重试');
+                showErrorMessage('编辑失败，请重试');
             },
         });
 

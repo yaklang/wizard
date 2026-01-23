@@ -1,7 +1,7 @@
 import React from 'react';
-import { GraphProps } from './GraphViewer';
+import type { GraphProps } from './GraphViewer';
 import { Axis, Chart, Coord, Geom, Tooltip } from 'bizcharts';
-import { Palm } from '@/gen/schema';
+import type { Palm } from '@/gen/schema';
 
 export const BarGraph: React.FC<GraphProps> = (g) => {
     const data = g.data as Palm.BarGraph;

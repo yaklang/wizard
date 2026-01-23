@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import type { ButtonProps } from 'antd';
-import { Button, Modal, Space, message, Pagination } from 'antd';
+import { Button, Modal, Space, Pagination } from 'antd';
+import showErrorMessage from '@/utils/showErrorMessage';
 import type { CellSetting } from './toExcel';
 import { export_json_to_excel } from './toExcel';
 import { useMemoizedFn } from 'ahooks';
@@ -114,7 +115,7 @@ export const ExportExcel: React.FC<ExportExcelProps> = (props) => {
                 }
             })
             .catch((e: any) => {
-                message.error(`数据导出失败: ${e}`);
+                showErrorMessage(`数据导出失败: ${e}`);
             })
             .finally(() => setTimeout(() => setLoading(false), 300));
     });

@@ -25,7 +25,7 @@ const TaskScriptTags: React.FC<Partial<TaskScriptTagsProps>> = ({ tags }) => {
     return (
         <div className={styles['content-tags']} ref={contentRef}>
             {tagItem
-                ?.filter((it) => it !== '')
+                ?.filter((it: string) => it !== '')
                 ?.map(
                     (tag: string, key: Key) =>
                         key === 0 && (
@@ -39,14 +39,15 @@ const TaskScriptTags: React.FC<Partial<TaskScriptTagsProps>> = ({ tags }) => {
                         ),
                 )}
             {tagItem &&
-                tagItem.filter((it) => it !== '')?.slice(1, tagItem?.length)
-                    ?.length > 0 && (
+                tagItem
+                    .filter((it: string) => it !== '')
+                    ?.slice(1, tagItem?.length)?.length > 0 && (
                     <Popover
                         content={
                             <div className="max-h-30 overflow-auto flex flex-col gap-2">
                                 {tagItem
                                     .slice(1, tagItem?.length)
-                                    .map((tag: any) => (
+                                    .map((tag: string) => (
                                         <Tag
                                             style={{
                                                 display: 'flex',

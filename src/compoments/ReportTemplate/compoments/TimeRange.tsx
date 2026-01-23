@@ -13,16 +13,16 @@ interface TimeRangeProps {
     start?: number;
     end?: number;
 
-    onStart?(time: number): any;
+    onStart?: (time: number) => any;
 
-    onEnd?(time: number): any;
+    onEnd?: (time: number) => any;
 }
 
 export interface TimePointProps {
     value?: number;
     placeholder?: string;
 
-    setValue(value: number): any;
+    setValue: (value: number) => any;
 }
 
 export const TimePoint: React.FC<TimePointProps> = ({
@@ -62,7 +62,7 @@ const TimeRange: React.FC<TimeRangeProps> = (props: TimeRangeProps) => {
     }, [end]);
 
     return (
-        <div className={'div-left'}>
+        <div className="div-left">
             <Row>
                 <Col span={12}>
                     <div style={{ marginRight: 4 }}>
@@ -77,7 +77,7 @@ const TimeRange: React.FC<TimeRangeProps> = (props: TimeRangeProps) => {
                             }
                             placeholder="点击这里设置开始时间"
                             onChange={(e) => {
-                                e != null
+                                e !== null
                                     ? setStart(e.unix())
                                     : setStart(undefined);
                             }}
@@ -93,7 +93,9 @@ const TimeRange: React.FC<TimeRangeProps> = (props: TimeRangeProps) => {
                             value={end && end > 0 ? dayjs.unix(end) : undefined}
                             placeholder="点击这里设置结束时间"
                             onChange={(e) =>
-                                e != null ? setEnd(e.unix()) : setEnd(undefined)
+                                e !== null
+                                    ? setEnd(e.unix())
+                                    : setEnd(undefined)
                             }
                         />
                     </div>

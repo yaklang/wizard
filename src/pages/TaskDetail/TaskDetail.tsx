@@ -216,22 +216,20 @@ const TaskDetail: FC = () => {
                             order_by: filter?.order ? 'updated_at' : undefined,
                             task_id: record?.task_id,
                         });
-                        const targetProtColumns = ProtColumns().map(
-                            // eslint-disable-next-line max-nested-callbacks
-                            (item) =>
-                                item.dataIndex === 'execute_node'
-                                    ? {
-                                          ...item,
-                                          wizardColumnsOptions:
-                                              record?.scanner?.map(
-                                                  // eslint-disable-next-line max-nested-callbacks
-                                                  (it: string) => ({
-                                                      label: it,
-                                                      value: it,
-                                                  }),
-                                              ),
-                                      }
-                                    : item,
+                        const targetProtColumns = ProtColumns().map((item) =>
+                            item.dataIndex === 'execute_node'
+                                ? {
+                                      ...item,
+                                      wizardColumnsOptions:
+                                          record?.scanner?.map(
+                                              // eslint-disable-next-line max-nested-callbacks
+                                              (it: string) => ({
+                                                  label: it,
+                                                  value: it,
+                                              }),
+                                          ),
+                                  }
+                                : item,
                         );
                         setColumns(targetProtColumns);
                         setTableLoadings(false);

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Axis, Chart, Geom, Legend, Tooltip } from 'bizcharts';
-import { GraphProps } from './GraphViewer';
-import { Palm } from '@/gen/schema';
+import type { GraphProps } from './GraphViewer';
+import type { Palm } from '@/gen/schema';
 import { formatTimestamp } from './utils/strUtils';
 
 interface LineGraphProps extends GraphProps {
@@ -71,7 +71,7 @@ export const LineGraph: React.FC<LineGraphProps> = (graph) => {
                     label={{
                         autoRotate: false,
                         formatter(text: string): string {
-                            const timestamp = parseInt(text, 0);
+                            const timestamp = parseInt(text, 10);
                             return formatTimestamp(timestamp);
                         },
                         style: { rotate: 15, textAlign: 'left', fontSize: 10 },
@@ -96,12 +96,12 @@ export const LineGraph: React.FC<LineGraphProps> = (graph) => {
                         type: 'y',
                     }}
                 />
-                <Legend position={'bottom'} />
+                <Legend position="bottom" />
                 <Geom
                     type="line"
                     position="timestamp*value"
                     size={2}
-                    color={'name'}
+                    color="name"
                     tooltip={[
                         'timestamp*value',
                         (timestamp, value) => {
@@ -121,7 +121,7 @@ export const LineGraph: React.FC<LineGraphProps> = (graph) => {
                         type="point"
                         position="timestamp*value"
                         size={4}
-                        shape={'circle'}
+                        shape="circle"
                         style={{
                             stroke: '#fff',
                             lineWidth: 1,

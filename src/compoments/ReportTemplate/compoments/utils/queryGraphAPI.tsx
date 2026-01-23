@@ -1,7 +1,7 @@
-import { Palm } from '@/gen/schema';
+import type { Palm } from '@/gen/schema';
 import axios from '@/utils/axios';
 import { notification } from 'antd';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 export function handleAxiosError(e: AxiosError) {
     let msg = `Axios Message[${e?.name}]: ${e?.message}: Body: ${JSON.stringify(e?.response?.data)} ${e ? '' : JSON.stringify(e)}`;

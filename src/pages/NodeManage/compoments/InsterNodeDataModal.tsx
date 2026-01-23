@@ -3,6 +3,7 @@ import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { Button, Checkbox, Col, Form, message, Row } from 'antd';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import type { UsePageRef } from '@/hooks/usePage';
+import showErrorMessage from '@/utils/showErrorMessage';
 import { useRequest } from 'ahooks';
 import { postNodesDownloadDataRun } from '@/apis/NodeManageApi';
 
@@ -22,7 +23,7 @@ const InsterNodeDataModal = forwardRef<UseModalRefType, { page: UsePageRef }>(
                 model.close();
             },
             onError: () => {
-                message.error('更新失败，请重试');
+                showErrorMessage('更新失败，请重试');
             },
         });
 

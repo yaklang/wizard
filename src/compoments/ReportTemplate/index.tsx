@@ -426,7 +426,7 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
                     );
                 }
                 break;
-            // eslint-disable-next-line no-fallthrough
+
             default:
                 return <div key={`default-${randomString(5)}`}>-</div>;
         }

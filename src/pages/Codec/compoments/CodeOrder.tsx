@@ -19,6 +19,7 @@ import {
 
 import EmptyImages from '@/assets/compoments/Empty.png';
 import { Button, Checkbox, message, Popover, Tooltip } from 'antd';
+import { showErrorMessage } from '@/utils/showErrorMessage';
 import { OutlineStorage } from '../assets/OutlineStorage';
 import { OutlineClock } from '../assets/OutlineClock';
 import { CodecTypeItem } from './CodecTypeItem';
@@ -55,7 +56,7 @@ const CodeOrder = () => {
         },
         onError: (error) => {
             message.destroy();
-            message.error(error.message);
+            showErrorMessage(error);
         },
     });
 

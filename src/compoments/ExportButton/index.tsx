@@ -1,7 +1,7 @@
-import { Button } from 'antd';
 import type { ExportProps, ExportState } from './types';
 import { LoadingOutlined } from '@ant-design/icons';
-import { message, Modal, Spin } from 'antd';
+import { Button, Modal, message, Spin } from 'antd';
+import showErrorMessage from '@/utils/showErrorMessage';
 import axios from '@/utils/axios';
 import type { FC } from 'react';
 import { useCallback, useReducer } from 'react';
@@ -65,7 +65,7 @@ const ExportButton: FC<
             };
 
             const failure = () => {
-                message.error('导出错误');
+                showErrorMessage('导出错误');
                 clearTimeout(timer);
                 onChange?.('error');
             };
