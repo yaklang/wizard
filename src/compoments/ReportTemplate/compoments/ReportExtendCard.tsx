@@ -28,7 +28,7 @@ export const FoldHoleCard: React.FC<FoldHoleCardProps> = (props) => {
     return (
         <div className={styles['fold-hole']}>
             {dataSource.map((item: any, index: number) => {
-                const content = item[1].value;
+                const content = item?.[1]?.value;
                 if (item[1]?.fold) {
                     return (
                         <div
@@ -50,8 +50,8 @@ export const FoldHoleCard: React.FC<FoldHoleCardProps> = (props) => {
             {extendItem && (
                 <div className={styles['card-content']}>
                     {dataSource.map((item: any, index: number) => {
-                        const title = item[0];
-                        const content = item[1].value;
+                        const title = item?.[0];
+                        const content = item?.[1]?.value;
                         if (item[1]?.type === 'code') {
                             return (
                                 <div
@@ -122,11 +122,11 @@ export const FoldRuleCard: React.FC<FoldRuleCardProps> = (props) => {
                 ) : (
                     <PlusSquareOutlined size={12} />
                 )}
-                <Markdown>{`#### ${title} (共${data.length}个)`}</Markdown>
+                <Markdown>{`#### ${title} (共${data?.length}个)`}</Markdown>
             </div>
             {extendItem && (
                 <div className={styles['rule-risk-content']}>
-                    {data.map((item, index) => {
+                    {data?.map((item, index) => {
                         return <FoldHoleCard key={index} data={item} />;
                     })}
                 </div>

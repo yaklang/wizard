@@ -62,7 +62,7 @@ const AppLayout = () => {
         const resultRouteList = resultPathNodes ? resultPathNodes.slice(1) : [];
         setHeaderTitle(resultRouteList);
 
-        return routerList as MenuProps['items'];
+        return routerList;
     }, [routers, collapsed, permissionsSlice, locations.pathname]);
 
     // 超过二级路由点击时，获取2级路由作为key
