@@ -22,6 +22,13 @@ export interface TSSATask {
     execute_node?: string;
     program_name?: string;
     risk_count?: number;
+    risk_count_high?: number;
+    risk_count_medium?: number;
+    risk_count_low?: number;
+    total_lines?: number;
+    creator?: string;
+    language?: string;
+    source_origin?: string;
     error_message?: string;
     started_at?: number; // Unix 时间戳（秒）
     finished_at?: number; // Unix 时间戳（秒）
@@ -35,6 +42,13 @@ export interface TSSATaskQueryParams {
     status?: string;
     page?: number;
     limit?: number;
+    query?: string;
+    language?: string;
+    start_date?: string;
+    end_date?: string;
+    source?: string;
+    risk_count_min?: number;
+    risk_count_max?: number;
 }
 
 // 任务列表响应
