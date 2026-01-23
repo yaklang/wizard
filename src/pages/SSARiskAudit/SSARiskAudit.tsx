@@ -24,6 +24,7 @@ import {
     Tabs,
     Tooltip,
     Collapse,
+    Timeline,
 } from 'antd';
 import {
     CheckOutlined,
@@ -39,6 +40,8 @@ import {
     ZoomInOutlined,
     ZoomOutOutlined,
     BugOutlined,
+    ClockCircleOutlined,
+    UserOutlined,
 } from '@ant-design/icons';
 import {
     getSSARiskAudit,
@@ -46,6 +49,7 @@ import {
     getSsaRiskFileContent,
     postSSARiskDisposal,
     getSSARisks,
+    getSSARiskDisposals,
 } from '@/apis/SSARiskApi';
 import type {
     TSSARiskAuditInfo,
@@ -54,6 +58,7 @@ import type {
     TSSARiskFileContent,
     TGraphNodeInfo,
     TSSARisk,
+    TSSARiskDisposal,
 } from '@/apis/SSARiskApi/type';
 import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
 import Markdown from '@/compoments/MarkDown';
@@ -174,6 +179,12 @@ const SSARiskAudit: React.FC = () => {
         from: { line: number; ch: number };
         to: { line: number; ch: number };
     } | null>(null);
+
+    // 处置历史状态
+    const [disposalHistory, setDisposalHistory] = useState<TSSARiskDisposal[]>(
+        [],
+    );
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     // 左侧面板拖拽调整宽度
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -324,6 +335,31 @@ const SSARiskAudit: React.FC = () => {
         }
     }, [taskId, programName]);
 
+    // 获取处置历史
+    const fetchDisposalHistory = useCallback(async () => {
+        if (!auditInfo?.risk?.id) return;
+        setLoadingHistory(true);
+        try {
+            const res = await getSSARiskDisposals({
+                risk_id: auditInfo.risk.id,
+            });
+            if (res.code === 200 && res.data?.list) {
+                setDisposalHistory(res.data.list);
+            }
+        } catch (err) {
+            console.error('Failed to fetch disposal history:', err);
+        } finally {
+            setLoadingHistory(false);
+        }
+    }, [auditInfo?.risk?.id]);
+
+    // 当审计信息变化时，获取处置历史
+    useEffect(() => {
+        if (auditInfo?.risk?.id) {
+            fetchDisposalHistory();
+        }
+    }, [auditInfo?.risk?.id, fetchDisposalHistory]);
+
     const fetchAuditInfo = async (targetHash?: string) => {
         const hashToUse = targetHash || hash;
         if (!hashToUse) {
@@ -428,7 +464,10 @@ const SSARiskAudit: React.FC = () => {
 
         risks.forEach((risk) => {
             const severity = risk.severity || 'info';
-            const isAudited = risk.is_read;
+            // 只要有处置状态且不是 not_set，就认为是已审计
+            const isAudited =
+                risk.latest_disposal_status &&
+                risk.latest_disposal_status !== 'not_set';
 
             if (severity === 'high' || severity === 'critical') {
                 stats.high.total++;
@@ -1083,8 +1122,45 @@ const SSARiskAudit: React.FC = () => {
             });
             message.success('处置成功');
 
-            // 刷新审计信息
+            // 刷新当前审计信息和历史
             await fetchAuditInfo();
+            fetchDisposalHistory();
+
+            // 如果是任务模式，更新列表中的状态并尝试跳转到下一个
+            if (isTaskMode) {
+                // 更新列表中的状态
+                setRiskList((prev) =>
+                    prev.map((r) =>
+                        r.id === auditInfo.risk?.id
+                            ? { ...r, latest_disposal_status: backendStatus }
+                            : r,
+                    ),
+                );
+
+                // 寻找下一个未处置的漏洞
+                const currentIndex = riskList.findIndex(
+                    (r) => r.hash === selectedRiskHash,
+                );
+                if (currentIndex !== -1) {
+                    // 从当前位置往后找
+                    const nextPending = riskList
+                        .slice(currentIndex + 1)
+                        .find(
+                            (r) =>
+                                !r.latest_disposal_status ||
+                                r.latest_disposal_status === 'not_set',
+                        );
+
+                    if (nextPending && nextPending.hash) {
+                        message.info('自动跳转到下一个待处置漏洞');
+                        setSelectedRiskHash(nextPending.hash);
+                        // 切换回详情页，方便继续审计
+                        setActiveTab('detail');
+                    } else {
+                        message.info('已完成当前列表所有漏洞的处置');
+                    }
+                }
+            }
         } catch (err: any) {
             message.error(`处置失败: ${err.message}`);
         } finally {
@@ -1270,6 +1346,28 @@ const SSARiskAudit: React.FC = () => {
                                                                     'admin'}
                                                             </span>
                                                         </div>
+                                                        {risk.latest_disposal_status &&
+                                                            risk.latest_disposal_status !==
+                                                                'not_set' && (
+                                                                <div className="risk-status-tag">
+                                                                    <Tag
+                                                                        color={getDisposeStatusColor(
+                                                                            risk.latest_disposal_status,
+                                                                        )}
+                                                                        style={{
+                                                                            fontSize: 10,
+                                                                            lineHeight:
+                                                                                '14px',
+                                                                            padding:
+                                                                                '0 4px',
+                                                                        }}
+                                                                    >
+                                                                        {convertDisposalStatusToDisplay(
+                                                                            risk.latest_disposal_status,
+                                                                        )}
+                                                                    </Tag>
+                                                                </div>
+                                                            )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -1346,6 +1444,31 @@ const SSARiskAudit: React.FC = () => {
                                                     risk.risk_type ||
                                                     '未知类型'}
                                             </div>
+                                            {risk.latest_disposal_status &&
+                                                risk.latest_disposal_status !==
+                                                    'not_set' && (
+                                                    <div
+                                                        className="risk-status-tag"
+                                                        style={{ marginTop: 4 }}
+                                                    >
+                                                        <Tag
+                                                            color={getDisposeStatusColor(
+                                                                risk.latest_disposal_status,
+                                                            )}
+                                                            style={{
+                                                                fontSize: 10,
+                                                                lineHeight:
+                                                                    '14px',
+                                                                padding:
+                                                                    '0 4px',
+                                                            }}
+                                                        >
+                                                            {convertDisposalStatusToDisplay(
+                                                                risk.latest_disposal_status,
+                                                            )}
+                                                        </Tag>
+                                                    </div>
+                                                )}
                                         </div>
                                     ))}
                                 </div>
@@ -1924,12 +2047,14 @@ const SSARiskAudit: React.FC = () => {
                                         {
                                             key: 'dispose',
                                             label: '处置',
+                                            className: 'dispose-tab-pane',
                                             children: (
                                                 <div className="dispose-tab-content">
                                                     <Form
                                                         form={form}
                                                         layout="vertical"
                                                         onFinish={handleDispose}
+                                                        className="dispose-form"
                                                         initialValues={{
                                                             disposal_status:
                                                                 convertDisposalStatusToDisplay(
@@ -1939,111 +2064,221 @@ const SSARiskAudit: React.FC = () => {
                                                                 ),
                                                         }}
                                                     >
-                                                        <Form.Item
-                                                            name="disposal_status"
-                                                            label="处置结果"
-                                                            rules={[
-                                                                {
-                                                                    required:
-                                                                        true,
-                                                                    message:
-                                                                        '请选择处置结果',
-                                                                },
-                                                            ]}
-                                                        >
-                                                            <Radio.Group
-                                                                style={{
-                                                                    width: '100%',
-                                                                }}
+                                                        <div className="dispose-form-body">
+                                                            <Form.Item
+                                                                name="disposal_status"
+                                                                label="处置结果"
+                                                                rules={[
+                                                                    {
+                                                                        required:
+                                                                            true,
+                                                                        message:
+                                                                            '请选择处置结果',
+                                                                    },
+                                                                ]}
                                                             >
-                                                                <Space
-                                                                    direction="vertical"
+                                                                <Radio.Group
                                                                     style={{
                                                                         width: '100%',
                                                                     }}
                                                                 >
-                                                                    <Radio value="有问题">
-                                                                        <Tag color="red">
-                                                                            有问题
-                                                                        </Tag>
-                                                                        <Text type="secondary">
-                                                                            （确认为真实漏洞）
-                                                                        </Text>
-                                                                    </Radio>
-                                                                    <Radio value="没问题">
-                                                                        <Tag color="green">
-                                                                            没问题
-                                                                        </Tag>
-                                                                        <Text type="secondary">
-                                                                            （误报，不是漏洞）
-                                                                        </Text>
-                                                                    </Radio>
-                                                                    <Radio value="存疑">
-                                                                        <Tag color="orange">
-                                                                            存疑
-                                                                        </Tag>
-                                                                        <Text type="secondary">
-                                                                            （需要进一步确认）
-                                                                        </Text>
-                                                                    </Radio>
-                                                                    <Radio value="未处置">
-                                                                        <Tag color="default">
-                                                                            未处置
-                                                                        </Tag>
-                                                                        <Text type="secondary">
-                                                                            （尚未审计）
-                                                                        </Text>
-                                                                    </Radio>
+                                                                    <Space
+                                                                        direction="vertical"
+                                                                        style={{
+                                                                            width: '100%',
+                                                                        }}
+                                                                    >
+                                                                        <Radio value="有问题">
+                                                                            <Tag color="red">
+                                                                                有问题
+                                                                            </Tag>
+                                                                            <Text type="secondary">
+                                                                                （确认为真实漏洞）
+                                                                            </Text>
+                                                                        </Radio>
+                                                                        <Radio value="没问题">
+                                                                            <Tag color="green">
+                                                                                没问题
+                                                                            </Tag>
+                                                                            <Text type="secondary">
+                                                                                （误报，不是漏洞）
+                                                                            </Text>
+                                                                        </Radio>
+                                                                        <Radio value="存疑">
+                                                                            <Tag color="orange">
+                                                                                存疑
+                                                                            </Tag>
+                                                                            <Text type="secondary">
+                                                                                （需要进一步确认）
+                                                                            </Text>
+                                                                        </Radio>
+                                                                        <Radio value="未处置">
+                                                                            <Tag color="default">
+                                                                                未处置
+                                                                            </Tag>
+                                                                            <Text type="secondary">
+                                                                                （尚未审计）
+                                                                            </Text>
+                                                                        </Radio>
+                                                                    </Space>
+                                                                </Radio.Group>
+                                                            </Form.Item>
+
+                                                            <Form.Item
+                                                                name="comment"
+                                                                label="处置评论"
+                                                                extra="请详细说明处置原因、修复建议或其他备注信息"
+                                                            >
+                                                                <TextArea
+                                                                    rows={6}
+                                                                    placeholder="例如：&#10;- 漏洞成因分析&#10;- 修复建议&#10;- 影响范围&#10;- 其他备注"
+                                                                    showCount
+                                                                    maxLength={
+                                                                        1000
+                                                                    }
+                                                                />
+                                                            </Form.Item>
+                                                        </div>
+
+                                                        <div className="dispose-form-footer">
+                                                            <Form.Item>
+                                                                <Space>
+                                                                    <Button
+                                                                        type="primary"
+                                                                        htmlType="submit"
+                                                                        loading={
+                                                                            disposing
+                                                                        }
+                                                                        icon={
+                                                                            <CheckOutlined />
+                                                                        }
+                                                                    >
+                                                                        提交处置
+                                                                    </Button>
+                                                                    <Button
+                                                                        onClick={() =>
+                                                                            form.resetFields()
+                                                                        }
+                                                                    >
+                                                                        重置
+                                                                    </Button>
+                                                                    <Button
+                                                                        onClick={() =>
+                                                                            navigate(
+                                                                                -1,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        返回列表
+                                                                    </Button>
                                                                 </Space>
-                                                            </Radio.Group>
-                                                        </Form.Item>
-
-                                                        <Form.Item
-                                                            name="comment"
-                                                            label="处置评论"
-                                                            extra="请详细说明处置原因、修复建议或其他备注信息"
-                                                        >
-                                                            <TextArea
-                                                                rows={6}
-                                                                placeholder="例如：&#10;- 漏洞成因分析&#10;- 修复建议&#10;- 影响范围&#10;- 其他备注"
-                                                                showCount
-                                                                maxLength={1000}
-                                                            />
-                                                        </Form.Item>
-
-                                                        <Form.Item>
-                                                            <Space>
-                                                                <Button
-                                                                    type="primary"
-                                                                    htmlType="submit"
-                                                                    loading={
-                                                                        disposing
-                                                                    }
-                                                                    icon={
-                                                                        <CheckOutlined />
-                                                                    }
-                                                                >
-                                                                    提交处置
-                                                                </Button>
-                                                                <Button
-                                                                    onClick={() =>
-                                                                        form.resetFields()
-                                                                    }
-                                                                >
-                                                                    重置
-                                                                </Button>
-                                                                <Button
-                                                                    onClick={() =>
-                                                                        navigate(
-                                                                            -1,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    返回列表
-                                                                </Button>
-                                                            </Space>
-                                                        </Form.Item>
+                                                            </Form.Item>
+                                                        </div>
                                                     </Form>
+                                                </div>
+                                            ),
+                                        },
+                                        {
+                                            key: 'history',
+                                            label: '处置历史',
+                                            children: (
+                                                <div className="history-tab-content">
+                                                    {loadingHistory ? (
+                                                        <div
+                                                            style={{
+                                                                textAlign:
+                                                                    'center',
+                                                                padding:
+                                                                    '40px 0',
+                                                            }}
+                                                        >
+                                                            <Spin tip="加载历史记录..." />
+                                                        </div>
+                                                    ) : disposalHistory.length >
+                                                      0 ? (
+                                                        <Timeline
+                                                            mode="left"
+                                                            className="disposal-timeline"
+                                                        >
+                                                            {disposalHistory.map(
+                                                                (item) => (
+                                                                    <Timeline.Item
+                                                                        key={
+                                                                            item.id
+                                                                        }
+                                                                        label={
+                                                                            <Text type="secondary">
+                                                                                {item.created_at
+                                                                                    ? new Date(
+                                                                                          item.created_at *
+                                                                                              1000,
+                                                                                      ).toLocaleString()
+                                                                                    : '-'}
+                                                                            </Text>
+                                                                        }
+                                                                        dot={
+                                                                            <ClockCircleOutlined />
+                                                                        }
+                                                                        color={getDisposeStatusColor(
+                                                                            item.status,
+                                                                        )}
+                                                                    >
+                                                                        <Card
+                                                                            size="small"
+                                                                            className="history-card"
+                                                                        >
+                                                                            <div className="history-header">
+                                                                                <Tag
+                                                                                    color={getDisposeStatusColor(
+                                                                                        item.status,
+                                                                                    )}
+                                                                                >
+                                                                                    {convertDisposalStatusToDisplay(
+                                                                                        item.status,
+                                                                                    )}
+                                                                                </Tag>
+                                                                                <Space>
+                                                                                    <UserOutlined />
+                                                                                    <Text
+                                                                                        strong
+                                                                                    >
+                                                                                        审计员
+                                                                                    </Text>
+                                                                                </Space>
+                                                                            </div>
+                                                                            {item.comment && (
+                                                                                <div className="history-comment">
+                                                                                    <Paragraph
+                                                                                        ellipsis={{
+                                                                                            rows: 3,
+                                                                                            expandable:
+                                                                                                true,
+                                                                                        }}
+                                                                                    >
+                                                                                        {
+                                                                                            item.comment
+                                                                                        }
+                                                                                    </Paragraph>
+                                                                                </div>
+                                                                            )}
+                                                                        </Card>
+                                                                    </Timeline.Item>
+                                                                ),
+                                                            )}
+                                                        </Timeline>
+                                                    ) : (
+                                                        <div
+                                                            style={{
+                                                                textAlign:
+                                                                    'center',
+                                                                padding:
+                                                                    '40px 0',
+                                                                color: '#999',
+                                                            }}
+                                                        >
+                                                            暂无处置历史
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ),
                                         },
