@@ -1,0 +1,84 @@
+.task-defect-audit {
+    .audit-sider {
+        border-right: 1px solid #f0f0f0;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+
+        .sider-header {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stats-card {
+            .ant-card-body {
+                padding: 12px;
+            }
+            border-bottom: 1px solid #f0f0f0;
+            
+            .stats-row {
+                display: flex;
+                justify-content: space-between;
+                
+                .stat-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    font-size: 12px;
+                    
+                    .label {
+                        color: #8c8c8c;
+                        margin-bottom: 4px;
+                    }
+                    
+                    .value {
+                        font-weight: bold;
+                        font-size: 14px;
+                    }
+
+                    &.high .value { color: #f5222d; }
+                    &.medium .value { color: #fa8c16; }
+                    &.low .value { color: #52c41a; } // Assuming low is generally green/safe-ish or yellow
+                    &.total .value { color: #595959; }
+                }
+            }
+        }
+
+        .tree-container {
+            flex: 1;
+            overflow: auto;
+            padding: 10px;
+        }
+    }
+
+    .audit-content {
+        background: #fff;
+        
+        .empty-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #ccc;
+        }
+
+        .code-view-container {
+            border-bottom: 1px solid #f0f0f0;
+            overflow: hidden;
+            
+            .ant-card-body {
+                height: 100%;
+                overflow: auto;
+            }
+        }
+
+        .details-container {
+            .audit-tabs {
+                height: 100%;
+                .ant-tabs-content {
+                    height: 100%;
+                }
+            }
+        }
+    }
+}

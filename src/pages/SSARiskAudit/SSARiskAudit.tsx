@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useCallback,
+    useRef,
+    useMemo,
+} from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Card,
@@ -32,12 +38,14 @@ import {
     FileMarkdownOutlined,
     ZoomInOutlined,
     ZoomOutOutlined,
+    BugOutlined,
 } from '@ant-design/icons';
 import {
     getSSARiskAudit,
     getSsaRiskAuditFiles,
     getSsaRiskFileContent,
     updateSSARisk,
+    getSSARisks,
 } from '@/apis/SSARiskApi';
 import type {
     TSSARiskAuditInfo,
@@ -45,8 +53,10 @@ import type {
     TFileTreeNode,
     TSSARiskFileContent,
     TGraphNodeInfo,
+    TSSARisk,
 } from '@/apis/SSARiskApi/type';
 import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
+import Markdown from '@/compoments/MarkDown';
 import { instance } from '@viz-js/viz';
 import './SSARiskAudit.scss';
 
@@ -88,12 +98,40 @@ class ErrorBoundary extends React.Component<
     }
 }
 
+// 左侧视图模式类型
+type LeftViewMode = 'type' | 'file' | 'tree';
+
+// 严重程度颜色映射
+const severityColorMap: Record<string, string> = {
+    critical: 'red',
+    high: 'orange',
+    middle: 'gold',
+    warning: 'blue',
+    low: 'green',
+    info: 'default',
+};
+
+// 严重程度中文映射
+const severityLabelMap: Record<string, string> = {
+    critical: '严重',
+    high: '高危',
+    middle: '中危',
+    warning: '警告',
+    low: '低危',
+    info: '信息',
+};
+
 const SSARiskAudit: React.FC = () => {
     const [searchParams] = useSearchParams();
     const hash = searchParams.get('hash') || '';
+    const taskId = searchParams.get('task_id') || '';
+    const programName = searchParams.get('program_name') || '';
 
     const navigate = useNavigate();
     const [form] = Form.useForm();
+
+    // 判断是任务模式还是单个风险模式
+    const isTaskMode = !!taskId && !!programName;
 
     const [loading, setLoading] = useState(false);
     const [auditInfo, setAuditInfo] = useState<TSSARiskAuditInfo | null>(null);
@@ -107,6 +145,20 @@ const SSARiskAudit: React.FC = () => {
     const [disposing, setDisposing] = useState(false);
     const editorHeight = 400;
 
+    // 任务模式相关状态
+    const [riskList, setRiskList] = useState<TSSARisk[]>([]);
+    const [loadingRisks, setLoadingRisks] = useState(false);
+    const [selectedRiskHash, setSelectedRiskHash] = useState<string | null>(
+        null,
+    );
+    const [leftViewMode, setLeftViewMode] = useState<LeftViewMode>('type');
+    const [severityFilter, setSeverityFilter] = useState<string | null>(null);
+    const [expandedFiles, setExpandedFiles] = useState<string[]>([]);
+
+    // 左侧面板宽度控制
+    const [leftPanelWidth, setLeftPanelWidth] = useState(280);
+    const [isResizing, setIsResizing] = useState(false);
+
     // DOT 图相关状态
     const svgBoxRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement | null>(null);
@@ -115,12 +167,45 @@ const SSARiskAudit: React.FC = () => {
     const [dragging, setDragging] = useState(false);
     const dragStartRef = useRef<{ x: number; y: number } | null>(null);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState('detail');
 
     // 代码高亮相关状态
     const [codeHighlight, setCodeHighlight] = useState<{
         from: { line: number; ch: number };
         to: { line: number; ch: number };
     } | null>(null);
+
+    // 左侧面板拖拽调整宽度
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        setIsResizing(true);
+        e.preventDefault();
+    }, []);
+
+    const handleMouseMove = useCallback(
+        (e: MouseEvent) => {
+            if (!isResizing) return;
+            const newWidth = e.clientX;
+            if (newWidth >= 200 && newWidth <= 600) {
+                setLeftPanelWidth(newWidth);
+            }
+        },
+        [isResizing],
+    );
+
+    const handleMouseUp = useCallback(() => {
+        setIsResizing(false);
+    }, []);
+
+    useEffect(() => {
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+    }, [isResizing, handleMouseMove, handleMouseUp]);
 
     // 从扁平文件列表构建目录树
     const buildFileTree = (files: TRelatedFile[]): TFileTreeNode[] => {
@@ -214,16 +299,42 @@ const SSARiskAudit: React.FC = () => {
         });
     };
 
-    const fetchAuditInfo = async () => {
-        if (!hash) {
+    // 加载任务的所有风险列表
+    const fetchRiskList = useCallback(async () => {
+        if (!taskId) return;
+
+        setLoadingRisks(true);
+        try {
+            const res = await getSSARisks({
+                task_id: taskId,
+                program_name: programName,
+                limit: 1000, // 加载所有风险
+            });
+            if (res?.data?.list) {
+                setRiskList(res.data.list);
+                // 如果有风险，默认选中第一个
+                if (res.data.list.length > 0 && res.data.list[0].hash) {
+                    setSelectedRiskHash(res.data.list[0].hash);
+                }
+            }
+        } catch (err: any) {
+            message.error(`加载风险列表失败: ${err.message}`);
+        } finally {
+            setLoadingRisks(false);
+        }
+    }, [taskId, programName]);
+
+    const fetchAuditInfo = async (targetHash?: string) => {
+        const hashToUse = targetHash || hash;
+        if (!hashToUse) {
             console.log('No hash provided');
             return;
         }
 
-        console.log('Fetching audit info for hash:', hash);
+        console.log('Fetching audit info for hash:', hashToUse);
         setLoading(true);
         try {
-            const res = await getSSARiskAudit(hash);
+            const res = await getSSARiskAudit(hashToUse);
             console.log('API Response:', res);
             if (res?.data) {
                 setAuditInfo(res.data);
@@ -239,11 +350,12 @@ const SSARiskAudit: React.FC = () => {
     };
 
     // 获取文件列表并构建树
-    const fetchFileTree = async () => {
-        if (!hash) return;
+    const fetchFileTree = async (targetHash?: string) => {
+        const hashToUse = targetHash || hash;
+        if (!hashToUse) return;
 
         try {
-            const res = await getSsaRiskAuditFiles(hash);
+            const res = await getSsaRiskAuditFiles(hashToUse);
             if (res?.data?.files && res.data.files.length > 0) {
                 // 从扁平列表构建目录树
                 const tree = buildFileTree(res.data.files);
@@ -270,7 +382,7 @@ const SSARiskAudit: React.FC = () => {
                 const firstFile = res.data.files[0];
                 if (firstFile) {
                     setSelectedFilePath(firstFile.path);
-                    fetchFileContent(firstFile.path);
+                    fetchFileContent(firstFile.path, hashToUse);
                 }
             }
         } catch (err: any) {
@@ -281,14 +393,107 @@ const SSARiskAudit: React.FC = () => {
         }
     };
 
+    // 按风险类型 > 严重程度分组
+    const groupByTypeAndSeverity = useCallback((risks: TSSARisk[]) => {
+        const grouped: Record<string, Record<string, TSSARisk[]>> = {};
+        risks.forEach((risk) => {
+            const type = risk.risk_type_verbose || risk.risk_type || '未分类';
+            const severity = risk.severity || 'info';
+            if (!grouped[type]) grouped[type] = {};
+            if (!grouped[type][severity]) grouped[type][severity] = [];
+            grouped[type][severity].push(risk);
+        });
+        return grouped;
+    }, []);
+
+    // 按文件分组
+    const groupByFile = useCallback((risks: TSSARisk[]) => {
+        const grouped: Record<string, TSSARisk[]> = {};
+        risks.forEach((risk) => {
+            const file = risk.code_source_url || '未知文件';
+            if (!grouped[file]) grouped[file] = [];
+            grouped[file].push(risk);
+        });
+        return grouped;
+    }, []);
+
+    // 计算严重程度统计
+    const calculateSeverityStats = useCallback((risks: TSSARisk[]) => {
+        const stats = {
+            high: { audited: 0, pending: 0, total: 0 },
+            middle: { audited: 0, pending: 0, total: 0 },
+            low: { audited: 0, pending: 0, total: 0 },
+            all: { audited: 0, pending: 0, total: 0 },
+        };
+
+        risks.forEach((risk) => {
+            const severity = risk.severity || 'info';
+            const isAudited = risk.is_read;
+
+            if (severity === 'high' || severity === 'critical') {
+                stats.high.total++;
+                if (isAudited) stats.high.audited++;
+                else stats.high.pending++;
+            } else if (severity === 'middle' || severity === 'warning') {
+                stats.middle.total++;
+                if (isAudited) stats.middle.audited++;
+                else stats.middle.pending++;
+            } else {
+                stats.low.total++;
+                if (isAudited) stats.low.audited++;
+                else stats.low.pending++;
+            }
+
+            stats.all.total++;
+            if (isAudited) stats.all.audited++;
+            else stats.all.pending++;
+        });
+
+        return stats;
+    }, []);
+
+    // 过滤风险列表
+    const filteredRisks = useMemo(() => {
+        if (!severityFilter) return riskList;
+
+        return riskList.filter((risk) => {
+            if (severityFilter === 'high') {
+                return risk.severity === 'high' || risk.severity === 'critical';
+            } else if (severityFilter === 'middle') {
+                return (
+                    risk.severity === 'middle' || risk.severity === 'warning'
+                );
+            } else if (severityFilter === 'low') {
+                return risk.severity === 'low' || risk.severity === 'info';
+            }
+            return true;
+        });
+    }, [riskList, severityFilter]);
+
+    // 文件折叠切换
+    const toggleFileExpand = useCallback((filePath: string) => {
+        setExpandedFiles((prev) =>
+            prev.includes(filePath)
+                ? prev.filter((p) => p !== filePath)
+                : [...prev, filePath],
+        );
+    }, []);
+
+    // 计算当前统计
+    const severityStats = useMemo(
+        () => calculateSeverityStats(riskList),
+        [riskList, calculateSeverityStats],
+    );
+
     // 获取文件内容
     const fetchFileContent = useCallback(
-        async (filePath: string): Promise<boolean> => {
-            if (!hash || !filePath) return false;
+        async (filePath: string, targetHash?: string): Promise<boolean> => {
+            const hashToUse = targetHash || hash || selectedRiskHash;
+            if (!hashToUse || !filePath) return false;
 
             setLoadingFile(true);
             try {
-                const res = await getSsaRiskFileContent(hash, filePath);
+                const res = await getSsaRiskFileContent(hashToUse, filePath);
                 if (res?.data) {
                     setFileContent(res.data);
                     return true;
@@ -304,7 +509,7 @@ const SSARiskAudit: React.FC = () => {
                 setLoadingFile(false);
             }
         },
-        [hash],
+        [hash, selectedRiskHash],
     );
 
     // 处理文件选择
@@ -316,13 +521,31 @@ const SSARiskAudit: React.FC = () => {
         [fetchFileContent],
     );
 
+    // 初始化：根据模式加载数据
     useEffect(() => {
-        console.log('Component mounted, hash:', hash);
-        if (hash) {
+        console.log(
+            'Component mounted, isTaskMode:',
+            isTaskMode,
+            'hash:',
+            hash,
+        );
+        if (isTaskMode) {
+            // 任务模式：加载该任务的所有风险
+            fetchRiskList();
+        } else if (hash) {
+            // 单个风险模式：直接加载审计信息
             fetchAuditInfo();
             fetchFileTree();
         }
-    }, [hash]);
+    }, [hash, isTaskMode, fetchRiskList]);
+
+    // 当选中的风险变化时，加载对应的审计信息
+    useEffect(() => {
+        if (isTaskMode && selectedRiskHash) {
+            fetchAuditInfo(selectedRiskHash);
+            fetchFileTree(selectedRiskHash);
+        }
+    }, [selectedRiskHash, isTaskMode]);
 
     // 根据节点 ID 获取节点信息
     const getNodeInfo = useCallback(
@@ -379,9 +602,16 @@ const SSARiskAudit: React.FC = () => {
     // 跳转到代码位置并高亮
     const jumpToCodeLocation = useCallback(
         async (nodeInfo: TGraphNodeInfo) => {
-            if (!nodeInfo.code_range) return;
+            console.log('jumpToCodeLocation called with:', nodeInfo);
+
+            if (!nodeInfo.code_range) {
+                console.warn('No code_range in nodeInfo');
+                return;
+            }
 
             const codeRange = nodeInfo.code_range;
+            console.log('Code range:', codeRange);
+
             // 从完整 URL 提取相对路径
             const filePath = extractRelativePath(
                 codeRange.url,
@@ -393,13 +623,19 @@ const SSARiskAudit: React.FC = () => {
                 return;
             }
 
+            console.log('Extracted file path:', filePath);
+            console.log('Current file path:', fileContent?.path);
+
             // 更新选中的文件路径
             setSelectedFilePath(filePath);
 
             // 先获取文件内容
             if (filePath !== fileContent?.path) {
                 const success = await fetchFileContent(filePath);
-                if (!success) return;
+                if (!success) {
+                    console.error('Failed to load file:', filePath);
+                    return;
+                }
             }
 
             // 计算高亮位置
@@ -416,12 +652,18 @@ const SSARiskAudit: React.FC = () => {
                 },
             };
 
+            console.log('Highlight range:', highlightRange);
+
             // 先清除旧高亮，再设置新高亮
             setCodeHighlight(null);
 
             // 延迟设置高亮，确保文件内容已渲染
             setTimeout(() => {
                 setCodeHighlight(highlightRange);
+                console.log(
+                    'Code highlight set, line:',
+                    highlightRange.from.line,
+                );
             }, 200);
         },
         [
@@ -437,18 +679,30 @@ const SSARiskAudit: React.FC = () => {
         (event: MouseEvent) => {
             const target = event.target as Element;
             const nodeElement = target.closest('g.node');
-            if (!nodeElement) return;
+            if (!nodeElement) {
+                console.log('No node element found');
+                return;
+            }
 
             const titleElement = nodeElement.querySelector('title');
-            if (!titleElement) return;
+            if (!titleElement) {
+                console.log('No title element found');
+                return;
+            }
 
             const nodeId = titleElement.textContent;
-            if (!nodeId) return;
+            if (!nodeId) {
+                console.log('No node ID found');
+                return;
+            }
 
+            console.log('Clicked node:', nodeId);
             setSelectedNodeId(nodeId);
 
             // 获取节点信息并跳转
             const nodeInfo = getNodeInfo(nodeId);
+            console.log('Node info:', nodeInfo);
+
             if (nodeInfo) {
                 jumpToCodeLocation(nodeInfo);
             }
@@ -458,44 +712,189 @@ const SSARiskAudit: React.FC = () => {
                 // 清除之前的高亮
                 svgRef.current.querySelectorAll('g.node').forEach((node) => {
                     node.classList.remove('selected-node');
+                    // 移除之前的高亮样式
+                    node.querySelectorAll(
+                        'ellipse, polygon, rect, circle, path',
+                    ).forEach((shape) => {
+                        const el = shape as SVGElement;
+                        el.style.stroke = '';
+                        el.style.strokeWidth = '';
+                        el.style.fill = '';
+                        el.style.filter = '';
+                    });
+                    node.querySelectorAll('text').forEach((text) => {
+                        const el = text as SVGElement;
+                        el.style.fill = '';
+                        el.style.fontWeight = '';
+                    });
                 });
+
                 // 添加新的高亮
                 nodeElement.classList.add('selected-node');
+
+                // 直接设置高亮样式
+                nodeElement
+                    .querySelectorAll('ellipse, polygon, rect, circle, path')
+                    .forEach((shape) => {
+                        const el = shape as SVGElement;
+                        el.style.stroke = '#1890ff';
+                        el.style.strokeWidth = '3.5';
+                        el.style.fill = '#e6f7ff';
+                        el.style.filter =
+                            'drop-shadow(0 0 10px rgba(24, 144, 255, 0.8))';
+                    });
+
+                nodeElement.querySelectorAll('text').forEach((text) => {
+                    const el = text as SVGElement;
+                    el.style.fill = '#0050b3';
+                    el.style.fontWeight = '700';
+                });
+
+                console.log(
+                    'Added selected-node class and styles to:',
+                    nodeElement,
+                );
+                console.log('Node classList:', nodeElement.classList);
             }
         },
         [getNodeInfo, jumpToCodeLocation],
     );
 
+    // 应用节点悬浮样式
+    const applyNodeHoverStyle = useCallback((nodeEl: SVGGElement) => {
+        if (nodeEl.classList.contains('selected-node')) return;
+
+        nodeEl.style.cursor = 'pointer';
+        const shapes = nodeEl.querySelectorAll(
+            'ellipse, polygon, rect, circle, path',
+        );
+        shapes.forEach((shape) => {
+            const el = shape as SVGElement;
+            if (!el.hasAttribute('data-original-stroke')) {
+                el.setAttribute(
+                    'data-original-stroke',
+                    el.style.stroke || el.getAttribute('stroke') || '',
+                );
+                el.setAttribute(
+                    'data-original-stroke-width',
+                    el.style.strokeWidth ||
+                        el.getAttribute('stroke-width') ||
+                        '',
+                );
+            }
+            el.style.stroke = '#1890ff';
+            el.style.strokeWidth = '2.5';
+            el.style.filter = 'drop-shadow(0 0 8px rgba(24, 144, 255, 0.6))';
+        });
+
+        const texts = nodeEl.querySelectorAll('text');
+        texts.forEach((text) => {
+            const el = text as SVGElement;
+            if (!el.hasAttribute('data-original-fill')) {
+                el.setAttribute(
+                    'data-original-fill',
+                    el.style.fill || el.getAttribute('fill') || '',
+                );
+            }
+            el.style.fill = '#1890ff';
+            el.style.fontWeight = '600';
+        });
+    }, []);
+
+    // 恢复节点默认样式
+    const resetNodeStyle = useCallback((nodeEl: SVGGElement) => {
+        if (nodeEl.classList.contains('selected-node')) return;
+
+        const shapes = nodeEl.querySelectorAll(
+            'ellipse, polygon, rect, circle, path',
+        );
+        shapes.forEach((shape) => {
+            const el = shape as SVGElement;
+            el.style.stroke = el.getAttribute('data-original-stroke') || '';
+            el.style.strokeWidth =
+                el.getAttribute('data-original-stroke-width') || '';
+            el.style.filter = '';
+        });
+
+        const texts = nodeEl.querySelectorAll('text');
+        texts.forEach((text) => {
+            const el = text as SVGElement;
+            el.style.fill = el.getAttribute('data-original-fill') || '';
+            el.style.fontWeight = '';
+        });
+    }, []);
+
+    // 为节点添加事件监听
+    const setupNodeEventListeners = useCallback(
+        (node: Element) => {
+            const nodeEl = node as SVGGElement;
+            nodeEl.addEventListener('mouseenter', () =>
+                applyNodeHoverStyle(nodeEl),
+            );
+            nodeEl.addEventListener('mouseleave', () => resetNodeStyle(nodeEl));
+        },
+        [applyNodeHoverStyle, resetNodeStyle],
+    );
+
     // 渲染 DOT 图
     useEffect(() => {
-        if (!auditInfo?.graph || !svgBoxRef.current) return;
+        const renderGraph = async () => {
+            if (!auditInfo?.graph || !svgBoxRef.current) {
+                console.log('No graph data or container');
+                return;
+            }
 
-        const graphStr = auditInfo.graph;
-        instance().then((viz) => {
+            const graphStr = auditInfo.graph;
+            console.log(
+                'Rendering DOT graph, length:',
+                graphStr.length,
+                'activeTab:',
+                activeTab,
+            );
+
             try {
+                const viz = await instance();
                 const svg = viz.renderSVGElement(graphStr, {});
                 svgRef.current = svg;
 
                 // 清空容器
-                while (svgBoxRef.current?.firstChild) {
-                    svgBoxRef.current.removeChild(svgBoxRef.current.firstChild);
+                if (svgBoxRef.current) {
+                    while (svgBoxRef.current.firstChild) {
+                        svgBoxRef.current.removeChild(
+                            svgBoxRef.current.firstChild,
+                        );
+                    }
+                    svgBoxRef.current.appendChild(svg);
                 }
 
-                // 添加 SVG
-                svgBoxRef.current?.appendChild(svg);
+                // 设置初始样式
+                svg.style.cursor = 'default';
+                svg.style.transformOrigin = 'center center';
 
-                // 添加点击事件
+                // 为每个节点添加悬浮效果
+                const nodes = svg.querySelectorAll('g.node');
+                nodes.forEach(setupNodeEventListeners);
+
+                // 添加点击事件到SVG
                 svg.addEventListener('click', handleGraphNodeClick);
 
-                // 设置初始样式
-                svg.style.cursor = 'grab';
-                svg.style.transformOrigin = 'center center';
+                console.log(
+                    'DOT graph rendered successfully, nodes:',
+                    nodes.length,
+                );
             } catch (err) {
                 console.error('Failed to render DOT graph:', err);
             }
-        });
+        };
+
+        // 添加延迟确保DOM已挂载
+        const timer = setTimeout(
+            renderGraph,
+            activeTab === 'dataflow' ? 300 : 0,
+        );
 
         return () => {
+            clearTimeout(timer);
             if (svgRef.current) {
                 svgRef.current.removeEventListener(
                     'click',
@@ -503,13 +902,19 @@ const SSARiskAudit: React.FC = () => {
                 );
             }
         };
-    }, [auditInfo?.graph, handleGraphNodeClick]);
+    }, [
+        auditInfo?.graph,
+        handleGraphNodeClick,
+        activeTab,
+        setupNodeEventListeners,
+    ]);
 
     // 更新 SVG 变换
     useEffect(() => {
         if (svgRef.current) {
             svgRef.current.style.transform = `scale(${graphScale}) translate(${graphOffset.x}px, ${graphOffset.y}px)`;
-            svgRef.current.style.cursor = dragging ? 'grabbing' : 'grab';
+            // 只在拖拽时显示grabbing，否则显示default让节点的pointer显示
+            svgRef.current.style.cursor = dragging ? 'grabbing' : 'default';
         }
     }, [graphScale, graphOffset, dragging]);
 
@@ -522,6 +927,11 @@ const SSARiskAudit: React.FC = () => {
 
     // 图拖动
     const handleGraphMouseDown = (e: React.MouseEvent) => {
+        // 如果点击的是节点，不启动拖拽
+        const target = e.target as Element;
+        if (target.closest('g.node')) {
+            return;
+        }
         setDragging(true);
         dragStartRef.current = { x: e.clientX, y: e.clientY };
     };
@@ -756,6 +1166,195 @@ const SSARiskAudit: React.FC = () => {
         }));
     };
 
+    // 处理漏洞选择
+    const handleRiskSelect = (risk: TSSARisk) => {
+        if (risk.hash) {
+            setSelectedRiskHash(risk.hash);
+        }
+    };
+
+    // 渲染分类显示视图 (按风险类型 > 严重程度)
+    const renderTypeView = () => {
+        const grouped = groupByTypeAndSeverity(filteredRisks);
+        const types = Object.keys(grouped);
+
+        if (types.length === 0) {
+            return <div className="empty">暂无漏洞</div>;
+        }
+
+        return (
+            <div className="risk-group-list">
+                {types.map((type) => {
+                    const severities = grouped[type];
+                    const typeTotal = Object.values(severities).flat().length;
+
+                    return (
+                        <Collapse
+                            key={type}
+                            defaultActiveKey={Object.keys(severities)}
+                            bordered={false}
+                            className="type-collapse"
+                        >
+                            <Collapse.Panel
+                                key={type}
+                                header={
+                                    <div className="type-header">
+                                        <BugOutlined
+                                            style={{ marginRight: 8 }}
+                                        />
+                                        <span className="type-name">
+                                            {type}
+                                        </span>
+                                        <Tag className="type-count">
+                                            {typeTotal}
+                                        </Tag>
+                                    </div>
+                                }
+                            >
+                                {Object.entries(severities).map(
+                                    ([severity, risks]) => (
+                                        <div
+                                            key={severity}
+                                            className="severity-group"
+                                        >
+                                            <div className="severity-header">
+                                                <Tag
+                                                    color={
+                                                        severityColorMap[
+                                                            severity
+                                                        ]
+                                                    }
+                                                >
+                                                    {severityLabelMap[
+                                                        severity
+                                                    ] || severity}
+                                                </Tag>
+                                                <span className="severity-count">
+                                                    ({risks.length})
+                                                </span>
+                                            </div>
+                                            <div className="risk-items">
+                                                {risks.map((risk) => (
+                                                    <div
+                                                        key={
+                                                            risk.hash || risk.id
+                                                        }
+                                                        className={`risk-item ${selectedRiskHash === risk.hash ? 'selected' : ''}`}
+                                                        onClick={() =>
+                                                            handleRiskSelect(
+                                                                risk,
+                                                            )
+                                                        }
+                                                    >
+                                                        <div className="risk-location">
+                                                            {risk.code_source_url && (
+                                                                <span className="file-name">
+                                                                    {risk.code_source_url
+                                                                        .split(
+                                                                            '/',
+                                                                        )
+                                                                        .pop()}
+                                                                </span>
+                                                            )}
+                                                            {risk.line && (
+                                                                <span className="line-number">
+                                                                    [{risk.line}
+                                                                    ]
+                                                                </span>
+                                                            )}
+                                                            {' - '}
+                                                            <span className="user-name">
+                                                                {risk.program_name ||
+                                                                    'admin'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
+                            </Collapse.Panel>
+                        </Collapse>
+                    );
+                })}
+            </div>
+        );
+    };
+
+    // 渲染文件显示视图 (按文件分组)
+    const renderFileView = () => {
+        const grouped = groupByFile(filteredRisks);
+        const files = Object.keys(grouped).sort();
+
+        if (files.length === 0) {
+            return <div className="empty">暂无漏洞</div>;
+        }
+
+        // 辅助函数：去掉路径开头的项目名称
+        const removeProjectPrefix = (path: string) => {
+            // 去掉开头的 / 和第一个路径段（项目名）
+            const parts = path.split('/').filter((p) => p);
+            if (parts.length > 1) {
+                // 如果路径包含多个段，去掉第一段（项目名）
+                return parts.slice(1).join('/');
+            }
+            return path;
+        };
+
+        return (
+            <div className="risk-group-list file-view">
+                {files.map((filePath) => {
+                    const risks = grouped[filePath];
+                    const displayPath = removeProjectPrefix(filePath);
+                    const fileName = filePath.split('/').pop() || filePath;
+                    const auditedCount = risks.filter((r) => r.is_read).length;
+                    const pendingCount = risks.filter((r) => !r.is_read).length;
+                    const totalCount = risks.length;
+                    const isExpanded = expandedFiles.includes(filePath);
+
+                    return (
+                        <div key={filePath} className="file-node">
+                            <div
+                                className="file-node-header"
+                                onClick={() => toggleFileExpand(filePath)}
+                            >
+                                <FolderOutlined style={{ fontSize: 14 }} />
+                                <span className="file-path">{displayPath}</span>
+                                <span className="file-stat">
+                                    ({auditedCount}/{pendingCount}/{totalCount})
+                                </span>
+                            </div>
+                            {isExpanded && (
+                                <div className="file-risks">
+                                    {risks.map((risk) => (
+                                        <div
+                                            key={risk.hash || risk.id}
+                                            className={`risk-item ${selectedRiskHash === risk.hash ? 'selected' : ''}`}
+                                            onClick={() =>
+                                                handleRiskSelect(risk)
+                                            }
+                                        >
+                                            <div className="risk-location">
+                                                {fileName}[{risk.line || '?'}] -{' '}
+                                                {risk.program_name || 'admin'}
+                                            </div>
+                                            <div className="risk-type-info">
+                                                {risk.risk_type_verbose ||
+                                                    risk.risk_type ||
+                                                    '未知类型'}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     // Tree 节点渲染
     const renderTreeTitle = useCallback(
         (nodeData: any) => {
@@ -814,7 +1413,28 @@ const SSARiskAudit: React.FC = () => {
     // 添加调试信息
     console.log('Render state:', { loading, hasAuditInfo: !!auditInfo, hash });
 
-    if (loading) {
+    if (loadingRisks) {
+        return (
+            <div className="ssa-risk-audit-loading">
+                <Spin size="large" tip="加载任务风险列表..." />
+            </div>
+        );
+    }
+
+    if (isTaskMode && riskList.length === 0 && !loadingRisks) {
+        return (
+            <Card style={{ margin: 20 }}>
+                <Alert
+                    message="该任务暂无风险"
+                    description={`任务 ID: ${taskId}`}
+                    type="info"
+                    showIcon
+                />
+            </Card>
+        );
+    }
+
+    if (!isTaskMode && loading) {
         return (
             <div className="ssa-risk-audit-loading">
                 <Spin size="large" tip="加载审计信息中..." />
@@ -822,7 +1442,7 @@ const SSARiskAudit: React.FC = () => {
         );
     }
 
-    if (!auditInfo) {
+    if (!isTaskMode && !auditInfo) {
         return (
             <Card style={{ margin: 20 }}>
                 <Alert
@@ -839,44 +1459,237 @@ const SSARiskAudit: React.FC = () => {
 
     return (
         <div className="ssa-risk-audit">
-            {/* 顶部风险信息 */}
+            {/* 顶部信息 */}
             <Card className="audit-header" size="small">
-                <Title level={4}>{auditInfo.risk?.title || '风险审计'}</Title>
-                <div className="risk-meta">
-                    <Text type="secondary">
-                        严重程度:{' '}
-                        <Text type={getSeverityType(auditInfo.risk?.severity)}>
-                            {auditInfo.risk?.severity || '-'}
-                        </Text>
-                    </Text>
-                    <Divider type="vertical" />
-                    <Text type="secondary">
-                        类型: {auditInfo.risk?.risk_type || '-'}
-                    </Text>
-                    <Divider type="vertical" />
-                    <Text type="secondary">
-                        项目: {auditInfo.risk?.program_name || '-'}
-                    </Text>
-                </div>
+                {isTaskMode ? (
+                    <>
+                        <Title level={4}>缺陷审计 - {programName}</Title>
+                        <div className="risk-meta">
+                            <Text type="secondary">任务 ID: {taskId}</Text>
+                            <Divider type="vertical" />
+                            <Text type="secondary">
+                                漏洞总数: <Text strong>{riskList.length}</Text>
+                            </Text>
+                            {auditInfo?.risk && (
+                                <>
+                                    <Divider type="vertical" />
+                                    <Text type="secondary">
+                                        当前: {auditInfo.risk.title || '-'}
+                                    </Text>
+                                </>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <Title level={4}>
+                            {auditInfo?.risk?.title || '风险审计'}
+                        </Title>
+                        <div className="risk-meta">
+                            <Text type="secondary">
+                                严重程度:{' '}
+                                <Text
+                                    type={getSeverityType(
+                                        auditInfo?.risk?.severity,
+                                    )}
+                                >
+                                    {auditInfo?.risk?.severity || '-'}
+                                </Text>
+                            </Text>
+                            <Divider type="vertical" />
+                            <Text type="secondary">
+                                类型: {auditInfo?.risk?.risk_type || '-'}
+                            </Text>
+                            <Divider type="vertical" />
+                            <Text type="secondary">
+                                项目: {auditInfo?.risk?.program_name || '-'}
+                            </Text>
+                        </div>
+                    </>
+                )}
             </Card>
 
             {/* 主要内容区域 */}
             <div className="audit-content">
-                {/* 左侧文件树 */}
-                <div className="file-tree-panel">
-                    <Card title="代码文件" size="small" className="panel-card">
-                        {treeData.length > 0 ? (
-                            <Tree
-                                blockNode
-                                treeData={treeData}
-                                expandedKeys={expandedKeys}
-                                selectedKeys={[selectedFilePath]}
-                                titleRender={renderTreeTitle}
-                            />
-                        ) : (
-                            <div className="empty">暂无文件</div>
-                        )}
-                    </Card>
+                {/* 左侧面板 */}
+                <div
+                    className="file-tree-panel"
+                    style={{ width: leftPanelWidth }}
+                >
+                    <div
+                        className="resize-handle"
+                        onMouseDown={handleMouseDown}
+                        style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: 4,
+                            cursor: 'ew-resize',
+                            background: isResizing ? '#1890ff' : 'transparent',
+                            transition: 'background 0.2s',
+                            zIndex: 10,
+                        }}
+                        onMouseEnter={(e) => {
+                            (
+                                e.currentTarget as HTMLDivElement
+                            ).style.background = '#1890ff';
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isResizing) {
+                                (
+                                    e.currentTarget as HTMLDivElement
+                                ).style.background = 'transparent';
+                            }
+                        }}
+                    />
+                    {isTaskMode ? (
+                        <Card
+                            title={
+                                <div className="panel-header">
+                                    <span>漏洞列表 ({riskList.length})</span>
+                                </div>
+                            }
+                            size="small"
+                            className="panel-card"
+                            extra={
+                                <Radio.Group
+                                    value={leftViewMode}
+                                    onChange={(e) =>
+                                        setLeftViewMode(e.target.value)
+                                    }
+                                    size="small"
+                                    optionType="button"
+                                    buttonStyle="solid"
+                                >
+                                    <Radio.Button value="type">
+                                        分类
+                                    </Radio.Button>
+                                    <Radio.Button value="file">
+                                        文件
+                                    </Radio.Button>
+                                    <Radio.Button value="tree">
+                                        代码
+                                    </Radio.Button>
+                                </Radio.Group>
+                            }
+                        >
+                            {loadingRisks ? (
+                                <div className="empty">
+                                    <Spin tip="加载漏洞列表..." />
+                                </div>
+                            ) : (
+                                <>
+                                    {/* 严重程度统计栏 */}
+                                    <div className="severity-stats">
+                                        <div
+                                            className={`stat-item ${severityFilter === 'high' ? 'active' : ''}`}
+                                            onClick={() =>
+                                                setSeverityFilter(
+                                                    severityFilter === 'high'
+                                                        ? null
+                                                        : 'high',
+                                                )
+                                            }
+                                        >
+                                            <span className="label">高</span>
+                                            <span className="count">
+                                                {severityStats.high.audited}|
+                                                {severityStats.high.pending}|
+                                                {severityStats.high.total}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={`stat-item ${severityFilter === 'middle' ? 'active' : ''}`}
+                                            onClick={() =>
+                                                setSeverityFilter(
+                                                    severityFilter === 'middle'
+                                                        ? null
+                                                        : 'middle',
+                                                )
+                                            }
+                                        >
+                                            <span className="label">中</span>
+                                            <span className="count">
+                                                {severityStats.middle.audited}|
+                                                {severityStats.middle.pending}|
+                                                {severityStats.middle.total}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={`stat-item ${severityFilter === 'low' ? 'active' : ''}`}
+                                            onClick={() =>
+                                                setSeverityFilter(
+                                                    severityFilter === 'low'
+                                                        ? null
+                                                        : 'low',
+                                                )
+                                            }
+                                        >
+                                            <span className="label">低</span>
+                                            <span className="count">
+                                                {severityStats.low.audited}|
+                                                {severityStats.low.pending}|
+                                                {severityStats.low.total}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={`stat-item ${severityFilter === null ? 'active' : ''}`}
+                                            onClick={() =>
+                                                setSeverityFilter(null)
+                                            }
+                                        >
+                                            <span className="label">所有</span>
+                                            <span className="count">
+                                                {severityStats.all.audited}|
+                                                {severityStats.all.pending}|
+                                                {severityStats.all.total}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {leftViewMode === 'type' &&
+                                        renderTypeView()}
+                                    {leftViewMode === 'file' &&
+                                        renderFileView()}
+                                    {leftViewMode === 'tree' &&
+                                        (treeData.length > 0 ? (
+                                            <Tree
+                                                blockNode
+                                                treeData={treeData}
+                                                expandedKeys={expandedKeys}
+                                                selectedKeys={[
+                                                    selectedFilePath,
+                                                ]}
+                                                titleRender={renderTreeTitle}
+                                            />
+                                        ) : (
+                                            <div className="empty">
+                                                暂无文件
+                                            </div>
+                                        ))}
+                                </>
+                            )}
+                        </Card>
+                    ) : (
+                        <Card
+                            title="代码文件"
+                            size="small"
+                            className="panel-card"
+                        >
+                            {treeData.length > 0 ? (
+                                <Tree
+                                    blockNode
+                                    treeData={treeData}
+                                    expandedKeys={expandedKeys}
+                                    selectedKeys={[selectedFilePath]}
+                                    titleRender={renderTreeTitle}
+                                />
+                            ) : (
+                                <div className="empty">暂无文件</div>
+                            )}
+                        </Card>
+                    )}
                 </div>
 
                 {/* 中间区域：代码编辑器 + 漏洞详情和处置 */}
@@ -940,362 +1753,476 @@ const SSARiskAudit: React.FC = () => {
                     {/* 漏洞详情和处置 */}
                     <div className="detail-dispose-panel">
                         <Card size="small" className="panel-card">
-                            <Tabs
-                                defaultActiveKey="detail"
-                                items={[
-                                    {
-                                        key: 'detail',
-                                        label: '漏洞详情',
-                                        children: (
-                                            <div className="detail-tab-content">
-                                                {/* 风险基本信息 */}
-                                                <div className="info-section">
-                                                    <Descriptions
-                                                        column={2}
-                                                        size="small"
-                                                        bordered
-                                                    >
-                                                        <Descriptions.Item
-                                                            label="风险类型"
-                                                            span={2}
+                            {auditInfo ? (
+                                <Tabs
+                                    defaultActiveKey="overview"
+                                    activeKey={activeTab}
+                                    onChange={setActiveTab}
+                                    items={[
+                                        {
+                                            key: 'overview',
+                                            label: '漏洞概览',
+                                            children: (
+                                                <div className="overview-tab-content">
+                                                    {/* 风险基本信息 */}
+                                                    <div className="info-section">
+                                                        <Descriptions
+                                                            column={2}
+                                                            size="small"
+                                                            bordered
                                                         >
-                                                            {auditInfo.risk
-                                                                ?.risk_type ||
-                                                                '-'}
-                                                        </Descriptions.Item>
-                                                        <Descriptions.Item label="严重程度">
-                                                            {auditInfo.risk
-                                                                ?.severity && (
+                                                            <Descriptions.Item
+                                                                label="风险类型"
+                                                                span={2}
+                                                            >
+                                                                {auditInfo.risk
+                                                                    ?.risk_type ||
+                                                                    '-'}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label="严重程度">
+                                                                {auditInfo.risk
+                                                                    ?.severity && (
+                                                                    <Tag
+                                                                        color={getSeverityColor(
+                                                                            auditInfo
+                                                                                .risk
+                                                                                .severity,
+                                                                        )}
+                                                                    >
+                                                                        {
+                                                                            auditInfo
+                                                                                .risk
+                                                                                .severity
+                                                                        }
+                                                                    </Tag>
+                                                                )}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label="处置状态">
                                                                 <Tag
-                                                                    color={getSeverityColor(
+                                                                    color={getDisposeStatusColor(
                                                                         auditInfo
                                                                             .risk
-                                                                            .severity,
+                                                                            ?.latest_disposal_status,
                                                                     )}
                                                                 >
+                                                                    {auditInfo
+                                                                        .risk
+                                                                        ?.latest_disposal_status ||
+                                                                        '未处置'}
+                                                                </Tag>
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item
+                                                                label="代码位置"
+                                                                span={2}
+                                                            >
+                                                                <Text
+                                                                    ellipsis
+                                                                    style={{
+                                                                        maxWidth: 400,
+                                                                    }}
+                                                                >
+                                                                    {auditInfo
+                                                                        .risk
+                                                                        ?.code_source_url ||
+                                                                        '-'}
+                                                                </Text>
+                                                            </Descriptions.Item>
+                                                            {auditInfo.risk
+                                                                ?.line && (
+                                                                <Descriptions.Item label="行号">
                                                                     {
                                                                         auditInfo
                                                                             .risk
-                                                                            .severity
+                                                                            .line
                                                                     }
-                                                                </Tag>
+                                                                </Descriptions.Item>
                                                             )}
-                                                        </Descriptions.Item>
-                                                        <Descriptions.Item label="处置状态">
-                                                            <Tag
-                                                                color={getDisposeStatusColor(
-                                                                    auditInfo
-                                                                        .risk
-                                                                        ?.latest_disposal_status,
-                                                                )}
-                                                            >
+                                                            {auditInfo.risk
+                                                                ?.function_name && (
+                                                                <Descriptions.Item label="函数名">
+                                                                    {
+                                                                        auditInfo
+                                                                            .risk
+                                                                            .function_name
+                                                                    }
+                                                                </Descriptions.Item>
+                                                            )}
+                                                        </Descriptions>
+                                                    </div>
+                                                </div>
+                                            ),
+                                        },
+                                        {
+                                            key: 'detail',
+                                            label: '漏洞详情',
+                                            children: (
+                                                <div className="detail-tab-content">
+                                                    {/* 风险描述 - Markdown渲染 */}
+                                                    {auditInfo.risk
+                                                        ?.description ||
+                                                    auditInfo.message ? (
+                                                        <div className="description-section">
+                                                            <Markdown>
                                                                 {auditInfo.risk
-                                                                    ?.latest_disposal_status ||
-                                                                    '未处置'}
-                                                            </Tag>
-                                                        </Descriptions.Item>
-                                                        <Descriptions.Item
-                                                            label="代码位置"
-                                                            span={2}
+                                                                    ?.description ||
+                                                                    auditInfo.message ||
+                                                                    ''}
+                                                            </Markdown>
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            style={{
+                                                                textAlign:
+                                                                    'center',
+                                                                padding:
+                                                                    '40px 0',
+                                                                color: '#999',
+                                                            }}
                                                         >
-                                                            <Text
-                                                                ellipsis
-                                                                style={{
-                                                                    maxWidth: 400,
-                                                                }}
-                                                            >
-                                                                {auditInfo.risk
-                                                                    ?.code_source_url ||
-                                                                    '-'}
-                                                            </Text>
-                                                        </Descriptions.Item>
-                                                        {auditInfo.risk
-                                                            ?.line && (
-                                                            <Descriptions.Item label="行号">
-                                                                {
-                                                                    auditInfo
-                                                                        .risk
-                                                                        .line
-                                                                }
-                                                            </Descriptions.Item>
-                                                        )}
-                                                        {auditInfo.risk
-                                                            ?.function_name && (
-                                                            <Descriptions.Item label="函数名">
-                                                                {
-                                                                    auditInfo
-                                                                        .risk
-                                                                        .function_name
-                                                                }
-                                                            </Descriptions.Item>
-                                                        )}
-                                                    </Descriptions>
+                                                            暂无漏洞详情
+                                                        </div>
+                                                    )}
                                                 </div>
-
-                                                <Divider />
-
-                                                {/* 风险描述 */}
-                                                <div className="description-section">
-                                                    <Title level={5}>
-                                                        风险描述
-                                                    </Title>
-                                                    <Paragraph>
-                                                        {auditInfo.risk
-                                                            ?.description ||
-                                                            auditInfo.message ||
-                                                            '暂无描述'}
-                                                    </Paragraph>
-                                                </div>
-
-                                                {auditInfo.risk?.solution && (
-                                                    <>
-                                                        <Divider />
+                                            ),
+                                        },
+                                        {
+                                            key: 'solution',
+                                            label: '解决方案',
+                                            children: (
+                                                <div className="solution-tab-content">
+                                                    {/* 解决方案 - Markdown渲染 */}
+                                                    {auditInfo.risk
+                                                        ?.solution ? (
                                                         <div className="solution-section">
-                                                            <Title level={5}>
-                                                                解决方案
-                                                            </Title>
-                                                            <Paragraph>
+                                                            <Markdown>
                                                                 {
                                                                     auditInfo
                                                                         .risk
                                                                         .solution
                                                                 }
-                                                            </Paragraph>
+                                                            </Markdown>
                                                         </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        ),
-                                    },
-                                    {
-                                        key: 'dispose',
-                                        label: '处置',
-                                        children: (
-                                            <div className="dispose-tab-content">
-                                                <Form
-                                                    form={form}
-                                                    layout="vertical"
-                                                    onFinish={handleDispose}
-                                                    initialValues={{
-                                                        disposal_status:
-                                                            auditInfo.risk
-                                                                ?.latest_disposal_status ||
-                                                            '未处置',
-                                                    }}
-                                                >
-                                                    <Form.Item
-                                                        name="disposal_status"
-                                                        label="处置结果"
-                                                        rules={[
-                                                            {
-                                                                required: true,
-                                                                message:
-                                                                    '请选择处置结果',
-                                                            },
-                                                        ]}
-                                                    >
-                                                        <Radio.Group
+                                                    ) : (
+                                                        <div
                                                             style={{
-                                                                width: '100%',
+                                                                textAlign:
+                                                                    'center',
+                                                                padding:
+                                                                    '40px 0',
+                                                                color: '#999',
                                                             }}
                                                         >
-                                                            <Space
-                                                                direction="vertical"
+                                                            暂无解决方案
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ),
+                                        },
+                                        {
+                                            key: 'dispose',
+                                            label: '处置',
+                                            children: (
+                                                <div className="dispose-tab-content">
+                                                    <Form
+                                                        form={form}
+                                                        layout="vertical"
+                                                        onFinish={handleDispose}
+                                                        initialValues={{
+                                                            disposal_status:
+                                                                auditInfo.risk
+                                                                    ?.latest_disposal_status ||
+                                                                '未处置',
+                                                        }}
+                                                    >
+                                                        <Form.Item
+                                                            name="disposal_status"
+                                                            label="处置结果"
+                                                            rules={[
+                                                                {
+                                                                    required:
+                                                                        true,
+                                                                    message:
+                                                                        '请选择处置结果',
+                                                                },
+                                                            ]}
+                                                        >
+                                                            <Radio.Group
                                                                 style={{
                                                                     width: '100%',
                                                                 }}
                                                             >
-                                                                <Radio value="有问题">
-                                                                    <Tag color="red">
-                                                                        有问题
-                                                                    </Tag>
-                                                                    <Text type="secondary">
-                                                                        （确认为真实漏洞）
-                                                                    </Text>
-                                                                </Radio>
-                                                                <Radio value="没问题">
-                                                                    <Tag color="green">
-                                                                        没问题
-                                                                    </Tag>
-                                                                    <Text type="secondary">
-                                                                        （误报，不是漏洞）
-                                                                    </Text>
-                                                                </Radio>
-                                                                <Radio value="存疑">
-                                                                    <Tag color="orange">
-                                                                        存疑
-                                                                    </Tag>
-                                                                    <Text type="secondary">
-                                                                        （需要进一步确认）
-                                                                    </Text>
-                                                                </Radio>
-                                                                <Radio value="未处置">
-                                                                    <Tag color="default">
-                                                                        未处置
-                                                                    </Tag>
-                                                                    <Text type="secondary">
-                                                                        （尚未审计）
-                                                                    </Text>
-                                                                </Radio>
+                                                                <Space
+                                                                    direction="vertical"
+                                                                    style={{
+                                                                        width: '100%',
+                                                                    }}
+                                                                >
+                                                                    <Radio value="有问题">
+                                                                        <Tag color="red">
+                                                                            有问题
+                                                                        </Tag>
+                                                                        <Text type="secondary">
+                                                                            （确认为真实漏洞）
+                                                                        </Text>
+                                                                    </Radio>
+                                                                    <Radio value="没问题">
+                                                                        <Tag color="green">
+                                                                            没问题
+                                                                        </Tag>
+                                                                        <Text type="secondary">
+                                                                            （误报，不是漏洞）
+                                                                        </Text>
+                                                                    </Radio>
+                                                                    <Radio value="存疑">
+                                                                        <Tag color="orange">
+                                                                            存疑
+                                                                        </Tag>
+                                                                        <Text type="secondary">
+                                                                            （需要进一步确认）
+                                                                        </Text>
+                                                                    </Radio>
+                                                                    <Radio value="未处置">
+                                                                        <Tag color="default">
+                                                                            未处置
+                                                                        </Tag>
+                                                                        <Text type="secondary">
+                                                                            （尚未审计）
+                                                                        </Text>
+                                                                    </Radio>
+                                                                </Space>
+                                                            </Radio.Group>
+                                                        </Form.Item>
+
+                                                        <Form.Item
+                                                            name="comment"
+                                                            label="处置评论"
+                                                            extra="请详细说明处置原因、修复建议或其他备注信息"
+                                                        >
+                                                            <TextArea
+                                                                rows={6}
+                                                                placeholder="例如：&#10;- 漏洞成因分析&#10;- 修复建议&#10;- 影响范围&#10;- 其他备注"
+                                                                showCount
+                                                                maxLength={1000}
+                                                            />
+                                                        </Form.Item>
+
+                                                        <Form.Item>
+                                                            <Space>
+                                                                <Button
+                                                                    type="primary"
+                                                                    htmlType="submit"
+                                                                    loading={
+                                                                        disposing
+                                                                    }
+                                                                    icon={
+                                                                        <CheckOutlined />
+                                                                    }
+                                                                >
+                                                                    提交处置
+                                                                </Button>
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        form.resetFields()
+                                                                    }
+                                                                >
+                                                                    重置
+                                                                </Button>
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        navigate(
+                                                                            -1,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    返回列表
+                                                                </Button>
                                                             </Space>
-                                                        </Radio.Group>
-                                                    </Form.Item>
+                                                        </Form.Item>
+                                                    </Form>
+                                                </div>
+                                            ),
+                                        },
+                                        {
+                                            key: 'audit-path',
+                                            label: '审计路径',
+                                            children: (
+                                                <div className="audit-path-tab-content">
+                                                    {auditInfo.node_id && (
+                                                        <div className="result-item">
+                                                            <Text strong>
+                                                                节点 ID：
+                                                            </Text>
+                                                            <Text code>
+                                                                {
+                                                                    auditInfo.node_id
+                                                                }
+                                                            </Text>
+                                                        </div>
+                                                    )}
 
-                                                    <Form.Item
-                                                        name="comment"
-                                                        label="处置评论"
-                                                        extra="请详细说明处置原因、修复建议或其他备注信息"
+                                                    {(auditInfo.risk
+                                                        ?.title_verbose ||
+                                                        auditInfo.risk?.title ||
+                                                        auditInfo.message) && (
+                                                        <div className="result-item">
+                                                            <Text strong>
+                                                                审计消息：
+                                                            </Text>
+                                                            <Paragraph>
+                                                                {auditInfo.risk
+                                                                    ?.title_verbose ||
+                                                                    auditInfo
+                                                                        .risk
+                                                                        ?.title ||
+                                                                    auditInfo.message}
+                                                            </Paragraph>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="result-item audit-path-section">
+                                                        <Text strong>
+                                                            审计路径：
+                                                        </Text>
+                                                        {auditInfo.graph_path ? (
+                                                            renderAuditPath()
+                                                        ) : (
+                                                            <div className="empty">
+                                                                暂无审计路径
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ),
+                                        },
+                                        {
+                                            key: 'dataflow',
+                                            label: '数据流图',
+                                            children: (
+                                                <div className="dataflow-tab-content">
+                                                    {auditInfo.graph && (
+                                                        <div
+                                                            style={{
+                                                                marginBottom: 12,
+                                                                display: 'flex',
+                                                                alignItems:
+                                                                    'center',
+                                                                gap: 8,
+                                                            }}
+                                                        >
+                                                            <Tooltip
+                                                                title={
+                                                                    <div>
+                                                                        <div>
+                                                                            黑色箭头代表数据流分析路径
+                                                                        </div>
+                                                                        <div>
+                                                                            红色箭头代表跨数据流分析路径
+                                                                        </div>
+                                                                        <div>
+                                                                            紫色节点代表审计结果
+                                                                        </div>
+                                                                        <div>
+                                                                            点击节点可跳转到代码位置
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                            >
+                                                                <span
+                                                                    className="help-icon"
+                                                                    style={{
+                                                                        display:
+                                                                            'inline-flex',
+                                                                        alignItems:
+                                                                            'center',
+                                                                        justifyContent:
+                                                                            'center',
+                                                                        width: 16,
+                                                                        height: 16,
+                                                                        background:
+                                                                            '#e6e6e6',
+                                                                        color: '#666',
+                                                                        borderRadius:
+                                                                            '50%',
+                                                                        fontSize: 10,
+                                                                        cursor: 'help',
+                                                                    }}
+                                                                >
+                                                                    ?
+                                                                </span>
+                                                            </Tooltip>
+                                                            <Space size="small">
+                                                                <Button
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={
+                                                                        <ZoomInOutlined />
+                                                                    }
+                                                                    onClick={
+                                                                        handleGraphZoomIn
+                                                                    }
+                                                                >
+                                                                    放大
+                                                                </Button>
+                                                                <Button
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={
+                                                                        <ZoomOutOutlined />
+                                                                    }
+                                                                    onClick={
+                                                                        handleGraphZoomOut
+                                                                    }
+                                                                >
+                                                                    缩小
+                                                                </Button>
+                                                            </Space>
+                                                        </div>
+                                                    )}
+                                                    <div
+                                                        className="dataflow-graph-content"
+                                                        style={{ height: 500 }}
                                                     >
-                                                        <TextArea
-                                                            rows={6}
-                                                            placeholder="例如：&#10;- 漏洞成因分析&#10;- 修复建议&#10;- 影响范围&#10;- 其他备注"
-                                                            showCount
-                                                            maxLength={1000}
-                                                        />
-                                                    </Form.Item>
-
-                                                    <Form.Item>
-                                                        <Space>
-                                                            <Button
-                                                                type="primary"
-                                                                htmlType="submit"
-                                                                loading={
-                                                                    disposing
+                                                        {auditInfo.graph ? (
+                                                            <div
+                                                                className="svg-container"
+                                                                ref={svgBoxRef}
+                                                                onMouseDown={
+                                                                    handleGraphMouseDown
                                                                 }
-                                                                icon={
-                                                                    <CheckOutlined />
+                                                                onMouseUp={
+                                                                    handleGraphMouseUp
                                                                 }
-                                                            >
-                                                                提交处置
-                                                            </Button>
-                                                            <Button
-                                                                onClick={() =>
-                                                                    form.resetFields()
+                                                                onMouseMove={
+                                                                    handleGraphMouseMove
                                                                 }
-                                                            >
-                                                                重置
-                                                            </Button>
-                                                            <Button
-                                                                onClick={() =>
-                                                                    navigate(-1)
+                                                                onMouseLeave={
+                                                                    handleGraphMouseUp
                                                                 }
-                                                            >
-                                                                返回列表
-                                                            </Button>
-                                                        </Space>
-                                                    </Form.Item>
-                                                </Form>
-                                            </div>
-                                        ),
-                                    },
-                                ]}
-                            />
-                        </Card>
-                    </div>
-                </div>
-
-                {/* 右侧面板：审计结果 + 数据流图 */}
-                <div className="right-panel">
-                    {/* 上栏：审计结果 */}
-                    <div className="audit-result-panel">
-                        <Card
-                            title="审计结果"
-                            size="small"
-                            className="panel-card"
-                        >
-                            <div className="audit-result-content">
-                                {/* 审计信息 */}
-                                {auditInfo.node_id && (
-                                    <div className="result-item">
-                                        <Text strong>节点 ID：</Text>
-                                        <Text code>{auditInfo.node_id}</Text>
-                                    </div>
-                                )}
-
-                                {auditInfo.message && (
-                                    <div className="result-item">
-                                        <Text strong>审计消息：</Text>
-                                        <Paragraph>
-                                            {auditInfo.message}
-                                        </Paragraph>
-                                    </div>
-                                )}
-
-                                {/* 审计路径 - 使用新的树形结构 */}
-                                <div className="result-item audit-path-section">
-                                    <Text strong>审计路径：</Text>
-                                    {auditInfo.graph_path ? (
-                                        renderAuditPath()
-                                    ) : (
-                                        <div className="empty">
-                                            暂无审计路径
-                                        </div>
-                                    )}
+                                                                onWheel={
+                                                                    handleGraphWheel
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            <div className="empty">
+                                                                暂无数据流图
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            ) : (
+                                <div
+                                    className="empty"
+                                    style={{ padding: '40px 20px' }}
+                                >
+                                    {isTaskMode
+                                        ? '请从左侧选择一个漏洞进行审计'
+                                        : '暂无审计信息'}
                                 </div>
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* 下栏：数据流图 - 使用 viz-js 渲染 */}
-                    <div className="dataflow-graph-panel">
-                        <Card
-                            title={
-                                <div className="graph-card-title">
-                                    <span>Syntax Flow 审计过程</span>
-                                    <Tooltip
-                                        title={
-                                            <div>
-                                                <div>
-                                                    黑色箭头代表数据流分析路径
-                                                </div>
-                                                <div>
-                                                    红色箭头代表跨数据流分析路径
-                                                </div>
-                                                <div>紫色节点代表审计结果</div>
-                                                <div>
-                                                    点击节点可跳转到代码位置
-                                                </div>
-                                            </div>
-                                        }
-                                    >
-                                        <span className="help-icon">?</span>
-                                    </Tooltip>
-                                </div>
-                            }
-                            size="small"
-                            className="panel-card"
-                            extra={
-                                <Space size="small">
-                                    <Button
-                                        type="text"
-                                        size="small"
-                                        icon={<ZoomInOutlined />}
-                                        onClick={handleGraphZoomIn}
-                                    />
-                                    <Button
-                                        type="text"
-                                        size="small"
-                                        icon={<ZoomOutOutlined />}
-                                        onClick={handleGraphZoomOut}
-                                    />
-                                </Space>
-                            }
-                        >
-                            <div className="dataflow-graph-content">
-                                {auditInfo.graph ? (
-                                    <div
-                                        className="svg-container"
-                                        ref={svgBoxRef}
-                                        onMouseDown={handleGraphMouseDown}
-                                        onMouseUp={handleGraphMouseUp}
-                                        onMouseMove={handleGraphMouseMove}
-                                        onMouseLeave={handleGraphMouseUp}
-                                        onWheel={handleGraphWheel}
-                                    />
-                                ) : (
-                                    <div className="empty">暂无数据流图</div>
-                                )}
-                            </div>
+                            )}
                         </Card>
                     </div>
                 </div>
