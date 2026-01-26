@@ -6,6 +6,8 @@ import path from 'path';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
+    const isIRify = mode.includes('irify');
+
     return {
         base: './',
         plugins: [
@@ -13,6 +15,26 @@ export default defineConfig(({ mode }) => {
             UnoCSS({
                 configFile: './uno.config.ts',
             }),
+            // HTML transform plugin for title and favicon
+            {
+                name: 'html-transform',
+                transformIndexHtml(html) {
+                    const title = env.VITE_APP_TITLE || '自动化渗透系统';
+                    let result = html.replace(
+                        /<title>.*?<\/title>/,
+                        `<title>${title}</title>`,
+                    );
+
+                    // Inject IRify favicon when in IRify mode
+                    if (isIRify) {
+                        result = result.replace(
+                            /href="\.\/src\/assets\/compoments\/telecommunicationsLogo\.svg"/,
+                            'href="/irify-favicon.svg"',
+                        );
+                    }
+                    return result;
+                },
+            },
         ],
         resolve: {
             alias: {
@@ -34,9 +56,8 @@ export default defineConfig(({ mode }) => {
             hmr: true,
         },
         build: {
-            sourcemap: mode === 'development',
+            sourcemap: mode.includes('development'),
+            outDir: isIRify ? 'dist-irify' : 'dist',
         },
     };
 });
-
-// $r2}#TqJn$5dQYB]^0(J

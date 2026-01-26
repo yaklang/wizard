@@ -59,7 +59,6 @@ const CreateTaskItems: TCreateTaskItemsProps = (
     status,
     scannerDataList,
     keywordPlaceholder,
-    // eslint-disable-next-line max-params
 ) => {
     const starTimeRf = useRef<Dayjs | null>();
 

@@ -125,6 +125,14 @@ const routers: RouteObjectRootMy[] = [
                         name: '漏洞与风险',
                         key: 'assets-vulns',
                         element: <AssetsVulns />,
+                        children: [
+                            {
+                                path: 'audit-code',
+                                name: '代码审计',
+                                key: 'assets-vulns-audit-code',
+                                element: null,
+                            },
+                        ],
                     },
                     {
                         path: 'sensitive-message',
@@ -218,6 +226,7 @@ const routers: RouteObjectRootMy[] = [
                         key: 'system-user',
                         element: <SystemManagement />,
                     },
+
                     {
                         path: 'task-script',
                         name: '脚本管理',

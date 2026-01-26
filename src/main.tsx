@@ -3,8 +3,7 @@
 import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 
-import { ConfigProvider } from 'antd';
-import locale from 'antd/locale/zh_CN';
+import { ThemeProvider } from './theme';
 
 import 'virtual:uno.css';
 
@@ -14,12 +13,18 @@ import './index.scss';
 
 import App from './App.tsx';
 
+// Conditionally load IRify styles
+const APP_MODE = import.meta.env.VITE_APP_MODE;
+if (APP_MODE === 'irify') {
+    import('./styles/irify.scss');
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     // <React.StrictMode>
     <HashRouter>
-        <ConfigProvider locale={locale}>
+        <ThemeProvider>
             <App />
-        </ConfigProvider>
+        </ThemeProvider>
     </HashRouter>,
     // </React.StrictMode>,
 );

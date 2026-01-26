@@ -42,7 +42,6 @@ const ChunkUpload: React.FC<ChunkUploadProps> = ({
         chunkIndex: number,
         totalChunks: number,
         newFileName: string,
-        // eslint-disable-next-line max-params
     ) => {
         const chunk = file.slice(
             chunkIndex * chunkSize * 1024 * 1024,

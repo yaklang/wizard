@@ -1,0 +1,305 @@
+// IRify Layout Styles - Light/Dark Theme Support
+
+// Dark theme colors
+$dark-bg: #0d1117;
+$dark-bg-container: #161b22;
+$dark-bg-elevated: #21262d;
+$dark-border: #30363d;
+$dark-text: #e6edf3;
+$dark-text-secondary: #8b949e;
+
+// Light theme colors
+$light-bg: #f8fafc;
+$light-bg-container: #ffffff;
+$light-bg-elevated: #f1f5f9;
+$light-border: #e2e8f0;
+$light-text: #1e293b;
+$light-text-secondary: #64748b;
+
+// Accent color
+$accent: #00d9ff;
+$accent-secondary: #4f46e5;
+
+.irify-layout {
+    min-height: 100vh;
+    transition: background 0.3s ease;
+
+    &.dark {
+        background: $dark-bg;
+
+        .irify-layout-sider {
+            background: $dark-bg !important;
+            border-right: 1px solid $dark-border;
+        }
+
+        .irify-logo {
+            border-bottom: 1px solid $dark-border;
+            &:hover {
+                background: $dark-bg-container;
+            }
+
+            .logo-text {
+                color: $dark-text;
+            }
+            .logo-name {
+                color: $dark-text;
+            }
+        }
+
+        .irify-nav-item {
+            color: $dark-text-secondary;
+            &:hover {
+                background: $dark-bg-elevated;
+                color: $dark-text;
+            }
+        }
+
+        .irify-sider-footer {
+            border-top: 1px solid $dark-border;
+        }
+
+        .irify-user-card {
+            &:hover {
+                background: $dark-bg-elevated;
+            }
+            .user-name {
+                color: $dark-text;
+            }
+        }
+
+        .irify-layout-content {
+            background: $dark-bg;
+        }
+    }
+
+    &.light {
+        background: $light-bg;
+
+        .irify-layout-sider {
+            background: $light-bg-container !important;
+            border-right: 1px solid $light-border;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .irify-logo {
+            border-bottom: 1px solid $light-border;
+            &:hover {
+                background: $light-bg-elevated;
+            }
+
+            .logo-text {
+                color: $light-text;
+            }
+            .logo-name {
+                color: $light-text;
+            }
+        }
+
+        .irify-nav-item {
+            color: $light-text-secondary;
+            &:hover {
+                background: $light-bg-elevated;
+                color: $light-text;
+            }
+        }
+
+        .irify-sider-footer {
+            border-top: 1px solid $light-border;
+        }
+
+        .irify-user-card {
+            &:hover {
+                background: $light-bg-elevated;
+            }
+            .user-name {
+                color: $light-text;
+            }
+        }
+
+        .irify-layout-content {
+            background: $light-bg;
+        }
+    }
+}
+
+.irify-layout-sider {
+    display: flex;
+    flex-direction: column;
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 100;
+    transition:
+        width 0.2s ease,
+        background 0.3s ease;
+
+    .ant-layout-sider-children {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+}
+
+.irify-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    .logo-bracket {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 24px;
+        font-weight: 700;
+        color: $accent;
+    }
+
+    .logo-text {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 24px;
+        font-weight: 700;
+        color: $dark-text; // Default visible
+    }
+
+    .logo-name {
+        font-family: 'Inter', sans-serif;
+        font-size: 20px;
+        font-weight: 600;
+        margin-left: 4px;
+        color: $dark-text; // Default visible
+    }
+}
+
+.irify-nav {
+    flex: 1;
+    padding: 16px 8px;
+    overflow-y: auto;
+}
+
+.irify-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    color: $dark-text-secondary;
+
+    .nav-icon {
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+    }
+
+    .nav-label {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .nav-arrow {
+        margin-left: auto;
+        font-size: 12px;
+        transition: transform 0.2s ease;
+    }
+
+    &.active {
+        background: rgba($accent, 0.12);
+        color: $accent;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background: $accent;
+            border-radius: 0 2px 2px 0;
+        }
+    }
+}
+
+.irify-nav-submenu {
+    margin-left: 20px;
+    padding: 4px 0;
+
+    .irify-nav-item {
+        padding: 8px 12px;
+        font-size: 13px;
+        margin-bottom: 2px;
+
+        .nav-icon {
+            min-width: 16px;
+        }
+
+        .nav-label {
+            font-size: 13px;
+        }
+
+        &.active-sub {
+            background: rgba($accent, 0.08);
+            color: $accent;
+        }
+    }
+}
+
+.irify-sider-footer {
+    padding: 16px 8px;
+}
+
+.irify-user-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    .user-info {
+        overflow: hidden;
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: $dark-text; // Default visible
+        }
+    }
+}
+
+.irify-layout-content {
+    margin-left: 72px;
+    min-height: 100vh;
+    transition:
+        margin-left 0.2s ease,
+        background 0.3s ease;
+    overflow: auto;
+}
+
+// When sidebar is expanded
+.irify-layout-sider:hover + .irify-layout-content,
+.irify-layout-sider:not(.ant-layout-sider-collapsed) + .irify-layout-content {
+    margin-left: 200px;
+}
+
+// Theme toggle item in dropdown
+.theme-toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 120px;
+}
