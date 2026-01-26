@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Tooltip, Avatar, Dropdown, Spin, Switch } from 'antd';
+import { Layout, Tooltip, Avatar, Dropdown, Spin } from 'antd';
 import type { MenuProps } from 'antd';
 import { useRequest, useSafeState } from 'ahooks';
 import {
@@ -8,11 +8,17 @@ import {
     FolderOutlined,
     BugOutlined,
     ThunderboltOutlined,
-    SettingOutlined,
     LogoutOutlined,
     UserOutlined,
     SunOutlined,
     MoonOutlined,
+    FileTextOutlined,
+    ControlOutlined,
+    AppstoreOutlined,
+    DownOutlined,
+    RightOutlined,
+    NodeIndexOutlined,
+    SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import { getLicense } from '@/apis/login';
 import { useNetworkStatus } from '@/hooks';
@@ -23,7 +29,6 @@ import './IRifyLayout.scss';
 
 const { Sider, Content } = Layout;
 
-// Navigation items for IRify - Chinese labels
 const mainNavItems = [
     {
         key: '/',
@@ -49,28 +54,86 @@ const mainNavItems = [
         label: '扫描任务',
         path: '/scans',
     },
+    {
+        key: '/rules',
+        icon: <SafetyCertificateOutlined />,
+        label: '规则管理',
+        path: '/rules',
+    },
 ];
 
-const settingsNavItems = [
+const collapsibleNavItems = [
     {
-        key: '/settings/rules',
-        label: '规则管理',
-        path: '/settings/rules',
+        key: '/task',
+        icon: <AppstoreOutlined />,
+        label: '任务中心',
+        children: [
+            {
+                key: '/task/new-create-task',
+                label: '新建扫描',
+                path: '/task/new-create-task',
+            },
+            {
+                key: '/task/special-task',
+                label: '专项扫描',
+                path: '/task/special-task',
+            },
+            {
+                key: '/task/task-list',
+                label: '任务列表',
+                path: '/task/task-list',
+            },
+        ],
     },
     {
-        key: '/settings/nodes',
-        label: '节点管理',
-        path: '/settings/nodes',
-    },
-    {
-        key: '/settings/users',
-        label: '用户管理',
-        path: '/settings/users',
-    },
-    {
-        key: '/settings/reports',
+        key: '/reports',
+        icon: <FileTextOutlined />,
         label: '报告管理',
-        path: '/settings/reports',
+        path: '/reports',
+    },
+    {
+        key: '/node-config',
+        icon: <ControlOutlined />,
+        label: '节点配置',
+        children: [
+            {
+                key: '/node-config/install',
+                label: '节点安装',
+                path: '/node-config/install',
+            },
+            {
+                key: '/node-config/manage',
+                label: '节点管理',
+                path: '/node-config/manage',
+            },
+        ],
+    },
+    {
+        key: '/system-management',
+        icon: <NodeIndexOutlined />,
+        label: '系统管理',
+        children: [
+            {
+                key: '/system-management/userinfo',
+                label: '用户管理',
+                path: '/system-management/userinfo',
+            },
+            {
+                key: '/system-management/task-script',
+                label: '脚本管理',
+                path: '/system-management/task-script',
+            },
+            {
+                key: '/system-management/cve-loophole',
+                label: '漏洞库管理',
+                path: '/system-management/cve-loophole',
+            },
+            {
+                key: '/system-management/global-reverse-link',
+                label: '全局反连',
+                path: '/system-management/global-reverse-link',
+            },
+        ],
     },
 ];
 
@@ -80,6 +143,9 @@ const IRifyLayout: React.FC = () => {
     const { status } = useNetworkStatus();
     const store = useLoginStore.getState();
     const [collapsed, setCollapsed] = useSafeState(false);
+    const [expandedMenus, setExpandedMenus] = useSafeState<Set<string>>(
+        new Set(),
+    );
     const { isDark, themeMode, setThemeMode } = useTheme();
 
     const { data: license, loading } = useRequest(async () => {
@@ -98,10 +164,8 @@ const IRifyLayout: React.FC = () => {
         license && navigate('/license', { state: { license } });
     }, [license]);
 
-    // Get current selected key
     const selectedKey = useMemo(() => {
         const path = location.pathname;
-        // Match main nav items
         for (const item of mainNavItems) {
             if (
                 path === item.path ||
@@ -110,10 +174,15 @@ const IRifyLayout: React.FC = () => {
                 return item.key;
             }
         }
-        // Match settings items
-        for (const item of settingsNavItems) {
-            if (path.startsWith(item.path)) {
-                return '/settings';
+        for (const item of collapsibleNavItems) {
+            if (item.children) {
+                for (const child of item.children) {
+                    if (path.startsWith(child.path)) {
+                        return item.key;
+                    }
+                }
+            } else if (path.startsWith(item.path)) {
+                return item.key;
             }
         }
         return '/';
@@ -122,6 +191,22 @@ const IRifyLayout: React.FC = () => {
     // Handle navigation
     const handleNavClick = (path: string) => {
         navigate(path);
+    };
+
+    const toggleMenu = (menuKey: string) => {
+        setExpandedMenus((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(menuKey)) {
+                newSet.delete(menuKey);
+            } else {
+                newSet.add(menuKey);
+            }
+            return newSet;
+        });
+    };
+
+    const isMenuExpanded = (menuKey: string) => {
+        return expandedMenus.has(menuKey);
     };
 
     // Theme toggle handler
@@ -142,8 +227,13 @@ const IRifyLayout: React.FC = () => {
         return '浅色模式';
     };
 
-    // User dropdown menu
     const userMenuItems: MenuProps['items'] = [
+        {
+            key: 'theme',
+            icon: isDark ? <MoonOutlined /> : <SunOutlined />,
+            label: getThemeLabel(),
+            onClick: handleThemeToggle,
+        },
         {
             key: 'profile',
             icon: <UserOutlined />,
@@ -158,34 +248,6 @@ const IRifyLayout: React.FC = () => {
             label: '退出登录',
             danger: true,
             onClick: () => store.outLogin(),
-        },
-    ];
-
-    // Settings dropdown menu
-    const settingsMenuItems: MenuProps['items'] = [
-        ...settingsNavItems.map((item) => ({
-            key: item.key,
-            label: item.label,
-            onClick: () => handleNavClick(item.path),
-        })),
-        { type: 'divider' as const },
-        {
-            key: 'theme',
-            label: (
-                <div
-                    className="theme-toggle-item"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <span>{getThemeLabel()}</span>
-                    <Switch
-                        size="small"
-                        checked={isDark}
-                        onChange={() => handleThemeToggle()}
-                        checkedChildren={<MoonOutlined />}
-                        unCheckedChildren={<SunOutlined />}
-                    />
-                </div>
-            ),
         },
     ];
 
@@ -221,7 +283,6 @@ const IRifyLayout: React.FC = () => {
                     {!collapsed && <span className="logo-name">ify</span>}
                 </div>
 
-                {/* Main Navigation */}
                 <nav className="irify-nav">
                     {mainNavItems.map((item) => (
                         <Tooltip
@@ -242,33 +303,76 @@ const IRifyLayout: React.FC = () => {
                             </div>
                         </Tooltip>
                     ))}
+
+                    {collapsibleNavItems.map((item) => (
+                        <React.Fragment key={item.key}>
+                            <Tooltip
+                                title={collapsed ? item.label : ''}
+                                placement="right"
+                            >
+                                <div
+                                    className={`irify-nav-item ${selectedKey === item.key ? 'active' : ''}`}
+                                    onClick={() => {
+                                        if (item.children) {
+                                            toggleMenu(item.key);
+                                        } else {
+                                            handleNavClick(item.path);
+                                        }
+                                    }}
+                                >
+                                    <span className="nav-icon">
+                                        {item.icon}
+                                    </span>
+                                    {!collapsed && (
+                                        <span className="nav-label">
+                                            {item.label}
+                                        </span>
+                                    )}
+                                    {!collapsed && item.children && (
+                                        <span className="nav-arrow">
+                                            {isMenuExpanded(item.key) ? (
+                                                <DownOutlined />
+                                            ) : (
+                                                <RightOutlined />
+                                            )}
+                                        </span>
+                                    )}
+                                </div>
+                            </Tooltip>
+
+                            {!collapsed &&
+                                item.children &&
+                                isMenuExpanded(item.key) && (
+                                    <div className="irify-nav-submenu">
+                                        {item.children.map((child) => (
+                                            <Tooltip
+                                                key={child.key}
+                                                title={child.label}
+                                                placement="right"
+                                            >
+                                                <div
+                                                    className={`irify-nav-item ${selectedKey === item.key && location.pathname.startsWith(child.path) ? 'active-sub' : ''}`}
+                                                    onClick={() =>
+                                                        handleNavClick(
+                                                            child.path,
+                                                        )
+                                                    }
+                                                >
+                                                    <span className="nav-icon" />
+                                                    <span className="nav-label">
+                                                        {child.label}
+                                                    </span>
+                                                </div>
+                                            </Tooltip>
+                                        ))}
+                                    </div>
+                                )}
+                        </React.Fragment>
+                    ))}
                 </nav>
 
                 {/* Bottom Section */}
                 <div className="irify-sider-footer">
-                    {/* Settings */}
-                    <Dropdown
-                        menu={{ items: settingsMenuItems }}
-                        placement="topRight"
-                        trigger={['click']}
-                    >
-                        <Tooltip
-                            title={collapsed ? '设置' : ''}
-                            placement="right"
-                        >
-                            <div
-                                className={`irify-nav-item ${selectedKey === '/settings' ? 'active' : ''}`}
-                            >
-                                <span className="nav-icon">
-                                    <SettingOutlined />
-                                </span>
-                                {!collapsed && (
-                                    <span className="nav-label">设置</span>
-                                )}
-                            </div>
-                        </Tooltip>
-                    </Dropdown>
-
                     {/* User */}
                     <Dropdown
                         menu={{ items: userMenuItems }}

@@ -1,24 +1,24 @@
 // IRify Layout Styles - Light/Dark Theme Support
 
 // Dark theme colors
-$dark-bg: #0D1117;
-$dark-bg-container: #161B22;
-$dark-bg-elevated: #21262D;
-$dark-border: #30363D;
-$dark-text: #E6EDF3;
-$dark-text-secondary: #8B949E;
+$dark-bg: #0d1117;
+$dark-bg-container: #161b22;
+$dark-bg-elevated: #21262d;
+$dark-border: #30363d;
+$dark-text: #e6edf3;
+$dark-text-secondary: #8b949e;
 
 // Light theme colors
-$light-bg: #F8FAFC;
-$light-bg-container: #FFFFFF;
-$light-bg-elevated: #F1F5F9;
-$light-border: #E2E8F0;
-$light-text: #1E293B;
-$light-text-secondary: #64748B;
+$light-bg: #f8fafc;
+$light-bg-container: #ffffff;
+$light-bg-elevated: #f1f5f9;
+$light-border: #e2e8f0;
+$light-text: #1e293b;
+$light-text-secondary: #64748b;
 
 // Accent color
-$accent: #00D9FF;
-$accent-secondary: #4F46E5;
+$accent: #00d9ff;
+$accent-secondary: #4f46e5;
 
 .irify-layout {
     min-height: 100vh;
@@ -34,10 +34,16 @@ $accent-secondary: #4F46E5;
 
         .irify-logo {
             border-bottom: 1px solid $dark-border;
-            &:hover { background: $dark-bg-container; }
+            &:hover {
+                background: $dark-bg-container;
+            }
 
-            .logo-text { color: $dark-text; }
-            .logo-name { color: $dark-text; }
+            .logo-text {
+                color: $dark-text;
+            }
+            .logo-name {
+                color: $dark-text;
+            }
         }
 
         .irify-nav-item {
@@ -53,8 +59,12 @@ $accent-secondary: #4F46E5;
         }
 
         .irify-user-card {
-            &:hover { background: $dark-bg-elevated; }
-            .user-name { color: $dark-text; }
+            &:hover {
+                background: $dark-bg-elevated;
+            }
+            .user-name {
+                color: $dark-text;
+            }
         }
 
         .irify-layout-content {
@@ -73,10 +83,16 @@ $accent-secondary: #4F46E5;
 
         .irify-logo {
             border-bottom: 1px solid $light-border;
-            &:hover { background: $light-bg-elevated; }
+            &:hover {
+                background: $light-bg-elevated;
+            }
 
-            .logo-text { color: $light-text; }
-            .logo-name { color: $light-text; }
+            .logo-text {
+                color: $light-text;
+            }
+            .logo-name {
+                color: $light-text;
+            }
         }
 
         .irify-nav-item {
@@ -92,8 +108,12 @@ $accent-secondary: #4F46E5;
         }
 
         .irify-user-card {
-            &:hover { background: $light-bg-elevated; }
-            .user-name { color: $light-text; }
+            &:hover {
+                background: $light-bg-elevated;
+            }
+            .user-name {
+                color: $light-text;
+            }
         }
 
         .irify-layout-content {
@@ -110,7 +130,9 @@ $accent-secondary: #4F46E5;
     top: 0;
     bottom: 0;
     z-index: 100;
-    transition: width 0.2s ease, background 0.3s ease;
+    transition:
+        width 0.2s ease,
+        background 0.3s ease;
 
     .ant-layout-sider-children {
         display: flex;
@@ -167,7 +189,7 @@ $accent-secondary: #4F46E5;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
-    color: $dark-text-secondary; // Default visible
+    color: $dark-text-secondary;
 
     .nav-icon {
         font-size: 18px;
@@ -181,6 +203,12 @@ $accent-secondary: #4F46E5;
         font-size: 14px;
         font-weight: 500;
         white-space: nowrap;
+    }
+
+    .nav-arrow {
+        margin-left: auto;
+        font-size: 12px;
+        transition: transform 0.2s ease;
     }
 
     &.active {
@@ -197,6 +225,30 @@ $accent-secondary: #4F46E5;
             height: 20px;
             background: $accent;
             border-radius: 0 2px 2px 0;
+        }
+    }
+}
+
+.irify-nav-submenu {
+    margin-left: 20px;
+    padding: 4px 0;
+
+    .irify-nav-item {
+        padding: 8px 12px;
+        font-size: 13px;
+        margin-bottom: 2px;
+
+        .nav-icon {
+            min-width: 16px;
+        }
+
+        .nav-label {
+            font-size: 13px;
+        }
+
+        &.active-sub {
+            background: rgba($accent, 0.08);
+            color: $accent;
         }
     }
 }
@@ -231,7 +283,9 @@ $accent-secondary: #4F46E5;
 .irify-layout-content {
     margin-left: 72px;
     min-height: 100vh;
-    transition: margin-left 0.2s ease, background 0.3s ease;
+    transition:
+        margin-left 0.2s ease,
+        background 0.3s ease;
     overflow: auto;
 }
 

@@ -38,13 +38,6 @@ import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 import CodecEntry from '@/pages/Codec';
 import SpecialTask from '@/pages/SpecialTask';
 import CreateTask from '@/pages/CreateTask';
-import { ProjectManagement, ProjectEditor } from '@/pages/ProjecManagement';
-import CreateSSAProject from '@/pages/ProjecManagement/CreateSSAProject';
-import RuleManagement from '@/pages/RuleManagement';
-import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
-import { SSARiskList, SSARiskDetail } from '@/pages/SSARisk';
-import SSARiskAudit from '@/pages/SSARiskAudit';
-import TaskList from '@/pages/SSAScanTask/TaskList';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -264,95 +257,6 @@ const routers: RouteObjectRootMy[] = [
                         path: 'global-reverse-link',
                         key: 'system-global-reverse-link',
                         element: <GlobalReverseLink />,
-                    },
-                ],
-            },
-            {
-                path: 'static-analysis',
-                name: '静态代码分析',
-                key: 'static-analysis',
-                icon: <ApiOutlinedIcon />,
-                children: [
-                    {
-                        path: 'project-management',
-                        name: '项目管理',
-                        key: 'static-project',
-                        children: [
-                            {
-                                index: true,
-                                element: <ProjectManagement />,
-                            },
-                            {
-                                path: 'create',
-                                key: 'static-project-create',
-                                element: <CreateSSAProject />,
-                                name: '新建项目',
-                                hidden: true,
-                                parentpath:
-                                    '/static-analysis/project-management',
-                            },
-                            {
-                                path: 'edit',
-                                key: 'static-project-edit',
-                                element: <ProjectEditor />,
-                                name: '编辑项目',
-                                hidden: true,
-                                parentpath:
-                                    '/static-analysis/project-management',
-                            },
-                        ],
-                    },
-                    {
-                        path: 'rule-management',
-                        name: '规则管理',
-                        key: 'static-rule',
-                        children: [
-                            {
-                                index: true,
-                                element: <RuleManagement />,
-                            },
-                            {
-                                path: 'create',
-                                key: 'static-rule-create',
-                                element: <RuleEditor />,
-                                name: '新建规则',
-                                hidden: true,
-                                parentpath: '/static-analysis/rule-management',
-                            },
-                        ],
-                    },
-                    {
-                        path: 'ssa-risk',
-                        name: '漏洞管理',
-                        key: 'static-ssa-risk',
-                        children: [
-                            {
-                                index: true,
-                                element: <SSARiskList />,
-                            },
-                            {
-                                path: 'detail',
-                                key: 'static-ssa-risk-detail',
-                                element: <SSARiskDetail />,
-                                name: '风险详情',
-                                hidden: true,
-                                parentpath: '/static-analysis/ssa-risk',
-                            },
-                            {
-                                path: 'audit',
-                                key: 'static-ssa-risk-audit',
-                                element: <SSARiskAudit />,
-                                name: '风险审计',
-                                hidden: true,
-                                parentpath: '/static-analysis/ssa-risk',
-                            },
-                        ],
-                    },
-                    {
-                        path: 'task-list',
-                        name: '任务列表',
-                        key: 'static-task-list',
-                        element: <TaskList />,
                     },
                 ],
             },

@@ -17,8 +17,16 @@ import NodeManagePage from '@/pages/NodeManage';
 import SystemManagement from '@/pages/SystemManagement';
 import ReportManage from '@/pages/ReportManage';
 
-// New IRify-specific pages
 import IRifyDashboard from '@/pages/IRifyDashboard';
+import { CreateTask } from '@/pages/CreateTask/CreateTask';
+import { SpecialTask } from '@/pages/SpecialTask/SpecialTask';
+import { TaskPageList } from '@/pages/TaskPageList/TaskPageList';
+import TaskDetail from '@/pages/TaskDetail';
+import { NodeConfig } from '@/pages/NodeConfig/NodeConfig';
+import { TaskScript } from '@/pages/TaskScript/TaskScript';
+import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
+import { CveLoophole } from '@/pages/DataService/CveLoophole';
+import GlobalReverseLink from '@/pages/ReverseLink';
 
 const irifyRouters: RouteObject[] = [
     {
@@ -29,12 +37,10 @@ const irifyRouters: RouteObject[] = [
             </AuthRoute>
         ),
         children: [
-            // Dashboard - Guided workflow home
             {
                 index: true,
                 element: <IRifyDashboard />,
             },
-            // Projects
             {
                 path: 'projects',
                 children: [
@@ -52,7 +58,6 @@ const irifyRouters: RouteObject[] = [
                     },
                 ],
             },
-            // Vulnerabilities
             {
                 path: 'vulnerabilities',
                 children: [
@@ -69,45 +74,98 @@ const irifyRouters: RouteObject[] = [
                         element: <SSARiskAudit />,
                     },
                     {
-                        // Standalone audit route for hash-based access
                         path: 'audit',
                         element: <SSARiskAudit />,
                     },
                 ],
             },
-            // Scans
             {
                 path: 'scans',
                 element: <TaskList />,
             },
-            // Settings
             {
-                path: 'settings',
+                path: 'rules',
                 children: [
                     {
-                        path: 'rules',
+                        index: true,
+                        element: <RuleManagement />,
+                    },
+                    {
+                        path: 'create',
+                        element: <RuleEditor />,
+                    },
+                ],
+            },
+            {
+                path: 'task',
+                children: [
+                    {
+                        path: 'new-create-task',
+                        element: <CreateTask />,
+                    },
+                    {
+                        path: 'special-task',
+                        element: <SpecialTask />,
+                    },
+                    {
+                        path: 'task-list',
                         children: [
                             {
                                 index: true,
-                                element: <RuleManagement />,
+                                element: <TaskPageList />,
                             },
                             {
-                                path: 'create',
-                                element: <RuleEditor />,
+                                path: 'detail',
+                                element: <TaskDetail />,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                path: 'reports',
+                element: <ReportManage />,
+            },
+            {
+                path: 'node-config',
+                children: [
+                    {
+                        path: 'install',
+                        element: <NodeConfig />,
+                    },
+                    {
+                        path: 'manage',
+                        element: <NodeManagePage />,
+                    },
+                ],
+            },
+            {
+                path: 'system-management',
+                children: [
+                    {
+                        path: 'userinfo',
+                        element: <SystemManagement />,
+                    },
+                    {
+                        path: 'task-script',
+                        children: [
+                            {
+                                index: true,
+                                element: <TaskScript />,
+                            },
+                            {
+                                path: 'modify-task-script',
+                                element: <ModifyTaskScript />,
                             },
                         ],
                     },
                     {
-                        path: 'nodes',
-                        element: <NodeManagePage />,
+                        path: 'cve-loophole',
+                        element: <CveLoophole />,
                     },
                     {
-                        path: 'users',
-                        element: <SystemManagement />,
-                    },
-                    {
-                        path: 'reports',
-                        element: <ReportManage />,
+                        path: 'global-reverse-link',
+                        element: <GlobalReverseLink />,
                     },
                 ],
             },
