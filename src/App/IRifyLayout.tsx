@@ -20,6 +20,7 @@ import {
     SafetyCertificateOutlined,
     BugOutlined,
 } from '@ant-design/icons';
+import { SiderClose, SiderOpen } from '@/assets/compoments';
 import { getLicense } from '@/apis/login';
 import { useNetworkStatus } from '@/hooks';
 import useLoginStore from '@/App/store/loginStore';
@@ -285,8 +286,6 @@ const IRifyLayout: React.FC = () => {
                 collapsible
                 collapsed={collapsed}
                 trigger={null}
-                onMouseEnter={() => setCollapsed(false)}
-                onMouseLeave={() => setCollapsed(true)}
             >
                 {/* Logo */}
                 <div className="irify-logo" onClick={() => navigate('/')}>
@@ -386,6 +385,13 @@ const IRifyLayout: React.FC = () => {
 
                 {/* Bottom Section */}
                 <div className="irify-sider-footer">
+                    <div
+                        className="irify-collapse-trigger"
+                        onClick={() => setCollapsed(!collapsed)}
+                    >
+                        {collapsed ? <SiderOpen /> : <SiderClose />}
+                    </div>
+
                     {/* User */}
                     <Dropdown
                         menu={{ items: userMenuItems }}
