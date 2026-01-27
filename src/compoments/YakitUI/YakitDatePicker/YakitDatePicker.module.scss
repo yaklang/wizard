@@ -24,19 +24,11 @@
         }
         .ant-picker-range:hover,
         .ant-picker-focused {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Primary);
-            box-shadow: 0 0 0 2px rgb(242 139 68 / 20%);
-        }
-        .ant-picker-range .ant-picker-active-bar {
-            background-color: var(--Colors-Use-Blue-Primary);
-=======
             border-color: var(--Colors-Use-Main-Primary);
             box-shadow: 0 0 0 2px rgb(242 139 68 / 20%);
         }
         .ant-picker-range .ant-picker-active-bar {
             background-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-picker-clear{
             background-color: var(--Colors-Use-Neutral-Bg);
@@ -51,28 +43,16 @@
         .ant-picker-header-super-next-btn,
         .ant-picker-header-next-btn {
             &:hover {
-<<<<<<< HEAD
-                color: var(--Colors-Use-Blue-Primary);
-            }
-        }
-        .ant-picker-header-view button:hover {
-            color: var(--Colors-Use-Blue-Primary);
-=======
                 color: var(--Colors-Use-Main-Primary);
             }
         }
         .ant-picker-header-view button:hover {
             color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
         .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
         .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
-<<<<<<< HEAD
-            background-color: var(--Colors-Use-Blue-Primary);
-=======
             background-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-range-start-single)::before,
         .ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-range-end-single)::before {
@@ -100,11 +80,7 @@
             background: var(--Colors-Use-Neutral-Bg);
         }
         .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
-<<<<<<< HEAD
-            border: 1px solid var(--Colors-Use-Blue-Primary);
-=======
             border: 1px solid var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         // Edge start
         tr > .ant-picker-cell-in-view.ant-picker-cell-range-hover:first-child::after,
@@ -114,11 +90,7 @@
                 .ant-picker-cell-range-hover-edge-start-near-range
             )::after,
         .ant-picker-cell-in-view.ant-picker-cell-range-hover-start::after {
-<<<<<<< HEAD
-            border-left-color: var(--Colors-Use-Blue-Primary);
-=======
             border-left-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
 
         // Edge end
@@ -129,11 +101,7 @@
                 .ant-picker-cell-range-hover-edge-end-near-range
             )::after,
         .ant-picker-cell-in-view.ant-picker-cell-range-hover-end::after {
-<<<<<<< HEAD
-            border-right-color: var(--Colors-Use-Blue-Primary);
-=======
             border-right-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
 
         // >>> Range Hover
@@ -148,16 +116,6 @@
         .ant-picker-cell-in-view.ant-picker-cell-range-hover-end.ant-picker-cell-range-start.ant-picker-cell-range-end.ant-picker-cell-range-start-near-hover::after,
         .ant-picker-cell-in-view.ant-picker-cell-range-hover-end.ant-picker-cell-range-end-single::after,
         .ant-picker-cell-in-view.ant-picker-cell-range-hover:not(.ant-picker-cell-in-range)::after {
-<<<<<<< HEAD
-            border-top-color: var(--Colors-Use-Blue-Primary);
-            border-bottom-color: var(--Colors-Use-Blue-Primary);
-        }
-
-        .ant-picker-ranges .ant-picker-preset > .ant-tag-blue {
-            color: var(--Colors-Use-Blue-Primary);
-            background: var(--Colors-Use-Blue-Bg);
-            border: 1px solid var(--Colors-Use-Blue-Border);
-=======
             border-top-color: var(--Colors-Use-Main-Primary);
             border-bottom-color: var(--Colors-Use-Main-Primary);
         }
@@ -166,26 +124,17 @@
             color: var(--Colors-Use-Main-Primary);
             background: var(--Colors-Use-Main-Bg);
             border: 1px solid var(--Colors-Use-Main-Border);
->>>>>>> 38104b8 (feat: 引入yakit控件)
             cursor: pointer;
         }
 
         .ant-picker-time-panel-column > li.ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
-<<<<<<< HEAD
-            background: var(--Colors-Use-Blue-Primary);
-=======
             background: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-picker-time-panel-column > li.ant-picker-time-panel-cell.ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
             color: var(--Colors-Use-Neutral-Text-1-Title);
         }
         .ant-picker-ranges .ant-picker-ok .ant-btn-primary {
-<<<<<<< HEAD
-            background-color: var(--Colors-Use-Blue-Primary);
-=======
             background-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
             color: var(--Colors-Use-Neutral-Text-1-Title);
             border-radius: 4px;
             border: none;
@@ -234,19 +183,11 @@
         }
         .ant-picker:hover,
         .ant-picker-focused {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Primary);
-            box-shadow: 0 0 0 2px rgb(242 139 68 / 20%);
-        }
-        .ant-picker .ant-picker-active-bar {
-            background-color: var(--Colors-Use-Blue-Primary);
-=======
             border-color: var(--Colors-Use-Main-Primary);
             box-shadow: 0 0 0 2px rgb(242 139 68 / 20%);
         }
         .ant-picker .ant-picker-active-bar {
             background-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
     }
 }
@@ -257,22 +198,6 @@
         .ant-picker-header-super-next-btn,
         .ant-picker-header-next-btn {
             &:hover {
-<<<<<<< HEAD
-                color: var(--Colors-Use-Blue-Primary);
-            }
-        }
-        .ant-picker-header-view button:hover {
-            color: var(--Colors-Use-Blue-Primary);
-        }
-        .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
-            border: 1px solid var(--Colors-Use-Blue-Primary);
-        }
-        .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
-            background-color: var(--Colors-Use-Blue-Primary);
-        }
-        .ant-picker-today-btn {
-            color: var(--Colors-Use-Blue-Primary);
-=======
                 color: var(--Colors-Use-Main-Primary);
             }
         }
@@ -287,7 +212,6 @@
         }
         .ant-picker-today-btn {
             color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
     }
 }

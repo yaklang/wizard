@@ -70,7 +70,7 @@ const ColumnsOperateRender: FC<{
                     <FileOutlinedIcon
                         style={{
                             width: '32px',
-                            borderRight: '1px solid #EAECF3',
+                            borderRight: '1px solid var(--irify-border)',
                         }}
                         onClick={() => handPreviewReport(render?.report_title)}
                     />
@@ -88,7 +88,7 @@ const ColumnsOperateRender: FC<{
                         <DownloadOutlinedIcon
                             style={{
                                 width: '32px',
-                                borderRight: '1px solid #EAECF3',
+                                borderRight: '1px solid var(--irify-border)',
                             }}
                         />
                     </Tooltip>

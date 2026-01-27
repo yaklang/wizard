@@ -22,7 +22,7 @@ const NetWorkIconNode: FC<{ node_ids: Array<string> }> = ({ node_ids }) => {
                         }
                         style={{
                             width: '32px',
-                            borderRight: '1px solid #EAECF3',
+                            borderRight: '1px solid var(--irify-border)',
                         }}
                     />
                 </div>

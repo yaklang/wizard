@@ -1,11 +1,6 @@
 import React, { type ReactNode, useMemo } from 'react';
 import { useMemoizedFn } from 'ahooks';
-<<<<<<< HEAD
-import { Menu, Tooltip } from 'antd';
-import type { MenuProps } from 'antd';
-=======
 import { Menu, type MenuProps, Tooltip } from 'antd';
->>>>>>> 38104b8 (feat: 引入yakit控件)
 import { OutlineChevronrightIcon } from '@/assets/icon/outline';
 
 import classNames from 'classnames';

@@ -1,16 +1,5 @@
 // ========================== checkbox ==========================
 .yakit-checkbox-wrapper {
-<<<<<<< HEAD
-    --checkbox-box-shadow-color: var(--Colors-Use-Blue-Focus);
-    --checkbox-hover-color: var(--Colors-Use-Blue-Hover);
-    --checkbox-active-color: var(--Colors-Use-Blue-Pressed);
-
-    --checkbox-border-color: var(--Colors-Use-Neutral-Border);
-    --checkbox-border-primary-color: var(--Colors-Use-Blue-Border);
-    --checkbox-border-disabled-color: var(--Colors-Use-Neutral-Disable);
-
-    --checkbox-background-color: var(--Colors-Use-Blue-Primary);
-=======
     --checkbox-box-shadow-color: var(--Colors-Use-Main-Focus);
     --checkbox-hover-color: var(--Colors-Use-Main-Hover);
     --checkbox-active-color: var(--Colors-Use-Main-Pressed);
@@ -20,7 +9,6 @@
     --checkbox-border-disabled-color: var(--Colors-Use-Neutral-Disable);
 
     --checkbox-background-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     --checkbox-background-disabled-color: var(--Colors-Use-Neutral-Disable);
 
     height: 16px;

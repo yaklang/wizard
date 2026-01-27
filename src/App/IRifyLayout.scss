@@ -1,124 +1,71 @@
-// IRify Layout Styles - Light/Dark Theme Support
-
-// Dark theme colors
-$dark-bg: #0d1117;
-$dark-bg-container: #161b22;
-$dark-bg-elevated: #21262d;
-$dark-border: #30363d;
-$dark-text: #e6edf3;
-$dark-text-secondary: #8b949e;
-
-// Light theme colors
-$light-bg: #f8fafc;
-$light-bg-container: #ffffff;
-$light-bg-elevated: #f1f5f9;
-$light-border: #e2e8f0;
-$light-text: #1e293b;
-$light-text-secondary: #64748b;
-
-// Accent color
-$accent: #00d9ff;
-$accent-secondary: #4f46e5;
+// IRify Layout Styles - Light/Dark Theme Support uses CSS Variables defined in irify.scss
 
 .irify-layout {
     min-height: 100vh;
+    background: var(--irify-bg-base);
     transition: background 0.3s ease;
 
-    &.dark {
-        background: $dark-bg;
+    &.irify-dark {
+        --irify-bg-base: #0D1117;
+        --irify-bg-container: #161B22;
+        --irify-bg-elevated: #21262D;
+        --irify-text: #E6EDF3;
+        --irify-text-secondary: #8B949E;
+        --irify-border: #30363D;
+        --irify-accent: #00D9FF;
+    }
 
-        .irify-layout-sider {
-            background: $dark-bg !important;
-            border-right: 1px solid $dark-border;
+    .irify-layout-sider {
+        background: var(--irify-bg-base) !important; // override ant design
+        border-right: 1px solid var(--irify-border);
+        
+        // Fix for global style conflict
+        .ant-layout-sider-children {
+            background-color: transparent !important;
         }
 
-        .irify-logo {
-            border-bottom: 1px solid $dark-border;
-            &:hover {
-                background: $dark-bg-container;
-            }
-
-            .logo-text {
-                color: $dark-text;
-            }
-            .logo-name {
-                color: $dark-text;
-            }
-        }
-
-        .irify-nav-item {
-            color: $dark-text-secondary;
-            &:hover {
-                background: $dark-bg-elevated;
-                color: $dark-text;
-            }
-        }
-
-        .irify-sider-footer {
-            border-top: 1px solid $dark-border;
-        }
-
-        .irify-user-card {
-            &:hover {
-                background: $dark-bg-elevated;
-            }
-            .user-name {
-                color: $dark-text;
-            }
-        }
-
-        .irify-layout-content {
-            background: $dark-bg;
+        &.ant-layout-sider-dark {
+            background: var(--irify-bg-base) !important;
         }
     }
 
-    &.light {
-        background: $light-bg;
-
-        .irify-layout-sider {
-            background: $light-bg-container !important;
-            border-right: 1px solid $light-border;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    .irify-logo {
+        border-bottom: 1px solid var(--irify-border);
+        &:hover {
+            background: var(--irify-bg-container);
         }
 
-        .irify-logo {
-            border-bottom: 1px solid $light-border;
-            &:hover {
-                background: $light-bg-elevated;
-            }
-
-            .logo-text {
-                color: $light-text;
-            }
-            .logo-name {
-                color: $light-text;
-            }
+        .logo-text {
+            color: var(--irify-text);
         }
-
-        .irify-nav-item {
-            color: $light-text-secondary;
-            &:hover {
-                background: $light-bg-elevated;
-                color: $light-text;
-            }
+        .logo-name {
+            color: var(--irify-text);
         }
+    }
 
-        .irify-sider-footer {
-            border-top: 1px solid $light-border;
+    .irify-nav-item {
+        color: var(--irify-text-secondary);
+        &:hover {
+            background: var(--irify-bg-elevated);
+            color: var(--irify-text);
         }
+    }
 
-        .irify-user-card {
-            &:hover {
-                background: $light-bg-elevated;
-            }
-            .user-name {
-                color: $light-text;
-            }
-        }
+    .irify-sider-footer {
+        border-top: 1px solid var(--irify-border);
+    }
 
-        .irify-layout-content {
-            background: $light-bg;
+    .irify-user-card {
+        &:hover {
+            background: var(--irify-bg-elevated);
         }
+        .user-name {
+            color: var(--irify-text);
+        }
+    }
+
+    .irify-layout-content {
+        background: var(--irify-bg-base);
     }
 }
 
@@ -154,14 +101,14 @@ $accent-secondary: #4f46e5;
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
         font-size: 24px;
         font-weight: 700;
-        color: $accent;
+        color: var(--irify-accent);
     }
 
     .logo-text {
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
         font-size: 24px;
         font-weight: 700;
-        color: $dark-text; // Default visible
+        color: var(--irify-text); // Default visible
     }
 
     .logo-name {
@@ -169,7 +116,7 @@ $accent-secondary: #4f46e5;
         font-size: 20px;
         font-weight: 600;
         margin-left: 4px;
-        color: $dark-text; // Default visible
+        color: var(--irify-text); // Default visible
     }
 }
 
@@ -189,7 +136,7 @@ $accent-secondary: #4f46e5;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
-    color: $dark-text-secondary;
+    color: var(--irify-text-secondary);
 
     .nav-icon {
         font-size: 18px;
@@ -212,8 +159,8 @@ $accent-secondary: #4f46e5;
     }
 
     &.active {
-        background: rgba($accent, 0.12);
-        color: $accent;
+        background: rgba(0, 217, 255, 0.12);
+        color: var(--irify-accent);
 
         &::before {
             content: '';
@@ -223,7 +170,7 @@ $accent-secondary: #4f46e5;
             transform: translateY(-50%);
             width: 3px;
             height: 20px;
-            background: $accent;
+            background: var(--irify-accent);
             border-radius: 0 2px 2px 0;
         }
     }
@@ -247,8 +194,8 @@ $accent-secondary: #4f46e5;
         }
 
         &.active-sub {
-            background: rgba($accent, 0.08);
-            color: $accent;
+            background: rgba(0, 217, 255, 0.08);
+            color: var(--irify-accent);
         }
     }
 }
@@ -275,7 +222,7 @@ $accent-secondary: #4f46e5;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: $dark-text; // Default visible
+            color: var(--irify-text); // Default visible
         }
     }
 }

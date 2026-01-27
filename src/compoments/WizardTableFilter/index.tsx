@@ -40,9 +40,9 @@ const WizardTableFilter: FC<{
                 <div className="flex items-center font-bold text-xl">
                     <div> {props?.title ?? tableHeaderGroup}</div>
                     {props?.totalStatus && (
-                        <div className="ml-4 text-[#85899E] text-[14px] translate-y-[2px] font-normal">
+                        <div className="ml-4 text-[var(--irify-text-secondary)] text-[14px] translate-y-[2px] font-normal">
                             <span className="mr-1">Total</span>
-                            <span className="text-[#1677ff]">
+                            <span className="text-[var(--irify-accent)]">
                                 {filterState?.pagemeta?.total}
                             </span>
                         </div>
@@ -86,7 +86,9 @@ const WizardTableFilter: FC<{
                     {proFilterSwitch?.trigger &&
                         !filterState?.proSwitchStatus && (
                             <div className="flex gap-2 justify-center items-center ml-2">
-                                <div className="color-[#85899E]">高级筛选</div>
+                                <div className="color-[var(--irify-text-secondary)]">
+                                    高级筛选
+                                </div>
                                 <Switch onChange={headSwitchChange} />
                             </div>
                         )}

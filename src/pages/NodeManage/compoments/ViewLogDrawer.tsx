@@ -18,7 +18,7 @@ const LogIconNode: FC = () => {
                     <LogIcon
                         style={{
                             width: '32px',
-                            borderRight: '1px solid #EAECF3',
+                            borderRight: '1px solid var(--irify-border)',
                         }}
                         onClick={() => {
                             ViewLogDrawerRef.current?.open();
