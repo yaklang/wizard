@@ -81,20 +81,23 @@ const ScanConfigurationModal: React.FC<ScanConfigurationModalProps> = ({
             };
 
             if (values.sched_type === 2) {
+                params.enable_sched = true;
                 params.sched_type = 2;
                 if (values.execution_date) {
-                    params.execution_time = values.execution_date.unix();
+                    params.start_timestamp = values.execution_date.unix();
                 }
             } else if (values.sched_type === 3) {
+                params.enable_sched = true;
                 params.sched_type = 3;
                 if (values.timestamp && values.timestamp.length === 2) {
-                    params.start_time = values.timestamp[0].unix();
-                    params.end_time = values.timestamp[1].unix();
+                    params.start_timestamp = values.timestamp[0].unix();
+                    params.end_timestamp = values.timestamp[1].unix();
                 }
                 params.interval_time = values.interval_time;
                 params.interval_type = values.interval_type;
                 params.immediate_execution = values.first;
             } else {
+                params.enable_sched = false;
                 params.sched_type = 1;
             }
 
