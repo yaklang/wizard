@@ -15,6 +15,7 @@ import {
     Progress,
     Spin,
 } from 'antd';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 const severityMap: Record<string, { label: string; color: string }> = {
     critical: { label: '严重', color: 'red' },
@@ -292,7 +293,7 @@ const RuleManagement: React.FC = () => {
             message.warning('该规则缺少唯一标识，无法编辑');
             return;
         }
-        navigate('/static-analysis/rule-management/create', {
+        navigate(getRoutePath(RouteKey.RULE_EDITOR), {
             state: {
                 mode: 'edit',
                 rule_id: record.rule_id,
@@ -302,7 +303,7 @@ const RuleManagement: React.FC = () => {
     };
 
     const handleCreate = () => {
-        navigate('/static-analysis/rule-management/create', {
+        navigate(getRoutePath(RouteKey.RULE_EDITOR), {
             state: { mode: 'add' },
         });
     };
