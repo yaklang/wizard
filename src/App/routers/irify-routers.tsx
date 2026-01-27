@@ -10,7 +10,6 @@ import { ProjectManagement, ProjectEditor } from '@/pages/ProjecManagement';
 import CreateSSAProject from '@/pages/ProjecManagement/CreateSSAProject';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
-import { SSARiskList, SSARiskDetail } from '@/pages/SSARisk';
 import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
 import NodeManagePage from '@/pages/NodeManage';
@@ -63,14 +62,6 @@ const irifyRouters: RouteObject[] = [
                 children: [
                     {
                         index: true,
-                        element: <SSARiskList />,
-                    },
-                    {
-                        path: ':id',
-                        element: <SSARiskDetail />,
-                    },
-                    {
-                        path: ':id/audit',
                         element: <SSARiskAudit />,
                     },
                     {
