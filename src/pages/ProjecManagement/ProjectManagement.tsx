@@ -14,9 +14,9 @@ import {
 import { PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
-import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
-import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import { ROUTES, getRoutePath, RouteKey } from '@/utils/routeMap';
+import ScanConfigurationModal from './components/ScanConfigurationModal';
 
 const { Search } = Input;
 
@@ -53,6 +53,10 @@ const ProjectManagement: React.FC = () => {
     // 筛选条件
     const [searchName, setSearchName] = useState<string>('');
     const [filterLanguage, setFilterLanguage] = useState<string | undefined>();
+    const [scanModalOpen, setScanModalOpen] = useState(false);
+    const [currentProject, setCurrentProject] = useState<TSSAProject | null>(
+        null,
+    );
 
     const fetchList = useCallback(
         async (options: {
@@ -160,17 +164,10 @@ const ProjectManagement: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
-    const handleScan = async (record: TSSAProject) => {
+    const handleScan = (record: TSSAProject) => {
         if (!record.id) return;
-        try {
-            await scanSSAProject(record.id, {
-                // node_id 可选，不传则由后端自动分配
-                // rule_groups 可选，使用默认规则集
-            });
-            message.success('扫描任务已创建');
-        } catch (err: any) {
-            message.error(`创建扫描失败: ${err.msg || err.message}`);
-        }
+        setCurrentProject(record);
+        setScanModalOpen(true);
     };
 
     const columns: ColumnsType<TSSAProject> = [
@@ -370,6 +367,20 @@ const ProjectManagement: React.FC = () => {
                         showTotal: (t) => `共 ${t} 个项目`,
                     }}
                     onChange={handleTableChange}
+                />
+
+                <ScanConfigurationModal
+                    open={scanModalOpen}
+                    onCancel={() => {
+                        setScanModalOpen(false);
+                        setCurrentProject(null);
+                    }}
+                    onSuccess={() => {
+                        setScanModalOpen(false);
+                        setCurrentProject(null);
+                    }}
+                    projectId={currentProject?.id}
+                    projectName={currentProject?.project_name}
                 />
             </Card>
         </div>
