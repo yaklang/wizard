@@ -6,11 +6,13 @@ import AceEditor from 'react-ace';
 
 import 'ace-builds/src-noconflict/mode-golang';
 import 'ace-builds/src-noconflict/theme-github';
+import 'ace-builds/src-noconflict/theme-monokai';
 // import 'ace-builds/src-noconflict/ext-language_tools';
 // import 'ace-builds/src-noconflict/mode-golang';
 // import 'ace-builds/src-noconflict/theme-monokai';
 
 import { Empty, Spin } from 'antd';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type TWizardAceEditor = IAceEditorProps & {
     scrollStatus?: boolean;
@@ -26,6 +28,7 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
     scrollStatus,
     ...props
 }) => {
+    const { isDark } = useTheme();
     const editorRef = useRef<any>(null);
     const [isAtBottom, setIsAtBottom] = useState(scrollStatus);
 
@@ -71,8 +74,7 @@ const WizardAceEditor: FC<TWizardAceEditor> = ({
             ref={editorRef}
             width="100%"
             mode="golang"
-            theme="github"
-            // theme="monokai"
+            theme={isDark ? 'monokai' : 'github'}
             onChange={onChange}
             value={value}
             showGutter={true}

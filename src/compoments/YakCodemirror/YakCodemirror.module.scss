@@ -1,6 +1,6 @@
 .yak-codemirror {
     .highlight-text {
-        background-color: #fff3b2; // 浅黄色背景
+        background-color: var(--irify-warning-bg-hover); // Use warning background for highlight
         // 或者使用其他样式
         // border-bottom: 2px solid #f00;  // 下划线
         // font-weight: bold;  // 加粗
@@ -34,7 +34,7 @@
 
         .CodeMirror-simplescroll-horizontal,
         .CodeMirror-simplescroll-vertical {
-            background-color: #f5f5f5;
+            background-color: var(--irify-bg-container);
             border: none;
         }
     }

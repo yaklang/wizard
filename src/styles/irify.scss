@@ -1,26 +1,47 @@
 // IRify Dark Theme Styles
 // Cybersecurity-inspired visual design with glowing accents
 
-// Color Variables
-$irify-bg-base: #0D1117;
-$irify-bg-container: #161B22;
-$irify-bg-elevated: #21262D;
-$irify-accent: #00D9FF;
-$irify-accent-secondary: #4F46E5;
-$irify-text: #E6EDF3;
-$irify-text-secondary: #8B949E;
-$irify-border: #30363D;
+// Color Variables (CSS Custom Properties)
+:root {
+    --irify-bg-base: #F8FAFC;
+    --irify-bg-container: #FFFFFF;
+    --irify-bg-elevated: #F1F5F9;
+    --irify-accent: #00D9FF;
+    --irify-accent-secondary: #4F46E5;
+    --irify-text: #1E293B;
+    --irify-text-secondary: #64748B;
+    --irify-border: #E2E8F0;
+    --irify-glass-bg: rgba(255, 255, 255, 0.7);
+    --irify-glass-border: rgba(226, 232, 240, 0.5);
+    --irify-glass-shadow: rgba(0, 0, 0, 0.05);
+}
 
-// Global dark mode body styling
-body.irify-mode {
-    background-color: $irify-bg-base;
-    color: $irify-text;
+// Dark Mode Overrides
+.irify-dark, [data-theme='dark'] {
+    --irify-bg-base: #0D1117;
+    --irify-bg-container: #161B22;
+    --irify-bg-elevated: #21262D;
+    --irify-accent: #00D9FF;
+    --irify-accent-secondary: #4F46E5;
+    --irify-text: #E6EDF3;
+    --irify-text-secondary: #8B949E;
+    --irify-border: #30363D;
+    --irify-glass-bg: rgba(22, 27, 34, 0.7);
+    --irify-glass-border: rgba(48, 54, 61, 0.5);
+    --irify-glass-shadow: rgba(0, 0, 0, 0.3);
+}
+
+// Global body styling using CSS variables
+body.irify-app {
+    background-color: var(--irify-bg-base);
+    color: var(--irify-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 // IRify specific styles
 .irify-app {
     min-height: 100vh;
-    background: $irify-bg-base;
+    background: var(--irify-bg-base);
     
     // Custom scrollbar
     ::-webkit-scrollbar {
@@ -29,60 +50,60 @@ body.irify-mode {
     }
     
     ::-webkit-scrollbar-track {
-        background: $irify-bg-container;
+        background: var(--irify-bg-container);
     }
     
     ::-webkit-scrollbar-thumb {
-        background: $irify-border;
+        background: var(--irify-border);
         border-radius: 4px;
         
         &:hover {
-            background: $irify-text-secondary;
+            background: var(--irify-text-secondary);
         }
     }
 }
 
 // Glassmorphism card effect
 .irify-glass-card {
-    background: rgba($irify-bg-container, 0.7);
+    background: var(--irify-glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba($irify-border, 0.5);
+    border: 1px solid var(--irify-glass-border);
     border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 24px var(--irify-glass-shadow);
     transition: all 0.3s ease;
     
     &:hover {
-        border-color: rgba($irify-accent, 0.3);
-        box-shadow: 0 4px 24px rgba($irify-accent, 0.1);
+        border-color: rgba(0, 217, 255, 0.3); // Keep accent explicit for rgba manipulation or use color-mix if supported
+        box-shadow: 0 4px 24px rgba(0, 217, 255, 0.1);
     }
 }
 
 // Glowing accent effects
 .irify-glow {
-    box-shadow: 0 0 20px rgba($irify-accent, 0.3);
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
 }
 
 .irify-glow-text {
-    text-shadow: 0 0 10px rgba($irify-accent, 0.5);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
 }
 
 // Primary button with glow effect
 .irify-btn-primary {
-    background: linear-gradient(135deg, $irify-accent-secondary 0%, $irify-accent 100%);
+    background: linear-gradient(135deg, var(--irify-accent-secondary) 0%, var(--irify-accent) 100%);
     border: none;
-    box-shadow: 0 0 20px rgba($irify-accent, 0.4);
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
     transition: all 0.3s ease;
     
     &:hover {
-        box-shadow: 0 0 30px rgba($irify-accent, 0.6);
+        box-shadow: 0 0 30px rgba(0, 217, 255, 0.6);
         transform: translateY(-2px);
     }
 }
 
 // Stats card styling
 .irify-stats-card {
-    background: linear-gradient(135deg, rgba($irify-bg-elevated, 0.9) 0%, rgba($irify-bg-container, 0.9) 100%);
-    border: 1px solid $irify-border;
+    background: linear-gradient(135deg, var(--irify-bg-elevated) 0%, var(--irify-bg-container) 100%);
+    border: 1px solid var(--irify-border);
     border-radius: 16px;
     padding: 24px;
     position: relative;
@@ -95,19 +116,19 @@ body.irify-mode {
         left: 0;
         right: 0;
         height: 3px;
-        background: linear-gradient(90deg, $irify-accent-secondary, $irify-accent);
+        background: linear-gradient(90deg, var(--irify-accent-secondary), var(--irify-accent));
     }
     
     .stats-value {
         font-size: 36px;
         font-weight: 700;
-        color: $irify-text;
+        color: var(--irify-text);
         font-family: 'JetBrains Mono', monospace;
     }
     
     .stats-label {
         font-size: 14px;
-        color: $irify-text-secondary;
+        color: var(--irify-text-secondary);
         margin-top: 8px;
     }
 }
@@ -133,40 +154,40 @@ body.irify-mode {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: $irify-bg-elevated;
-            border: 2px solid $irify-border;
+            background: var(--irify-bg-elevated);
+            border: 2px solid var(--irify-border);
             transition: all 0.3s ease;
             
             svg {
                 width: 28px;
                 height: 28px;
-                color: $irify-text-secondary;
+                color: var(--irify-text-secondary);
             }
         }
         
         .step-label {
             font-size: 14px;
-            color: $irify-text-secondary;
+            color: var(--irify-text-secondary);
         }
         
         &.active,
         &.completed {
             .step-icon {
-                border-color: $irify-accent;
-                box-shadow: 0 0 20px rgba($irify-accent, 0.4);
+                border-color: var(--irify-accent);
+                box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
                 
                 svg {
-                    color: $irify-accent;
+                    color: var(--irify-accent);
                 }
             }
             
             .step-label {
-                color: $irify-text;
+                color: var(--irify-text);
             }
         }
         
         &.completed .step-icon {
-            background: linear-gradient(135deg, $irify-accent-secondary, $irify-accent);
+            background: linear-gradient(135deg, var(--irify-accent-secondary), var(--irify-accent));
             
             svg {
                 color: white;
@@ -177,36 +198,36 @@ body.irify-mode {
     .step-connector {
         width: 80px;
         height: 2px;
-        background: $irify-border;
+        background: var(--irify-border);
         position: relative;
         
         &.active {
-            background: linear-gradient(90deg, $irify-accent, $irify-border);
+            background: linear-gradient(90deg, var(--irify-accent), var(--irify-border));
         }
         
         &.completed {
-            background: $irify-accent;
+            background: var(--irify-accent);
         }
     }
 }
 
 // Sidebar navigation
 .irify-sidebar {
-    background: $irify-bg-base;
-    border-right: 1px solid $irify-border;
+    background: var(--irify-bg-base);
+    border-right: 1px solid var(--irify-border);
     
     .logo {
         padding: 20px 16px;
-        border-bottom: 1px solid $irify-border;
+        border-bottom: 1px solid var(--irify-border);
         
         .logo-text {
             font-size: 24px;
             font-weight: 700;
-            color: $irify-text;
+            color: var(--irify-text);
             font-family: 'JetBrains Mono', monospace;
             
             .bracket {
-                color: $irify-accent;
+                color: var(--irify-accent);
             }
         }
     }
@@ -218,18 +239,18 @@ body.irify-mode {
         padding: 12px 16px;
         margin: 4px 8px;
         border-radius: 8px;
-        color: $irify-text-secondary;
+        color: var(--irify-text-secondary);
         cursor: pointer;
         transition: all 0.2s ease;
         
         &:hover {
-            background: $irify-bg-elevated;
-            color: $irify-text;
+            background: var(--irify-bg-elevated);
+            color: var(--irify-text);
         }
         
         &.active {
-            background: rgba($irify-accent, 0.15);
-            color: $irify-accent;
+            background: rgba(0, 217, 255, 0.15); // Consistent with accent/alpha logic
+            color: var(--irify-accent);
             
             &::before {
                 content: '';
@@ -239,7 +260,7 @@ body.irify-mode {
                 transform: translateY(-50%);
                 width: 3px;
                 height: 24px;
-                background: $irify-accent;
+                background: var(--irify-accent);
                 border-radius: 0 2px 2px 0;
             }
         }
@@ -253,7 +274,7 @@ body.irify-mode {
         align-items: flex-start;
         gap: 12px;
         padding: 12px 0;
-        border-bottom: 1px solid $irify-border;
+        border-bottom: 1px solid var(--irify-border);
         
         &:last-child {
             border-bottom: none;
@@ -266,7 +287,7 @@ body.irify-mode {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: $irify-bg-elevated;
+            background: var(--irify-bg-elevated);
             flex-shrink: 0;
         }
         
@@ -275,12 +296,12 @@ body.irify-mode {
             
             .activity-title {
                 font-size: 14px;
-                color: $irify-text;
+                color: var(--irify-text);
             }
             
             .activity-time {
                 font-size: 12px;
-                color: $irify-text-secondary;
+                color: var(--irify-text-secondary);
                 margin-top: 4px;
             }
         }
@@ -330,8 +351,8 @@ body.irify-mode {
 
 // Code preview styling
 .irify-code-preview {
-    background: $irify-bg-base;
-    border: 1px solid $irify-border;
+    background: var(--irify-bg-base);
+    border: 1px solid var(--irify-border);
     border-radius: 8px;
     overflow: hidden;
     
@@ -340,13 +361,13 @@ body.irify-mode {
         align-items: center;
         justify-content: space-between;
         padding: 8px 16px;
-        background: $irify-bg-elevated;
-        border-bottom: 1px solid $irify-border;
+        background: var(--irify-bg-elevated);
+        border-bottom: 1px solid var(--irify-border);
         
         .file-name {
             font-family: 'JetBrains Mono', monospace;
             font-size: 13px;
-            color: $irify-text-secondary;
+            color: var(--irify-text-secondary);
         }
     }
     
@@ -362,13 +383,13 @@ body.irify-mode {
 // Pulse animation for active scans
 @keyframes irify-pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba($irify-accent, 0.4);
+        box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.4);
     }
     70% {
-        box-shadow: 0 0 0 10px rgba($irify-accent, 0);
+        box-shadow: 0 0 0 10px rgba(0, 217, 255, 0);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba($irify-accent, 0);
+        box-shadow: 0 0 0 0 rgba(0, 217, 255, 0);
     }
 }
 

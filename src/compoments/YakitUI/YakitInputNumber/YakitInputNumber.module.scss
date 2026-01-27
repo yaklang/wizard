@@ -1,35 +1,19 @@
 // ========================== wrapper ==========================
 .yakit-input-number-wrapper {
-<<<<<<< HEAD
-    --input-number-box-shadow-color: var(--Colors-Use-Blue-Focus);
-    --input-number-box-shadow-error-color: var(--yakit-danger-2);
-
-    --input-number-border-hover-color: var(--Colors-Use-Blue-Hover);
-    --input-number-border-focus-color: var(--Colors-Use-Blue-Primary);
-=======
     --input-number-box-shadow-color: var(--Colors-Use-Main-Focus);
     --input-number-box-shadow-error-color: var(--yakit-danger-2);
 
     --input-number-border-hover-color: var(--Colors-Use-Main-Hover);
     --input-number-border-focus-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     --input-number-border-error-color: var(--Colors-Use-Error-Primary);
     --input-number-border-color: var(--Colors-Use-Neutral-Border);
     --input-number-border-disabled-color: var(--Colors-Use-Neutral-Border);
 
-<<<<<<< HEAD
-    --input-number-icon-hover-color: var(--Colors-Use-Blue-Hover);
-    --input-number-icon-error-color: var(--Colors-Use-Error-Primary);
-    --input-number-icon-disabled-color: var(--Colors-Use-Neutral-Disable);
-
-    --input-number-hover-color: var(--Colors-Use-Blue-Hover);
-=======
     --input-number-icon-hover-color: var(--Colors-Use-Main-Hover);
     --input-number-icon-error-color: var(--Colors-Use-Error-Primary);
     --input-number-icon-disabled-color: var(--Colors-Use-Neutral-Disable);
 
     --input-number-hover-color: var(--Colors-Use-Main-Hover);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     --input-number-hover-error-color: var(--Colors-Use-Error-Primary);
 
     --input-number-background-disabled-color: var(--Colors-Use-Neutral-Bg);
@@ -61,19 +45,11 @@
         .ant-input-number-affix-wrapper:focus,
         .ant-input-number-affix-wrapper-focused {
             box-shadow: 0 0 0 2px var(--input-number-box-shadow-color);
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Hover);
-        }
-
-        .ant-input-number-affix-wrapper:not(.ant-input-number-affix-wrapper-disabled):hover {
-            border-color: var(--Colors-Use-Blue-Hover);
-=======
             border-color: var(--Colors-Use-Main-Hover);
         }
 
         .ant-input-number-affix-wrapper:not(.ant-input-number-affix-wrapper-disabled):hover {
             border-color: var(--Colors-Use-Main-Hover);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-input-number-disabled:hover {
             border-color: var(--input-number-border-disabled-color);

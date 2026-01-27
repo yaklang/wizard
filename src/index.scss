@@ -76,6 +76,7 @@ li {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     overflow: hidden;
 }
 
@@ -93,6 +94,7 @@ li {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
 }
 
@@ -102,6 +104,7 @@ li {
     display: -webkit-box; //作为弹性伸缩盒子模型显示。
     -webkit-box-orient: vertical; //设置伸缩盒子的子元素排列方式--从上到下垂直排列
     -webkit-line-clamp: 3; //显示的行
+    line-clamp: 3;
 }
 
 .ant-form {
@@ -115,7 +118,10 @@ li {
 
 .ant-layout-sider {
     .ant-layout-sider-children {
-        background-color: #f0f1f3;
+        // Only apply this gray background if NOT in irify app
+        body:not(.irify-app) & {
+            background-color: #f0f1f3;
+        }
     }
 }
 
@@ -141,11 +147,12 @@ li {
 
 #WIZARD_ACE_EDITOR {
     .ace_scroller {
-        background-color: #e8e8e8;
+        background-color: var(--irify-bg-base); // Was #e8e8e8
         .ace_content {
             .ace_layer {
                 .ace_active-line {
-                    background-color: rgb(254 255 96 / 39%);
+                    background-color: rgba(254, 255, 96, 0.2); // Translucent, better for dark
+                    // Consider a dark-specific override if needed
                 }
             }
         }

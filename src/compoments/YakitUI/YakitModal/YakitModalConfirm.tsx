@@ -124,15 +124,10 @@ export const YakitModalConfirm = (props: YakitModalConfirmProps) => {
 };
 
 interface YakitBaseModalProp
-<<<<<<< HEAD
-    extends
-        Omit<YakitModalProp, 'cancelButtonProps' | 'okButtonProps' | 'okType'>,
-=======
     extends Omit<
             YakitModalProp,
             'cancelButtonProps' | 'okButtonProps' | 'okType'
         >,
->>>>>>> 38104b8 (feat: 引入yakit控件)
         React.ComponentProps<any> {
     onVisibleSetter?: (setter: (i: boolean) => any) => any;
     showConfirmLoading?: boolean;

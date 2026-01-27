@@ -34,16 +34,6 @@
         border-color: fetch-color($type, "color-6");
     }
     &[disabled] {
-<<<<<<< HEAD
-        background: var(--Colors-Use-Blue-Border);
-        color: var(--Colors-Use-Basic-Background);
-        border: var(--Colors-Use-Blue-Border);
-    }
-    &[disabled]:hover {
-        background: var(--Colors-Use-Blue-Border);
-        color: var(--Colors-Use-Basic-Background);
-        border-color: var(--Colors-Use-Blue-Border);
-=======
         background: var(--Colors-Use-Main-Border);
         color: var(--Colors-Use-Basic-Background);
         border: var(--Colors-Use-Main-Border);
@@ -52,7 +42,6 @@
         background: var(--Colors-Use-Main-Border);
         color: var(--Colors-Use-Basic-Background);
         border-color: var(--Colors-Use-Main-Border);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     }
 }
 
@@ -554,16 +543,6 @@
         border-color: fetch-color($type, "color-6");
     }
     &[disabled] {
-<<<<<<< HEAD
-        background: var(--Colors-Use-Blue-Border);
-        color: var(--Colors-Use-Basic-Background);
-        border: var(--Colors-Use-Blue-Border);
-    }
-    &[disabled]:hover {
-        background: var(--Colors-Use-Blue-Border);
-        color: var(--Colors-Use-Basic-Background);
-        border-color: var(--Colors-Use-Blue-Border);
-=======
         background: var(--Colors-Use-Main-Border);
         color: var(--Colors-Use-Basic-Background);
         border: var(--Colors-Use-Main-Border);
@@ -572,7 +551,6 @@
         background: var(--Colors-Use-Main-Border);
         color: var(--Colors-Use-Basic-Background);
         border-color: var(--Colors-Use-Main-Border);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     }
 }
 

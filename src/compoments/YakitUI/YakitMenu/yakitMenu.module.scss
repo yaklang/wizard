@@ -60,11 +60,7 @@
     // TODO：该处不确定取值
     --menu-active-color: var(--Colors-Use-Neutral-Text-1-Title);
     --menu-active-icon-color: #{fetch-color($type, "color-5")};
-<<<<<<< HEAD
-    --menu-active-background: var(--Colors-Use-Blue-Focus);
-=======
     --menu-active-background: var(--Colors-Use-Main-Focus);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     @include generateMenuSelect($type);
 }
 
@@ -290,11 +286,7 @@
             color: var(--menu-active-color);
         }
         .keys-style {
-<<<<<<< HEAD
-            color: var(--Colors-Use-Blue-On-Primary);
-=======
             color: var(--Colors-Use-Main-On-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-#{$kind}menu-submenu-title {
             color: var(--menu-active-color);

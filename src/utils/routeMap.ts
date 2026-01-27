@@ -91,7 +91,7 @@ const irifyRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.SSA_RISK]: '/vulnerabilities',
     [RouteKey.TASK_LIST]: '/scans',
     [RouteKey.SSA_RISK_DETAIL]: '/vulnerabilities/:id',
-    [RouteKey.SSA_RISK_AUDIT]: '/vulnerabilities/:id/audit',
+    [RouteKey.SSA_RISK_AUDIT]: '/vulnerabilities/audit',
     [RouteKey.RULE_MANAGEMENT]: '/settings/rules',
     [RouteKey.RULE_EDITOR]: '/settings/rules/create',
     [RouteKey.STATIC_ANALYSIS_HOME]: '/',

@@ -36,6 +36,7 @@ import {
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { querySSATasks } from '@/apis/SSAScanTaskApi';
 import type { TSSATask, TSSATaskQueryParams } from '@/apis/SSAScanTaskApi/type';
+import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
@@ -280,7 +281,7 @@ const TaskList: React.FC = () => {
                             icon={<AuditOutlined />}
                             onClick={() =>
                                 navigate(
-                                    `/static-analysis/ssa-risk/audit?task_id=${task.task_id}&program_name=${task.project_name}`,
+                                    `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?task_id=${task.task_id}&program_name=${task.project_name}`,
                                 )
                             }
                         >

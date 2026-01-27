@@ -23,11 +23,7 @@
             color: var(--Colors-Use-Neutral-Text-1-Title);
             .yakit-button-outline2{
                 &:hover{
-<<<<<<< HEAD
-                    border-color: var(--Colors-Use-Blue-Primary);
-=======
                     border-color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
                 }
             }
         }
@@ -54,11 +50,7 @@
 .yakit-drawer-icon {
     color: var(--Colors-Use-Neutral-Text-3-Secondary);
     &:hover {
-<<<<<<< HEAD
-        color: var(--Colors-Use-Blue-Primary);
-=======
         color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     }
     .yakit-drawer-remove-icon {
         svg {

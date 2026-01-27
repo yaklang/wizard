@@ -1,12 +1,14 @@
 .drawer-container {
     .ant-drawer-header {
-        background: #f8f8f8;
+        background: var(--irify-bg-container);
+        border-bottom: 1px solid var(--irify-border);
     }
     .ant-drawer-footer {
-        background: #f8f8f8;
+        background: var(--irify-bg-container);
+        border-top: 1px solid var(--irify-border);
     }
     .ant-drawer-body {
         padding: 16px !important;
-        // background-color: #F5F5F5;
+        background-color: var(--irify-bg-base);
     }
 }

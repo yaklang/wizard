@@ -385,8 +385,9 @@ const WizardTable = <T extends AnyObject = AnyObject>(
             <div
                 id={styles['table-container']}
                 ref={tableContainerRef}
-                className="transition-all duration-500 w-full p-4 bg-[#fff] relative"
+                className="transition-all duration-500 w-full p-4 relative"
                 style={{
+                    backgroundColor: 'var(--irify-bg-base)',
                     width: `${
                         state.proSwitchStatus ? 'calc(100% - 300px)' : '100%'
                     }`,

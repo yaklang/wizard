@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTheme } from '@/theme/ThemeProvider';
 import styles from './YakCodemirror.module.scss';
 import type { YakCodemirrorProps } from './YakCodemirror.moduleType';
 import { Controlled as CodeMirror } from 'react-codemirror2';
@@ -102,6 +103,7 @@ export const YakCodemirror: React.FC<YakCodemirrorProps> = (props) => {
         return modeMap[extension] || 'javascript'; // 默认返回 javascript
     };
 
+    const { isDark } = useTheme();
     const options = useMemo(() => {
         // 几个推荐的亮色主题：
         // idea (IntelliJ IDEA风格)   theme: "idea"
@@ -111,7 +113,7 @@ export const YakCodemirror: React.FC<YakCodemirrorProps> = (props) => {
         // neat (简洁主题)    theme: "neat"
         let setting: any = {
             mode: fileName ? getLanguageMode(fileName) : language,
-            theme,
+            theme: isDark ? 'material' : theme,
             lineNumbers: true,
             viewportMargin: Infinity, // 关键设置
             lineWrapping: false, // 设置为 false 禁止换行
@@ -133,7 +135,7 @@ export const YakCodemirror: React.FC<YakCodemirrorProps> = (props) => {
             setting.cursorHeight = 0;
         }
         return setting;
-    }, [readOnly, fileName]);
+    }, [readOnly, fileName, isDark, theme, language, firstLineNumber]);
 
     useEffect(() => {
         if (!codemirrorEditor || !highLight) return;
@@ -169,7 +171,7 @@ export const YakCodemirror: React.FC<YakCodemirrorProps> = (props) => {
             <CodeMirror
                 value={value}
                 options={options}
-                onBeforeChange={(editor, data, value) => {
+                onBeforeChange={(_editor, _data, value) => {
                     onChange && onChange(value);
                 }}
                 onChange={() => {

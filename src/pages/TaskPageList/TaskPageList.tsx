@@ -231,17 +231,29 @@ const TaskPageList: FC = () => {
     return (
         <div className="flex align-start h-full">
             <div
-                className="bg-[#FFF] w-75 p-3 pt-0 overflow-auto"
-                style={{ borderRight: '1px solid #EAECF3' }}
+                className="w-75 p-3 pt-0 overflow-auto transition-colors duration-300"
+                style={{
+                    borderRight: '1px solid var(--irify-border)',
+                    backgroundColor: 'var(--irify-bg-container)',
+                }}
             >
                 <Spin spinning={taskGrounpLoading}>
                     {/* sider header */}
                     <div className="py-2.5 px-2 flex items-center justify-between">
                         <div className="flex gap-1 items-center">
-                            <span className="text-base font-semibold">
+                            <span
+                                className="text-base font-semibold"
+                                style={{ color: 'var(--irify-text)' }}
+                            >
                                 任务组管理
                             </span>
-                            <div className="bg-[#F0F1F3] color-[#85899E] rounded-lg px-2 flex items-center justify-center">
+                            <div
+                                className="rounded-lg px-2 flex items-center justify-center"
+                                style={{
+                                    backgroundColor: 'var(--irify-bg-elevated)',
+                                    color: 'var(--irify-text-secondary)',
+                                }}
+                            >
                                 {siderContextList.length - 1}
                             </div>
                         </div>

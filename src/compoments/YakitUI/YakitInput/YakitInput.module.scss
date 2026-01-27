@@ -52,11 +52,7 @@
         }
 
         .ant-input:hover {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Hover);
-=======
             border-color: var(--Colors-Use-Main-Hover);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-input::placeholder {
             color: var(--Colors-Use-Neutral-Disable);
@@ -86,13 +82,8 @@
         .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover,
         .ant-input-affix-wrapper-focused,
         .ant-input-affix-wrapper:focus {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Hover);
-            box-shadow: 0 0 0 2px var(--Colors-Use-Blue-Focus);
-=======
             border-color: var(--Colors-Use-Main-Hover);
             box-shadow: 0 0 0 2px var(--Colors-Use-Main-Focus);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
     }
 
@@ -188,17 +179,6 @@
 
 // ========================== search ==========================
 .yakit-search-wrapper {
-<<<<<<< HEAD
-    --search-box-shadow-color: var(--Colors-Use-Blue-Focus);
-
-    --search-background-color: var(--Colors-Use-Blue-Primary);
-    --search-background-hover-color: var(--Colors-Use-Blue-Hover);
-    --search-background-focus-color: var(--Colors-Use-Blue-Pressed);
-
-    --search-border-color: var(--Colors-Use-Neutral-Border);
-    --search-border-hover-color: var(--Colors-Use-Blue-Hover);
-    --search-border-focus-color: var(--Colors-Use-Blue-Pressed);
-=======
     --search-box-shadow-color: var(--Colors-Use-Main-Focus);
 
     --search-background-color: var(--Colors-Use-Main-Primary);
@@ -208,7 +188,6 @@
     --search-border-color: var(--Colors-Use-Neutral-Border);
     --search-border-hover-color: var(--Colors-Use-Main-Hover);
     --search-border-focus-color: var(--Colors-Use-Main-Pressed);
->>>>>>> 38104b8 (feat: 引入yakit控件)
 
     border-radius: 4px;
     height: 24px;
@@ -499,22 +478,13 @@
             color: var(--Colors-Use-Neutral-Text-1-Title);
         }
         .ant-input:hover {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Hover);
-=======
             border-color: var(--Colors-Use-Main-Hover);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
 
         .ant-input:focus,
         .ant-input-focused {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Hover);
-            box-shadow: 0 0 0 2px var(--Colors-Use-Blue-Focus);
-=======
             border-color: var(--Colors-Use-Main-Hover);
             box-shadow: 0 0 0 2px var(--Colors-Use-Main-Focus);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-input-suffix {
             .ant-input-show-count-suffix {
@@ -582,11 +552,7 @@
             color: var(--Colors-Use-Neutral-Disable);
         }
         .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Hover);
-=======
             border-color: var(--Colors-Use-Main-Hover);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
         .ant-input::placeholder {
             color: var(--Colors-Use-Neutral-Disable);
@@ -594,13 +560,8 @@
         }
         .ant-input-affix-wrapper:focus,
         .ant-input-affix-wrapper-focused {
-<<<<<<< HEAD
-            border-color: var(--Colors-Use-Blue-Primary);
-            box-shadow: 0 0 0 2px var(--Colors-Use-Blue-Focus);
-=======
             border-color: var(--Colors-Use-Main-Primary);
             box-shadow: 0 0 0 2px var(--Colors-Use-Main-Focus);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
     }
 }

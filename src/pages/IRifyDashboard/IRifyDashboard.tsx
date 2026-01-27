@@ -6,6 +6,7 @@ import {
     FolderOutlined,
     BugOutlined,
     ThunderboltOutlined,
+    CheckOutlined,
     CheckCircleOutlined,
     ClockCircleOutlined,
     ExclamationCircleOutlined,
@@ -118,7 +119,9 @@ const IRifyDashboard: React.FC = () => {
                     type="primary"
                     size="large"
                     icon={<PlusOutlined />}
-                    onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECT_CREATE))}
+                    onClick={() =>
+                        navigate(getRoutePath(RouteKey.IRIFY_PROJECT_CREATE))
+                    }
                     className="create-btn"
                 >
                     新建项目
@@ -133,7 +136,7 @@ const IRifyDashboard: React.FC = () => {
                     >
                         <div className="step-icon">
                             {workflowStep >= 1 ? (
-                                <CheckCircleOutlined />
+                                <CheckOutlined />
                             ) : (
                                 <FolderOutlined />
                             )}
@@ -151,7 +154,7 @@ const IRifyDashboard: React.FC = () => {
                     >
                         <div className="step-icon">
                             {workflowStep >= 2 ? (
-                                <CheckCircleOutlined />
+                                <CheckOutlined />
                             ) : (
                                 <ThunderboltOutlined />
                             )}
@@ -169,7 +172,7 @@ const IRifyDashboard: React.FC = () => {
                     >
                         <div className="step-icon">
                             {workflowStep >= 3 ? (
-                                <CheckCircleOutlined />
+                                <CheckOutlined />
                             ) : (
                                 <BugOutlined />
                             )}
@@ -187,7 +190,9 @@ const IRifyDashboard: React.FC = () => {
                 <Col xs={24} sm={8}>
                     <Card
                         className="stats-card projects-card"
-                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECTS))}
+                        onClick={() =>
+                            navigate(getRoutePath(RouteKey.IRIFY_PROJECTS))
+                        }
                     >
                         <div className="stats-icon">
                             <FolderOutlined />
@@ -205,7 +210,9 @@ const IRifyDashboard: React.FC = () => {
                 <Col xs={24} sm={8}>
                     <Card
                         className="stats-card scans-card"
-                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_SCANS))}
+                        onClick={() =>
+                            navigate(getRoutePath(RouteKey.IRIFY_SCANS))
+                        }
                     >
                         <div className="stats-icon">
                             <ThunderboltOutlined />
@@ -223,7 +230,11 @@ const IRifyDashboard: React.FC = () => {
                 <Col xs={24} sm={8}>
                     <Card
                         className="stats-card vulns-card"
-                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_VULNERABILITIES))}
+                        onClick={() =>
+                            navigate(
+                                getRoutePath(RouteKey.IRIFY_VULNERABILITIES),
+                            )
+                        }
                     >
                         <div className="stats-icon">
                             <BugOutlined />
@@ -254,7 +265,9 @@ const IRifyDashboard: React.FC = () => {
                         extra={
                             <Button
                                 type="link"
-                                onClick={() => navigate(getRoutePath(RouteKey.IRIFY_SCANS))}
+                                onClick={() =>
+                                    navigate(getRoutePath(RouteKey.IRIFY_SCANS))
+                                }
                             >
                                 查看全部
                             </Button>
@@ -344,7 +357,13 @@ const IRifyDashboard: React.FC = () => {
                                 <Button
                                     type="primary"
                                     icon={<RocketOutlined />}
-                                    onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECTS))}
+                                    onClick={() =>
+                                        navigate(
+                                            getRoutePath(
+                                                RouteKey.IRIFY_PROJECTS,
+                                            ),
+                                        )
+                                    }
                                 >
                                     开始第一次扫描
                                 </Button>
@@ -365,7 +384,13 @@ const IRifyDashboard: React.FC = () => {
                         extra={
                             <Button
                                 type="link"
-                                onClick={() => navigate(getRoutePath(RouteKey.IRIFY_VULNERABILITIES))}
+                                onClick={() =>
+                                    navigate(
+                                        getRoutePath(
+                                            RouteKey.IRIFY_VULNERABILITIES,
+                                        ),
+                                    )
+                                }
                             >
                                 查看全部
                             </Button>
@@ -433,7 +458,11 @@ const IRifyDashboard: React.FC = () => {
                             type="primary"
                             size="large"
                             icon={<PlusOutlined />}
-                            onClick={() => navigate(getRoutePath(RouteKey.IRIFY_PROJECT_CREATE))}
+                            onClick={() =>
+                                navigate(
+                                    getRoutePath(RouteKey.IRIFY_PROJECT_CREATE),
+                                )
+                            }
                         >
                             创建第一个项目
                         </Button>

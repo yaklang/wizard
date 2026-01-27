@@ -33,11 +33,7 @@
             }
 
             &:hover {
-<<<<<<< HEAD
-                color: var(--Colors-Use-Blue-Primary);
-=======
                 color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
             }
         }
     }
@@ -198,13 +194,8 @@
 }
 
 .yakit-tag-main {
-<<<<<<< HEAD
-    background: var(--Colors-Use-Blue-Bg);
-    border-color: var(--Colors-Use-Blue-Border);
-=======
     background: var(--Colors-Use-Main-Bg);
     border-color: var(--Colors-Use-Main-Border);
->>>>>>> 38104b8 (feat: 引入yakit控件)
     color: var(--Colors-Use-Neutral-Text-1-Title);
 }
 
@@ -249,21 +240,12 @@
         }
 
         .ant-tag-checkable-checked {
-<<<<<<< HEAD
-            background: var(--Colors-Use-Blue-Primary);
-            color: var(--Colors-Use-Blue-On-Primary);
-        }
-
-        .ant-tag-checkable:not(.ant-tag-checkable-checked):hover {
-            color: var(--Colors-Use-Blue-Primary);
-=======
             background: var(--Colors-Use-Main-Primary);
             color: var(--Colors-Use-Main-On-Primary);
         }
 
         .ant-tag-checkable:not(.ant-tag-checkable-checked):hover {
             color: var(--Colors-Use-Main-Primary);
->>>>>>> 38104b8 (feat: 引入yakit控件)
         }
     }
 }

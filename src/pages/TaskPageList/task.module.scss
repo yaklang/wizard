@@ -6,22 +6,23 @@
         align-items: center;
         width: 100%;
         padding: 10px 8px;
-        border-top: 1px solid #eaecf3;
+        border-top: 1px solid var(--irify-border);
         transition: all 0.3s ease; /* 添加动画 */
         min-height: 49px;
+        color: var(--irify-text);
         .tools-list-operate {
             display: none;
             transition: display 0.3s ease; /* 可选：如果动画库支持 display 的过渡 */
         }
 
         &:last-child {
-            border-bottom: 1px solid #eaecf3;
+            border-bottom: 1px solid var(--irify-border);
         }
 
         &:hover {
             border-color: transparent;
             border-radius: 8px;
-            background-color: #f8f8f8;
+            background-color: var(--irify-bg-elevated);
 
             & + .tools-list-item {
                 border-top-color: transparent;
@@ -40,7 +41,7 @@
     .tools-list-click {
         border-color: transparent;
         border-radius: 8px;
-        background-color: #4a94f8 !important;
+        background-color: var(--irify-accent) !important;
         color: #fff;
         transition: all 0.3s ease; /* 点击时添加过渡效果 */
 
