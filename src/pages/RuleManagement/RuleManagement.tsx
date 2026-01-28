@@ -1,46 +1,32 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+    Layout,
     Card,
     Table,
+    Tree,
     Space,
     Button,
     Popconfirm,
     message,
     Input,
     Upload,
-    Select,
     Tag,
     Modal,
     Progress,
     Spin,
+    Select,
+    Empty,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-
-const severityMap: Record<string, { label: string; color: string }> = {
-    critical: { label: '严重', color: 'red' },
-    high: { label: '高危', color: 'orange' },
-    medium: { label: '中危', color: 'gold' },
-    low: { label: '低危', color: 'green' },
-    info: { label: '信息', color: 'blue' },
-};
-
-const languageOptions = [
-    { label: 'Go', value: 'go' },
-    { label: 'Java', value: 'java' },
-    { label: 'Python', value: 'python' },
-    { label: 'JavaScript', value: 'javascript' },
-    { label: 'TypeScript', value: 'typescript' },
-    { label: 'PHP', value: 'php' },
-    { label: 'C#', value: 'csharp' },
-    { label: 'C/C++', value: 'cpp' },
-    { label: 'Ruby', value: 'ruby' },
-    { label: 'Rust', value: 'rust' },
-    { label: 'Swift', value: 'swift' },
-    { label: 'Kotlin', value: 'kotlin' },
-];
-import { UploadOutlined } from '@ant-design/icons';
+import {
+    BugOutlined,
+    UploadOutlined,
+    ReloadOutlined,
+    EyeOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import type { UploadFile } from 'antd/es/upload/interface';
 import {
     getSyntaxFlowRules,
@@ -48,8 +34,55 @@ import {
     exportSyntaxFlowRules,
     importSyntaxFlowRules,
     createRuleSnapshot,
+    getSyntaxFlowRuleFilterOptions,
 } from '@/apis/SyntaxFlowRuleApi';
-import type { TSyntaxFlowRule } from '@/apis/SyntaxFlowRuleApi/type';
+import type {
+    TSyntaxFlowRule,
+    TSyntaxFlowRuleFilterOptions,
+} from '@/apis/SyntaxFlowRuleApi/type';
+import { RuleDetailModal } from './RuleDetailModal';
+import './RuleManagement.scss';
+
+const { Sider, Content } = Layout;
+const { Option } = Select;
+
+const renderTreeNodeTitle = (node: any) => (
+    <div className="tree-node-title">
+        <span className="icon-wrapper">
+            <BugOutlined />
+        </span>
+        <span className="label-text">{node.title}</span>
+        {node.count !== undefined && (
+            <Tag className="node-count">{node.count}</Tag>
+        )}
+    </div>
+);
+
+const severityMap: Record<string, { label: string; color: string }> = {
+    critical: { label: '严重', color: 'red' },
+    high: { label: '高危', color: 'orange' },
+    medium: { label: '中危', color: 'gold' },
+    middle: { label: '中危', color: 'gold' },
+    low: { label: '低危', color: 'green' },
+    info: { label: '信息', color: 'blue' },
+};
+
+// 左侧筛选树的节点类型
+type FilterTreeNodeType =
+    | 'severity'
+    | 'language'
+    | 'purpose'
+    | 'group'
+    | 'risk_type';
+
+interface FilterTreeNode {
+    title: string;
+    key: string;
+    icon?: React.ReactNode;
+    children?: FilterTreeNode[];
+    filterType?: FilterTreeNodeType;
+    filterValue?: string;
+}
 
 const RuleManagement: React.FC = () => {
     const navigate = useNavigate();
@@ -57,14 +90,18 @@ const RuleManagement: React.FC = () => {
     const [data, setData] = useState<TSyntaxFlowRule[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(20);
 
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [filters, setFilters] = useState<{
         rule_name?: string;
         language?: string;
         severity?: string;
-        type?: string;
+        purpose?: string;
+        group_name?: string;
+        risk_type?: string;
+        order_by?: string;
+        order?: string;
     }>({});
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -74,6 +111,48 @@ const RuleManagement: React.FC = () => {
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [importLoading, setImportLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+
+    // 规则详情弹窗状态
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [selectedRule, setSelectedRule] = useState<{
+        name?: string;
+        id?: string;
+    }>({});
+
+    // 筛选选项和树
+    const [filterTreeData, setFilterTreeData] = useState<FilterTreeNode[]>([]);
+    const [selectedFilterKeys, setSelectedFilterKeys] = useState<string[]>([]);
+
+    // 构建筛选树 (Simplified: Only Risk Type, flattened)
+    const buildFilterTree = useCallback(
+        (options: TSyntaxFlowRuleFilterOptions): FilterTreeNode[] => {
+            // 缺陷类型 (RiskType) - 直接展示列表，不使用文件夹包裹
+            if (options.risk_types && options.risk_types.length > 0) {
+                return options.risk_types.map((rt) => ({
+                    title: rt.name || '',
+                    key: `risk-type-${rt.name}`,
+                    filterType: 'risk_type' as FilterTreeNodeType,
+                    filterValue: rt.name,
+                    count: rt.count,
+                }));
+            }
+            return [];
+        },
+        [],
+    );
+
+    // 筛选选项和树数据
+    const [rawFilterOptions, setRawFilterOptions] =
+        useState<TSyntaxFlowRuleFilterOptions>({});
+
+    useEffect(() => {
+        getSyntaxFlowRuleFilterOptions().then((res) => {
+            if (res.code === 200 && res.data) {
+                setRawFilterOptions(res.data);
+                setFilterTreeData(buildFilterTree(res.data));
+            }
+        });
+    }, [buildFilterTree]);
 
     const handleExportClick = () => {
         setExportPassword('');
@@ -91,8 +170,6 @@ const RuleManagement: React.FC = () => {
             const res = await exportSyntaxFlowRules({
                 password: exportPassword,
             });
-
-            // res is the blob data because of axios interceptor
             const blob = new Blob([res as any], { type: 'application/zip' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -102,7 +179,6 @@ const RuleManagement: React.FC = () => {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-
             message.success('导出成功');
             setIsExportModalOpen(false);
         } catch (err) {
@@ -146,6 +222,12 @@ const RuleManagement: React.FC = () => {
             setImportLoading(false);
             setIsImportModalOpen(false);
             fetchList(1, limit);
+            // 刷新筛选选项
+            getSyntaxFlowRuleFilterOptions().then((r) => {
+                if (r.code === 200 && r.data) {
+                    setFilterTreeData(buildFilterTree(r.data));
+                }
+            });
         } catch (error) {
             setImportLoading(false);
             console.error(error);
@@ -171,7 +253,6 @@ const RuleManagement: React.FC = () => {
                 setPage(res.data?.pagemeta?.page ?? p);
                 setLimit(res.data?.pagemeta?.limit ?? l);
             } catch (err) {
-                // axios interceptor already shows message; extra fallback
                 message.destroy();
                 message.error('获取规则列表出错');
             } finally {
@@ -182,21 +263,95 @@ const RuleManagement: React.FC = () => {
     );
 
     useEffect(() => {
-        fetchList(1, 10, filters);
+        fetchList(1, 20, filters);
     }, [fetchList, filters]);
 
-    const handleTableChange = (pagination: TablePaginationConfig) => {
+    const handleTableChange = (
+        pagination: TablePaginationConfig,
+        filtersArg: Record<string, FilterValue | null>,
+        sorter: SorterResult<TSyntaxFlowRule> | SorterResult<TSyntaxFlowRule>[],
+    ) => {
         const nextPage = pagination.current ?? 1;
-        const nextLimit = pagination.pageSize ?? 10;
-        fetchList(Number(nextPage), Number(nextLimit), filters);
+        const nextLimit = pagination.pageSize ?? 20;
+
+        // Merge existing filters with new table filters
+        const newFilters: any = { ...filters };
+
+        // Process Language Filter
+        if (filtersArg.language) {
+            newFilters.language = filtersArg.language[0] as string;
+        } else {
+            delete newFilters.language;
+        }
+
+        // Process Severity Filter
+        if (filtersArg.severity) {
+            newFilters.severity = filtersArg.severity[0] as string;
+        } else {
+            delete newFilters.severity;
+        }
+
+        // Handle sorting (limited to other columns if any, assuming language/severity sorting removed)
+        if (!Array.isArray(sorter) && sorter.field) {
+            const order =
+                sorter.order === 'ascend'
+                    ? 'asc'
+                    : sorter.order === 'descend'
+                      ? 'desc'
+                      : undefined;
+            if (order) {
+                newFilters.order_by = sorter.field as string;
+                newFilters.order = order;
+            } else {
+                delete newFilters.order_by;
+                delete newFilters.order;
+            }
+        }
+
+        setFilters(newFilters);
+        fetchList(Number(nextPage), Number(nextLimit), newFilters);
     };
 
     const handleSearch = (value: string) => {
-        setFilters((prev) => ({ ...prev, rule_name: value }));
+        const newFilters = { ...filters, rule_name: value };
+        // Reset to page 1 on search
+        setPage(1);
+        setFilters(newFilters);
+        fetchList(1, limit, newFilters);
     };
 
-    const handleFilterChange = (key: string, value: any) => {
-        setFilters((prev) => ({ ...prev, [key]: value }));
+    // 树节点选择处理
+    const handleTreeSelect = (keys: any[], info: any) => {
+        if (keys.length === 0) {
+            setSelectedFilterKeys([]);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { risk_type: _, ...rest } = filters;
+            setFilters(rest);
+            return;
+        }
+
+        const node = info.node as FilterTreeNode;
+        if (node.filterType && node.filterValue) {
+            setSelectedFilterKeys(keys as string[]);
+            const newFilters = { ...filters };
+            switch (node.filterType) {
+                case 'risk_type':
+                    newFilters.risk_type = node.filterValue;
+                    break;
+                default:
+                    break;
+            }
+            // Reset to page 1 on filter change
+            setPage(1);
+            setFilters(newFilters);
+            fetchList(1, limit, newFilters);
+        }
+    };
+
+    const handleClearFilters = () => {
+        setSelectedFilterKeys([]);
+        setFilters({});
+        fetchList(1, limit, {});
     };
 
     const handleBatchDelete = async () => {
@@ -308,22 +463,52 @@ const RuleManagement: React.FC = () => {
         });
     };
 
+    const handleViewDetail = (record: TSyntaxFlowRule) => {
+        setSelectedRule({ name: record.rule_name, id: record.rule_id });
+        setDetailModalOpen(true);
+    };
+
+    const handleDetailClose = () => {
+        setDetailModalOpen(false);
+        setSelectedRule({});
+    };
+
+    const handleDetailSuccess = () => {
+        fetchList(page, limit, filters);
+    };
+
     const columns: ColumnsType<TSyntaxFlowRule> = [
         {
             title: '规则名',
             dataIndex: 'rule_name',
             key: 'rule_name',
+            ellipsis: true,
             render: (text, record) => (
-                <a onClick={() => handleEdit(record)} className="font-medium">
+                <a
+                    onClick={() => handleViewDetail(record)}
+                    className="font-medium"
+                >
                     {text}
                 </a>
             ),
         },
         {
+            title: '标题',
+            dataIndex: 'title_zh',
+            key: 'title_zh',
+            ellipsis: true,
+            render: (text, record) => text || record.title || '-',
+        },
+        {
             title: '语言',
             dataIndex: 'language',
             key: 'language',
-            width: 120,
+            width: 100,
+            filters: rawFilterOptions.languages?.map((lang) => ({
+                text: `${lang.name} (${lang.count})`,
+                value: lang.name || '',
+            })),
+            filterMultiple: false,
             render: (text) => (text ? <Tag>{text}</Tag> : '-'),
         },
         {
@@ -331,6 +516,11 @@ const RuleManagement: React.FC = () => {
             dataIndex: 'severity',
             key: 'severity',
             width: 100,
+            filters: Object.entries(severityMap).map(([key, conf]) => ({
+                text: conf.label,
+                value: key,
+            })),
+            filterMultiple: false,
             render: (val) => {
                 const conf = severityMap[val?.toLowerCase()] || {
                     label: val || '-',
@@ -340,25 +530,18 @@ const RuleManagement: React.FC = () => {
             },
         },
         {
-            title: '类型',
-            dataIndex: 'type',
-            key: 'type',
-            width: 120,
-            render: (text) => text || '-',
-        },
-        {
-            title: '标签',
-            dataIndex: 'tag',
-            key: 'tag',
-            ellipsis: true,
-            render: (text) => (text ? <Tag>{text}</Tag> : '-'),
-        },
-        {
             title: '操作',
             key: 'action',
-            width: 150,
+            width: 180,
             render: (_, record) => (
-                <Space size="middle">
+                <Space size="small">
+                    <Button
+                        type="link"
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => handleViewDetail(record)}
+                        style={{ padding: 0 }}
+                    />
                     <Button
                         type="link"
                         size="small"
@@ -391,52 +574,163 @@ const RuleManagement: React.FC = () => {
     };
 
     return (
-        <div className="p-4">
-            <Card>
-                <div className="flex justify-between items-center mb-4">
-                    <div className="text-[18px] font-bold">
-                        静态分析 · 规则管理
+        <Layout className="rule-management-layout">
+            {/* 左侧筛选面板 */}
+            <Sider width={280} className="filter-sider" theme="light">
+                <div className="sider-header">
+                    <span className="title">规则列表 ({total})</span>
+                    <Button
+                        type="text"
+                        size="small"
+                        icon={<ReloadOutlined />}
+                        onClick={handleClearFilters}
+                        disabled={
+                            selectedFilterKeys.length === 0 &&
+                            !filters.severity &&
+                            !filters.language &&
+                            !filters.purpose &&
+                            !filters.group_name
+                        }
+                    >
+                        重置
+                    </Button>
+                </div>
+
+                {/* 顶部统计卡片 (类似缺陷筛选) */}
+                <div className="severity-stats">
+                    {[
+                        { key: 'critical', label: '严重' },
+                        { key: 'high', label: '高' },
+                        { key: 'medium', label: '中' },
+                        { key: 'low', label: '低' },
+                    ].map((item) => {
+                        const count =
+                            rawFilterOptions.severities?.find(
+                                (s) => s.name?.toLowerCase() === item.key,
+                            )?.count || 0;
+                        const isActive =
+                            filters.severity?.toLowerCase() === item.key;
+                        return (
+                            <div
+                                key={item.key}
+                                className={`stat-item ${isActive ? 'active' : ''}`}
+                                onClick={() => {
+                                    const newFilters = {
+                                        ...filters,
+                                        severity: isActive
+                                            ? undefined
+                                            : item.key,
+                                    };
+                                    setPage(1);
+                                    setFilters(newFilters);
+                                    fetchList(1, limit, newFilters);
+                                }}
+                            >
+                                <span className="label">{item.label}</span>
+                                <span className="count">{count}</span>
+                            </div>
+                        );
+                    })}
+                    <div
+                        className={`stat-item ${!filters.severity ? 'active' : ''}`}
+                        onClick={() => {
+                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                            const { severity: _, ...rest } = filters;
+                            setPage(1);
+                            setFilters(rest);
+                            fetchList(1, limit, rest);
+                        }}
+                    >
+                        <span className="label">所有</span>
+                        <span className="count">
+                            {rawFilterOptions.severities?.reduce(
+                                (acc, curr) => acc + (curr.count || 0),
+                                0,
+                            ) || 0}
+                        </span>
                     </div>
-                    <div>
+                </div>
+
+                <div className="filter-tree-container">
+                    {filterTreeData.length > 0 ? (
+                        <Tree
+                            treeData={filterTreeData}
+                            selectedKeys={selectedFilterKeys}
+                            onSelect={handleTreeSelect}
+                            blockNode
+                            showIcon={false}
+                            titleRender={renderTreeNodeTitle}
+                        />
+                    ) : (
+                        <Empty description="暂无筛选项" />
+                    )}
+                </div>
+            </Sider>
+
+            {/* 右侧内容区 */}
+            <Content className="rule-content">
+                <Card className="rule-card">
+                    <div className="header-row">
+                        <div className="title-section">
+                            <span className="page-title">
+                                静态分析 · 规则管理
+                            </span>
+                        </div>
                         <Space>
+                            <Select
+                                allowClear
+                                placeholder="用途"
+                                style={{ width: 120 }}
+                                value={filters.purpose}
+                                onChange={(val) => {
+                                    const newFilters = {
+                                        ...filters,
+                                        purpose: val,
+                                    };
+                                    setPage(1);
+                                    setFilters(newFilters);
+                                    fetchList(1, limit, newFilters);
+                                }}
+                            >
+                                {rawFilterOptions.purposes?.map((p) => (
+                                    <Option key={p.name} value={p.name}>
+                                        {p.name} ({p.count})
+                                    </Option>
+                                ))}
+                            </Select>
+                            <Select
+                                allowClear
+                                placeholder="分组"
+                                style={{ width: 140 }}
+                                value={filters.group_name}
+                                onChange={(val) => {
+                                    const newFilters = {
+                                        ...filters,
+                                        group_name: val,
+                                    };
+                                    setPage(1);
+                                    setFilters(newFilters);
+                                    fetchList(1, limit, newFilters);
+                                }}
+                            >
+                                {rawFilterOptions.groups?.map((g) => (
+                                    <Option key={g.name} value={g.name}>
+                                        {g.name} ({g.count})
+                                    </Option>
+                                ))}
+                            </Select>
                             <Input.Search
-                                placeholder="规则名"
+                                placeholder="搜索规则名"
                                 allowClear
                                 onSearch={handleSearch}
-                                style={{ width: 160 }}
+                                style={{ width: 180 }}
                             />
-                            <Select
-                                placeholder="语言"
-                                allowClear
-                                showSearch
-                                style={{ width: 120 }}
-                                onChange={(val) =>
-                                    handleFilterChange('language', val)
-                                }
-                                options={languageOptions}
-                            />
-                            <Select
-                                placeholder="严重度"
-                                allowClear
-                                style={{ width: 100 }}
-                                onChange={(v) =>
-                                    handleFilterChange('severity', v)
-                                }
-                                options={Object.entries(severityMap).map(
-                                    ([k, v]) => ({ label: v.label, value: k }),
-                                )}
-                            />
-                            <Button onClick={handleImportClick}>
-                                导入规则
-                            </Button>
-                            <Button onClick={handleExportClick}>
-                                导出规则
-                            </Button>
+                            <Button onClick={handleImportClick}>导入</Button>
+                            <Button onClick={handleExportClick}>导出</Button>
                             <Button danger onClick={handleClearRules}>
-                                清空规则
+                                清空
                             </Button>
                             <Button
-                                type="default"
                                 style={{
                                     backgroundColor: '#52c41a',
                                     borderColor: '#52c41a',
@@ -451,51 +745,54 @@ const RuleManagement: React.FC = () => {
                             </Button>
                         </Space>
                     </div>
-                </div>
 
-                {selectedRowKeys.length > 0 && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded flex items-center justify-between">
-                        <span>
-                            已选择{' '}
-                            <span style={{ fontWeight: 600, color: '#1890ff' }}>
-                                {selectedRowKeys.length}
-                            </span>{' '}
-                            项
-                        </span>
-                        <Space>
-                            <Button
-                                danger
-                                size="small"
-                                onClick={handleBatchDelete}
-                            >
-                                批量删除
-                            </Button>
-                            <Button
-                                size="small"
-                                onClick={() => setSelectedRowKeys([])}
-                            >
-                                取消选择
-                            </Button>
-                        </Space>
-                    </div>
-                )}
+                    {selectedRowKeys.length > 0 && (
+                        <div className="batch-action-bar">
+                            <span>
+                                已选择{' '}
+                                <span className="count">
+                                    {selectedRowKeys.length}
+                                </span>{' '}
+                                项
+                            </span>
+                            <Space>
+                                <Button
+                                    danger
+                                    size="small"
+                                    onClick={handleBatchDelete}
+                                >
+                                    批量删除
+                                </Button>
+                                <Button
+                                    size="small"
+                                    onClick={() => setSelectedRowKeys([])}
+                                >
+                                    取消选择
+                                </Button>
+                            </Space>
+                        </div>
+                    )}
 
-                <Table<TSyntaxFlowRule>
-                    rowSelection={rowSelection}
-                    columns={columns}
-                    dataSource={data}
-                    rowKey={(r) => r.rule_id ?? r.rule_name}
-                    loading={loading}
-                    pagination={{
-                        current: page,
-                        pageSize: limit,
-                        total,
-                        showSizeChanger: true,
-                    }}
-                    onChange={handleTableChange}
-                />
-            </Card>
+                    <Table<TSyntaxFlowRule>
+                        rowSelection={rowSelection}
+                        columns={columns}
+                        dataSource={data}
+                        rowKey={(r) => r.rule_id ?? r.rule_name}
+                        loading={loading}
+                        pagination={{
+                            current: page,
+                            pageSize: limit,
+                            total,
+                            showSizeChanger: true,
+                            showTotal: (t) => `共 ${t} 条`,
+                        }}
+                        onChange={handleTableChange}
+                        size="small"
+                    />
+                </Card>
+            </Content>
 
+            {/* 导出Modal */}
             <Modal
                 title="导出规则"
                 open={isExportModalOpen}
@@ -512,6 +809,7 @@ const RuleManagement: React.FC = () => {
                 </div>
             </Modal>
 
+            {/* 导入Modal */}
             <Modal
                 title="导入规则"
                 open={isImportModalOpen}
@@ -539,35 +837,18 @@ const RuleManagement: React.FC = () => {
                                 percent={uploadProgress}
                                 status="active"
                             />
-                            <div
-                                style={{
-                                    marginTop: 8,
-                                    color: '#666',
-                                    fontSize: 12,
-                                }}
-                            >
-                                正在上传文件...
-                            </div>
                         </div>
                     )}
                     {importLoading && uploadProgress >= 100 && (
-                        <div
-                            style={{
-                                marginTop: 16,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
+                        <div style={{ marginTop: 16, textAlign: 'center' }}>
                             <Spin />
-                            <span style={{ marginLeft: 8, color: '#666' }}>
+                            <span style={{ marginLeft: 8 }}>
                                 正在导入数据库...
                             </span>
                         </div>
                     )}
                 </div>
-
-                <div style={{ marginBottom: 16 }}>
+                <div>
                     <p>请输入解压密码（可选）：</p>
                     <Input.Password
                         value={importPassword}
@@ -576,7 +857,16 @@ const RuleManagement: React.FC = () => {
                     />
                 </div>
             </Modal>
-        </div>
+
+            {/* 规则详情弹窗 */}
+            <RuleDetailModal
+                open={detailModalOpen}
+                ruleName={selectedRule.name}
+                ruleId={selectedRule.id}
+                onClose={handleDetailClose}
+                onSuccess={handleDetailSuccess}
+            />
+        </Layout>
     );
 };
 

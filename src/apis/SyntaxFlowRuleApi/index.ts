@@ -5,6 +5,8 @@ import type {
     TSyntaxFlowRuleListResponse,
     TSyntaxFlowRuleRequest,
     TAsyncTaskStatusResponse,
+    TSyntaxFlowRuleMetadataUpdateRequest,
+    TSyntaxFlowRuleFilterOptions,
 } from './type';
 
 // GET /syntaxflow/rule
@@ -104,6 +106,24 @@ const createRuleSnapshot = (
         ResponseData<{ version: string; hash: string; rule_count: number }>
     >(`/syntaxflow/rules/snapshot`, { note });
 
+// PUT /syntaxflow/rule/update - 更新规则元数据
+const updateSyntaxFlowRuleMetadata = (
+    data: TSyntaxFlowRuleMetadataUpdateRequest,
+): Promise<ResponseData<TSyntaxFlowRule>> =>
+    axios.put<never, ResponseData<TSyntaxFlowRule>>(
+        `/syntaxflow/rule/update`,
+        data,
+    );
+
+// GET /syntaxflow/rule/filter-options - 获取规则筛选选项
+const getSyntaxFlowRuleFilterOptions = (
+    signal?: AbortSignal,
+): Promise<ResponseData<TSyntaxFlowRuleFilterOptions>> =>
+    axios.get<never, ResponseData<TSyntaxFlowRuleFilterOptions>>(
+        `/syntaxflow/rule/filter-options`,
+        { signal },
+    );
+
 export {
     getSyntaxFlowRules,
     postSyntaxFlowRule,
@@ -113,4 +133,6 @@ export {
     importSyntaxFlowRules,
     getAsyncTaskStatus,
     createRuleSnapshot,
+    updateSyntaxFlowRuleMetadata,
+    getSyntaxFlowRuleFilterOptions,
 };

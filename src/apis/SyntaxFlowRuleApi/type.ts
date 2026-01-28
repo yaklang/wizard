@@ -81,16 +81,6 @@ interface TSyntaxFlowRuleRequest {
 // list response wraps paging meta and list
 type TSyntaxFlowRuleListResponse = TableResponseData<TSyntaxFlowRule>;
 
-export type {
-    TSyntaxFlowAlertDesc,
-    TSyntaxFlowGroup,
-    TSyntaxFlowRule,
-    TSyntaxFlowRuleRequest,
-    TSyntaxFlowRuleListResponse,
-    TAsyncTaskStatusResponse,
-    TAsyncTaskLog,
-};
-
 interface TAsyncTaskLog {
     level?: string;
     message?: string;
@@ -104,3 +94,48 @@ interface TAsyncTaskStatusResponse {
     progress_percent?: number;
     error?: string;
 }
+
+// 规则元数据更新请求
+interface TSyntaxFlowRuleMetadataUpdateRequest {
+    rule_name: string;
+    rule_id?: string;
+    type?: string;
+    severity?: string;
+    purpose?: string;
+    title?: string;
+    title_zh?: string;
+    description?: string;
+    solution?: string;
+    tag?: string;
+    risk_type?: string;
+    cve?: string;
+    cwe?: string[];
+    groups?: string[];
+}
+
+// 规则筛选选项
+export type TSyntaxFlowRuleFilterOptionItem = {
+    name?: string;
+    count?: number;
+};
+
+export type TSyntaxFlowRuleFilterOptions = {
+    languages?: TSyntaxFlowRuleFilterOptionItem[];
+    severities?: TSyntaxFlowRuleFilterOptionItem[];
+    purposes?: TSyntaxFlowRuleFilterOptionItem[];
+    groups?: TSyntaxFlowRuleFilterOptionItem[];
+    types?: TSyntaxFlowRuleFilterOptionItem[];
+    risk_types?: TSyntaxFlowRuleFilterOptionItem[];
+};
+
+export type {
+    TSyntaxFlowAlertDesc,
+    TSyntaxFlowGroup,
+    TSyntaxFlowRule,
+    TSyntaxFlowRuleRequest,
+    TSyntaxFlowRuleListResponse,
+    TAsyncTaskStatusResponse,
+    TAsyncTaskLog,
+    TSyntaxFlowRuleMetadataUpdateRequest,
+};
+

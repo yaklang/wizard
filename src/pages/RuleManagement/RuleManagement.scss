@@ -1,0 +1,329 @@
+.rule-management-layout {
+    height: 100vh;
+    background: var(--irify-bg-base, #f0f2f5);
+
+    .filter-sider {
+        background: var(--irify-bg-base, #fff) !important;
+        border-right: 1px solid var(--irify-border-color, #e8e8e8);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+
+        .sider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--irify-border-color, #e8e8e8);
+
+            .title {
+                font-weight: 600;
+                font-size: 14px;
+                color: var(--irify-text, #333);
+            }
+        }
+
+        // 严重程度统计栏 (Synced with SSARiskAudit)
+        .severity-stats {
+            display: flex;
+            border-bottom: 2px solid #e8e8e8;
+            margin-bottom: 12px;
+            
+            .stat-item {
+                flex: 1;
+                text-align: center;
+                padding: 8px 4px;
+                cursor: pointer;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -2px;
+                transition: all 0.3s;
+                
+                &:hover {
+                    background: var(--irify-bg-elevated);
+                }
+                
+                &.active {
+                    border-bottom-color: var(--irify-accent);
+                    background: rgba(0, 217, 255, 0.05);
+                }
+                
+                .label {
+                    display: block;
+                    font-size: 14px;
+                    font-weight: 500;
+                    margin-bottom: 4px;
+                }
+                
+                .count {
+                    display: block;
+                    font-size: 12px;
+                    color: #8c8c8c;
+                }
+            }
+        }
+
+        .filter-tree-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+
+            .ant-tree {
+                background: transparent;
+
+                .ant-tree-treenode {
+                    padding: 2px 0;
+                    width: 100%;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+
+                    &:hover {
+                        background: var(--irify-bg-hover, #f5f5f5);
+                    }
+
+                    &.ant-tree-treenode-selected {
+                        background: var(--irify-bg-selected, #e6f7ff);
+                    }
+                }
+
+                .ant-tree-node-content-wrapper {
+                    display: flex;
+                    align-items: center;
+                    padding: 2px 8px;
+                }
+
+                .tree-node-title {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    width: 100%;
+                    padding-right: 8px;
+
+                    .label-text {
+                        font-size: 13px;
+                    }
+
+                    .node-count {
+                        font-size: 11px;
+                        color: #999;
+                        background: var(--irify-bg-secondary, #f0f0f0);
+                        padding: 0 6px;
+                        border-radius: 10px;
+                        min-width: 20px;
+                        text-align: center;
+                    }
+                }
+
+                .severity-dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    margin-right: 8px;
+                }
+            }
+        }
+    }
+
+    .rule-content {
+        padding: 16px;
+        overflow-y: auto;
+
+        .rule-card {
+            height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+            .header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+                gap: 12px;
+
+                .title-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+
+                    .page-title {
+                        font-size: 20px;
+                        font-weight: 600;
+                        color: var(--irify-text, #333);
+                    }
+                }
+            }
+
+            .batch-action-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 16px;
+                background: #e6f7ff;
+                border-radius: 6px;
+                margin-bottom: 16px;
+                border: 1px solid #91d5ff;
+
+                .count {
+                    font-weight: 600;
+                    color: #1890ff;
+                }
+            }
+        }
+    }
+}
+
+/* 暗色模式适配 */
+.irify-dark {
+    .rule-management-layout {
+        // 强制整体背景变黑
+        background: var(--irify-bg-base);
+
+        .filter-sider {
+            // 强制覆盖 Sider 背景，不依赖不稳定的变量
+            background: var(--irify-bg-container) !important;
+            border-right: 1px solid var(--irify-border) !important;
+
+            .ant-layout-sider-children {
+                background: var(--irify-bg-container);
+            }
+
+            .sider-header {
+                border-bottom: 1px solid var(--irify-border) !important;
+                background: var(--irify-bg-container); // 确保 Header 也是深色
+
+                .title {
+                    color: var(--irify-text);
+                }
+            }
+
+            // 严重等级统计条 - 深色背景
+            .severity-stats {
+                background: var(--irify-bg-container) !important;
+                border-bottom: 2px solid var(--irify-border) !important;
+                
+                .stat-item {
+                    border-bottom: 2px solid transparent;
+
+                    &:hover {
+                        background: var(--irify-bg-hover);
+                    }
+                    
+                    &.active {
+                        background: var(--irify-bg-selected);
+                        border-bottom-color: var(--irify-accent);
+                        
+                        .label {
+                            color: var(--irify-accent);
+                        }
+                    }
+                    
+                    .label { 
+                        color: var(--irify-text); 
+                    }
+
+                    .count { 
+                        color: var(--irify-text-secondary); 
+                    }
+                }
+            }
+
+            .filter-tree-container {
+                .ant-empty-description {
+                    color: var(--irify-text-secondary);
+                }
+
+                .ant-empty-normal {
+                    color: var(--irify-text-secondary); 
+                }
+
+                .ant-tree {
+                    background: transparent;
+                    color: var(--irify-text);
+
+                    .ant-tree-treenode {
+                        padding: 0;
+                        margin-bottom: 2px;
+                    }
+
+                    .ant-tree-node-content-wrapper {
+                        padding: 0;
+                        min-height: 32px;
+                        line-height: 32px;
+                        border-radius: 4px;
+                        background: transparent !important;
+                        
+                        &:hover {
+                            background: var(--irify-bg-hover) !important;
+                        }
+
+                        &.ant-tree-node-selected {
+                            background: var(--irify-bg-selected) !important;
+                        }
+                    }
+
+                    // Tree node flex alignment
+                    .tree-node-title {
+                        display: flex;
+                        align-items: center;
+                        padding: 0 8px;
+                        width: 100%;
+
+                        .icon-wrapper {
+                            margin-right: 8px;
+                            display: flex;
+                            align-items: center;
+                            color: var(--irify-text-secondary);
+                        }
+
+                        .label-text {
+                            flex: 1;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            font-size: 13px;
+                        }
+
+                        .node-count {
+                            font-size: 11px;
+                            padding: 0 6px;
+                            border-radius: 10px;
+                            margin-left: 8px;
+                        }
+                    }
+
+                    .ant-tree-treenode-switcher-open, 
+                    .ant-tree-treenode-switcher-close {
+                        .ant-tree-switcher-icon {
+                            color: var(--irify-text-secondary);
+                        }
+                    }
+
+                    .ant-tree-treenode-selected {
+                         .tree-node-title {
+                            color: var(--irify-accent);
+                            .icon-wrapper {
+                                color: var(--irify-accent);
+                            }
+                            .node-count {
+                                color: var(--irify-accent);
+                                background: rgba(0, 217, 255, 0.15);
+                            }
+                         }
+                    }
+                }
+            }
+        }
+
+        .rule-content {
+            .rule-card {
+                .batch-action-bar {
+                    background: var(--irify-bg-selected);
+                    border-color: var(--irify-accent);
+                    .count {
+                        color: var(--irify-accent);
+                    }
+                }
+            }
+        }
+    }
+}
