@@ -6,7 +6,6 @@ import {
     FolderOutlined,
     BugOutlined,
     ThunderboltOutlined,
-    CheckOutlined,
     CheckCircleOutlined,
     ClockCircleOutlined,
     ExclamationCircleOutlined,
@@ -135,11 +134,7 @@ const IRifyDashboard: React.FC = () => {
                         className={`step ${workflowStep >= 1 ? 'completed' : ''} ${workflowStep === 0 ? 'active' : ''}`}
                     >
                         <div className="step-icon">
-                            {workflowStep >= 1 ? (
-                                <CheckOutlined />
-                            ) : (
-                                <FolderOutlined />
-                            )}
+                            <FolderOutlined />
                         </div>
                         <div className="step-content">
                             <div className="step-title">创建项目</div>
@@ -153,11 +148,7 @@ const IRifyDashboard: React.FC = () => {
                         className={`step ${workflowStep >= 2 ? 'completed' : ''} ${workflowStep === 1 ? 'active' : ''}`}
                     >
                         <div className="step-icon">
-                            {workflowStep >= 2 ? (
-                                <CheckOutlined />
-                            ) : (
-                                <ThunderboltOutlined />
-                            )}
+                            <ThunderboltOutlined />
                         </div>
                         <div className="step-content">
                             <div className="step-title">执行扫描</div>
@@ -171,11 +162,7 @@ const IRifyDashboard: React.FC = () => {
                         className={`step ${workflowStep >= 3 ? 'completed' : ''} ${workflowStep === 2 ? 'active' : ''}`}
                     >
                         <div className="step-icon">
-                            {workflowStep >= 3 ? (
-                                <CheckOutlined />
-                            ) : (
-                                <BugOutlined />
-                            )}
+                            <BugOutlined />
                         </div>
                         <div className="step-content">
                             <div className="step-title">审计漏洞</div>

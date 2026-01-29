@@ -76,16 +76,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 20px;
             transition: all 0.3s ease;
             
             background: var(--irify-bg-elevated);
             border: 2px solid var(--irify-border);
             color: var(--irify-text-secondary);
-            overflow: hidden;
 
             .anticon {
-                background: transparent !important;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
         }
 
@@ -105,9 +106,7 @@
         &.active {
             .step-icon {
                 border-color: var(--irify-accent);
-                box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
                 color: var(--irify-accent);
-                animation: pulse 2s infinite;
             }
 
             .step-title {
@@ -118,7 +117,7 @@
         &.completed {
             .step-icon {
                 background: linear-gradient(135deg, var(--irify-accent-secondary) 0%, var(--irify-accent) 100%);
-                border-color: transparent;
+                border-color: var(--irify-accent);
                 color: white;
             }
 
@@ -142,11 +141,6 @@
     }
 }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.4); }
-    70% { box-shadow: 0 0 0 15px rgba(0, 217, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 217, 255, 0); }
-}
 
 // Stats Cards
 .stats-section {
