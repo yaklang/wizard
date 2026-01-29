@@ -6,8 +6,13 @@
         background: var(--irify-bg-base, #fff) !important;
         border-right: 1px solid var(--irify-border-color, #e8e8e8);
         overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        height: 100vh;
+        
+        .ant-layout-sider-children {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
 
         .sider-header {
             display: flex;
@@ -23,101 +28,93 @@
             }
         }
 
-        // 严重程度统计栏 (Synced with SSARiskAudit)
-        .severity-stats {
-            display: flex;
-            border-bottom: 2px solid #e8e8e8;
-            margin-bottom: 12px;
-            
-            .stat-item {
-                flex: 1;
-                text-align: center;
-                padding: 8px 4px;
-                cursor: pointer;
-                border-bottom: 2px solid transparent;
-                margin-bottom: -2px;
-                transition: all 0.3s;
-                
-                &:hover {
-                    background: var(--irify-bg-elevated);
-                }
-                
-                &.active {
-                    border-bottom-color: var(--irify-accent);
-                    background: rgba(0, 217, 255, 0.05);
-                }
-                
-                .label {
-                    display: block;
-                    font-size: 14px;
-                    font-weight: 500;
-                    margin-bottom: 4px;
-                }
-                
-                .count {
-                    display: block;
-                    font-size: 12px;
-                    color: #8c8c8c;
-                }
-            }
-        }
 
         .filter-tree-container {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 8px;
+            scroll-behavior: smooth;
+            
+            // 自定义滚动条样式（针对 webkit 浏览器）
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            
+            &::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 3px;
+                
+                &:hover {
+                    background: rgba(0, 0, 0, 0.3);
+                }
+            }
 
             .ant-tree {
                 background: transparent;
 
                 .ant-tree-treenode {
-                    padding: 2px 0;
+                    padding: 0;
+                    margin-bottom: 1px;
                     width: 100%;
-                    border-radius: 4px;
-                    transition: all 0.2s;
 
                     &:hover {
-                        background: var(--irify-bg-hover, #f5f5f5);
+                        .ant-tree-node-content-wrapper {
+                            background: var(--irify-bg-hover, #f5f5f5);
+                        }
                     }
 
                     &.ant-tree-treenode-selected {
-                        background: var(--irify-bg-selected, #e6f7ff);
+                        .ant-tree-node-content-wrapper {
+                            background: var(--irify-bg-selected, #e6f7ff);
+                        }
                     }
                 }
 
                 .ant-tree-node-content-wrapper {
                     display: flex;
                     align-items: center;
-                    padding: 2px 8px;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                    width: 100%;
+                }
+
+                .ant-tree-switcher {
+                    width: 20px;
+                    line-height: 28px;
                 }
 
                 .tree-node-title {
                     display: flex;
-                    justify-content: space-between;
                     align-items: center;
                     width: 100%;
-                    padding-right: 8px;
+                    gap: 8px;
+
+                    .icon-wrapper {
+                        display: flex;
+                        align-items: center;
+                        color: #8c8c8c;
+                        font-size: 12px;
+                    }
 
                     .label-text {
+                        flex: 1;
                         font-size: 13px;
+                        line-height: 1.5;
                     }
 
-                    .node-count {
-                        font-size: 11px;
-                        color: #999;
-                        background: var(--irify-bg-secondary, #f0f0f0);
-                        padding: 0 6px;
-                        border-radius: 10px;
-                        min-width: 20px;
-                        text-align: center;
+                    .node-count-text {
+                        font-size: 12px;
+                        color: #8c8c8c;
+                        margin-left: auto;
+                        flex-shrink: 0;
                     }
-                }
-
-                .severity-dot {
-                    width: 8px;
-                    height: 8px;
-                    border-radius: 50%;
-                    margin-right: 8px;
                 }
             }
         }
@@ -170,6 +167,31 @@
             }
         }
     }
+
+    // Light Mode muted tag styles
+    .muted-tag {
+        background-color: #f5f5f5 !important;
+        color: #595959 !important;
+        border: 1px solid #d9d9d9 !important;
+        font-size: 12px;
+    }
+
+    .muted-tag-overflow {
+        background-color: #fafafa !important;
+        color: #8c8c8c !important;
+        border: 1px solid #d9d9d9 !important;
+        font-size: 11px;
+    }
+
+    .rule-title-link {
+        color: #262626;
+        font-weight: 600;
+        font-size: 14px;
+        
+        &:hover {
+            color: #1890ff;
+        }
+    }
 }
 
 /* 暗色模式适配 */
@@ -196,38 +218,17 @@
                 }
             }
 
-            // 严重等级统计条 - 深色背景
-            .severity-stats {
-                background: var(--irify-bg-container) !important;
-                border-bottom: 2px solid var(--irify-border) !important;
-                
-                .stat-item {
-                    border-bottom: 2px solid transparent;
-
-                    &:hover {
-                        background: var(--irify-bg-hover);
-                    }
-                    
-                    &.active {
-                        background: var(--irify-bg-selected);
-                        border-bottom-color: var(--irify-accent);
-                        
-                        .label {
-                            color: var(--irify-accent);
-                        }
-                    }
-                    
-                    .label { 
-                        color: var(--irify-text); 
-                    }
-
-                    .count { 
-                        color: var(--irify-text-secondary); 
-                    }
-                }
-            }
 
             .filter-tree-container {
+                // Dark Mode 滚动条样式
+                &::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                    
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.3);
+                    }
+                }
+                
                 .ant-empty-description {
                     color: var(--irify-text-secondary);
                 }
@@ -246,11 +247,11 @@
                     }
 
                     .ant-tree-node-content-wrapper {
-                        padding: 0;
-                        min-height: 32px;
-                        line-height: 32px;
+                        padding: 4px 8px;
+                        min-height: 28px;
                         border-radius: 4px;
                         background: transparent !important;
+                        transition: all 0.2s;
                         
                         &:hover {
                             background: var(--irify-bg-hover) !important;
@@ -261,33 +262,36 @@
                         }
                     }
 
+                    .ant-tree-switcher {
+                        width: 20px;
+                        line-height: 28px;
+                    }
+
                     // Tree node flex alignment
                     .tree-node-title {
                         display: flex;
                         align-items: center;
-                        padding: 0 8px;
                         width: 100%;
+                        gap: 8px;
 
                         .icon-wrapper {
-                            margin-right: 8px;
                             display: flex;
                             align-items: center;
                             color: var(--irify-text-secondary);
+                            font-size: 12px;
                         }
 
                         .label-text {
                             flex: 1;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            white-space: nowrap;
                             font-size: 13px;
+                            line-height: 1.5;
                         }
 
-                        .node-count {
-                            font-size: 11px;
-                            padding: 0 6px;
-                            border-radius: 10px;
-                            margin-left: 8px;
+                        .node-count-text {
+                            font-size: 12px;
+                            color: var(--irify-text-secondary);
+                            margin-left: auto;
+                            flex-shrink: 0;
                         }
                     }
 
@@ -304,9 +308,8 @@
                             .icon-wrapper {
                                 color: var(--irify-accent);
                             }
-                            .node-count {
+                            .node-count-text {
                                 color: var(--irify-accent);
-                                background: rgba(0, 217, 255, 0.15);
                             }
                          }
                     }
@@ -324,6 +327,37 @@
                     }
                 }
             }
+        }
+    }
+
+    // Muted tag styles for Dark Mode
+    .muted-tag {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: rgba(255, 255, 255, 0.65) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        font-size: 12px;
+    }
+
+    .muted-tag-overflow {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        font-size: 11px;
+    }
+
+    .lang-tag {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: rgba(255, 255, 255, 0.65) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .rule-title-link {
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-weight: 600;
+        font-size: 14px;
+        
+        &:hover {
+            color: var(--irify-accent) !important;
         }
     }
 }

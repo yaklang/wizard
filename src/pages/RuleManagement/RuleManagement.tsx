@@ -7,7 +7,6 @@ import {
     Tree,
     Space,
     Button,
-    Popconfirm,
     message,
     Input,
     Upload,
@@ -15,16 +14,10 @@ import {
     Modal,
     Progress,
     Spin,
-    Select,
     Empty,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import {
-    BugOutlined,
-    UploadOutlined,
-    ReloadOutlined,
-    EyeOutlined,
-} from '@ant-design/icons';
+import { BugOutlined, UploadOutlined, ShrinkOutlined } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -44,26 +37,38 @@ import { RuleDetailModal } from './RuleDetailModal';
 import './RuleManagement.scss';
 
 const { Sider, Content } = Layout;
-const { Option } = Select;
 
-const renderTreeNodeTitle = (node: any) => (
-    <div className="tree-node-title">
-        <span className="icon-wrapper">
-            <BugOutlined />
-        </span>
-        <span className="label-text">{node.title}</span>
-        {node.count !== undefined && (
-            <Tag className="node-count">{node.count}</Tag>
-        )}
-    </div>
-);
+const renderTreeNodeTitle = (node: any) => {
+    const isParentNode = node.children && node.children.length > 0;
+
+    return (
+        <div className="tree-node-title">
+            <span className="icon-wrapper">
+                <BugOutlined />
+            </span>
+            <span
+                className="label-text"
+                style={{
+                    fontWeight: isParentNode ? 600 : 400,
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                }}
+            >
+                {node.title}
+            </span>
+            {node.count !== undefined && (
+                <span className="node-count-text">({node.count})</span>
+            )}
+        </div>
+    );
+};
 
 const severityMap: Record<string, { label: string; color: string }> = {
     critical: { label: '严重', color: 'red' },
     high: { label: '高危', color: 'orange' },
     medium: { label: '中危', color: 'gold' },
     middle: { label: '中危', color: 'gold' },
-    low: { label: '低危', color: 'green' },
+    low: { label: '低危', color: 'gold' },
     info: { label: '信息', color: 'blue' },
 };
 
@@ -90,7 +95,10 @@ const RuleManagement: React.FC = () => {
     const [data, setData] = useState<TSyntaxFlowRule[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(20);
+    const [limit] = useState(50); // 无限滚动每次加载更多
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const loadMoreRef = React.useRef<HTMLDivElement>(null);
 
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [filters, setFilters] = useState<{
@@ -122,21 +130,164 @@ const RuleManagement: React.FC = () => {
     // 筛选选项和树
     const [filterTreeData, setFilterTreeData] = useState<FilterTreeNode[]>([]);
     const [selectedFilterKeys, setSelectedFilterKeys] = useState<string[]>([]);
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-    // 构建筛选树 (Simplified: Only Risk Type, flattened)
+    // 收集所有父节点的 key（用于默认展开）
+    const collectParentKeys = (nodes: FilterTreeNode[]): string[] => {
+        const keys: string[] = [];
+        const traverse = (nodeList: FilterTreeNode[]) => {
+            nodeList.forEach((node) => {
+                if (node.children && node.children.length > 0) {
+                    keys.push(node.key as string);
+                    traverse(node.children);
+                }
+            });
+        };
+        traverse(nodes);
+        return keys;
+    };
+
+    // 构建筛选树 - 支持多维度分组
     const buildFilterTree = useCallback(
         (options: TSyntaxFlowRuleFilterOptions): FilterTreeNode[] => {
-            // 缺陷类型 (RiskType) - 直接展示列表，不使用文件夹包裹
+            const treeNodes: FilterTreeNode[] = [];
+
+            // 1. 标准分组 - 按前缀分类
+            if (options.groups && options.groups.length > 0) {
+                // OWASP Top 10
+                const owaspGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('OWASP '),
+                );
+                if (owaspGroups.length > 0) {
+                    treeNodes.push({
+                        title: 'OWASP Top 10',
+                        key: 'category-owasp',
+                        children: owaspGroups.map((g) => ({
+                            title: g.name || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group' as FilterTreeNodeType,
+                            filterValue: g.name,
+                            count: g.count,
+                        })),
+                    });
+                }
+
+                // CWE Top 25
+                const cweTopGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('CWE Top '),
+                );
+                if (cweTopGroups.length > 0) {
+                    treeNodes.push({
+                        title: 'CWE Top 25',
+                        key: 'category-cwe-top',
+                        children: cweTopGroups.map((g) => ({
+                            title: g.name || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group' as FilterTreeNodeType,
+                            filterValue: g.name,
+                            count: g.count,
+                        })),
+                    });
+                }
+
+                // 框架分组
+                const frameworkGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('Framework - '),
+                );
+                if (frameworkGroups.length > 0) {
+                    treeNodes.push({
+                        title: '框架/组件',
+                        key: 'category-frameworks',
+                        children: frameworkGroups.map((g) => ({
+                            title: g.name?.replace('Framework - ', '') || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group' as FilterTreeNodeType,
+                            filterValue: g.name,
+                            count: g.count,
+                        })),
+                    });
+                }
+
+                // 语言库分组
+                const langLibGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('Language Library - '),
+                );
+                if (langLibGroups.length > 0) {
+                    treeNodes.push({
+                        title: '语言库',
+                        key: 'category-lang-libs',
+                        children: langLibGroups.map((g) => ({
+                            title:
+                                g.name?.replace('Language Library - ', '') ||
+                                '',
+                            key: `group-${g.name}`,
+                            filterType: 'group' as FilterTreeNodeType,
+                            filterValue: g.name,
+                            count: g.count,
+                        })),
+                    });
+                }
+
+                // SCA 分组
+                const scaGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('SCA - '),
+                );
+                if (scaGroups.length > 0) {
+                    treeNodes.push({
+                        title: 'SCA / 其他',
+                        key: 'category-sca',
+                        children: scaGroups.map((g) => ({
+                            title: g.name?.replace('SCA - ', '') || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group' as FilterTreeNodeType,
+                            filterValue: g.name,
+                            count: g.count,
+                        })),
+                    });
+                }
+
+                // 其他分组（不符合标准命名的）
+                const otherGroups = options.groups.filter(
+                    (g) =>
+                        !g.name?.startsWith('OWASP ') &&
+                        !g.name?.startsWith('CWE Top ') &&
+                        !g.name?.startsWith('Framework - ') &&
+                        !g.name?.startsWith('Language Library - ') &&
+                        !g.name?.startsWith('SCA - '),
+                );
+                if (otherGroups.length > 0) {
+                    treeNodes.push({
+                        title: '自定义分组',
+                        key: 'category-custom',
+                        children: otherGroups.map((g) => ({
+                            title: g.name || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group' as FilterTreeNodeType,
+                            filterValue: g.name,
+                            count: g.count,
+                        })),
+                    });
+                }
+            }
+
+            // 2. 缺陷类型分组 (Risk Types)
             if (options.risk_types && options.risk_types.length > 0) {
-                return options.risk_types.map((rt) => ({
+                const riskTypeChildren = options.risk_types.map((rt) => ({
                     title: rt.name || '',
                     key: `risk-type-${rt.name}`,
                     filterType: 'risk_type' as FilterTreeNodeType,
                     filterValue: rt.name,
                     count: rt.count,
                 }));
+
+                treeNodes.push({
+                    title: '缺陷类型',
+                    key: 'category-risk-types',
+                    children: riskTypeChildren,
+                });
             }
-            return [];
+
+            return treeNodes;
         },
         [],
     );
@@ -149,7 +300,10 @@ const RuleManagement: React.FC = () => {
         getSyntaxFlowRuleFilterOptions().then((res) => {
             if (res.code === 200 && res.data) {
                 setRawFilterOptions(res.data);
-                setFilterTreeData(buildFilterTree(res.data));
+                const treeData = buildFilterTree(res.data);
+                setFilterTreeData(treeData);
+                // 默认展开所有父节点
+                setExpandedKeys(collectParentKeys(treeData));
             }
         });
     }, [buildFilterTree]);
@@ -221,11 +375,16 @@ const RuleManagement: React.FC = () => {
             message.success('导入成功');
             setImportLoading(false);
             setIsImportModalOpen(false);
-            fetchList(1, limit);
+            setPage(1);
+            setData([]);
+            fetchList(1, filters, false);
             // 刷新筛选选项
             getSyntaxFlowRuleFilterOptions().then((r) => {
                 if (r.code === 200 && r.data) {
-                    setFilterTreeData(buildFilterTree(r.data));
+                    const treeData = buildFilterTree(r.data);
+                    setFilterTreeData(treeData);
+                    // 默认展开所有父节点
+                    setExpandedKeys(collectParentKeys(treeData));
                 }
             });
         } catch (error) {
@@ -235,12 +394,16 @@ const RuleManagement: React.FC = () => {
     };
 
     const fetchList = useCallback(
-        async (p: number, l: number, currentFilters?: any) => {
-            setLoading(true);
+        async (p: number, currentFilters?: any, append = false) => {
+            if (append) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
             try {
                 const res = await getSyntaxFlowRules({
                     page: p,
-                    limit: l,
+                    limit,
                     ...currentFilters,
                 });
                 if (!res) {
@@ -248,32 +411,81 @@ const RuleManagement: React.FC = () => {
                     return;
                 }
                 const list = res.data?.list ?? [];
-                setData(list);
-                setTotal(res.data?.pagemeta?.total ?? 0);
+                const totalCount = res.data?.pagemeta?.total ?? 0;
+
+                if (append) {
+                    setData((prev) => [...prev, ...list]);
+                } else {
+                    setData(list);
+                }
+
+                setTotal(totalCount);
                 setPage(res.data?.pagemeta?.page ?? p);
-                setLimit(res.data?.pagemeta?.limit ?? l);
+
+                // 检查是否还有更多数据
+                const currentTotal = append
+                    ? data.length + list.length
+                    : list.length;
+                setHasMore(currentTotal < totalCount);
             } catch (err) {
                 message.destroy();
                 message.error('获取规则列表出错');
             } finally {
                 setLoading(false);
+                setLoadingMore(false);
             }
         },
-        [],
+        [limit, data.length],
     );
 
     useEffect(() => {
-        fetchList(1, 20, filters);
-    }, [fetchList, filters]);
+        setPage(1);
+        setData([]);
+        fetchList(1, filters, false);
+    }, [filters]);
+
+    // 加载更多
+    const loadMore = useCallback(() => {
+        if (!loadingMore && !loading && hasMore) {
+            const nextPage = page + 1;
+            setPage(nextPage);
+            fetchList(nextPage, filters, true);
+        }
+    }, [loadingMore, loading, hasMore, page, filters, fetchList]);
+
+    // 无限滚动监听
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (
+                    entries[0].isIntersecting &&
+                    hasMore &&
+                    !loading &&
+                    !loadingMore
+                ) {
+                    loadMore();
+                }
+            },
+            { threshold: 0.1 },
+        );
+
+        const currentRef = loadMoreRef.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
+    }, [hasMore, loading, loadingMore, loadMore]);
 
     const handleTableChange = (
-        pagination: TablePaginationConfig,
+        _pagination: TablePaginationConfig,
         filtersArg: Record<string, FilterValue | null>,
         sorter: SorterResult<TSyntaxFlowRule> | SorterResult<TSyntaxFlowRule>[],
     ) => {
-        const nextPage = pagination.current ?? 1;
-        const nextLimit = pagination.pageSize ?? 20;
-
         // Merge existing filters with new table filters
         const newFilters: any = { ...filters };
 
@@ -291,7 +503,7 @@ const RuleManagement: React.FC = () => {
             delete newFilters.severity;
         }
 
-        // Handle sorting (limited to other columns if any, assuming language/severity sorting removed)
+        // Handle sorting
         if (!Array.isArray(sorter) && sorter.field) {
             const order =
                 sorter.order === 'ascend'
@@ -308,50 +520,73 @@ const RuleManagement: React.FC = () => {
             }
         }
 
+        // 重置到第一页并重新加载
+        setPage(1);
+        setData([]);
         setFilters(newFilters);
-        fetchList(Number(nextPage), Number(nextLimit), newFilters);
     };
 
     const handleSearch = (value: string) => {
         const newFilters = { ...filters, rule_name: value };
-        // Reset to page 1 on search
         setPage(1);
+        setData([]);
         setFilters(newFilters);
-        fetchList(1, limit, newFilters);
     };
 
     // 树节点选择处理
     const handleTreeSelect = (keys: any[], info: any) => {
+        const node = info.node as FilterTreeNode;
+
+        // 如果点击的是父节点（有子节点），切换展开/折叠状态
+        if (node.children && node.children.length > 0) {
+            const nodeKey = node.key as string;
+            if (expandedKeys.includes(nodeKey)) {
+                setExpandedKeys(expandedKeys.filter((k) => k !== nodeKey));
+            } else {
+                setExpandedKeys([...expandedKeys, nodeKey]);
+            }
+        }
+
         if (keys.length === 0) {
             setSelectedFilterKeys([]);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { risk_type: _, ...rest } = filters;
+            const { risk_type: _rt, group_name: _gn, ...rest } = filters;
             setFilters(rest);
             return;
         }
 
-        const node = info.node as FilterTreeNode;
         if (node.filterType && node.filterValue) {
             setSelectedFilterKeys(keys as string[]);
             const newFilters = { ...filters };
+
+            // Clear other tree-based filters first
+            delete newFilters.risk_type;
+            delete newFilters.group_name;
+
+            // Apply the selected filter
             switch (node.filterType) {
                 case 'risk_type':
                     newFilters.risk_type = node.filterValue;
+                    break;
+                case 'group':
+                    newFilters.group_name = node.filterValue;
                     break;
                 default:
                     break;
             }
             // Reset to page 1 on filter change
             setPage(1);
+            setData([]);
             setFilters(newFilters);
-            fetchList(1, limit, newFilters);
         }
     };
 
-    const handleClearFilters = () => {
-        setSelectedFilterKeys([]);
-        setFilters({});
-        fetchList(1, limit, {});
+    const handleTreeExpand = (keys: React.Key[]) => {
+        setExpandedKeys(keys as string[]);
+    };
+
+    const handleCollapseAll = () => {
+        setExpandedKeys([]);
     };
 
     const handleBatchDelete = async () => {
@@ -370,31 +605,14 @@ const RuleManagement: React.FC = () => {
                     await Promise.all(promises);
                     message.success('批量删除成功');
                     setSelectedRowKeys([]);
-                    fetchList(page, limit, filters);
+                    setPage(1);
+                    setData([]);
+                    fetchList(1, filters, false);
                 } catch (e) {
                     message.error('批量删除过程中出现错误');
                 }
             },
         });
-    };
-
-    const handleDelete = async (record: TSyntaxFlowRule) => {
-        try {
-            const params: { rule_name?: string; rule_id?: string } = {};
-            if (record.rule_id) params.rule_id = record.rule_id;
-            else params.rule_name = record.rule_name;
-
-            const res = await deleteSyntaxFlowRule(params);
-            if (res) {
-                message.success('删除成功');
-                fetchList(page, limit, filters);
-            } else {
-                message.error('删除失败');
-            }
-        } catch (err) {
-            message.destroy();
-            message.error('删除失败');
-        }
     };
 
     const handleClearRules = () => {
@@ -410,7 +628,9 @@ const RuleManagement: React.FC = () => {
                     });
                     if (res) {
                         message.success('规则已清空');
-                        fetchList(1, limit);
+                        setPage(1);
+                        setData([]);
+                        fetchList(1, filters, false);
                     } else {
                         message.error('清空失败');
                     }
@@ -474,42 +694,138 @@ const RuleManagement: React.FC = () => {
     };
 
     const handleDetailSuccess = () => {
-        fetchList(page, limit, filters);
+        setPage(1);
+        setData([]);
+        fetchList(1, filters, false);
+    };
+
+    // 语言标准化显示映射（行业通用格式）
+    const standardizeLanguage = (lang: string): string => {
+        const langLower = lang.toLowerCase();
+        const langMap: Record<string, string> = {
+            php: 'PHP',
+            java: 'Java',
+            javascript: 'JavaScript',
+            python: 'Python',
+            golang: 'Go',
+            go: 'Go',
+            c: 'C',
+            'c++': 'C++',
+            'c#': 'C#',
+            typescript: 'TypeScript',
+            ruby: 'Ruby',
+            rust: 'Rust',
+            kotlin: 'Kotlin',
+            swift: 'Swift',
+        };
+        return (
+            langMap[langLower] || lang.charAt(0).toUpperCase() + lang.slice(1)
+        );
     };
 
     const columns: ColumnsType<TSyntaxFlowRule> = [
         {
-            title: '规则名',
-            dataIndex: 'rule_name',
+            title: '语言',
+            dataIndex: 'language',
+            key: 'language',
+            width: 90,
+            filters: rawFilterOptions.languages?.map((lang) => ({
+                text: `${standardizeLanguage(lang.name || '')} (${lang.count})`,
+                value: lang.name || '',
+            })),
+            filterMultiple: false,
+            render: (text) => {
+                if (!text) return '-';
+                const displayText = standardizeLanguage(text);
+                return (
+                    <Tag
+                        className="lang-tag"
+                        style={{
+                            backgroundColor: 'var(--tag-neutral-bg, #f5f5f5)',
+                            color: 'var(--tag-neutral-text, #595959)',
+                            border: '1px solid var(--tag-neutral-border, #d9d9d9)',
+                            fontSize: '12px',
+                        }}
+                    >
+                        {displayText}
+                    </Tag>
+                );
+            },
+        },
+        {
+            title: '规则名称',
             key: 'rule_name',
             ellipsis: true,
-            render: (text, record) => (
+            render: (_, record) => (
                 <a
                     onClick={() => handleViewDetail(record)}
-                    className="font-medium"
+                    className="rule-title-link"
                 >
-                    {text}
+                    {record.title_zh || record.title || record.rule_name}
                 </a>
             ),
         },
         {
-            title: '标题',
-            dataIndex: 'title_zh',
-            key: 'title_zh',
-            ellipsis: true,
-            render: (text, record) => text || record.title || '-',
-        },
-        {
-            title: '语言',
-            dataIndex: 'language',
-            key: 'language',
-            width: 100,
-            filters: rawFilterOptions.languages?.map((lang) => ({
-                text: `${lang.name} (${lang.count})`,
-                value: lang.name || '',
-            })),
-            filterMultiple: false,
-            render: (text) => (text ? <Tag>{text}</Tag> : '-'),
+            title: '分类标签',
+            key: 'categories',
+            width: 280,
+            render: (_, record) => {
+                const groups = record.groups || [];
+                const tags: string[] = [];
+
+                // Add OWASP, CWE, Risk Type
+                groups.forEach((g) => {
+                    if (
+                        g.is_build_in &&
+                        !g.group_name?.startsWith('Language Library')
+                    ) {
+                        let displayName = g.group_name || '';
+                        if (displayName.startsWith('OWASP 2021 ')) {
+                            displayName = displayName.replace(
+                                'OWASP 2021 ',
+                                '',
+                            );
+                        } else if (displayName.startsWith('Framework - ')) {
+                            displayName = displayName.replace(
+                                'Framework - ',
+                                '',
+                            );
+                        } else if (displayName.startsWith('SCA - ')) {
+                            displayName = displayName.replace('SCA - ', '');
+                        }
+                        tags.push(displayName);
+                    }
+                });
+
+                // Add CWE
+                if (record.cwe && record.cwe.length > 0) {
+                    tags.push(...record.cwe.slice(0, 2));
+                }
+
+                // Add Risk Type
+                if (record.risk_type) {
+                    tags.push(record.risk_type);
+                }
+
+                const displayTags = tags.slice(0, 4);
+
+                return displayTags.length > 0 ? (
+                    <Space size={[0, 4]} wrap>
+                        {displayTags.map((tag, idx) => (
+                            <Tag key={idx} className="muted-tag">
+                                {tag}
+                            </Tag>
+                        ))}
+                        {tags.length > 4 && (
+                            <Tag className="muted-tag-overflow">
+                                +{tags.length - 4}
+                            </Tag>
+                        )}
+                    </Space>
+                ) : (
+                    '-'
+                );
+            },
         },
         {
             title: '严重度',
@@ -532,38 +848,16 @@ const RuleManagement: React.FC = () => {
         {
             title: '操作',
             key: 'action',
-            width: 180,
+            width: 80,
             render: (_, record) => (
-                <Space size="small">
-                    <Button
-                        type="link"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleViewDetail(record)}
-                        style={{ padding: 0 }}
-                    />
-                    <Button
-                        type="link"
-                        size="small"
-                        onClick={() => handleEdit(record)}
-                        style={{ padding: 0 }}
-                    >
-                        编辑
-                    </Button>
-                    <Popconfirm
-                        title="确定删除吗？"
-                        onConfirm={() => handleDelete(record)}
-                    >
-                        <Button
-                            type="link"
-                            size="small"
-                            danger
-                            style={{ padding: 0 }}
-                        >
-                            删除
-                        </Button>
-                    </Popconfirm>
-                </Space>
+                <Button
+                    type="link"
+                    size="small"
+                    onClick={() => handleEdit(record)}
+                    style={{ padding: 0 }}
+                >
+                    编辑
+                </Button>
             ),
         },
     ];
@@ -582,73 +876,11 @@ const RuleManagement: React.FC = () => {
                     <Button
                         type="text"
                         size="small"
-                        icon={<ReloadOutlined />}
-                        onClick={handleClearFilters}
-                        disabled={
-                            selectedFilterKeys.length === 0 &&
-                            !filters.severity &&
-                            !filters.language &&
-                            !filters.purpose &&
-                            !filters.group_name
-                        }
-                    >
-                        重置
-                    </Button>
-                </div>
-
-                {/* 顶部统计卡片 (类似缺陷筛选) */}
-                <div className="severity-stats">
-                    {[
-                        { key: 'critical', label: '严重' },
-                        { key: 'high', label: '高' },
-                        { key: 'medium', label: '中' },
-                        { key: 'low', label: '低' },
-                    ].map((item) => {
-                        const count =
-                            rawFilterOptions.severities?.find(
-                                (s) => s.name?.toLowerCase() === item.key,
-                            )?.count || 0;
-                        const isActive =
-                            filters.severity?.toLowerCase() === item.key;
-                        return (
-                            <div
-                                key={item.key}
-                                className={`stat-item ${isActive ? 'active' : ''}`}
-                                onClick={() => {
-                                    const newFilters = {
-                                        ...filters,
-                                        severity: isActive
-                                            ? undefined
-                                            : item.key,
-                                    };
-                                    setPage(1);
-                                    setFilters(newFilters);
-                                    fetchList(1, limit, newFilters);
-                                }}
-                            >
-                                <span className="label">{item.label}</span>
-                                <span className="count">{count}</span>
-                            </div>
-                        );
-                    })}
-                    <div
-                        className={`stat-item ${!filters.severity ? 'active' : ''}`}
-                        onClick={() => {
-                            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                            const { severity: _, ...rest } = filters;
-                            setPage(1);
-                            setFilters(rest);
-                            fetchList(1, limit, rest);
-                        }}
-                    >
-                        <span className="label">所有</span>
-                        <span className="count">
-                            {rawFilterOptions.severities?.reduce(
-                                (acc, curr) => acc + (curr.count || 0),
-                                0,
-                            ) || 0}
-                        </span>
-                    </div>
+                        icon={<ShrinkOutlined />}
+                        onClick={handleCollapseAll}
+                        disabled={expandedKeys.length === 0}
+                        title="收起所有分组"
+                    />
                 </div>
 
                 <div className="filter-tree-container">
@@ -656,7 +888,9 @@ const RuleManagement: React.FC = () => {
                         <Tree
                             treeData={filterTreeData}
                             selectedKeys={selectedFilterKeys}
+                            expandedKeys={expandedKeys}
                             onSelect={handleTreeSelect}
+                            onExpand={handleTreeExpand}
                             blockNode
                             showIcon={false}
                             titleRender={renderTreeNodeTitle}
@@ -677,53 +911,11 @@ const RuleManagement: React.FC = () => {
                             </span>
                         </div>
                         <Space>
-                            <Select
-                                allowClear
-                                placeholder="用途"
-                                style={{ width: 120 }}
-                                value={filters.purpose}
-                                onChange={(val) => {
-                                    const newFilters = {
-                                        ...filters,
-                                        purpose: val,
-                                    };
-                                    setPage(1);
-                                    setFilters(newFilters);
-                                    fetchList(1, limit, newFilters);
-                                }}
-                            >
-                                {rawFilterOptions.purposes?.map((p) => (
-                                    <Option key={p.name} value={p.name}>
-                                        {p.name} ({p.count})
-                                    </Option>
-                                ))}
-                            </Select>
-                            <Select
-                                allowClear
-                                placeholder="分组"
-                                style={{ width: 140 }}
-                                value={filters.group_name}
-                                onChange={(val) => {
-                                    const newFilters = {
-                                        ...filters,
-                                        group_name: val,
-                                    };
-                                    setPage(1);
-                                    setFilters(newFilters);
-                                    fetchList(1, limit, newFilters);
-                                }}
-                            >
-                                {rawFilterOptions.groups?.map((g) => (
-                                    <Option key={g.name} value={g.name}>
-                                        {g.name} ({g.count})
-                                    </Option>
-                                ))}
-                            </Select>
                             <Input.Search
                                 placeholder="搜索规则名"
                                 allowClear
                                 onSearch={handleSearch}
-                                style={{ width: 180 }}
+                                style={{ width: 200 }}
                             />
                             <Button onClick={handleImportClick}>导入</Button>
                             <Button onClick={handleExportClick}>导出</Button>
@@ -779,16 +971,32 @@ const RuleManagement: React.FC = () => {
                         dataSource={data}
                         rowKey={(r) => r.rule_id ?? r.rule_name}
                         loading={loading}
-                        pagination={{
-                            current: page,
-                            pageSize: limit,
-                            total,
-                            showSizeChanger: true,
-                            showTotal: (t) => `共 ${t} 条`,
-                        }}
+                        pagination={false}
                         onChange={handleTableChange}
                         size="small"
                     />
+
+                    {/* 无限滚动加载指示器 */}
+                    <div
+                        ref={loadMoreRef}
+                        style={{
+                            textAlign: 'center',
+                            padding: '20px',
+                            color: 'rgba(255, 255, 255, 0.45)',
+                        }}
+                    >
+                        {loadingMore && <Spin />}
+                        {!loadingMore && !hasMore && data.length > 0 && (
+                            <span>已加载全部 {total} 条规则</span>
+                        )}
+                        {!loadingMore && hasMore && data.length > 0 && (
+                            <span
+                                style={{ color: 'rgba(255, 255, 255, 0.25)' }}
+                            >
+                                向下滚动加载更多...
+                            </span>
+                        )}
+                    </div>
                 </Card>
             </Content>
 

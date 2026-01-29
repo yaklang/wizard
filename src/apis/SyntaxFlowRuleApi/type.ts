@@ -114,19 +114,28 @@ interface TSyntaxFlowRuleMetadataUpdateRequest {
 }
 
 // 规则筛选选项
-export type TSyntaxFlowRuleFilterOptionItem = {
+export interface TSyntaxFlowRuleFilterOptionItem {
     name?: string;
     count?: number;
-};
+}
 
-export type TSyntaxFlowRuleFilterOptions = {
+// CWE 分类项（包含关联的 OWASP 信息）
+export interface TCWECategoryItem {
+    cwe?: string; // CWE-89
+    name?: string; // SQL Injection
+    count?: number; // 规则数量
+    owasp_categories?: string[]; // 关联的 OWASP 分类
+}
+
+export interface TSyntaxFlowRuleFilterOptions {
     languages?: TSyntaxFlowRuleFilterOptionItem[];
     severities?: TSyntaxFlowRuleFilterOptionItem[];
     purposes?: TSyntaxFlowRuleFilterOptionItem[];
     groups?: TSyntaxFlowRuleFilterOptionItem[];
     types?: TSyntaxFlowRuleFilterOptionItem[];
     risk_types?: TSyntaxFlowRuleFilterOptionItem[];
-};
+    cwe_categories?: TCWECategoryItem[]; // ⭐ 新增：CWE 分类筛选
+}
 
 export type {
     TSyntaxFlowAlertDesc,
@@ -138,4 +147,3 @@ export type {
     TAsyncTaskLog,
     TSyntaxFlowRuleMetadataUpdateRequest,
 };
-
