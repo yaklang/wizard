@@ -1,6 +1,7 @@
 .rule-management-layout {
     height: 100vh;
     background: var(--irify-bg-base, #f0f2f5);
+    position: relative;
 
     .filter-sider {
         background: var(--irify-bg-base, #fff) !important;
@@ -16,14 +17,16 @@
 
         .sider-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            padding: 16px;
             border-bottom: 1px solid var(--irify-border-color, #e8e8e8);
+            flex-shrink: 0;
 
             .title {
                 font-weight: 600;
-                font-size: 14px;
+                font-size: 16px;
                 color: var(--irify-text, #333);
             }
         }
@@ -94,7 +97,8 @@
                     display: flex;
                     align-items: center;
                     width: 100%;
-                    gap: 8px;
+                    gap: 4px;
+                    flex-wrap: wrap;
 
                     .icon-wrapper {
                         display: flex;
@@ -107,6 +111,9 @@
                         flex: 1;
                         font-size: 13px;
                         line-height: 1.5;
+                        min-width: 0;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
                     }
 
                     .node-count-text {
@@ -122,7 +129,8 @@
 
     .rule-content {
         padding: 16px;
-        overflow-y: auto;
+        overflow: hidden;
+        position: relative;
 
         .rule-card {
             height: 100%;
@@ -272,7 +280,8 @@
                         display: flex;
                         align-items: center;
                         width: 100%;
-                        gap: 8px;
+                        gap: 4px;
+                        flex-wrap: wrap;
 
                         .icon-wrapper {
                             display: flex;
@@ -285,6 +294,9 @@
                             flex: 1;
                             font-size: 13px;
                             line-height: 1.5;
+                            min-width: 0;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
                         }
 
                         .node-count-text {

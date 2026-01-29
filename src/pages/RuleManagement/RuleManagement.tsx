@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
     Layout,
     Card,
-    Table,
     Tree,
     Space,
     Button,
@@ -15,11 +14,12 @@ import {
     Progress,
     Spin,
     Empty,
+    Select,
+    Tabs,
+    Form,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import { BugOutlined, UploadOutlined, ShrinkOutlined } from '@ant-design/icons';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import type { FilterValue, SorterResult } from 'antd/es/table/interface';
+import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import {
     getSyntaxFlowRules,
@@ -28,35 +28,52 @@ import {
     importSyntaxFlowRules,
     createRuleSnapshot,
     getSyntaxFlowRuleFilterOptions,
+    fetchSyntaxFlowRule,
+    updateSyntaxFlowRuleMetadata,
 } from '@/apis/SyntaxFlowRuleApi';
 import type {
     TSyntaxFlowRule,
     TSyntaxFlowRuleFilterOptions,
 } from '@/apis/SyntaxFlowRuleApi/type';
-import { RuleDetailModal } from './RuleDetailModal';
+import { WizardAceEditor } from '@/compoments';
 import './RuleManagement.scss';
 
 const { Sider, Content } = Layout;
 
-const renderTreeNodeTitle = (node: any) => {
+const renderTreeNodeTitle = (node: FilterTreeNode) => {
+    const isRuleNode = node.filterType === 'rule';
     const isParentNode = node.children && node.children.length > 0;
 
     return (
         <div className="tree-node-title">
-            <span className="icon-wrapper">
-                <BugOutlined />
-            </span>
+            {isRuleNode && node.language && (
+                <Tag
+                    style={{
+                        fontSize: '10px',
+                        padding: '0 4px',
+                        marginRight: '4px',
+                        lineHeight: '16px',
+                    }}
+                >
+                    {node.language.toUpperCase()}
+                </Tag>
+            )}
+            {!isRuleNode && (
+                <span className="icon-wrapper">
+                    <BugOutlined />
+                </span>
+            )}
             <span
                 className="label-text"
                 style={{
-                    fontWeight: isParentNode ? 600 : 400,
+                    fontWeight: isParentNode ? 600 : isRuleNode ? 400 : 500,
                     whiteSpace: 'normal',
                     wordBreak: 'break-word',
                 }}
             >
                 {node.title}
             </span>
-            {node.count !== undefined && (
+            {node.count !== undefined && !isRuleNode && (
                 <span className="node-count-text">({node.count})</span>
             )}
         </div>
@@ -74,11 +91,10 @@ const severityMap: Record<string, { label: string; color: string }> = {
 
 // 左侧筛选树的节点类型
 type FilterTreeNodeType =
-    | 'severity'
-    | 'language'
-    | 'purpose'
-    | 'group'
-    | 'risk_type';
+    | 'category'      // Level 1: 大分类（如 "OWASP Top 10"）
+    | 'group'         // Level 2: 具体分类（如 "A01: Broken Access Control"）
+    | 'rule'          // Level 3: 具体规则
+    | 'risk_type';    // 缺陷类型
 
 interface FilterTreeNode {
     title: string;
@@ -87,31 +103,32 @@ interface FilterTreeNode {
     children?: FilterTreeNode[];
     filterType?: FilterTreeNodeType;
     filterValue?: string;
+    count?: number;
+    language?: string;     // 规则节点的语言
+    ruleId?: string;       // 规则节点的ID
+    ruleName?: string;     // 规则节点的名称
+    isLeaf?: boolean;      // 是否为叶子节点
 }
 
 const RuleManagement: React.FC = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [data, setData] = useState<TSyntaxFlowRule[]>([]);
-    const [total, setTotal] = useState(0);
-    const [page, setPage] = useState(1);
-    const [limit] = useState(50); // 无限滚动每次加载更多
-    const [hasMore, setHasMore] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const loadMoreRef = React.useRef<HTMLDivElement>(null);
-
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [form] = Form.useForm();
+    
+    // 选中的规则详情
+    const [selectedRule, setSelectedRule] = useState<TSyntaxFlowRule | null>(null);
+    const [loadingRuleDetail, setLoadingRuleDetail] = useState(false);
+    const [savingRule, setSavingRule] = useState(false);
+    
+    // 筛选状态
+    const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
     const [filters, setFilters] = useState<{
         rule_name?: string;
-        language?: string;
-        severity?: string;
-        purpose?: string;
+        languages?: string[];
         group_name?: string;
         risk_type?: string;
-        order_by?: string;
-        order?: string;
     }>({});
 
+    // Modal 状态
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [exportPassword, setExportPassword] = useState('');
@@ -120,14 +137,7 @@ const RuleManagement: React.FC = () => {
     const [importLoading, setImportLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
-    // 规则详情弹窗状态
-    const [detailModalOpen, setDetailModalOpen] = useState(false);
-    const [selectedRule, setSelectedRule] = useState<{
-        name?: string;
-        id?: string;
-    }>({});
-
-    // 筛选选项和树
+    // 筛选选项和树（现在包含三层：分组 -> 分类 -> 规则）
     const [filterTreeData, setFilterTreeData] = useState<FilterTreeNode[]>([]);
     const [selectedFilterKeys, setSelectedFilterKeys] = useState<string[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
@@ -147,7 +157,7 @@ const RuleManagement: React.FC = () => {
         return keys;
     };
 
-    // 构建筛选树 - 支持多维度分组
+    // 构建筛选树 - 三层结构（Level 1: 标准/分组，Level 2: 具体分类，Level 3: 规则）
     const buildFilterTree = useCallback(
         (options: TSyntaxFlowRuleFilterOptions): FilterTreeNode[] => {
             const treeNodes: FilterTreeNode[] = [];
@@ -162,12 +172,15 @@ const RuleManagement: React.FC = () => {
                     treeNodes.push({
                         title: 'OWASP Top 10',
                         key: 'category-owasp',
+                        filterType: 'category',
                         children: owaspGroups.map((g) => ({
                             title: g.name || '',
                             key: `group-${g.name}`,
-                            filterType: 'group' as FilterTreeNodeType,
+                            filterType: 'group',
                             filterValue: g.name,
                             count: g.count,
+                            children: [], // 设置空数组以显示展开图标
+                            isLeaf: false, // 明确标记为非叶子节点
                         })),
                     });
                 }
@@ -180,12 +193,15 @@ const RuleManagement: React.FC = () => {
                     treeNodes.push({
                         title: 'CWE Top 25',
                         key: 'category-cwe-top',
+                        filterType: 'category',
                         children: cweTopGroups.map((g) => ({
                             title: g.name || '',
                             key: `group-${g.name}`,
-                            filterType: 'group' as FilterTreeNodeType,
+                            filterType: 'group',
                             filterValue: g.name,
                             count: g.count,
+                            children: [],
+                            isLeaf: false,
                         })),
                     });
                 }
@@ -198,12 +214,15 @@ const RuleManagement: React.FC = () => {
                     treeNodes.push({
                         title: '框架/组件',
                         key: 'category-frameworks',
+                        filterType: 'category',
                         children: frameworkGroups.map((g) => ({
                             title: g.name?.replace('Framework - ', '') || '',
                             key: `group-${g.name}`,
-                            filterType: 'group' as FilterTreeNodeType,
+                            filterType: 'group',
                             filterValue: g.name,
                             count: g.count,
+                            children: [],
+                            isLeaf: false,
                         })),
                     });
                 }
@@ -216,14 +235,17 @@ const RuleManagement: React.FC = () => {
                     treeNodes.push({
                         title: '语言库',
                         key: 'category-lang-libs',
+                        filterType: 'category',
                         children: langLibGroups.map((g) => ({
                             title:
                                 g.name?.replace('Language Library - ', '') ||
                                 '',
                             key: `group-${g.name}`,
-                            filterType: 'group' as FilterTreeNodeType,
+                            filterType: 'group',
                             filterValue: g.name,
                             count: g.count,
+                            children: [],
+                            isLeaf: false,
                         })),
                     });
                 }
@@ -236,12 +258,15 @@ const RuleManagement: React.FC = () => {
                     treeNodes.push({
                         title: 'SCA / 其他',
                         key: 'category-sca',
+                        filterType: 'category',
                         children: scaGroups.map((g) => ({
                             title: g.name?.replace('SCA - ', '') || '',
                             key: `group-${g.name}`,
-                            filterType: 'group' as FilterTreeNodeType,
+                            filterType: 'group',
                             filterValue: g.name,
                             count: g.count,
+                            children: [],
+                            isLeaf: false,
                         })),
                     });
                 }
@@ -259,12 +284,15 @@ const RuleManagement: React.FC = () => {
                     treeNodes.push({
                         title: '自定义分组',
                         key: 'category-custom',
+                        filterType: 'category',
                         children: otherGroups.map((g) => ({
                             title: g.name || '',
                             key: `group-${g.name}`,
-                            filterType: 'group' as FilterTreeNodeType,
+                            filterType: 'group',
                             filterValue: g.name,
                             count: g.count,
+                            children: [],
+                            isLeaf: false,
                         })),
                     });
                 }
@@ -278,11 +306,14 @@ const RuleManagement: React.FC = () => {
                     filterType: 'risk_type' as FilterTreeNodeType,
                     filterValue: rt.name,
                     count: rt.count,
+                    children: [],
+                    isLeaf: false,
                 }));
 
                 treeNodes.push({
                     title: '缺陷类型',
                     key: 'category-risk-types',
+                    filterType: 'category',
                     children: riskTypeChildren,
                 });
             }
@@ -375,244 +406,230 @@ const RuleManagement: React.FC = () => {
             message.success('导入成功');
             setImportLoading(false);
             setIsImportModalOpen(false);
-            setPage(1);
-            setData([]);
-            fetchList(1, filters, false);
-            // 刷新筛选选项
-            getSyntaxFlowRuleFilterOptions().then((r) => {
-                if (r.code === 200 && r.data) {
-                    const treeData = buildFilterTree(r.data);
-                    setFilterTreeData(treeData);
-                    // 默认展开所有父节点
-                    setExpandedKeys(collectParentKeys(treeData));
-                }
-            });
+            setSelectedRule(null);
+            refreshFilterOptions();
         } catch (error) {
             setImportLoading(false);
             console.error(error);
         }
     };
 
-    const fetchList = useCallback(
-        async (p: number, currentFilters?: any, append = false) => {
-            if (append) {
-                setLoadingMore(true);
-            } else {
-                setLoading(true);
-            }
+    // 加载特定分组下的规则列表（用于填充第三层节点）
+    const loadRulesForGroup = useCallback(
+        async (groupName: string, riskType?: string): Promise<FilterTreeNode[]> => {
             try {
-                const res = await getSyntaxFlowRules({
-                    page: p,
-                    limit,
-                    ...currentFilters,
-                });
-                if (!res) {
-                    message.error('获取规则列表失败');
-                    return;
-                }
-                const list = res.data?.list ?? [];
-                const totalCount = res.data?.pagemeta?.total ?? 0;
-
-                if (append) {
-                    setData((prev) => [...prev, ...list]);
+                const params: any = { limit: 1000 };
+                if (groupName) params.group_name = groupName;
+                if (riskType) params.risk_type = riskType;
+                
+                if (selectedLanguages.length > 0) {
+                    // 如果选择了语言，需要逐个加载
+                    const allRules: TSyntaxFlowRule[] = [];
+                    for (const lang of selectedLanguages) {
+                        const res = await getSyntaxFlowRules({ ...params, language: lang });
+                        if (res.data?.list) {
+                            allRules.push(...res.data.list);
+                        }
+                    }
+                    return allRules.map((rule) => ({
+                        title: rule.title_zh || rule.title || rule.rule_name,
+                        key: `rule-${rule.rule_id || rule.rule_name}`,
+                        filterType: 'rule',
+                        filterValue: rule.rule_name,
+                        language: rule.language,
+                        ruleId: rule.rule_id,
+                        ruleName: rule.rule_name,
+                        isLeaf: true,
+                    }));
                 } else {
-                    setData(list);
+                    const res = await getSyntaxFlowRules(params);
+                    const list = res.data?.list ?? [];
+                    return list.map((rule) => ({
+                        title: rule.title_zh || rule.title || rule.rule_name,
+                        key: `rule-${rule.rule_id || rule.rule_name}`,
+                        filterType: 'rule',
+                        filterValue: rule.rule_name,
+                        language: rule.language,
+                        ruleId: rule.rule_id,
+                        ruleName: rule.rule_name,
+                        isLeaf: true,
+                    }));
                 }
-
-                setTotal(totalCount);
-                setPage(res.data?.pagemeta?.page ?? p);
-
-                // 检查是否还有更多数据
-                const currentTotal = append
-                    ? data.length + list.length
-                    : list.length;
-                setHasMore(currentTotal < totalCount);
             } catch (err) {
-                message.destroy();
-                message.error('获取规则列表出错');
-            } finally {
-                setLoading(false);
-                setLoadingMore(false);
+                message.error('加载规则列表失败');
+                return [];
             }
         },
-        [limit, data.length],
+        [selectedLanguages],
     );
 
-    useEffect(() => {
-        setPage(1);
-        setData([]);
-        fetchList(1, filters, false);
-    }, [filters]);
-
-    // 加载更多
-    const loadMore = useCallback(() => {
-        if (!loadingMore && !loading && hasMore) {
-            const nextPage = page + 1;
-            setPage(nextPage);
-            fetchList(nextPage, filters, true);
-        }
-    }, [loadingMore, loading, hasMore, page, filters, fetchList]);
-
-    // 无限滚动监听
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (
-                    entries[0].isIntersecting &&
-                    hasMore &&
-                    !loading &&
-                    !loadingMore
-                ) {
-                    loadMore();
-                }
-            },
-            { threshold: 0.1 },
-        );
-
-        const currentRef = loadMoreRef.current;
-        if (currentRef) {
-            observer.observe(currentRef);
-        }
-
-        return () => {
-            if (currentRef) {
-                observer.unobserve(currentRef);
+    // 更新树节点的子节点
+    const updateTreeData = (
+        list: FilterTreeNode[],
+        key: React.Key,
+        children: FilterTreeNode[],
+    ): FilterTreeNode[] => {
+        return list.map((node) => {
+            if (node.key === key) {
+                return { ...node, children };
             }
-        };
-    }, [hasMore, loading, loadingMore, loadMore]);
-
-    const handleTableChange = (
-        _pagination: TablePaginationConfig,
-        filtersArg: Record<string, FilterValue | null>,
-        sorter: SorterResult<TSyntaxFlowRule> | SorterResult<TSyntaxFlowRule>[],
-    ) => {
-        // Merge existing filters with new table filters
-        const newFilters: any = { ...filters };
-
-        // Process Language Filter
-        if (filtersArg.language) {
-            newFilters.language = filtersArg.language[0] as string;
-        } else {
-            delete newFilters.language;
-        }
-
-        // Process Severity Filter
-        if (filtersArg.severity) {
-            newFilters.severity = filtersArg.severity[0] as string;
-        } else {
-            delete newFilters.severity;
-        }
-
-        // Handle sorting
-        if (!Array.isArray(sorter) && sorter.field) {
-            const order =
-                sorter.order === 'ascend'
-                    ? 'asc'
-                    : sorter.order === 'descend'
-                      ? 'desc'
-                      : undefined;
-            if (order) {
-                newFilters.order_by = sorter.field as string;
-                newFilters.order = order;
-            } else {
-                delete newFilters.order_by;
-                delete newFilters.order;
+            if (node.children) {
+                return {
+                    ...node,
+                    children: updateTreeData(node.children, key, children),
+                };
             }
-        }
-
-        // 重置到第一页并重新加载
-        setPage(1);
-        setData([]);
-        setFilters(newFilters);
+            return node;
+        });
     };
+
+    // 加载规则详情
+    const loadRuleDetail = useCallback(async (ruleName: string, ruleId?: string) => {
+        setLoadingRuleDetail(true);
+        try {
+            const res = await fetchSyntaxFlowRule({ rule_name: ruleName, rule_id: ruleId });
+            if (res.code === 200 && res.data) {
+                setSelectedRule(res.data);
+                // 填充表单
+                form.setFieldsValue({
+                    title: res.data.title,
+                    title_zh: res.data.title_zh,
+                    description: res.data.description,
+                    solution: res.data.solution,
+                    severity: res.data.severity,
+                    risk_type: res.data.risk_type,
+                    cwe: res.data.cwe,
+                    language: res.data.language,
+                });
+            }
+        } catch (err) {
+            message.error('加载规则详情失败');
+        } finally {
+            setLoadingRuleDetail(false);
+        }
+    }, [form]);
 
     const handleSearch = (value: string) => {
         const newFilters = { ...filters, rule_name: value };
-        setPage(1);
-        setData([]);
         setFilters(newFilters);
+        // TODO: 可以在这里添加搜索逻辑，过滤树节点
     };
 
     // 树节点选择处理
-    const handleTreeSelect = (keys: any[], info: any) => {
+    const handleTreeSelect = async (keys: any[], info: any) => {
         const node = info.node as FilterTreeNode;
 
-        // 如果点击的是父节点（有子节点），切换展开/折叠状态
-        if (node.children && node.children.length > 0) {
-            const nodeKey = node.key as string;
-            if (expandedKeys.includes(nodeKey)) {
-                setExpandedKeys(expandedKeys.filter((k) => k !== nodeKey));
-            } else {
-                setExpandedKeys([...expandedKeys, nodeKey]);
-            }
-        }
-
-        if (keys.length === 0) {
-            setSelectedFilterKeys([]);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { risk_type: _rt, group_name: _gn, ...rest } = filters;
-            setFilters(rest);
+        // 如果点击的是规则节点（叶子节点），加载规则详情
+        if (node.filterType === 'rule' && node.ruleName) {
+            setSelectedFilterKeys(keys as string[]);
+            loadRuleDetail(node.ruleName, node.ruleId);
             return;
         }
 
-        if (node.filterType && node.filterValue) {
-            setSelectedFilterKeys(keys as string[]);
-            const newFilters = { ...filters };
-
-            // Clear other tree-based filters first
-            delete newFilters.risk_type;
-            delete newFilters.group_name;
-
-            // Apply the selected filter
-            switch (node.filterType) {
-                case 'risk_type':
-                    newFilters.risk_type = node.filterValue;
-                    break;
-                case 'group':
-                    newFilters.group_name = node.filterValue;
-                    break;
-                default:
-                    break;
+        // 如果点击的是分类或分组节点（非规则节点），切换展开/折叠状态
+        if (node.filterType === 'category' || node.filterType === 'group' || node.filterType === 'risk_type') {
+            const nodeKey = node.key as string;
+            const isExpanded = expandedKeys.includes(nodeKey);
+            
+            if (isExpanded) {
+                // 折叠节点
+                setExpandedKeys(expandedKeys.filter((k) => k !== nodeKey));
+            } else {
+                // 展开节点
+                const newExpandedKeys = [...expandedKeys, nodeKey];
+                setExpandedKeys(newExpandedKeys);
+                
+                // 如果是 group 或 risk_type 节点，且还没有加载子节点，则加载规则列表
+                if (
+                    (node.filterType === 'group' || node.filterType === 'risk_type') &&
+                    (!node.children || node.children.length === 0)
+                ) {
+                    try {
+                        const rules = await loadRulesForGroup(
+                            node.filterType === 'group' ? node.filterValue || '' : '',
+                            node.filterType === 'risk_type' ? node.filterValue : undefined,
+                        );
+                        setFilterTreeData((prev) => updateTreeData(prev, node.key, rules));
+                    } catch (err) {
+                        message.error('加载规则失败');
+                    }
+                }
             }
-            // Reset to page 1 on filter change
-            setPage(1);
-            setData([]);
-            setFilters(newFilters);
         }
     };
 
-    const handleTreeExpand = (keys: React.Key[]) => {
+    // 树节点展开处理（懒加载规则列表）
+    const handleTreeExpand = async (keys: React.Key[], info: any) => {
         setExpandedKeys(keys as string[]);
+
+        // 如果展开的是第二层节点（group），且还没有加载子节点，则加载规则列表
+        if (info.expanded && info.node) {
+            const node = info.node as FilterTreeNode;
+            
+            // 检查是否是 group 或 risk_type 节点，且子节点未加载（undefined 或空数组）
+            if (
+                (node.filterType === 'group' || node.filterType === 'risk_type') &&
+                (!node.children || node.children.length === 0)
+            ) {
+                try {
+                    const rules = await loadRulesForGroup(
+                        node.filterType === 'group' ? node.filterValue || '' : '',
+                        node.filterType === 'risk_type' ? node.filterValue : undefined,
+                    );
+                    setFilterTreeData((prev) => updateTreeData(prev, node.key, rules));
+                } catch (err) {
+                    message.error('加载规则失败');
+                }
+            }
+        }
     };
 
     const handleCollapseAll = () => {
         setExpandedKeys([]);
     };
 
-    const handleBatchDelete = async () => {
-        if (selectedRowKeys.length === 0) return;
+    // 保存规则修改
+    const handleSaveRule = async () => {
+        if (!selectedRule) return;
+        
+        try {
+            const values = await form.validateFields();
+            setSavingRule(true);
+            
+            const res = await updateSyntaxFlowRuleMetadata({
+                rule_name: selectedRule.rule_name,
+                rule_id: selectedRule.rule_id,
+                ...values,
+            });
+            
+            if (res.code === 200) {
+                message.success('保存成功');
+                // 刷新规则详情
+                loadRuleDetail(selectedRule.rule_name, selectedRule.rule_id);
+            } else {
+                message.error(res.msg || '保存失败');
+            }
+        } catch (err) {
+            message.error('保存失败');
+        } finally {
+            setSavingRule(false);
+        }
+    };
 
-        Modal.confirm({
-            title: `确认删除选中的 ${selectedRowKeys.length} 个规则？`,
-            content: '此操作不可恢复',
-            okText: '删除',
-            okButtonProps: { danger: true },
-            onOk: async () => {
-                try {
-                    const promises = selectedRowKeys.map((id) =>
-                        deleteSyntaxFlowRule({ rule_id: String(id) }),
-                    );
-                    await Promise.all(promises);
-                    message.success('批量删除成功');
-                    setSelectedRowKeys([]);
-                    setPage(1);
-                    setData([]);
-                    fetchList(1, filters, false);
-                } catch (e) {
-                    message.error('批量删除过程中出现错误');
-                }
-            },
-        });
+    // 重置表单
+    const handleResetForm = () => {
+        if (selectedRule) {
+            form.setFieldsValue({
+                title: selectedRule.title,
+                title_zh: selectedRule.title_zh,
+                description: selectedRule.description,
+                solution: selectedRule.solution,
+                severity: selectedRule.severity,
+                risk_type: selectedRule.risk_type,
+                cwe: selectedRule.cwe,
+                language: selectedRule.language,
+            });
+        }
     };
 
     const handleClearRules = () => {
@@ -628,9 +645,9 @@ const RuleManagement: React.FC = () => {
                     });
                     if (res) {
                         message.success('规则已清空');
-                        setPage(1);
-                        setData([]);
-                        fetchList(1, filters, false);
+                        setSelectedRule(null);
+                        // 刷新筛选选项
+                        refreshFilterOptions();
                     } else {
                         message.error('清空失败');
                     }
@@ -663,40 +680,60 @@ const RuleManagement: React.FC = () => {
         });
     };
 
-    const handleEdit = (record: TSyntaxFlowRule) => {
-        if (!record.rule_id && !record.rule_name) {
-            message.warning('该规则缺少唯一标识，无法编辑');
-            return;
-        }
+    // 跳转到独立的规则编辑器（用于完整编辑）
+    const handleEditInEditor = () => {
+        if (!selectedRule) return;
         navigate(getRoutePath(RouteKey.RULE_EDITOR), {
             state: {
                 mode: 'edit',
-                rule_id: record.rule_id,
-                rule_name: record.rule_name,
+                rule_id: selectedRule.rule_id,
+                rule_name: selectedRule.rule_name,
             },
         });
     };
 
+    // 创建新规则
     const handleCreate = () => {
         navigate(getRoutePath(RouteKey.RULE_EDITOR), {
             state: { mode: 'add' },
         });
     };
 
-    const handleViewDetail = (record: TSyntaxFlowRule) => {
-        setSelectedRule({ name: record.rule_name, id: record.rule_id });
-        setDetailModalOpen(true);
+    // 删除当前选中的规则
+    const handleDeleteSelectedRule = () => {
+        if (!selectedRule) return;
+        
+        Modal.confirm({
+            title: '确认删除该规则？',
+            content: `规则名称: ${selectedRule.title_zh || selectedRule.rule_name}`,
+            okText: '删除',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                try {
+                    await deleteSyntaxFlowRule({
+                        rule_id: selectedRule.rule_id,
+                        rule_name: selectedRule.rule_name,
+                    });
+                    message.success('删除成功');
+                    setSelectedRule(null);
+                    refreshFilterOptions();
+                } catch (err) {
+                    message.error('删除失败');
+                }
+            },
+        });
     };
 
-    const handleDetailClose = () => {
-        setDetailModalOpen(false);
-        setSelectedRule({});
-    };
-
-    const handleDetailSuccess = () => {
-        setPage(1);
-        setData([]);
-        fetchList(1, filters, false);
+    // 刷新筛选选项
+    const refreshFilterOptions = () => {
+        getSyntaxFlowRuleFilterOptions().then((res) => {
+            if (res.code === 200 && res.data) {
+                setRawFilterOptions(res.data);
+                const treeData = buildFilterTree(res.data);
+                setFilterTreeData(treeData);
+                setExpandedKeys(collectParentKeys(treeData));
+            }
+        });
     };
 
     // 语言标准化显示映射（行业通用格式）
@@ -723,166 +760,55 @@ const RuleManagement: React.FC = () => {
         );
     };
 
-    const columns: ColumnsType<TSyntaxFlowRule> = [
-        {
-            title: '语言',
-            dataIndex: 'language',
-            key: 'language',
-            width: 90,
-            filters: rawFilterOptions.languages?.map((lang) => ({
-                text: `${standardizeLanguage(lang.name || '')} (${lang.count})`,
-                value: lang.name || '',
-            })),
-            filterMultiple: false,
-            render: (text) => {
-                if (!text) return '-';
-                const displayText = standardizeLanguage(text);
-                return (
-                    <Tag
-                        className="lang-tag"
-                        style={{
-                            backgroundColor: 'var(--tag-neutral-bg, #f5f5f5)',
-                            color: 'var(--tag-neutral-text, #595959)',
-                            border: '1px solid var(--tag-neutral-border, #d9d9d9)',
-                            fontSize: '12px',
-                        }}
-                    >
-                        {displayText}
-                    </Tag>
-                );
-            },
-        },
-        {
-            title: '规则名称',
-            key: 'rule_name',
-            ellipsis: true,
-            render: (_, record) => (
-                <a
-                    onClick={() => handleViewDetail(record)}
-                    className="rule-title-link"
-                >
-                    {record.title_zh || record.title || record.rule_name}
-                </a>
-            ),
-        },
-        {
-            title: '分类标签',
-            key: 'categories',
-            width: 280,
-            render: (_, record) => {
-                const groups = record.groups || [];
-                const tags: string[] = [];
-
-                // Add OWASP, CWE, Risk Type
-                groups.forEach((g) => {
-                    if (
-                        g.is_build_in &&
-                        !g.group_name?.startsWith('Language Library')
-                    ) {
-                        let displayName = g.group_name || '';
-                        if (displayName.startsWith('OWASP 2021 ')) {
-                            displayName = displayName.replace(
-                                'OWASP 2021 ',
-                                '',
-                            );
-                        } else if (displayName.startsWith('Framework - ')) {
-                            displayName = displayName.replace(
-                                'Framework - ',
-                                '',
-                            );
-                        } else if (displayName.startsWith('SCA - ')) {
-                            displayName = displayName.replace('SCA - ', '');
-                        }
-                        tags.push(displayName);
-                    }
-                });
-
-                // Add CWE
-                if (record.cwe && record.cwe.length > 0) {
-                    tags.push(...record.cwe.slice(0, 2));
-                }
-
-                // Add Risk Type
-                if (record.risk_type) {
-                    tags.push(record.risk_type);
-                }
-
-                const displayTags = tags.slice(0, 4);
-
-                return displayTags.length > 0 ? (
-                    <Space size={[0, 4]} wrap>
-                        {displayTags.map((tag, idx) => (
-                            <Tag key={idx} className="muted-tag">
-                                {tag}
-                            </Tag>
-                        ))}
-                        {tags.length > 4 && (
-                            <Tag className="muted-tag-overflow">
-                                +{tags.length - 4}
-                            </Tag>
-                        )}
-                    </Space>
-                ) : (
-                    '-'
-                );
-            },
-        },
-        {
-            title: '严重度',
-            dataIndex: 'severity',
-            key: 'severity',
-            width: 100,
-            filters: Object.entries(severityMap).map(([key, conf]) => ({
-                text: conf.label,
-                value: key,
-            })),
-            filterMultiple: false,
-            render: (val) => {
-                const conf = severityMap[val?.toLowerCase()] || {
-                    label: val || '-',
-                    color: 'default',
-                };
-                return <Tag color={conf.color}>{conf.label}</Tag>;
-            },
-        },
-        {
-            title: '操作',
-            key: 'action',
-            width: 80,
-            render: (_, record) => (
-                <Button
-                    type="link"
-                    size="small"
-                    onClick={() => handleEdit(record)}
-                    style={{ padding: 0 }}
-                >
-                    编辑
-                </Button>
-            ),
-        },
-    ];
-
-    const rowSelection = {
-        selectedRowKeys,
-        onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
-    };
-
     return (
         <Layout className="rule-management-layout">
-            {/* 左侧筛选面板 */}
-            <Sider width={280} className="filter-sider" theme="light">
-                <div className="sider-header">
-                    <span className="title">规则列表 ({total})</span>
-                    <Button
-                        type="text"
-                        size="small"
-                        icon={<ShrinkOutlined />}
-                        onClick={handleCollapseAll}
-                        disabled={expandedKeys.length === 0}
-                        title="收起所有分组"
+            {/* 左侧导航栏 */}
+            <Sider width={320} className="filter-sider" theme="light" style={{ position: 'relative' }}>
+                {/* 顶部筛选区 */}
+                <div className="sider-header" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className="title">规则导航</span>
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<ShrinkOutlined />}
+                            onClick={handleCollapseAll}
+                            disabled={expandedKeys.length === 0}
+                            title="收起所有分组"
+                        />
+                    </div>
+                    
+                    {/* 语言筛选（多选） */}
+                    <Select
+                        mode="multiple"
+                        placeholder="筛选语言"
+                        value={selectedLanguages}
+                        onChange={(values) => {
+                            setSelectedLanguages(values);
+                            // 语言变化时，清空已加载的规则节点，需要重新加载
+                            const treeData = buildFilterTree(rawFilterOptions);
+                            setFilterTreeData(treeData);
+                        }}
+                        style={{ width: '100%' }}
+                        allowClear
+                        maxTagCount="responsive"
+                    >
+                        {rawFilterOptions.languages?.map((lang) => (
+                            <Select.Option key={lang.name} value={lang.name || ''}>
+                                {standardizeLanguage(lang.name || '')} ({lang.count})
+                            </Select.Option>
+                        ))}
+                    </Select>
+
+                    {/* 搜索框 */}
+                    <Input.Search
+                        placeholder="搜索规则名称"
+                        allowClear
+                        onSearch={handleSearch}
                     />
                 </div>
 
+                {/* 规则树 */}
                 <div className="filter-tree-container">
                     {filterTreeData.length > 0 ? (
                         <Tree
@@ -896,108 +822,163 @@ const RuleManagement: React.FC = () => {
                             titleRender={renderTreeNodeTitle}
                         />
                     ) : (
-                        <Empty description="暂无筛选项" />
+                        <Empty description="暂无规则" />
                     )}
                 </div>
             </Sider>
 
-            {/* 右侧内容区 */}
-            <Content className="rule-content">
-                <Card className="rule-card">
-                    <div className="header-row">
-                        <div className="title-section">
-                            <span className="page-title">
-                                静态分析 · 规则管理
-                            </span>
-                        </div>
-                        <Space>
-                            <Input.Search
-                                placeholder="搜索规则名"
-                                allowClear
-                                onSearch={handleSearch}
-                                style={{ width: 200 }}
+            {/* 右侧详情/编辑区 */}
+            <Content className="rule-content" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                {/* 顶部工具栏 - 固定在右侧内容区顶部 */}
+                <div style={{ padding: '16px', borderBottom: '1px solid var(--irify-border-color, #e8e8e8)', flexShrink: 0 }}>
+                    <Space>
+                        <Button onClick={handleImportClick}>导入</Button>
+                        <Button onClick={handleExportClick}>导出</Button>
+                        <Button danger onClick={handleClearRules}>清空</Button>
+                        <Button
+                            style={{
+                                backgroundColor: '#52c41a',
+                                borderColor: '#52c41a',
+                                color: '#fff',
+                            }}
+                            onClick={handlePublishSnapshot}
+                        >
+                            发布快照
+                        </Button>
+                        <Button type="primary" onClick={handleCreate}>
+                            新增规则
+                        </Button>
+                    </Space>
+                </div>
+
+                {/* 内容区域 */}
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                    {!selectedRule ? (
+                        // 空状态
+                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description={
+                                    <div>
+                                        <div style={{ fontSize: '16px', marginBottom: '8px' }}>请选择左侧规则进行查看或编辑</div>
+                                        <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
+                                            或使用顶部工具栏的&ldquo;新增规则&rdquo;按钮创建规则
+                                        </div>
+                                    </div>
+                                }
                             />
-                            <Button onClick={handleImportClick}>导入</Button>
-                            <Button onClick={handleExportClick}>导出</Button>
-                            <Button danger onClick={handleClearRules}>
-                                清空
-                            </Button>
-                            <Button
-                                style={{
-                                    backgroundColor: '#52c41a',
-                                    borderColor: '#52c41a',
-                                    color: '#fff',
-                                }}
-                                onClick={handlePublishSnapshot}
-                            >
-                                发布快照
-                            </Button>
-                            <Button type="primary" onClick={handleCreate}>
-                                新增规则
-                            </Button>
-                        </Space>
-                    </div>
-
-                    {selectedRowKeys.length > 0 && (
-                        <div className="batch-action-bar">
-                            <span>
-                                已选择{' '}
-                                <span className="count">
-                                    {selectedRowKeys.length}
-                                </span>{' '}
-                                项
-                            </span>
-                            <Space>
-                                <Button
-                                    danger
-                                    size="small"
-                                    onClick={handleBatchDelete}
-                                >
-                                    批量删除
-                                </Button>
-                                <Button
-                                    size="small"
-                                    onClick={() => setSelectedRowKeys([])}
-                                >
-                                    取消选择
-                                </Button>
-                            </Space>
                         </div>
-                    )}
+                    ) : (
+                    // 规则详情编辑区
+                    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        {/* 顶部头信息 */}
+                        <Card style={{ marginBottom: '16px' }} bodyStyle={{ padding: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
+                                        {selectedRule.title_zh || selectedRule.title || selectedRule.rule_name}
+                                    </div>
+                                    <div style={{ fontSize: '14px', color: '#8c8c8c', marginBottom: '12px' }}>
+                                        {selectedRule.rule_id || selectedRule.rule_name}
+                                    </div>
+                                    <Space size={[0, 8]} wrap>
+                                        {selectedRule.language && (
+                                            <Tag color="blue">{standardizeLanguage(selectedRule.language)}</Tag>
+                                        )}
+                                        {selectedRule.severity && (
+                                            <Tag color={severityMap[selectedRule.severity?.toLowerCase()]?.color || 'default'}>
+                                                {severityMap[selectedRule.severity?.toLowerCase()]?.label || selectedRule.severity}
+                                            </Tag>
+                                        )}
+                                        {selectedRule.risk_type && (
+                                            <Tag>{selectedRule.risk_type}</Tag>
+                                        )}
+                                        {selectedRule.cwe?.slice(0, 3).map((cwe) => (
+                                            <Tag key={cwe}>{cwe}</Tag>
+                                        ))}
+                                    </Space>
+                                </div>
+                                <Space>
+                                    <Button onClick={handleDeleteSelectedRule} danger>删除</Button>
+                                    <Button onClick={handleEditInEditor}>完整编辑</Button>
+                                    <Button onClick={handleResetForm}>重置</Button>
+                                    <Button type="primary" onClick={handleSaveRule} loading={savingRule}>
+                                        保存修改
+                                    </Button>
+                                </Space>
+                            </div>
+                        </Card>
 
-                    <Table<TSyntaxFlowRule>
-                        rowSelection={rowSelection}
-                        columns={columns}
-                        dataSource={data}
-                        rowKey={(r) => r.rule_id ?? r.rule_name}
-                        loading={loading}
-                        pagination={false}
-                        onChange={handleTableChange}
-                        size="small"
-                    />
-
-                    {/* 无限滚动加载指示器 */}
-                    <div
-                        ref={loadMoreRef}
-                        style={{
-                            textAlign: 'center',
-                            padding: '20px',
-                            color: 'rgba(255, 255, 255, 0.45)',
-                        }}
-                    >
-                        {loadingMore && <Spin />}
-                        {!loadingMore && !hasMore && data.length > 0 && (
-                            <span>已加载全部 {total} 条规则</span>
-                        )}
-                        {!loadingMore && hasMore && data.length > 0 && (
-                            <span
-                                style={{ color: 'rgba(255, 255, 255, 0.25)' }}
-                            >
-                                向下滚动加载更多...
-                            </span>
-                        )}
+                        {/* 内容编辑区 */}
+                        <Card style={{ flex: 1, overflow: 'hidden' }} bodyStyle={{ height: '100%', padding: '16px', overflow: 'auto' }}>
+                            <Spin spinning={loadingRuleDetail}>
+                                <Tabs
+                                    defaultActiveKey="basic"
+                                    items={[
+                                        {
+                                            key: 'basic',
+                                            label: (
+                                                <span>
+                                                    <FileTextOutlined /> 基础信息
+                                                </span>
+                                            ),
+                                            children: (
+                                                <Form form={form} layout="vertical">
+                                                    <Form.Item label="标题（英文）" name="title">
+                                                        <Input placeholder="Rule title" />
+                                                    </Form.Item>
+                                                    <Form.Item label="标题（中文）" name="title_zh">
+                                                        <Input placeholder="规则标题" />
+                                                    </Form.Item>
+                                                    <Form.Item label="描述" name="description">
+                                                        <Input.TextArea rows={4} placeholder="描述该规则检测的风险" />
+                                                    </Form.Item>
+                                                    <Form.Item label="修复建议" name="solution">
+                                                        <Input.TextArea rows={4} placeholder="给出修复建议" />
+                                                    </Form.Item>
+                                                    <Form.Item label="严重度" name="severity">
+                                                        <Select placeholder="选择严重度">
+                                                            <Select.Option value="info">Info</Select.Option>
+                                                            <Select.Option value="low">Low</Select.Option>
+                                                            <Select.Option value="medium">Medium</Select.Option>
+                                                            <Select.Option value="high">High</Select.Option>
+                                                            <Select.Option value="critical">Critical</Select.Option>
+                                                        </Select>
+                                                    </Form.Item>
+                                                    <Form.Item label="风险类型" name="risk_type">
+                                                        <Input placeholder="如 SQLI / SSRF" />
+                                                    </Form.Item>
+                                                    <Form.Item label="CWE" name="cwe">
+                                                        <Select mode="tags" placeholder="输入 CWE 编号" />
+                                                    </Form.Item>
+                                                </Form>
+                                            ),
+                                        },
+                                        {
+                                            key: 'code',
+                                            label: (
+                                                <span>
+                                                    <CodeOutlined /> 规则代码
+                                                </span>
+                                            ),
+                                            children: (
+                                                <div style={{ height: '500px', border: '1px solid #d9d9d9', borderRadius: '4px' }}>
+                                                    <WizardAceEditor
+                                                        value={selectedRule.content || ''}
+                                                        mode="text"
+                                                        readOnly
+                                                        style={{ width: '100%', height: '100%' }}
+                                                    />
+                                                </div>
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            </Spin>
+                        </Card>
                     </div>
-                </Card>
+                    )}
+                </div>
             </Content>
 
             {/* 导出Modal */}
@@ -1065,15 +1046,6 @@ const RuleManagement: React.FC = () => {
                     />
                 </div>
             </Modal>
-
-            {/* 规则详情弹窗 */}
-            <RuleDetailModal
-                open={detailModalOpen}
-                ruleName={selectedRule.name}
-                ruleId={selectedRule.id}
-                onClose={handleDetailClose}
-                onSuccess={handleDetailSuccess}
-            />
         </Layout>
     );
 };
