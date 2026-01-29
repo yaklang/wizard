@@ -68,7 +68,8 @@ const ProjectManagement: React.FC = () => {
     const [data, setData] = useState<TSSAProject[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(20);
+    const [hasMore, setHasMore] = useState(true);
 
     // 抽屉状态
     const [drawerVisible, setDrawerVisible] = useState(false);
@@ -79,9 +80,9 @@ const ProjectManagement: React.FC = () => {
     // 筛选条件
     const [searchName, setSearchName] = useState<string>('');
     const [filterLanguage, setFilterLanguage] = useState<string | undefined>();
-    const [, setFilterSourceKind] = useState<string | undefined>();
-    const [, setFilterTags] = useState<string | undefined>();
-    const [, setFilterDateRange] = useState<[number, number] | undefined>();
+    const [filterSourceKind, setFilterSourceKind] = useState<string | undefined>();
+    const [filterTags, setFilterTags] = useState<string | undefined>();
+    const [filterDateRange, setFilterDateRange] = useState<[number, number] | undefined>();
 
     const fetchList = useCallback(
         async (options: {
@@ -89,8 +90,12 @@ const ProjectManagement: React.FC = () => {
             l: number;
             projectName?: string;
             language?: string;
+            sourceKind?: string;
+            tags?: string;
+            dateRange?: [number, number];
+            append?: boolean;
         }) => {
-            const { p, l, projectName, language } = options;
+            const { p, l, projectName, language, sourceKind, tags, dateRange, append = false } = options;
             setLoading(true);
             try {
                 const res = await getSSAProjects({
@@ -98,6 +103,11 @@ const ProjectManagement: React.FC = () => {
                     limit: l,
                     project_name: projectName || undefined,
                     language: language || undefined,
+                    // 注意：这些参数需要后端API支持，如果后端还没实现，可以在前端过滤
+                    // source_kind: sourceKind || undefined,
+                    tags: tags || undefined,
+                    // created_at_start: dateRange?.[0],
+                    // created_at_end: dateRange?.[1],
                     order_by: 'updated_at',
                     order: 'desc',
                 });
@@ -105,11 +115,31 @@ const ProjectManagement: React.FC = () => {
                     message.error('获取项目列表失败');
                     return;
                 }
-                const list = res.data?.list ?? [];
-                setData(list);
+                let list = res.data?.list ?? [];
+                
+                // 前端过滤（如果后端不支持这些筛选）
+                if (sourceKind) {
+                    list = list.filter(item => item.config?.CodeSource?.kind === sourceKind);
+                }
+                if (dateRange) {
+                    list = list.filter(item => {
+                        const createdAt = item.created_at || 0;
+                        return createdAt >= dateRange[0] && createdAt <= dateRange[1];
+                    });
+                }
+                
+                if (append) {
+                    setData(prevData => [...prevData, ...list]);
+                } else {
+                    setData(list);
+                }
                 setTotal(res.data?.pagemeta?.total ?? 0);
                 setPage(res.data?.pagemeta?.page ?? p);
                 setLimit(res.data?.pagemeta?.limit ?? l);
+                
+                // 检查是否还有更多数据
+                const currentTotal = append ? data.length + list.length : list.length;
+                setHasMore(currentTotal < (res.data?.pagemeta?.total ?? 0));
             } catch (err) {
                 message.error('获取项目列表出错');
             } finally {
@@ -120,24 +150,52 @@ const ProjectManagement: React.FC = () => {
     );
 
     useEffect(() => {
+        // 筛选条件改变时，重置到第一页
+        setPage(1);
+        setData([]);
+        setHasMore(true);
         fetchList({
             p: 1,
             l: limit,
             projectName: searchName,
             language: filterLanguage,
+            sourceKind: filterSourceKind,
+            tags: filterTags,
+            dateRange: filterDateRange,
         });
-    }, [fetchList, searchName, filterLanguage]);
+    }, [searchName, filterLanguage, filterSourceKind, filterTags, filterDateRange]);
 
-    const handleTableChange = (pagination: TablePaginationConfig) => {
-        const newPage = pagination.current ?? 1;
-        const newLimit = pagination.pageSize ?? 10;
+    const handleLoadMore = useCallback(() => {
+        if (loading || !hasMore) return;
+        
         fetchList({
-            p: newPage,
-            l: newLimit,
+            p: page + 1,
+            l: limit,
             projectName: searchName,
             language: filterLanguage,
+            sourceKind: filterSourceKind,
+            tags: filterTags,
+            dateRange: filterDateRange,
+            append: true,
         });
-    };
+    }, [loading, hasMore, page, limit, searchName, filterLanguage, filterSourceKind, filterTags, filterDateRange, fetchList]);
+    
+    // 监听滚动事件
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            // 距离底部200px时开始加载
+            if (scrollTop + clientHeight >= scrollHeight - 200) {
+                handleLoadMore();
+            }
+        };
+        
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [handleLoadMore]);
 
     const handleDelete = async (record: TSSAProject) => {
         if (!record.id) return;
@@ -145,11 +203,18 @@ const ProjectManagement: React.FC = () => {
             const res = await deleteSSAProject({ id: record.id });
             if (res) {
                 message.success('删除成功');
+                // 删除后重新加载第一页
+                setPage(1);
+                setData([]);
+                setHasMore(true);
                 fetchList({
-                    p: page,
+                    p: 1,
                     l: limit,
                     projectName: searchName,
                     language: filterLanguage,
+                    sourceKind: filterSourceKind,
+                    tags: filterTags,
+                    dateRange: filterDateRange,
                 });
             }
         } catch (err) {
@@ -173,11 +238,18 @@ const ProjectManagement: React.FC = () => {
     };
 
     const handleDrawerSuccess = () => {
+        // 保存后重新加载第一页
+        setPage(1);
+        setData([]);
+        setHasMore(true);
         fetchList({
-            p: page,
+            p: 1,
             l: limit,
             projectName: searchName,
             language: filterLanguage,
+            sourceKind: filterSourceKind,
+            tags: filterTags,
+            dateRange: filterDateRange,
         });
     };
 
@@ -582,18 +654,28 @@ const ProjectManagement: React.FC = () => {
                     columns={columns}
                     dataSource={data}
                     rowKey={(r) => r.id ?? r.project_name}
-                    loading={loading}
+                    loading={loading && page === 1}
                     scroll={{ x: 1200 }}
-                    pagination={{
-                        current: page,
-                        pageSize: limit,
-                        total,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (t) => `共 ${t} 个项目`,
-                    }}
-                    onChange={handleTableChange}
+                    pagination={false}
                 />
+                
+                {/* 加载更多提示 */}
+                <div style={{ 
+                    textAlign: 'center', 
+                    padding: '20px 0',
+                    color: '#999'
+                }}>
+                    {loading && page > 1 && <span>加载中...</span>}
+                    {!loading && hasMore && data.length > 0 && (
+                        <span>向下滚动加载更多</span>
+                    )}
+                    {!loading && !hasMore && data.length > 0 && (
+                        <span>已加载全部 {data.length} 个项目</span>
+                    )}
+                    {!loading && data.length === 0 && (
+                        <span>暂无项目</span>
+                    )}
+                </div>
             </Card>
 
             <ProjectDrawer
