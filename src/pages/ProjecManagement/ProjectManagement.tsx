@@ -10,13 +10,33 @@ import {
     Tag,
     Input,
     Select,
+    DatePicker,
+    Dropdown,
+    Tooltip,
+    Typography,
 } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import {
+    PlusOutlined,
+    GithubOutlined,
+    FolderOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    MoreOutlined,
+    PlayCircleOutlined,
+    EditOutlined,
+    EyeOutlined,
+    CopyOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import ProjectDrawer from './ProjectDrawer';
+
+const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 const { Search } = Input;
 
@@ -50,9 +70,18 @@ const ProjectManagement: React.FC = () => {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
 
+    // 抽屉状态
+    const [drawerVisible, setDrawerVisible] = useState(false);
+    const [editingProjectId, setEditingProjectId] = useState<
+        number | undefined
+    >();
+
     // 筛选条件
     const [searchName, setSearchName] = useState<string>('');
     const [filterLanguage, setFilterLanguage] = useState<string | undefined>();
+    const [, setFilterSourceKind] = useState<string | undefined>();
+    const [, setFilterTags] = useState<string | undefined>();
+    const [, setFilterDateRange] = useState<[number, number] | undefined>();
 
     const fetchList = useCallback(
         async (options: {
@@ -129,13 +158,27 @@ const ProjectManagement: React.FC = () => {
     };
 
     const handleEdit = (record: TSSAProject) => {
-        navigate(getRoutePath(RouteKey.PROJECT_EDIT), {
-            state: { id: record.id },
-        });
+        setEditingProjectId(record.id);
+        setDrawerVisible(true);
     };
 
     const handleCreate = () => {
-        navigate(getRoutePath(RouteKey.PROJECT_CREATE));
+        setEditingProjectId(undefined);
+        setDrawerVisible(true);
+    };
+
+    const handleDrawerClose = () => {
+        setDrawerVisible(false);
+        setEditingProjectId(undefined);
+    };
+
+    const handleDrawerSuccess = () => {
+        fetchList({
+            p: page,
+            l: limit,
+            projectName: searchName,
+            language: filterLanguage,
+        });
     };
 
     const handleSearch = (value: string) => {
@@ -146,12 +189,6 @@ const ProjectManagement: React.FC = () => {
     const handleLanguageFilter = (value: string | undefined) => {
         setFilterLanguage(value || undefined);
         setPage(1);
-    };
-
-    const handleViewRisks = (record: TSSAProject) => {
-        navigate(getRoutePath(RouteKey.SSA_RISK), {
-            state: { program_name: record.project_name },
-        });
     };
 
     // 格式化时间戳
@@ -173,67 +210,177 @@ const ProjectManagement: React.FC = () => {
         }
     };
 
+    const getLanguageIcon = (language: string) => {
+        const icons: Record<string, string> = {
+            java: '☕',
+            php: '🐘',
+            javascript: '📜',
+            js: '📜',
+            go: '🐹',
+            python: '🐍',
+            yak: '🦌',
+        };
+        return icons[language?.toLowerCase()] || '📁';
+    };
+
+    const getSourceTypeIcon = (kind?: string) => {
+        switch (kind) {
+            case 'git':
+                return <GithubOutlined style={{ fontSize: 14 }} />;
+            case 'svn':
+                return <FolderOutlined style={{ fontSize: 14 }} />;
+            default:
+                return <FolderOutlined style={{ fontSize: 14 }} />;
+        }
+    };
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        message.success('已复制到剪贴板');
+    };
+
     const columns: ColumnsType<TSSAProject> = [
         {
-            title: '项目名称',
-            dataIndex: 'project_name',
-            key: 'project_name',
-            width: 200,
-            ellipsis: true,
-            render: (text, record) => (
-                <a onClick={() => handleEdit(record)}>{text}</a>
-            ),
-        },
-        {
-            title: '语言',
-            dataIndex: 'language',
-            key: 'language',
-            width: 100,
-            render: (language: string) => {
-                if (!language) return '-';
+            title: '项目信息',
+            key: 'project_info',
+            width: 280,
+            render: (_, record) => {
+                const language = record.language || '';
                 const color =
                     languageColorMap[language.toLowerCase()] || 'default';
                 const label =
                     languageLabelMap[language.toLowerCase()] || language;
-                return <Tag color={color}>{label}</Tag>;
-            },
-        },
-        {
-            title: '描述',
-            dataIndex: 'description',
-            key: 'description',
-            ellipsis: true,
-            render: (text) => text || '-',
-        },
-        {
-            title: '源码地址',
-            dataIndex: 'url',
-            key: 'url',
-            width: 200,
-            ellipsis: true,
-            render: (url: string) => {
-                if (!url) return '-';
+
                 return (
-                    <a href={url} target="_blank" rel="noopener noreferrer">
-                        {url}
-                    </a>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 12,
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: 32,
+                                lineHeight: 1,
+                                marginTop: 4,
+                                flexShrink: 0,
+                            }}
+                        >
+                            {getLanguageIcon(language)}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div>
+                                <a
+                                    onClick={() => handleEdit(record)}
+                                    style={{
+                                        fontWeight: 600,
+                                        fontSize: 14,
+                                        color: '#1890ff',
+                                    }}
+                                >
+                                    {record.project_name}
+                                </a>
+                                <Tag
+                                    color={color}
+                                    style={{ marginLeft: 8, fontSize: 12 }}
+                                >
+                                    {label}
+                                </Tag>
+                            </div>
+                            <div
+                                style={{
+                                    color: '#999',
+                                    fontSize: 12,
+                                    marginTop: 4,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                {record.description ||
+                                    `创建于 ${formatTimestamp(record.created_at)}`}
+                            </div>
+                        </div>
+                    </div>
                 );
             },
         },
         {
-            title: '关联漏洞',
-            dataIndex: 'risk_count',
-            key: 'risk_count',
-            width: 100,
-            align: 'center',
-            render: (count: number, record) => {
-                if (!count || count === 0) {
-                    return <span style={{ color: '#999' }}>0</span>;
-                }
+            title: '代码源',
+            key: 'code_source',
+            width: 300,
+            render: (_, record) => {
+                const sourceKind = record.config?.CodeSource?.kind || 'git';
+                const url = record.config?.CodeSource?.url || record.url || '-';
+                const branch = record.config?.CodeSource?.branch || 'master';
+                const hasAuth =
+                    record.config?.CodeSource?.auth?.kind !== 'none';
+
                 return (
-                    <a onClick={() => handleViewRisks(record)}>
-                        <Tag color="red">{count}</Tag>
-                    </a>
+                    <div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                            }}
+                        >
+                            {getSourceTypeIcon(sourceKind)}
+                            <Tooltip title={url}>
+                                <Text
+                                    ellipsis
+                                    style={{
+                                        maxWidth: 200,
+                                        fontSize: 13,
+                                        color: '#1890ff',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => copyToClipboard(url)}
+                                >
+                                    {url}
+                                </Text>
+                            </Tooltip>
+                            <CopyOutlined
+                                style={{
+                                    fontSize: 12,
+                                    color: '#999',
+                                    cursor: 'pointer',
+                                }}
+                                onClick={() => copyToClipboard(url)}
+                            />
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                marginTop: 6,
+                                fontSize: 12,
+                            }}
+                        >
+                            <Tag style={{ margin: 0, fontSize: 11 }}>
+                                分支: {branch}
+                            </Tag>
+                            {hasAuth ? (
+                                <Tag
+                                    icon={<CheckCircleOutlined />}
+                                    color="success"
+                                    style={{ margin: 0, fontSize: 11 }}
+                                >
+                                    已认证
+                                </Tag>
+                            ) : (
+                                <Tag
+                                    icon={<CloseCircleOutlined />}
+                                    color="default"
+                                    style={{ margin: 0, fontSize: 11 }}
+                                >
+                                    无认证
+                                </Tag>
+                            )}
+                        </div>
+                    </div>
                 );
             },
         },
@@ -241,69 +388,102 @@ const ProjectManagement: React.FC = () => {
             title: '标签',
             dataIndex: 'tags',
             key: 'tags',
-            width: 150,
-            ellipsis: true,
+            width: 180,
             render: (tags: string) => {
-                if (!tags) return '-';
+                if (!tags) return <Text type="secondary">-</Text>;
                 const tagList = tags.split(',').filter(Boolean);
                 return (
                     <Space size={[0, 4]} wrap>
-                        {tagList.slice(0, 3).map((tag, index) => (
-                            <Tag key={index}>{tag.trim()}</Tag>
+                        {tagList.slice(0, 2).map((tag, index) => (
+                            <Tag key={index} style={{ fontSize: 11 }}>
+                                {tag.trim()}
+                            </Tag>
                         ))}
-                        {tagList.length > 3 && <Tag>+{tagList.length - 3}</Tag>}
+                        {tagList.length > 2 && (
+                            <Tooltip title={tagList.slice(2).join(', ')}>
+                                <Tag style={{ fontSize: 11 }}>
+                                    +{tagList.length - 2}
+                                </Tag>
+                            </Tooltip>
+                        )}
                     </Space>
                 );
             },
         },
         {
-            title: '更新时间',
-            dataIndex: 'updated_at',
-            key: 'updated_at',
-            width: 170,
-            render: formatTimestamp,
+            title: '更新信息',
+            key: 'update_info',
+            width: 160,
+            render: (_, record) => (
+                <div style={{ fontSize: 12 }}>
+                    <div style={{ color: '#666' }}>
+                        {formatTimestamp(record.updated_at)}
+                    </div>
+                </div>
+            ),
         },
         {
             title: '操作',
             key: 'action',
-            width: 280,
+            width: 180,
             fixed: 'right',
-            render: (_, record) => (
-                <Space>
-                    <Button
-                        size="small"
-                        type="primary"
-                        ghost
-                        onClick={() => handleScan(record)}
-                    >
-                        扫描
-                    </Button>
-                    <Button
-                        size="small"
-                        onClick={() =>
+            render: (_, record) => {
+                const menuItems: MenuProps['items'] = [
+                    {
+                        key: 'edit',
+                        icon: <EditOutlined />,
+                        label: '配置',
+                        onClick: () => handleEdit(record),
+                    },
+                    {
+                        key: 'view-tasks',
+                        icon: <EyeOutlined />,
+                        label: '查看任务',
+                        onClick: () =>
                             navigate(
                                 `${getRoutePath(RouteKey.TASK_LIST)}?project_id=${record.id}`,
-                            )
-                        }
-                    >
-                        查看任务
-                    </Button>
-                    <Button size="small" onClick={() => handleEdit(record)}>
-                        编辑
-                    </Button>
-                    <Popconfirm
-                        title="确认删除该项目吗？"
-                        description="删除后不可恢复，关联的漏洞数据不会被删除。"
-                        onConfirm={() => handleDelete(record)}
-                        okText="确认"
-                        cancelText="取消"
-                    >
-                        <Button size="small" danger>
-                            删除
+                            ),
+                    },
+                    {
+                        type: 'divider',
+                    },
+                    {
+                        key: 'delete',
+                        icon: <CloseCircleOutlined />,
+                        label: (
+                            <Popconfirm
+                                title="确认删除该项目吗？"
+                                description="删除后不可恢复，关联的漏洞数据不会被删除。"
+                                onConfirm={() => handleDelete(record)}
+                                okText="确认"
+                                cancelText="取消"
+                            >
+                                <span>删除</span>
+                            </Popconfirm>
+                        ),
+                        danger: true,
+                    },
+                ];
+
+                return (
+                    <Space size="small">
+                        <Button
+                            type="primary"
+                            size="small"
+                            icon={<PlayCircleOutlined />}
+                            onClick={() => handleScan(record)}
+                        >
+                            发起扫描
                         </Button>
-                    </Popconfirm>
-                </Space>
-            ),
+                        <Dropdown
+                            menu={{ items: menuItems }}
+                            trigger={['click']}
+                        >
+                            <Button size="small" icon={<MoreOutlined />} />
+                        </Dropdown>
+                    </Space>
+                );
+            },
         },
     ];
 
@@ -315,6 +495,14 @@ const ProjectManagement: React.FC = () => {
         { label: 'Go', value: 'go' },
         { label: 'Python', value: 'python' },
         { label: 'Yak', value: 'yak' },
+    ];
+
+    // 代码源类型选项
+    const sourceKindOptions = [
+        { label: 'Git', value: 'git' },
+        { label: 'SVN', value: 'svn' },
+        { label: '压缩包', value: 'compression' },
+        { label: 'Jar包', value: 'jar' },
     ];
 
     return (
@@ -347,11 +535,46 @@ const ProjectManagement: React.FC = () => {
                         }}
                     />
                     <Select
-                        placeholder="语言"
+                        placeholder="选择语言"
                         allowClear
-                        style={{ width: 120 }}
+                        style={{ width: 140 }}
                         onChange={handleLanguageFilter}
                         options={languageOptions}
+                    />
+                    <Select
+                        placeholder="代码源类型"
+                        allowClear
+                        style={{ width: 140 }}
+                        onChange={(value) => {
+                            setFilterSourceKind(value || undefined);
+                            setPage(1);
+                        }}
+                        options={sourceKindOptions}
+                    />
+                    <Input
+                        placeholder="标签筛选"
+                        allowClear
+                        style={{ width: 140 }}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            setFilterTags(value || undefined);
+                            setPage(1);
+                        }}
+                    />
+                    <RangePicker
+                        placeholder={['创建开始', '创建结束']}
+                        style={{ width: 260 }}
+                        onChange={(dates) => {
+                            if (dates && dates[0] && dates[1]) {
+                                setFilterDateRange([
+                                    dates[0].unix(),
+                                    dates[1].unix(),
+                                ]);
+                            } else {
+                                setFilterDateRange(undefined);
+                            }
+                            setPage(1);
+                        }}
                     />
                 </div>
 
@@ -372,6 +595,13 @@ const ProjectManagement: React.FC = () => {
                     onChange={handleTableChange}
                 />
             </Card>
+
+            <ProjectDrawer
+                visible={drawerVisible}
+                projectId={editingProjectId}
+                onClose={handleDrawerClose}
+                onSuccess={handleDrawerSuccess}
+            />
         </div>
     );
 };

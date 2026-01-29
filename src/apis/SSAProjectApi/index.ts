@@ -46,4 +46,28 @@ const deleteSSAProject = (params: {
 }): Promise<ResponseData<boolean>> =>
     axios.delete<never, ResponseData<boolean>>(`/ssa/project`, { params });
 
-export { getSSAProjects, fetchSSAProject, postSSAProject, deleteSSAProject };
+// POST /ssa/project/test-connection - 测试Git连接
+const testGitConnection = (data: {
+    url: string;
+    auth?: {
+        kind?: 'none' | 'basic' | 'ssh';
+        user_name?: string;
+        password?: string;
+        key_content?: string;
+    };
+    proxy?: {
+        url?: string;
+    };
+}): Promise<ResponseData<{ success: boolean; message: string }>> =>
+    axios.post<never, ResponseData<{ success: boolean; message: string }>>(
+        `/ssa/project/test-connection`,
+        data,
+    );
+
+export {
+    getSSAProjects,
+    fetchSSAProject,
+    postSSAProject,
+    deleteSSAProject,
+    testGitConnection,
+};
