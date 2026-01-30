@@ -27,6 +27,14 @@ import {
     EyeOutlined,
     CopyOutlined,
 } from '@ant-design/icons';
+// 语言官方图标
+import { 
+    SiPhp, 
+    SiJavascript, 
+    SiPython, 
+    SiGo, 
+} from 'react-icons/si';
+import { DiJava } from 'react-icons/di';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
@@ -282,17 +290,29 @@ const ProjectManagement: React.FC = () => {
         }
     };
 
+    // 语言图标映射（官方品牌 SVG 图标）
+    const languageIconMap: Record<string, { icon: React.ComponentType<{ size?: number; color?: string }>; color: string }> = {
+        php: { icon: SiPhp, color: '#777BB4' },
+        java: { icon: DiJava, color: '#007396' },
+        javascript: { icon: SiJavascript, color: '#F7DF1E' },
+        js: { icon: SiJavascript, color: '#F7DF1E' },
+        go: { icon: SiGo, color: '#00ADD8' },
+        golang: { icon: SiGo, color: '#00ADD8' },
+        python: { icon: SiPython, color: '#3776AB' },
+    };
+
     const getLanguageIcon = (language: string) => {
-        const icons: Record<string, string> = {
-            java: '☕',
-            php: '🐘',
-            javascript: '📜',
-            js: '📜',
-            go: '🐹',
-            python: '🐍',
-            yak: '🦌',
-        };
-        return icons[language?.toLowerCase()] || '📁';
+        const langKey = language?.toLowerCase();
+        const langConfig = langKey ? languageIconMap[langKey] : null;
+        
+        if (langConfig) {
+            return React.createElement(langConfig.icon, { 
+                size: 16, 
+                color: langConfig.color 
+            });
+        }
+        
+        return <FolderOutlined style={{ fontSize: 16, color: '#8c8c8c' }} />;
     };
 
     const getSourceTypeIcon = (kind?: string) => {
