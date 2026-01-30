@@ -10,12 +10,23 @@ import {
     Card,
     Alert,
     Spin,
+    Switch,
+    TimePicker,
+    Modal,
+    Tree,
+    Tabs,
+    Checkbox,
+    Tag,
 } from 'antd';
+import type { DataNode } from 'antd/es/tree';
 import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     LoadingOutlined,
+    SettingOutlined,
+    ThunderboltOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import {
     fetchSSAProject,
     postSSAProject,
@@ -42,6 +53,70 @@ const languageOptions = [
     { label: 'Rust', value: 'rust' },
 ];
 
+// 扫描策略选项
+const scanPolicyOptions = [
+    { label: '🛡️ OWASP Top 10 合规扫描', value: 'owasp-web', desc: '包含 135 条规则，覆盖常见 Web 风险' },
+    { label: '🚀 高危漏洞快速扫描', value: 'critical-high', desc: '89 条规则，仅扫描严重和高危级别' },
+    { label: '☕ 全栈深度扫描', value: 'fullstack', desc: '~180 条规则，包含语言+框架+SCA' },
+    { label: '⚙️ 自定义规则', value: 'custom', desc: '手动选择规则集' },
+];
+
+// 规则树数据（用于自定义策略Modal）
+const complianceRules: DataNode[] = [
+    {
+        title: 'OWASP Top 10',
+        key: 'owasp-top10',
+        children: [
+            { title: 'A01: 失效的访问控制', key: 'owasp-a01' },
+            { title: 'A02: 加密机制失败', key: 'owasp-a02' },
+            { title: 'A03: 注入', key: 'owasp-a03' },
+            { title: 'A04: 不安全设计', key: 'owasp-a04' },
+            { title: 'A05: 安全配置错误', key: 'owasp-a05' },
+            { title: 'A06: 易受攻击和过时的组件', key: 'owasp-a06' },
+            { title: 'A07: 识别和认证失败', key: 'owasp-a07' },
+            { title: 'A08: 软件和数据完整性故障', key: 'owasp-a08' },
+            { title: 'A09: 安全日志和监控失败', key: 'owasp-a09' },
+            { title: 'A10: 服务器端请求伪造', key: 'owasp-a10' },
+        ],
+    },
+    { title: 'CWE Top 25 (2023)', key: 'cwe-top25' },
+];
+
+const techStackRules: DataNode[] = [
+    {
+        title: '语言库',
+        key: 'language-group',
+        children: [
+            { title: 'Java', key: 'lang-java' },
+            { title: 'Golang', key: 'lang-go' },
+            { title: 'PHP', key: 'lang-php' },
+            { title: 'JavaScript', key: 'lang-js' },
+            { title: 'Python', key: 'lang-python' },
+            { title: 'C', key: 'lang-c' },
+        ],
+    },
+    {
+        title: '框架/组件',
+        key: 'framework-group',
+        children: [
+            { title: 'Spring', key: 'framework-spring' },
+            { title: 'Apache Shiro', key: 'framework-shiro' },
+            { title: 'ThinkPHP', key: 'framework-thinkphp' },
+        ],
+    },
+];
+
+const specialRules = [
+    { label: '严重', value: 'critical' },
+    { label: '高危', value: 'high' },
+    { label: '中危', value: 'middle' },
+    { label: '低危', value: 'low' },
+    { label: '审计', value: 'audit' },
+    { label: '配置', value: 'config' },
+    { label: '安全', value: 'security' },
+    { label: 'SCA / 其他', value: 'sca' },
+];
+
 const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     visible,
     projectId,
@@ -58,6 +133,14 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
         'success' | 'error' | 'idle'
     >('idle');
     const [connectionMessage, setConnectionMessage] = useState('');
+    
+    // 扫描策略相关状态
+    const [scanPolicy, setScanPolicy] = useState<string>('owasp-web');
+    const [customRulesModalVisible, setCustomRulesModalVisible] = useState(false);
+    const [selectedComplianceRules, setSelectedComplianceRules] = useState<React.Key[]>([]);
+    const [selectedTechStackRules, setSelectedTechStackRules] = useState<React.Key[]>([]);
+    const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>([]);
+    const [enableSchedule, setEnableSchedule] = useState(false);
 
     const isEdit = !!projectId;
 
@@ -301,6 +384,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 placeholder="请选择项目语言"
                                 options={languageOptions}
                                 showSearch
+                                disabled={isEdit}
                                 filterOption={(input, option) =>
                                     (option?.label ?? '')
                                         .toLowerCase()
@@ -338,11 +422,15 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                         </Form.Item>
                     </Card>
 
-                    {/* 代码仓库 */}
+                    {/* 代码仓库与认证配置 */}
                     <Card
-                        title="代码仓库"
+                        title="代码仓库配置"
                         size="small"
-                        style={{ marginBottom: 16 }}
+                        style={{ 
+                            marginBottom: 16,
+                            background: '#fafafa',
+                            border: '1px solid #e8e8e8',
+                        }}
                     >
                         <Form.Item
                             label="仓库类型"
@@ -380,16 +468,56 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 >
                                     <Input placeholder="默认主分支 (master/main)" />
                                 </Form.Item>
+
+                                {/* 测试连接（移到这里） */}
+                                <Form.Item>
+                                    <Button
+                                        onClick={handleTestConnection}
+                                        loading={testingConnection}
+                                        icon={<ThunderboltOutlined />}
+                                        style={{ marginBottom: 8 }}
+                                    >
+                                        {testingConnection ? '测试中...' : '测试连接'}
+                                    </Button>
+                                    {connectionStatus === 'success' && (
+                                        <Alert
+                                            message={connectionMessage}
+                                            type="success"
+                                            icon={<CheckCircleOutlined />}
+                                            showIcon
+                                            closable
+                                            onClose={() => setConnectionStatus('idle')}
+                                            style={{ marginTop: 8 }}
+                                        />
+                                    )}
+                                    {connectionStatus === 'error' && (
+                                        <Alert
+                                            message={connectionMessage}
+                                            type="error"
+                                            icon={<CloseCircleOutlined />}
+                                            showIcon
+                                            closable
+                                            onClose={() => setConnectionStatus('idle')}
+                                            style={{ marginTop: 8 }}
+                                        />
+                                    )}
+                                </Form.Item>
                             </>
                         )}
-                    </Card>
 
-                    {/* 认证配置 */}
-                    <Card
-                        title="认证配置"
-                        size="small"
-                        style={{ marginBottom: 16 }}
-                    >
+                        <div style={{ 
+                            borderTop: '1px dashed #d9d9d9', 
+                            margin: '16px 0',
+                            paddingTop: 16,
+                        }}>
+                            <div style={{ 
+                                marginBottom: 12, 
+                                fontSize: 14, 
+                                fontWeight: 600, 
+                                color: 'rgba(0,0,0,0.85)' 
+                            }}>
+                                认证配置
+                            </div>
                         <Form.Item
                             label="认证方式"
                             name={['config', 'CodeSource', 'auth', 'kind']}
@@ -468,81 +596,187 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 />
                             </Form.Item>
                         )}
-                    </Card>
 
-                    {/* 高级选项 */}
-                    <Card
-                        title="高级选项"
-                        size="small"
-                        style={{ marginBottom: 16 }}
-                    >
                         <Form.Item
-                            label="代理地址"
+                            label="代理地址（可选）"
                             name={['config', 'CodeSource', 'proxy', 'url']}
                         >
                             <Input placeholder="http://127.0.0.1:7890" />
                         </Form.Item>
+                        </div>
                     </Card>
 
-                    {/* 连通性测试 */}
-                    {(sourceKind === 'git' || sourceKind === 'svn') && (
-                        <Card title="连通性测试" size="small">
-                            <div
-                                style={{
-                                    marginBottom: 8,
-                                    color: '#999',
-                                    fontSize: 12,
-                                }}
+                    {/* 扫描策略 */}
+                    <Card
+                        title="扫描策略"
+                        size="small"
+                        style={{ 
+                            marginBottom: 16,
+                            background: '#fafafa',
+                            border: '1px solid #e8e8e8',
+                        }}
+                    >
+                        <Form.Item label="策略方案">
+                            <Select
+                                value={scanPolicy}
+                                onChange={setScanPolicy}
+                                placeholder="请选择扫描策略"
                             >
-                                在保存前测试配置是否正确，包括URL、认证和代理设置
+                                {scanPolicyOptions.map(opt => (
+                                    <Select.Option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                            <div style={{ 
+                                marginTop: 8, 
+                                fontSize: 12, 
+                                color: '#999' 
+                            }}>
+                                {scanPolicyOptions.find(o => o.value === scanPolicy)?.desc}
                             </div>
-                            <Space
-                                direction="vertical"
-                                style={{ width: '100%' }}
-                            >
-                                <Button
-                                    onClick={handleTestConnection}
-                                    loading={testingConnection}
-                                    icon={
-                                        testingConnection ? (
-                                            <LoadingOutlined />
-                                        ) : undefined
-                                    }
+                        </Form.Item>
+
+                        {scanPolicy === 'custom' && (
+                            <Form.Item>
+                                <Button 
+                                    icon={<SettingOutlined />}
+                                    onClick={() => setCustomRulesModalVisible(true)}
                                     block
                                 >
-                                    {testingConnection
-                                        ? '测试中...'
-                                        : '测试连接'}
+                                    配置自定义规则
                                 </Button>
-                                {connectionStatus === 'success' && (
-                                    <Alert
-                                        message={connectionMessage}
-                                        type="success"
-                                        icon={<CheckCircleOutlined />}
-                                        showIcon
-                                        closable
-                                        onClose={() =>
-                                            setConnectionStatus('idle')
-                                        }
+                            </Form.Item>
+                        )}
+
+                        <div style={{ 
+                            borderTop: '1px dashed #d9d9d9', 
+                            margin: '16px 0',
+                            paddingTop: 16,
+                        }}>
+                            <Form.Item label="定时扫描">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <Switch
+                                        checked={enableSchedule}
+                                        onChange={setEnableSchedule}
                                     />
-                                )}
-                                {connectionStatus === 'error' && (
-                                    <Alert
-                                        message={connectionMessage}
-                                        type="error"
-                                        icon={<CloseCircleOutlined />}
-                                        showIcon
-                                        closable
-                                        onClose={() =>
-                                            setConnectionStatus('idle')
-                                        }
+                                    <span>启用定时扫描</span>
+                                </div>
+                            </Form.Item>
+
+                            {enableSchedule && (
+                                <Form.Item
+                                    label="扫描时间"
+                                    name="schedule_time"
+                                    initialValue={dayjs('02:00', 'HH:mm')}
+                                >
+                                    <TimePicker
+                                        format="HH:mm"
+                                        placeholder="选择扫描时间"
+                                        style={{ width: '100%' }}
                                     />
-                                )}
-                            </Space>
-                        </Card>
-                    )}
+                                </Form.Item>
+                            )}
+                        </div>
+                    </Card>
                 </Form>
             </Spin>
+
+            {/* 自定义规则配置Modal */}
+            <Modal
+                title="自定义规则配置"
+                open={customRulesModalVisible}
+                onCancel={() => setCustomRulesModalVisible(false)}
+                onOk={() => setCustomRulesModalVisible(false)}
+                width={720}
+                okText="确定"
+                cancelText="取消"
+            >
+                <Tabs
+                    items={[
+                        {
+                            key: 'compliance',
+                            label: '合规标准',
+                            children: (
+                                <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
+                                    <Tree
+                                        checkable
+                                        defaultExpandAll
+                                        treeData={complianceRules}
+                                        checkedKeys={selectedComplianceRules}
+                                        onCheck={(checked) => setSelectedComplianceRules(checked as React.Key[])}
+                                    />
+                                </div>
+                            ),
+                        },
+                        {
+                            key: 'techstack',
+                            label: '技术栈',
+                            children: (
+                                <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
+                                    <Tree
+                                        checkable
+                                        defaultExpandAll
+                                        treeData={techStackRules}
+                                        checkedKeys={selectedTechStackRules}
+                                        onCheck={(checked) => setSelectedTechStackRules(checked as React.Key[])}
+                                    />
+                                </div>
+                            ),
+                        },
+                        {
+                            key: 'special',
+                            label: '专项/标签',
+                            children: (
+                                <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
+                                    <Checkbox.Group
+                                        options={specialRules}
+                                        value={selectedSpecialRules}
+                                        onChange={(checked) => setSelectedSpecialRules(checked as string[])}
+                                        style={{ 
+                                            display: 'flex', 
+                                            flexDirection: 'column', 
+                                            gap: 12 
+                                        }}
+                                    />
+                                </div>
+                            ),
+                        },
+                    ]}
+                />
+
+                {/* 已选规则汇总 */}
+                {(selectedComplianceRules.length > 0 || 
+                  selectedTechStackRules.length > 0 || 
+                  selectedSpecialRules.length > 0) && (
+                    <div style={{ 
+                        marginTop: 16, 
+                        padding: 16, 
+                        background: '#fafafa', 
+                        borderRadius: 8 
+                    }}>
+                        <div style={{ 
+                            marginBottom: 8, 
+                            fontSize: 13, 
+                            fontWeight: 600,
+                            color: 'rgba(0,0,0,0.85)' 
+                        }}>
+                            已选规则数量：
+                        </div>
+                        <Space wrap>
+                            {selectedComplianceRules.length > 0 && (
+                                <Tag color="blue">合规标准: {selectedComplianceRules.length}</Tag>
+                            )}
+                            {selectedTechStackRules.length > 0 && (
+                                <Tag color="green">技术栈: {selectedTechStackRules.length}</Tag>
+                            )}
+                            {selectedSpecialRules.length > 0 && (
+                                <Tag color="purple">专项: {selectedSpecialRules.length}</Tag>
+                            )}
+                        </Space>
+                    </div>
+                )}
+            </Modal>
         </Drawer>
     );
 };
