@@ -24,6 +24,7 @@ const getSyntaxFlowRules = (
         tag?: string;
         is_build_in_rule?: boolean;
         group_name?: string;
+        risk_type?: string;
     },
     signal?: AbortSignal,
 ): Promise<ResponseData<TSyntaxFlowRuleListResponse>> =>
