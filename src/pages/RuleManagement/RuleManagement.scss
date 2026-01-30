@@ -64,6 +64,7 @@
                     padding: 0;
                     margin-bottom: 1px;
                     width: 100%;
+                    position: relative;
 
                     &:hover {
                         .ant-tree-node-content-wrapper {
@@ -72,8 +73,21 @@
                     }
 
                     &.ant-tree-treenode-selected {
+                        // 左侧高亮竖条
+                        &::before {
+                            content: '';
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            bottom: 0;
+                            width: 3px;
+                            background: #1890ff;
+                            border-radius: 0 2px 2px 0;
+                        }
+                        
                         .ant-tree-node-content-wrapper {
-                            background: var(--irify-bg-selected, #e6f7ff);
+                            background: var(--irify-bg-selected, #bae7ff) !important;
+                            font-weight: 500;
                         }
                     }
                 }
@@ -128,9 +142,9 @@
     }
 
     .rule-content {
-        padding: 16px;
         overflow: hidden;
         position: relative;
+        background: var(--irify-bg-base, #f0f2f5);
 
         .rule-card {
             height: 100%;
@@ -252,6 +266,21 @@
                     .ant-tree-treenode {
                         padding: 0;
                         margin-bottom: 2px;
+                        position: relative;
+                        
+                        &.ant-tree-treenode-selected {
+                            // 暗黑模式左侧高亮竖条
+                            &::before {
+                                content: '';
+                                position: absolute;
+                                left: 0;
+                                top: 0;
+                                bottom: 0;
+                                width: 3px;
+                                background: var(--irify-accent, #40a9ff);
+                                border-radius: 0 2px 2px 0;
+                            }
+                        }
                     }
 
                     .ant-tree-node-content-wrapper {
@@ -266,7 +295,8 @@
                         }
 
                         &.ant-tree-node-selected {
-                            background: var(--irify-bg-selected) !important;
+                            background: rgba(64, 169, 255, 0.15) !important;
+                            font-weight: 500;
                         }
                     }
 

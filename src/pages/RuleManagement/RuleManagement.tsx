@@ -17,9 +17,11 @@ import {
     Select,
     Tabs,
     Form,
+    Row,
+    Col,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined } from '@ant-design/icons';
+import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import {
     getSyntaxFlowRules,
@@ -40,23 +42,42 @@ import './RuleManagement.scss';
 
 const { Sider, Content } = Layout;
 
+// 语言图标映射
+const languageIconMap: Record<string, { icon: string; color: string }> = {
+    php: { icon: '🐘', color: '#777BB4' },
+    java: { icon: '☕', color: '#007396' },
+    javascript: { icon: '📜', color: '#F7DF1E' },
+    typescript: { icon: '📘', color: '#3178C6' },
+    python: { icon: '🐍', color: '#3776AB' },
+    go: { icon: '🔷', color: '#00ADD8' },
+    golang: { icon: '🔷', color: '#00ADD8' },
+    ruby: { icon: '💎', color: '#CC342D' },
+    rust: { icon: '🦀', color: '#CE422B' },
+    c: { icon: '🔧', color: '#555555' },
+    'c++': { icon: '⚙️', color: '#00599C' },
+};
+
 const renderTreeNodeTitle = (node: FilterTreeNode) => {
     const isRuleNode = node.filterType === 'rule';
     const isParentNode = node.children && node.children.length > 0;
+    const langKey = node.language?.toLowerCase();
+    const langConfig = langKey ? languageIconMap[langKey] : null;
 
     return (
         <div className="tree-node-title">
-            {isRuleNode && node.language && (
-                <Tag
-                    style={{
-                        fontSize: '10px',
-                        padding: '0 4px',
-                        marginRight: '4px',
-                        lineHeight: '16px',
+            {isRuleNode && langConfig && (
+                <span 
+                    className="lang-icon"
+                    style={{ 
+                        fontSize: '14px', 
+                        marginRight: '6px',
+                        display: 'inline-block',
+                        lineHeight: '1'
                     }}
+                    title={node.language}
                 >
-                    {node.language.toUpperCase()}
-                </Tag>
+                    {langConfig.icon}
+                </span>
             )}
             {!isRuleNode && (
                 <span className="icon-wrapper">
@@ -825,34 +846,36 @@ const RuleManagement: React.FC = () => {
                         <Empty description="暂无规则" />
                     )}
                 </div>
+
+                {/* 底部全局操作栏 */}
+                <div className="sider-footer" style={{ 
+                    padding: '12px 16px', 
+                    borderTop: '1px solid var(--irify-border-color, #e8e8e8)',
+                    flexShrink: 0,
+                    background: 'var(--irify-bg-container, #fff)'
+                }}>
+                    <Space direction="vertical" style={{ width: '100%' }} size="small">
+                        <Button onClick={handleCreate} type="primary" block>
+                            新增规则
+                        </Button>
+                        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                            <Button onClick={handleImportClick} size="small">导入</Button>
+                            <Button onClick={handleExportClick} size="small">导出</Button>
+                            <Button onClick={handlePublishSnapshot} size="small" style={{ color: '#52c41a', borderColor: '#52c41a' }}>
+                                发布
+                            </Button>
+                        </Space>
+                        <Button danger onClick={handleClearRules} size="small" block>
+                            清空规则库
+                        </Button>
+                    </Space>
+                </div>
             </Sider>
 
             {/* 右侧详情/编辑区 */}
             <Content className="rule-content" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                {/* 顶部工具栏 - 固定在右侧内容区顶部 */}
-                <div style={{ padding: '16px', borderBottom: '1px solid var(--irify-border-color, #e8e8e8)', flexShrink: 0 }}>
-                    <Space>
-                        <Button onClick={handleImportClick}>导入</Button>
-                        <Button onClick={handleExportClick}>导出</Button>
-                        <Button danger onClick={handleClearRules}>清空</Button>
-                        <Button
-                            style={{
-                                backgroundColor: '#52c41a',
-                                borderColor: '#52c41a',
-                                color: '#fff',
-                            }}
-                            onClick={handlePublishSnapshot}
-                        >
-                            发布快照
-                        </Button>
-                        <Button type="primary" onClick={handleCreate}>
-                            新增规则
-                        </Button>
-                    </Space>
-                </div>
-
                 {/* 内容区域 */}
-                <div style={{ flex: 1, overflow: 'hidden' }}>
+                <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
                     {!selectedRule ? (
                         // 空状态
                         <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -872,37 +895,95 @@ const RuleManagement: React.FC = () => {
                     // 规则详情编辑区
                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                         {/* 顶部头信息 */}
-                        <Card style={{ marginBottom: '16px' }} bodyStyle={{ padding: '16px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>
-                                        {selectedRule.title_zh || selectedRule.title || selectedRule.rule_name}
+                        <Card style={{ marginBottom: '16px' }} bodyStyle={{ padding: '20px 24px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '24px' }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    {/* 标题和 UUID */}
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '12px' }}>
+                                        <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+                                            {selectedRule.title_zh || selectedRule.title || selectedRule.rule_name}
+                                        </h2>
+                                        <span 
+                                            style={{ 
+                                                fontSize: '12px', 
+                                                color: '#8c8c8c', 
+                                                fontFamily: 'monospace',
+                                                cursor: 'pointer',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                padding: '2px 8px',
+                                                background: 'rgba(0,0,0,0.02)',
+                                                borderRadius: '4px',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onClick={() => {
+                                                const uuid = selectedRule.rule_id || selectedRule.rule_name;
+                                                navigator.clipboard.writeText(uuid);
+                                                message.success('已复制 UUID');
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = 'rgba(0,0,0,0.06)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = 'rgba(0,0,0,0.02)';
+                                            }}
+                                            title="点击复制"
+                                        >
+                                            {selectedRule.rule_id || selectedRule.rule_name}
+                                            <CopyOutlined style={{ fontSize: '10px' }} />
+                                        </span>
                                     </div>
-                                    <div style={{ fontSize: '14px', color: '#8c8c8c', marginBottom: '12px' }}>
-                                        {selectedRule.rule_id || selectedRule.rule_name}
-                                    </div>
-                                    <Space size={[0, 8]} wrap>
+                                    
+                                    {/* 标签 */}
+                                    <Space size={[8, 8]} wrap>
                                         {selectedRule.language && (
-                                            <Tag color="blue">{standardizeLanguage(selectedRule.language)}</Tag>
+                                            <Tag color="blue" style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}>
+                                                {standardizeLanguage(selectedRule.language)}
+                                            </Tag>
                                         )}
                                         {selectedRule.severity && (
-                                            <Tag color={severityMap[selectedRule.severity?.toLowerCase()]?.color || 'default'}>
+                                            <Tag 
+                                                color={severityMap[selectedRule.severity?.toLowerCase()]?.color || 'default'}
+                                                style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}
+                                            >
                                                 {severityMap[selectedRule.severity?.toLowerCase()]?.label || selectedRule.severity}
                                             </Tag>
                                         )}
                                         {selectedRule.risk_type && (
-                                            <Tag>{selectedRule.risk_type}</Tag>
+                                            <Tag style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}>
+                                                {selectedRule.risk_type}
+                                            </Tag>
                                         )}
                                         {selectedRule.cwe?.slice(0, 3).map((cwe) => (
-                                            <Tag key={cwe}>{cwe}</Tag>
+                                            <Tag 
+                                                key={cwe} 
+                                                color="purple"
+                                                style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}
+                                            >
+                                                {cwe}
+                                            </Tag>
                                         ))}
+                                        {selectedRule.cwe && selectedRule.cwe.length > 3 && (
+                                            <Tag style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}>
+                                                +{selectedRule.cwe.length - 3} more
+                                            </Tag>
+                                        )}
                                     </Space>
                                 </div>
+                                
+                                {/* 操作按钮 */}
                                 <Space>
-                                    <Button onClick={handleDeleteSelectedRule} danger>删除</Button>
-                                    <Button onClick={handleEditInEditor}>完整编辑</Button>
-                                    <Button onClick={handleResetForm}>重置</Button>
-                                    <Button type="primary" onClick={handleSaveRule} loading={savingRule}>
+                                    <Button onClick={handleResetForm} size="middle">
+                                        重置
+                                    </Button>
+                                    <Button onClick={handleEditInEditor} size="middle">
+                                        完整编辑
+                                    </Button>
+                                    <Button onClick={handleDeleteSelectedRule} danger size="middle" ghost>
+                                        删除
+                                    </Button>
+                                    <Button type="primary" onClick={handleSaveRule} loading={savingRule} size="middle">
                                         保存修改
                                     </Button>
                                 </Space>
@@ -924,32 +1005,59 @@ const RuleManagement: React.FC = () => {
                                             ),
                                             children: (
                                                 <Form form={form} layout="vertical">
-                                                    <Form.Item label="标题（英文）" name="title">
-                                                        <Input placeholder="Rule title" />
-                                                    </Form.Item>
-                                                    <Form.Item label="标题（中文）" name="title_zh">
-                                                        <Input placeholder="规则标题" />
-                                                    </Form.Item>
+                                                    {/* 标题行 - 并排显示 */}
+                                                    <Row gutter={16}>
+                                                        <Col span={12}>
+                                                            <Form.Item label="标题（英文）" name="title">
+                                                                <Input placeholder="Rule title" />
+                                                            </Form.Item>
+                                                        </Col>
+                                                        <Col span={12}>
+                                                            <Form.Item label="标题（中文）" name="title_zh">
+                                                                <Input placeholder="规则标题" />
+                                                            </Form.Item>
+                                                        </Col>
+                                                    </Row>
+
+                                                    {/* 核心属性行 - 三列并排 */}
+                                                    <Row gutter={16}>
+                                                        <Col span={8}>
+                                                            <Form.Item label="严重度" name="severity">
+                                                                <Select placeholder="选择严重度">
+                                                                    <Select.Option value="info">Info</Select.Option>
+                                                                    <Select.Option value="low">Low</Select.Option>
+                                                                    <Select.Option value="medium">Medium</Select.Option>
+                                                                    <Select.Option value="high">High</Select.Option>
+                                                                    <Select.Option value="critical">Critical</Select.Option>
+                                                                </Select>
+                                                            </Form.Item>
+                                                        </Col>
+                                                        <Col span={8}>
+                                                            <Form.Item label="风险类型" name="risk_type">
+                                                                <Input placeholder="如 SQLI / SSRF" />
+                                                            </Form.Item>
+                                                        </Col>
+                                                        <Col span={8}>
+                                                            <Form.Item label="CWE" name="cwe">
+                                                                <Select mode="tags" placeholder="输入 CWE 编号" />
+                                                            </Form.Item>
+                                                        </Col>
+                                                    </Row>
+
+                                                    {/* 描述和修复建议 - 全宽 */}
                                                     <Form.Item label="描述" name="description">
-                                                        <Input.TextArea rows={4} placeholder="描述该规则检测的风险" />
+                                                        <Input.TextArea 
+                                                            rows={5} 
+                                                            placeholder="描述该规则检测的风险&#10;支持 Markdown 格式" 
+                                                            style={{ fontFamily: 'inherit' }}
+                                                        />
                                                     </Form.Item>
                                                     <Form.Item label="修复建议" name="solution">
-                                                        <Input.TextArea rows={4} placeholder="给出修复建议" />
-                                                    </Form.Item>
-                                                    <Form.Item label="严重度" name="severity">
-                                                        <Select placeholder="选择严重度">
-                                                            <Select.Option value="info">Info</Select.Option>
-                                                            <Select.Option value="low">Low</Select.Option>
-                                                            <Select.Option value="medium">Medium</Select.Option>
-                                                            <Select.Option value="high">High</Select.Option>
-                                                            <Select.Option value="critical">Critical</Select.Option>
-                                                        </Select>
-                                                    </Form.Item>
-                                                    <Form.Item label="风险类型" name="risk_type">
-                                                        <Input placeholder="如 SQLI / SSRF" />
-                                                    </Form.Item>
-                                                    <Form.Item label="CWE" name="cwe">
-                                                        <Select mode="tags" placeholder="输入 CWE 编号" />
+                                                        <Input.TextArea 
+                                                            rows={5} 
+                                                            placeholder="给出修复建议&#10;支持 Markdown 格式" 
+                                                            style={{ fontFamily: 'inherit' }}
+                                                        />
                                                     </Form.Item>
                                                 </Form>
                                             ),
