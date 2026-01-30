@@ -110,6 +110,7 @@ interface TSyntaxFlowRuleMetadataUpdateRequest {
     risk_type?: string;
     cve?: string;
     cwe?: string[];
+    alert_desc?: { [key: string]: TSyntaxFlowAlertDesc };
     groups?: string[];
 }
 

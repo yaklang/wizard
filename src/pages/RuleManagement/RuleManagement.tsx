@@ -17,21 +17,33 @@ import {
     Select,
     Tabs,
     Form,
-    Row,
-    Col,
     Dropdown,
+    Descriptions,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined, PlusOutlined, ExportOutlined, ImportOutlined, DeleteOutlined, SettingOutlined, RocketOutlined } from '@ant-design/icons';
+import {
+    BugOutlined,
+    UploadOutlined,
+    ShrinkOutlined,
+    FileTextOutlined,
+    CodeOutlined,
+    CopyOutlined,
+    PlusOutlined,
+    ExportOutlined,
+    ImportOutlined,
+    DeleteOutlined,
+    SettingOutlined,
+    RocketOutlined,
+} from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 // 语言官方图标
-import { 
-    SiPhp, 
-    SiJavascript, 
-    SiTypescript, 
-    SiPython, 
-    SiGo, 
-    SiRuby, 
+import {
+    SiPhp,
+    SiJavascript,
+    SiTypescript,
+    SiPython,
+    SiGo,
+    SiRuby,
     SiRust,
     SiC,
     SiCplusplus,
@@ -52,15 +64,23 @@ import {
 import type {
     TSyntaxFlowRule,
     TSyntaxFlowRuleFilterOptions,
+    TSyntaxFlowAlertDesc,
 } from '@/apis/SyntaxFlowRuleApi/type';
 import { WizardAceEditor } from '@/compoments';
 import Markdown from '@/compoments/MarkDown';
+import RelatedVulnerabilityList from './RelatedVulnerabilityList';
 import './RuleManagement.scss';
 
 const { Sider, Content } = Layout;
 
 // 语言图标映射（官方品牌 SVG 图标）
-const languageIconMap: Record<string, { icon: React.ComponentType<{ size?: number; color?: string }>; color: string }> = {
+const languageIconMap: Record<
+    string,
+    {
+        icon: React.ComponentType<{ size?: number; color?: string }>;
+        color: string;
+    }
+> = {
     php: { icon: SiPhp, color: '#777BB4' },
     java: { icon: DiJava, color: '#007396' },
     javascript: { icon: SiJavascript, color: '#F7DF1E' },
@@ -85,19 +105,19 @@ const renderTreeNodeTitle = (node: FilterTreeNode) => {
     return (
         <div className="tree-node-title">
             {isRuleNode && langConfig && (
-                <span 
+                <span
                     className="lang-icon"
-                    style={{ 
+                    style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginRight: '2px'
+                        marginRight: '2px',
                     }}
                     title={node.language}
                 >
-                    {React.createElement(langConfig.icon, { 
-                        size: 15, 
-                        color: langConfig.color 
+                    {React.createElement(langConfig.icon, {
+                        size: 15,
+                        color: langConfig.color,
                     })}
                 </span>
             )}
@@ -123,6 +143,30 @@ const renderTreeNodeTitle = (node: FilterTreeNode) => {
     );
 };
 
+// 树节点标题渲染（带加载状态）
+const renderTreeNodeTitleWithLoading = (node: FilterTreeNode, loadingNodes: Set<string>) => {
+    const nodeKey = node.key as string;
+    const isLoading = loadingNodes.has(nodeKey);
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+            }}
+        >
+            {renderTreeNodeTitle(node)}
+            {isLoading && (
+                <Spin
+                    size="small"
+                    style={{ marginLeft: 'auto' }}
+                />
+            )}
+        </div>
+    );
+};
+
 const severityMap: Record<string, { label: string; color: string }> = {
     critical: { label: '严重', color: 'red' },
     high: { label: '高危', color: 'orange' },
@@ -134,10 +178,10 @@ const severityMap: Record<string, { label: string; color: string }> = {
 
 // 左侧筛选树的节点类型
 type FilterTreeNodeType =
-    | 'category'      // Level 1: 大分类（如 "OWASP Top 10"）
-    | 'group'         // Level 2: 具体分类（如 "A01: Broken Access Control"）
-    | 'rule'          // Level 3: 具体规则
-    | 'risk_type';    // 缺陷类型
+    | 'category' // Level 1: 大分类（如 "OWASP Top 10"）
+    | 'group' // Level 2: 具体分类（如 "A01: Broken Access Control"）
+    | 'rule' // Level 3: 具体规则
+    | 'risk_type'; // 缺陷类型
 
 interface FilterTreeNode {
     title: string;
@@ -147,25 +191,40 @@ interface FilterTreeNode {
     filterType?: FilterTreeNodeType;
     filterValue?: string;
     count?: number;
-    language?: string;     // 规则节点的语言
-    ruleId?: string;       // 规则节点的ID
-    ruleName?: string;     // 规则节点的名称
-    isLeaf?: boolean;      // 是否为叶子节点
+    language?: string; // 规则节点的语言
+    ruleId?: string; // 规则节点的ID
+    ruleName?: string; // 规则节点的名称
+    isLeaf?: boolean; // 是否为叶子节点
 }
+
+// 空状态描述
+const EmptyDescription = (
+    <div>
+        <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+            请选择左侧规则进行查看或编辑
+        </div>
+        <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
+            或使用顶部工具栏的&ldquo;新增规则&rdquo;按钮创建规则
+        </div>
+    </div>
+);
 
 const RuleManagement: React.FC = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
-    
+
     // 选中的规则详情
-    const [selectedRule, setSelectedRule] = useState<TSyntaxFlowRule | null>(null);
+    const [selectedRule, setSelectedRule] = useState<TSyntaxFlowRule | null>(
+        null,
+    );
     const [loadingRuleDetail, setLoadingRuleDetail] = useState(false);
     const [savingRule, setSavingRule] = useState(false);
-    
-    // Markdown 预览模式 - 默认预览
-    const [descriptionPreview, setDescriptionPreview] = useState(true);
-    const [solutionPreview, setSolutionPreview] = useState(true);
-    
+
+    // 告警信息状态
+    const [alertDescState, setAlertDescState] = useState<{
+        [key: string]: TSyntaxFlowAlertDesc;
+    }>({});
+
     // 筛选状态
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
     const [filters, setFilters] = useState<{
@@ -188,13 +247,15 @@ const RuleManagement: React.FC = () => {
     const [filterTreeData, setFilterTreeData] = useState<FilterTreeNode[]>([]);
     const [selectedFilterKeys, setSelectedFilterKeys] = useState<string[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
-    
+
     // 规则缓存（避免重复请求）
-    const [rulesCache, setRulesCache] = useState<Record<string, FilterTreeNode[]>>({});
-    
+    const [rulesCache, setRulesCache] = useState<
+        Record<string, FilterTreeNode[]>
+    >({});
+
     // 节点加载状态
     const [loadingNodes] = useState<Set<string>>(new Set());
-    
+
     // Tab 视图模式：group（分组视图） 或 risk-type（缺陷类型视图）
     const [viewMode, setViewMode] = useState<'group' | 'risk-type'>('group');
 
@@ -215,9 +276,12 @@ const RuleManagement: React.FC = () => {
 
     // 构建筛选树 - 三层结构（Level 1: 标准/分组，Level 2: 具体分类，Level 3: 规则）
     const buildFilterTree = useCallback(
-        (options: TSyntaxFlowRuleFilterOptions, mode: 'group' | 'risk-type' = 'group'): FilterTreeNode[] => {
+        (
+            options: TSyntaxFlowRuleFilterOptions,
+            mode: 'group' | 'risk-type' = 'group',
+        ): FilterTreeNode[] => {
             const treeNodes: FilterTreeNode[] = [];
-            
+
             // 如果是缺陷类型视图，只显示缺陷类型
             if (mode === 'risk-type') {
                 if (options.risk_types && options.risk_types.length > 0) {
@@ -468,27 +532,31 @@ const RuleManagement: React.FC = () => {
 
     // 加载特定分组下的规则列表（用于填充第三层节点）- 优化版本
     const loadRulesForGroup = useCallback(
-        async (groupName: string, riskType?: string): Promise<FilterTreeNode[]> => {
+        async (
+            groupName: string,
+            riskType?: string,
+        ): Promise<FilterTreeNode[]> => {
             // 生成缓存 key
             const cacheKey = `${groupName || ''}_${riskType || ''}_${selectedLanguages.join(',')}`;
-            
+
             // 检查缓存
             if (rulesCache[cacheKey]) {
                 return rulesCache[cacheKey];
             }
-            
+
             try {
                 const params: any = { limit: 500 }; // 减少单次加载量
                 if (groupName) params.group_name = groupName;
                 if (riskType) params.risk_type = riskType;
-                
+
                 let allRules: TSyntaxFlowRule[] = [];
-                
+
                 if (selectedLanguages.length > 0) {
                     // 并行加载多个语言的规则（性能优化）
-                    const promises = selectedLanguages.map(lang => 
-                        getSyntaxFlowRules({ ...params, language: lang })
-                            .then(res => res.data?.list || [])
+                    const promises = selectedLanguages.map((lang) =>
+                        getSyntaxFlowRules({ ...params, language: lang }).then(
+                            (res) => res.data?.list || [],
+                        ),
                     );
                     const results = await Promise.all(promises);
                     allRules = results.flat();
@@ -496,7 +564,7 @@ const RuleManagement: React.FC = () => {
                     const res = await getSyntaxFlowRules(params);
                     allRules = res.data?.list ?? [];
                 }
-                
+
                 const ruleNodes = allRules.map((rule) => ({
                     title: rule.title_zh || rule.title || rule.rule_name,
                     key: `rule-${rule.rule_id || rule.rule_name}`,
@@ -507,10 +575,10 @@ const RuleManagement: React.FC = () => {
                     ruleName: rule.rule_name,
                     isLeaf: true,
                 }));
-                
+
                 // 缓存结果
-                setRulesCache(prev => ({ ...prev, [cacheKey]: ruleNodes }));
-                
+                setRulesCache((prev) => ({ ...prev, [cacheKey]: ruleNodes }));
+
                 return ruleNodes;
             } catch (err) {
                 message.error('加载规则列表失败');
@@ -541,30 +609,38 @@ const RuleManagement: React.FC = () => {
     };
 
     // 加载规则详情
-    const loadRuleDetail = useCallback(async (ruleName: string, ruleId?: string) => {
-        setLoadingRuleDetail(true);
-        try {
-            const res = await fetchSyntaxFlowRule({ rule_name: ruleName, rule_id: ruleId });
-            if (res.code === 200 && res.data) {
-                setSelectedRule(res.data);
-                // 填充表单
-                form.setFieldsValue({
-                    title: res.data.title,
-                    title_zh: res.data.title_zh,
-                    description: res.data.description,
-                    solution: res.data.solution,
-                    severity: res.data.severity,
-                    risk_type: res.data.risk_type,
-                    cwe: res.data.cwe,
-                    language: res.data.language,
+    const loadRuleDetail = useCallback(
+        async (ruleName: string, ruleId?: string) => {
+            setLoadingRuleDetail(true);
+            try {
+                const res = await fetchSyntaxFlowRule({
+                    rule_name: ruleName,
+                    rule_id: ruleId,
                 });
+                if (res.code === 200 && res.data) {
+                    setSelectedRule(res.data);
+                    // 初始化告警信息
+                    setAlertDescState(res.data.alert_desc || {});
+                    // 填充表单
+                    form.setFieldsValue({
+                        title: res.data.title,
+                        title_zh: res.data.title_zh,
+                        description: res.data.description,
+                        solution: res.data.solution,
+                        severity: res.data.severity,
+                        risk_type: res.data.risk_type,
+                        cwe: res.data.cwe,
+                        language: res.data.language,
+                    });
+                }
+            } catch (err) {
+                message.error('加载规则详情失败');
+            } finally {
+                setLoadingRuleDetail(false);
             }
-        } catch (err) {
-            message.error('加载规则详情失败');
-        } finally {
-            setLoadingRuleDetail(false);
-        }
-    }, [form]);
+        },
+        [form],
+    );
 
     const handleSearch = (value: string) => {
         const newFilters = { ...filters, rule_name: value };
@@ -584,10 +660,14 @@ const RuleManagement: React.FC = () => {
         }
 
         // 如果点击的是分类或分组节点（非规则节点），切换展开/折叠状态
-        if (node.filterType === 'category' || node.filterType === 'group' || node.filterType === 'risk_type') {
+        if (
+            node.filterType === 'category' ||
+            node.filterType === 'group' ||
+            node.filterType === 'risk_type'
+        ) {
             const nodeKey = node.key as string;
             const isExpanded = expandedKeys.includes(nodeKey);
-            
+
             if (isExpanded) {
                 // 折叠节点
                 setExpandedKeys(expandedKeys.filter((k) => k !== nodeKey));
@@ -595,18 +675,25 @@ const RuleManagement: React.FC = () => {
                 // 展开节点
                 const newExpandedKeys = [...expandedKeys, nodeKey];
                 setExpandedKeys(newExpandedKeys);
-                
+
                 // 如果是 group 或 risk_type 节点，且还没有加载子节点，则加载规则列表
                 if (
-                    (node.filterType === 'group' || node.filterType === 'risk_type') &&
+                    (node.filterType === 'group' ||
+                        node.filterType === 'risk_type') &&
                     (!node.children || node.children.length === 0)
                 ) {
                     try {
                         const rules = await loadRulesForGroup(
-                            node.filterType === 'group' ? node.filterValue || '' : '',
-                            node.filterType === 'risk_type' ? node.filterValue : undefined,
+                            node.filterType === 'group'
+                                ? node.filterValue || ''
+                                : '',
+                            node.filterType === 'risk_type'
+                                ? node.filterValue
+                                : undefined,
                         );
-                        setFilterTreeData((prev) => updateTreeData(prev, node.key, rules));
+                        setFilterTreeData((prev) =>
+                            updateTreeData(prev, node.key, rules),
+                        );
                     } catch (err) {
                         message.error('加载规则失败');
                     }
@@ -622,18 +709,25 @@ const RuleManagement: React.FC = () => {
         // 如果展开的是第二层节点（group），且还没有加载子节点，则加载规则列表
         if (info.expanded && info.node) {
             const node = info.node as FilterTreeNode;
-            
+
             // 检查是否是 group 或 risk_type 节点，且子节点未加载（undefined 或空数组）
             if (
-                (node.filterType === 'group' || node.filterType === 'risk_type') &&
+                (node.filterType === 'group' ||
+                    node.filterType === 'risk_type') &&
                 (!node.children || node.children.length === 0)
             ) {
                 try {
                     const rules = await loadRulesForGroup(
-                        node.filterType === 'group' ? node.filterValue || '' : '',
-                        node.filterType === 'risk_type' ? node.filterValue : undefined,
+                        node.filterType === 'group'
+                            ? node.filterValue || ''
+                            : '',
+                        node.filterType === 'risk_type'
+                            ? node.filterValue
+                            : undefined,
                     );
-                    setFilterTreeData((prev) => updateTreeData(prev, node.key, rules));
+                    setFilterTreeData((prev) =>
+                        updateTreeData(prev, node.key, rules),
+                    );
                 } catch (err) {
                     message.error('加载规则失败');
                 }
@@ -648,17 +742,18 @@ const RuleManagement: React.FC = () => {
     // 保存规则修改
     const handleSaveRule = async () => {
         if (!selectedRule) return;
-        
+
         try {
             const values = await form.validateFields();
             setSavingRule(true);
-            
+
             const res = await updateSyntaxFlowRuleMetadata({
                 rule_name: selectedRule.rule_name,
                 rule_id: selectedRule.rule_id,
                 ...values,
+                alert_desc: alertDescState, // 包含漏洞告警信息
             });
-            
+
             if (res.code === 200) {
                 message.success('保存成功');
                 // 刷新规则详情
@@ -686,6 +781,8 @@ const RuleManagement: React.FC = () => {
                 cwe: selectedRule.cwe,
                 language: selectedRule.language,
             });
+            // 重置告警信息
+            setAlertDescState(selectedRule.alert_desc || {});
         }
     };
 
@@ -759,7 +856,7 @@ const RuleManagement: React.FC = () => {
     // 删除当前选中的规则
     const handleDeleteSelectedRule = () => {
         if (!selectedRule) return;
-        
+
         Modal.confirm({
             title: '确认删除该规则？',
             content: `规则名称: ${selectedRule.title_zh || selectedRule.rule_name}`,
@@ -820,10 +917,29 @@ const RuleManagement: React.FC = () => {
     return (
         <Layout className="rule-management-layout">
             {/* 左侧导航栏 */}
-            <Sider width={320} className="filter-sider" theme="light" style={{ position: 'relative' }}>
+            <Sider
+                width={320}
+                className="filter-sider"
+                theme="light"
+                style={{ position: 'relative' }}
+            >
                 {/* 顶部筛选区 */}
-                <div className="sider-header" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px', padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                    className="sider-header"
+                    style={{
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        gap: '12px',
+                        padding: '16px',
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                        }}
+                    >
                         <span className="title">规则导航</span>
                         <Button
                             type="text"
@@ -834,7 +950,7 @@ const RuleManagement: React.FC = () => {
                             title="收起所有分组"
                         />
                     </div>
-                    
+
                     {/* 语言筛选（多选） */}
                     <Select
                         mode="multiple"
@@ -844,7 +960,10 @@ const RuleManagement: React.FC = () => {
                             setSelectedLanguages(values);
                             // 语言变化时，清空缓存和已加载的规则节点
                             setRulesCache({});
-                            const treeData = buildFilterTree(rawFilterOptions, viewMode);
+                            const treeData = buildFilterTree(
+                                rawFilterOptions,
+                                viewMode,
+                            );
                             setFilterTreeData(treeData);
                         }}
                         style={{ width: '100%' }}
@@ -852,8 +971,12 @@ const RuleManagement: React.FC = () => {
                         maxTagCount="responsive"
                     >
                         {rawFilterOptions.languages?.map((lang) => (
-                            <Select.Option key={lang.name} value={lang.name || ''}>
-                                {standardizeLanguage(lang.name || '')} ({lang.count})
+                            <Select.Option
+                                key={lang.name}
+                                value={lang.name || ''}
+                            >
+                                {standardizeLanguage(lang.name || '')} (
+                                {lang.count})
                             </Select.Option>
                         ))}
                     </Select>
@@ -864,11 +987,11 @@ const RuleManagement: React.FC = () => {
                         allowClear
                         onSearch={handleSearch}
                     />
-                    
+
                     {/* 新增规则按钮 */}
-                    <Button 
-                        type="primary" 
-                        icon={<PlusOutlined />} 
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
                         onClick={handleCreate}
                         block
                         size="middle"
@@ -878,11 +1001,14 @@ const RuleManagement: React.FC = () => {
                 </div>
 
                 {/* 视图切换 Tab */}
-                <div style={{ 
-                    padding: '0 16px 8px 16px',
-                    borderBottom: '1px solid var(--irify-border-color, #e8e8e8)',
-                    flexShrink: 0
-                }}>
+                <div
+                    style={{
+                        padding: '0 16px 8px 16px',
+                        borderBottom:
+                            '1px solid var(--irify-border-color, #e8e8e8)',
+                        flexShrink: 0,
+                    }}
+                >
                     <Tabs
                         activeKey={viewMode}
                         onChange={(key) => {
@@ -917,20 +1043,7 @@ const RuleManagement: React.FC = () => {
                             onExpand={handleTreeExpand}
                             blockNode
                             showIcon={false}
-                            titleRender={(node) => {
-                                const treeNode = node as FilterTreeNode;
-                                const nodeKey = treeNode.key as string;
-                                const isLoading = loadingNodes.has(nodeKey);
-                                
-                                return (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {renderTreeNodeTitle(treeNode)}
-                                        {isLoading && (
-                                            <Spin size="small" style={{ marginLeft: 'auto' }} />
-                                        )}
-                                    </div>
-                                );
-                            }}
+                            titleRender={(node) => renderTreeNodeTitleWithLoading(node as FilterTreeNode, loadingNodes)}
                             virtual={false}
                         />
                     ) : (
@@ -939,16 +1052,20 @@ const RuleManagement: React.FC = () => {
                 </div>
 
                 {/* 底部操作栏 */}
-                <div className="sider-footer" style={{ 
-                    padding: '12px 16px', 
-                    borderTop: '1px solid var(--irify-border-color, #e8e8e8)',
-                    flexShrink: 0,
-                    background: 'var(--irify-bg-container, #fff)',
-                    display: 'flex',
-                    gap: '8px',
-                    alignItems: 'center'
-                }}>
-                    <Button 
+                <div
+                    className="sider-footer"
+                    style={{
+                        padding: '12px 16px',
+                        borderTop:
+                            '1px solid var(--irify-border-color, #e8e8e8)',
+                        flexShrink: 0,
+                        background: 'var(--irify-bg-container, #fff)',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Button
                         type="primary"
                         icon={<RocketOutlined />}
                         onClick={handlePublishSnapshot}
@@ -997,41 +1114,181 @@ const RuleManagement: React.FC = () => {
             </Sider>
 
             {/* 右侧详情/编辑区 */}
-            <Content className="rule-content" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <Content
+                className="rule-content"
+                style={{
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: '#F9FAFB',
+                }}
+            >
                 {/* 内容区域 */}
                 <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
                     {!selectedRule ? (
                         // 空状态
-                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div
+                            style={{
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
                             <Empty
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description={
-                                    <div>
-                                        <div style={{ fontSize: '16px', marginBottom: '8px' }}>请选择左侧规则进行查看或编辑</div>
-                                        <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
-                                            或使用顶部工具栏的&ldquo;新增规则&rdquo;按钮创建规则
-                                        </div>
-                                    </div>
-                                }
+                                description={EmptyDescription}
                             />
                         </div>
                     ) : (
-                    // 规则详情编辑区
-                    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        {/* 顶部头信息 */}
-                        <Card style={{ marginBottom: '16px' }} bodyStyle={{ padding: '20px 24px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '24px' }}>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    {/* 标题和 UUID */}
-                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '16px' }}>
-                                        <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
-                                            {selectedRule.title_zh || selectedRule.title || selectedRule.rule_name}
-                                        </h2>
-                                        <span 
+                        // 规则详情编辑区
+                        <div
+                            style={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                            }}
+                        >
+                            {/* 顶部头信息 */}
+                            <Card
+                                style={{
+                                    marginBottom: '16px',
+                                    borderRadius: '12px',
+                                    boxShadow:
+                                        '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+                                    border: '1px solid rgba(0, 0, 0, 0.06)',
+                                }}
+                                bodyStyle={{ padding: '20px 24px' }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'flex-start',
+                                        gap: '24px',
+                                    }}
+                                >
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        {/* 标题和标签徽章（同一行） */}
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                marginBottom: '8px',
+                                                flexWrap: 'wrap',
+                                            }}
+                                        >
+                                            <h2
+                                                style={{
+                                                    fontSize: '20px',
+                                                    fontWeight: 600,
+                                                    margin: 0,
+                                                    lineHeight: 1.4,
+                                                }}
+                                            >
+                                                {selectedRule.title_zh ||
+                                                    selectedRule.title ||
+                                                    selectedRule.rule_name}
+                                            </h2>
+
+                                            {/* 标签徽章（缩小版，移到标题右侧） */}
+                                            {selectedRule.language && (
+                                                <Tag
+                                                    color="blue"
+                                                    style={{
+                                                        fontSize: '11px',
+                                                        padding: '0 6px',
+                                                        borderRadius: '3px',
+                                                        marginLeft: 0,
+                                                        height: '20px',
+                                                        lineHeight: '20px',
+                                                    }}
+                                                >
+                                                    {standardizeLanguage(
+                                                        selectedRule.language,
+                                                    )}
+                                                </Tag>
+                                            )}
+                                            {selectedRule.severity && (
+                                                <Tag
+                                                    color={
+                                                        severityMap[
+                                                            selectedRule.severity?.toLowerCase()
+                                                        ]?.color || 'default'
+                                                    }
+                                                    style={{
+                                                        fontSize: '11px',
+                                                        padding: '0 6px',
+                                                        borderRadius: '3px',
+                                                        marginLeft: 0,
+                                                        height: '20px',
+                                                        lineHeight: '20px',
+                                                    }}
+                                                >
+                                                    {severityMap[
+                                                        selectedRule.severity?.toLowerCase()
+                                                    ]?.label ||
+                                                        selectedRule.severity}
+                                                </Tag>
+                                            )}
+                                            {selectedRule.risk_type && (
+                                                <Tag
+                                                    style={{
+                                                        fontSize: '11px',
+                                                        padding: '0 6px',
+                                                        borderRadius: '3px',
+                                                        marginLeft: 0,
+                                                        height: '20px',
+                                                        lineHeight: '20px',
+                                                    }}
+                                                >
+                                                    {selectedRule.risk_type}
+                                                </Tag>
+                                            )}
+                                            {selectedRule.cwe
+                                                ?.slice(0, 2)
+                                                .map((cwe) => (
+                                                    <Tag
+                                                        key={cwe}
+                                                        color="purple"
+                                                        style={{
+                                                            fontSize: '11px',
+                                                            padding: '0 6px',
+                                                            borderRadius: '3px',
+                                                            marginLeft: 0,
+                                                            height: '20px',
+                                                            lineHeight: '20px',
+                                                        }}
+                                                    >
+                                                        {cwe}
+                                                    </Tag>
+                                                ))}
+                                            {selectedRule.cwe &&
+                                                selectedRule.cwe.length > 2 && (
+                                                    <Tag
+                                                        style={{
+                                                            fontSize: '11px',
+                                                            padding: '0 6px',
+                                                            borderRadius: '3px',
+                                                            marginLeft: 0,
+                                                            height: '20px',
+                                                            lineHeight: '20px',
+                                                        }}
+                                                    >
+                                                        +
+                                                        {selectedRule.cwe
+                                                            .length - 2}
+                                                    </Tag>
+                                                )}
+                                        </div>
+
+                                        {/* UUID（第二行，独立） */}
+                                        <span
                                             className="uuid-container"
-                                            style={{ 
-                                                fontSize: '11px', 
-                                                color: '#bfbfbf', 
+                                            style={{
+                                                fontSize: '11px',
+                                                color: '#bfbfbf',
                                                 fontFamily: 'monospace',
                                                 cursor: 'pointer',
                                                 display: 'inline-flex',
@@ -1041,239 +1298,351 @@ const RuleManagement: React.FC = () => {
                                                 background: 'rgba(0,0,0,0.015)',
                                                 borderRadius: '4px',
                                                 transition: 'all 0.2s',
-                                                position: 'relative'
+                                                position: 'relative',
                                             }}
                                             onClick={() => {
-                                                const uuid = selectedRule.rule_id || selectedRule.rule_name;
-                                                navigator.clipboard.writeText(uuid);
+                                                const uuid =
+                                                    selectedRule.rule_id ||
+                                                    selectedRule.rule_name;
+                                                navigator.clipboard.writeText(
+                                                    uuid,
+                                                );
                                                 message.success('已复制 UUID');
                                             }}
                                             title="点击复制"
                                         >
-                                            {selectedRule.rule_id || selectedRule.rule_name}
-                                            <CopyOutlined 
-                                                className="copy-icon" 
-                                                style={{ 
+                                            {selectedRule.rule_id ||
+                                                selectedRule.rule_name}
+                                            <CopyOutlined
+                                                className="copy-icon"
+                                                style={{
                                                     fontSize: '10px',
                                                     opacity: 0,
-                                                    transition: 'opacity 0.2s'
-                                                }} 
+                                                    transition: 'opacity 0.2s',
+                                                }}
                                             />
                                         </span>
                                     </div>
-                                    
-                                    {/* 标签 */}
-                                    <Space size={[8, 8]} wrap style={{ marginTop: '4px' }}>
-                                        {selectedRule.language && (
-                                            <Tag color="blue" style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}>
-                                                {standardizeLanguage(selectedRule.language)}
-                                            </Tag>
-                                        )}
-                                        {selectedRule.severity && (
-                                            <Tag 
-                                                color={severityMap[selectedRule.severity?.toLowerCase()]?.color || 'default'}
-                                                style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}
-                                            >
-                                                {severityMap[selectedRule.severity?.toLowerCase()]?.label || selectedRule.severity}
-                                            </Tag>
-                                        )}
-                                        {selectedRule.risk_type && (
-                                            <Tag style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}>
-                                                {selectedRule.risk_type}
-                                            </Tag>
-                                        )}
-                                        {selectedRule.cwe?.slice(0, 3).map((cwe) => (
-                                            <Tag 
-                                                key={cwe} 
-                                                color="purple"
-                                                style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}
-                                            >
-                                                {cwe}
-                                            </Tag>
-                                        ))}
-                                        {selectedRule.cwe && selectedRule.cwe.length > 3 && (
-                                            <Tag style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}>
-                                                +{selectedRule.cwe.length - 3} more
-                                            </Tag>
-                                        )}
+
+                                    {/* 操作按钮 */}
+                                    <Space>
+                                        <Button
+                                            onClick={handleResetForm}
+                                            size="middle"
+                                        >
+                                            重置
+                                        </Button>
+                                        <Button
+                                            onClick={handleEditInEditor}
+                                            size="middle"
+                                        >
+                                            完整编辑
+                                        </Button>
+                                        <Button
+                                            onClick={handleDeleteSelectedRule}
+                                            danger
+                                            size="middle"
+                                            ghost
+                                        >
+                                            删除
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={handleSaveRule}
+                                            loading={savingRule}
+                                            size="middle"
+                                        >
+                                            保存修改
+                                        </Button>
                                     </Space>
                                 </div>
-                                
-                                {/* 操作按钮 */}
-                                <Space>
-                                    <Button onClick={handleResetForm} size="middle">
-                                        重置
-                                    </Button>
-                                    <Button onClick={handleEditInEditor} size="middle">
-                                        完整编辑
-                                    </Button>
-                                    <Button onClick={handleDeleteSelectedRule} danger size="middle" ghost>
-                                        删除
-                                    </Button>
-                                    <Button type="primary" onClick={handleSaveRule} loading={savingRule} size="middle">
-                                        保存修改
-                                    </Button>
-                                </Space>
-                            </div>
-                        </Card>
+                            </Card>
 
-                        {/* 内容编辑区 */}
-                        <Card style={{ flex: 1, overflow: 'hidden' }} bodyStyle={{ height: '100%', padding: '16px', overflow: 'auto' }}>
-                            <Spin spinning={loadingRuleDetail}>
-                                <Tabs
-                                    defaultActiveKey="basic"
-                                    items={[
-                                        {
-                                            key: 'basic',
-                                            label: (
-                                                <span>
-                                                    <FileTextOutlined /> 基础信息
-                                                </span>
-                                            ),
-                                            children: (
-                                                <Form form={form} layout="vertical">
-                                                    {/* 标题行 - 并排显示 */}
-                                                    <Row gutter={16}>
-                                                        <Col span={12}>
-                                                            <Form.Item label="标题（英文）" name="title">
-                                                                <Input placeholder="Rule title" />
-                                                            </Form.Item>
-                                                        </Col>
-                                                        <Col span={12}>
-                                                            <Form.Item label="标题（中文）" name="title_zh">
-                                                                <Input placeholder="规则标题" />
-                                                            </Form.Item>
-                                                        </Col>
-                                                    </Row>
-
-                                                    {/* 核心属性行 - 三列并排 */}
-                                                    <Row gutter={16}>
-                                                        <Col span={8}>
-                                                            <Form.Item label="严重度" name="severity">
-                                                                <Select placeholder="选择严重度">
-                                                                    <Select.Option value="info">Info</Select.Option>
-                                                                    <Select.Option value="low">Low</Select.Option>
-                                                                    <Select.Option value="medium">Medium</Select.Option>
-                                                                    <Select.Option value="high">High</Select.Option>
-                                                                    <Select.Option value="critical">Critical</Select.Option>
-                                                                </Select>
-                                                            </Form.Item>
-                                                        </Col>
-                                                        <Col span={8}>
-                                                            <Form.Item label="风险类型" name="risk_type">
-                                                                <Input placeholder="如 SQLI / SSRF" />
-                                                            </Form.Item>
-                                                        </Col>
-                                                        <Col span={8}>
-                                                            <Form.Item label="CWE" name="cwe">
-                                                                <Select mode="tags" placeholder="输入 CWE 编号" />
-                                                            </Form.Item>
-                                                        </Col>
-                                                    </Row>
-
-                                                    {/* 描述 - 支持 Markdown 预览 */}
-                                                    <Form.Item 
-                                                        label={
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                                                <span>描述</span>
-                                                                <Button
-                                                                    type="text"
-                                                                    size="small"
-                                                                    icon={descriptionPreview ? <EditOutlined /> : <EyeOutlined />}
-                                                                    onClick={() => setDescriptionPreview(!descriptionPreview)}
-                                                                    style={{ marginLeft: '8px' }}
-                                                                >
-                                                                    {descriptionPreview ? '编辑' : '预览'}
-                                                                </Button>
-                                                            </div>
-                                                        }
-                                                        name="description"
+                            {/* 内容编辑区 */}
+                            <Card
+                                style={{
+                                    flex: 1,
+                                    overflow: 'hidden',
+                                    borderRadius: '12px',
+                                    boxShadow:
+                                        '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+                                    border: '1px solid rgba(0, 0, 0, 0.06)',
+                                }}
+                                bodyStyle={{
+                                    height: '100%',
+                                    padding: '16px',
+                                    overflow: 'auto',
+                                }}
+                            >
+                                <Spin spinning={loadingRuleDetail}>
+                                    <Tabs
+                                        defaultActiveKey="basic"
+                                        items={[
+                                            {
+                                                key: 'basic',
+                                                label: (
+                                                    <span>
+                                                        <FileTextOutlined />{' '}
+                                                        基础信息
+                                                    </span>
+                                                ),
+                                                children: (
+                                                    <div
+                                                        style={{
+                                                            padding: '8px 0',
+                                                        }}
                                                     >
-                                                        {descriptionPreview ? (
-                                                            <div style={{ 
-                                                                minHeight: '140px', 
-                                                                padding: '12px', 
-                                                                border: '1px solid #d9d9d9', 
-                                                                borderRadius: '4px',
-                                                                background: '#fafafa'
-                                                            }}>
+                                                        {/* 基本属性卡片 */}
+                                                        <div
+                                                            style={{
+                                                                background:
+                                                                    '#fff',
+                                                                padding: '20px',
+                                                                borderRadius:
+                                                                    '8px',
+                                                                boxShadow:
+                                                                    '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: '1px solid rgba(0,0,0,0.06)',
+                                                                marginBottom:
+                                                                    '16px',
+                                                            }}
+                                                        >
+                                                            <Descriptions
+                                                                bordered
+                                                                column={2}
+                                                                size="middle"
+                                                            >
+                                                                <Descriptions.Item
+                                                                    label="标题（英文）"
+                                                                    span={1}
+                                                                >
+                                                                    {selectedRule.title ||
+                                                                        '-'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item
+                                                                    label="标题（中文）"
+                                                                    span={1}
+                                                                >
+                                                                    {selectedRule.title_zh ||
+                                                                        '-'}
+                                                                </Descriptions.Item>
+                                                    <Descriptions.Item label="严重度">
+                                                        {(() => {
+                                                            const sev = selectedRule.severity?.toLowerCase();
+                                                            const sevInfo = sev ? severityMap[sev] : null;
+                                                            return (
+                                                                <Tag color={sevInfo?.color || 'default'}>
+                                                                    {sevInfo?.label || selectedRule.severity || '-'}
+                                                                </Tag>
+                                                            );
+                                                        })()}
+                                                    </Descriptions.Item>
+                                                                <Descriptions.Item label="风险类型">
+                                                                    {selectedRule.risk_type ||
+                                                                        '-'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item
+                                                                    label="CWE"
+                                                                    span={2}
+                                                                >
+                                                                    {selectedRule.cwe &&
+                                                                    selectedRule
+                                                                        .cwe
+                                                                        .length >
+                                                                        0 ? (
+                                                                        <Space
+                                                                            wrap
+                                                                        >
+                                                                            {selectedRule.cwe.map(
+                                                                                (
+                                                                                    cwe,
+                                                                                ) => (
+                                                                                    <Tag
+                                                                                        key={
+                                                                                            cwe
+                                                                                        }
+                                                                                        color="purple"
+                                                                                    >
+                                                                                        {
+                                                                                            cwe
+                                                                                        }
+                                                                                    </Tag>
+                                                                                ),
+                                                                            )}
+                                                                        </Space>
+                                                                    ) : (
+                                                                        '-'
+                                                                    )}
+                                                                </Descriptions.Item>
+                                                            </Descriptions>
+                                                        </div>
+
+                                                        {/* 描述卡片 */}
+                                                        <div
+                                                            style={{
+                                                                background:
+                                                                    '#fff',
+                                                                padding: '20px',
+                                                                borderRadius:
+                                                                    '8px',
+                                                                boxShadow:
+                                                                    '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: '1px solid rgba(0,0,0,0.06)',
+                                                                marginBottom:
+                                                                    '16px',
+                                                            }}
+                                                        >
+                                                            <h3
+                                                                style={{
+                                                                    fontSize:
+                                                                        '16px',
+                                                                    fontWeight: 600,
+                                                                    marginTop: 0,
+                                                                    marginBottom:
+                                                                        '16px',
+                                                                    color: 'rgba(0,0,0,0.85)',
+                                                                }}
+                                                            >
+                                                                描述
+                                                            </h3>
+                                                            <div
+                                                                style={{
+                                                                    maxHeight:
+                                                                        '300px',
+                                                                    overflow:
+                                                                        'auto',
+                                                                    lineHeight:
+                                                                        '1.6',
+                                                                }}
+                                                            >
                                                                 <Markdown>
-                                                                    {form.getFieldValue('description') || '*暂无内容*'}
+                                                                    {selectedRule.description ||
+                                                                        '*暂无内容*'}
                                                                 </Markdown>
                                                             </div>
-                                                        ) : (
-                                                            <Input.TextArea 
-                                                                rows={5} 
-                                                                placeholder="描述该规则检测的风险（支持 Markdown 格式）&#10;&#10;示例：&#10;## 风险说明&#10;该规则检测...&#10;&#10;**影响范围**&#10;- 数据泄露&#10;- 权限绕过" 
-                                                                style={{ fontFamily: 'inherit' }}
-                                                            />
-                                                        )}
-                                                    </Form.Item>
-                                                    
-                                                    {/* 修复建议 - 支持 Markdown 预览 */}
-                                                    <Form.Item 
-                                                        label={
-                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                                                <span>修复建议</span>
-                                                                <Button
-                                                                    type="text"
-                                                                    size="small"
-                                                                    icon={solutionPreview ? <EditOutlined /> : <EyeOutlined />}
-                                                                    onClick={() => setSolutionPreview(!solutionPreview)}
-                                                                    style={{ marginLeft: '8px' }}
-                                                                >
-                                                                    {solutionPreview ? '编辑' : '预览'}
-                                                                </Button>
-                                                            </div>
-                                                        }
-                                                        name="solution"
-                                                    >
-                                                        {solutionPreview ? (
-                                                            <div style={{ 
-                                                                minHeight: '140px', 
-                                                                padding: '12px', 
-                                                                border: '1px solid #d9d9d9', 
-                                                                borderRadius: '4px',
-                                                                background: '#fafafa'
-                                                            }}>
+                                                        </div>
+
+                                                        {/* 修复建议卡片 */}
+                                                        <div
+                                                            style={{
+                                                                background:
+                                                                    '#fff',
+                                                                padding: '20px',
+                                                                borderRadius:
+                                                                    '8px',
+                                                                boxShadow:
+                                                                    '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: '1px solid rgba(0,0,0,0.06)',
+                                                            }}
+                                                        >
+                                                            <h3
+                                                                style={{
+                                                                    fontSize:
+                                                                        '16px',
+                                                                    fontWeight: 600,
+                                                                    marginTop: 0,
+                                                                    marginBottom:
+                                                                        '16px',
+                                                                    color: 'rgba(0,0,0,0.85)',
+                                                                }}
+                                                            >
+                                                                修复建议
+                                                            </h3>
+                                                            <div
+                                                                style={{
+                                                                    maxHeight:
+                                                                        '300px',
+                                                                    overflow:
+                                                                        'auto',
+                                                                    lineHeight:
+                                                                        '1.6',
+                                                                }}
+                                                            >
                                                                 <Markdown>
-                                                                    {form.getFieldValue('solution') || '*暂无内容*'}
+                                                                    {selectedRule.solution ||
+                                                                        '*暂无内容*'}
                                                                 </Markdown>
                                                             </div>
-                                                        ) : (
-                                                            <Input.TextArea 
-                                                                rows={5} 
-                                                                placeholder="给出修复建议（支持 Markdown 格式）&#10;&#10;示例：&#10;## 修复方案&#10;1. 使用参数化查询&#10;2. 添加输入验证&#10;&#10;```php&#10;// 正确的做法&#10;$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');&#10;```" 
-                                                                style={{ fontFamily: 'inherit' }}
-                                                            />
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            },
+                                            {
+                                                key: 'vulnerabilities',
+                                                label: (
+                                                    <span>
+                                                        <BugOutlined /> 漏洞信息
+                                                        {Object.keys(
+                                                            alertDescState,
+                                                        ).length > 0 && (
+                                                            <span
+                                                                style={{
+                                                                    marginLeft: 4,
+                                                                    fontSize:
+                                                                        '12px',
+                                                                    color: '#1890ff',
+                                                                    fontWeight: 600,
+                                                                }}
+                                                            >
+                                                                (
+                                                                {
+                                                                    Object.keys(
+                                                                        alertDescState,
+                                                                    ).length
+                                                                }
+                                                                )
+                                                            </span>
                                                         )}
-                                                    </Form.Item>
-                                                </Form>
-                                            ),
-                                        },
-                                        {
-                                            key: 'code',
-                                            label: (
-                                                <span>
-                                                    <CodeOutlined /> 规则代码
-                                                </span>
-                                            ),
-                                            children: (
-                                                <div style={{ height: '500px', border: '1px solid #d9d9d9', borderRadius: '4px' }}>
-                                                    <WizardAceEditor
-                                                        value={selectedRule.content || ''}
-                                                        mode="text"
-                                                        readOnly
-                                                        style={{ width: '100%', height: '100%' }}
+                                                    </span>
+                                                ),
+                                                children: (
+                                                    <RelatedVulnerabilityList
+                                                        alertDesc={
+                                                            alertDescState
+                                                        }
+                                                        onChange={
+                                                            setAlertDescState
+                                                        }
+                                                        readOnly={false}
                                                     />
-                                                </div>
-                                            ),
-                                        },
-                                    ]}
-                                />
-                            </Spin>
-                        </Card>
-                    </div>
+                                                ),
+                                            },
+                                            {
+                                                key: 'code',
+                                                label: (
+                                                    <span>
+                                                        <CodeOutlined />{' '}
+                                                        规则代码
+                                                    </span>
+                                                ),
+                                                children: (
+                                                    <div
+                                                        style={{
+                                                            height: '500px',
+                                                            border: '1px solid #d9d9d9',
+                                                            borderRadius: '4px',
+                                                        }}
+                                                    >
+                                                        <WizardAceEditor
+                                                            value={
+                                                                selectedRule.content ||
+                                                                ''
+                                                            }
+                                                            mode="text"
+                                                            readOnly
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ),
+                                            },
+                                        ]}
+                                    />
+                                </Spin>
+                            </Card>
+                        </div>
                     )}
                 </div>
             </Content>
