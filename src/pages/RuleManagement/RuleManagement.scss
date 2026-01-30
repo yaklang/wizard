@@ -31,12 +31,18 @@
             }
         }
 
+        .sider-footer {
+            border-top: 1px solid var(--irify-border-color, #e8e8e8);
+            background: var(--irify-bg-container, #fff);
+        }
+
 
         .filter-tree-container {
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
             padding: 8px;
+            padding-bottom: 0;
             scroll-behavior: smooth;
             
             // 自定义滚动条样式（针对 webkit 浏览器）
@@ -57,14 +63,25 @@
                 }
             }
 
+            .ant-empty {
+                margin: 0;
+                padding: 40px 0;
+            }
+
             .ant-tree {
                 background: transparent;
+                padding-bottom: 0;
+                margin-bottom: 0;
 
                 .ant-tree-treenode {
                     padding: 0;
-                    margin-bottom: 1px;
+                    margin-bottom: 2px;
                     width: 100%;
                     position: relative;
+                    
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
 
                     &:hover {
                         .ant-tree-node-content-wrapper {
@@ -101,16 +118,17 @@
                 .ant-tree-node-content-wrapper {
                     display: flex;
                     align-items: center;
-                    padding: 4px 8px;
+                    padding: 6px 8px;
                     border-radius: 4px;
                     transition: all 0.2s;
                     cursor: pointer;
                     width: 100%;
+                    min-height: 32px;
                 }
 
                 .ant-tree-switcher {
                     width: 20px;
-                    line-height: 28px;
+                    line-height: 32px;
                 }
 
                     .tree-node-title {
@@ -132,12 +150,12 @@
                             align-items: center;
                             justify-content: center;
                             color: #8c8c8c;
-                            font-size: 12px;
+                            font-size: 14px;
                         }
 
                         .label-text {
                             flex: 1;
-                            font-size: 13px;
+                            font-size: 14px;
                             line-height: 1.6;
                             min-width: 0;
                             overflow: hidden;
@@ -147,7 +165,7 @@
                         }
 
                     .node-count-text {
-                        font-size: 12px;
+                        font-size: 13px;
                         color: #8c8c8c;
                         margin-left: auto;
                         flex-shrink: 0;
@@ -332,6 +350,11 @@
                 }
             }
 
+            .sider-footer {
+                border-top: 1px solid var(--irify-border) !important;
+                background: var(--irify-bg-container);
+            }
+
 
             .filter-tree-container {
                 // Dark Mode 滚动条样式
@@ -376,8 +399,8 @@
                     }
 
                     .ant-tree-node-content-wrapper {
-                        padding: 4px 8px;
-                        min-height: 28px;
+                        padding: 6px 8px;
+                        min-height: 32px;
                         border-radius: 4px;
                         background: transparent !important;
                         transition: all 0.2s;
@@ -394,7 +417,7 @@
 
                     .ant-tree-switcher {
                         width: 20px;
-                        line-height: 28px;
+                        line-height: 32px;
                     }
 
                     // Tree node flex alignment
@@ -402,27 +425,34 @@
                         display: flex;
                         align-items: center;
                         width: 100%;
-                        gap: 4px;
+                        gap: 6px;
                         flex-wrap: wrap;
+
+                        .lang-icon {
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            vertical-align: middle;
+                        }
 
                         .icon-wrapper {
                             display: flex;
                             align-items: center;
                             color: var(--irify-text-secondary);
-                            font-size: 12px;
+                            font-size: 14px;
                         }
 
                         .label-text {
                             flex: 1;
-                            font-size: 13px;
-                            line-height: 1.5;
+                            font-size: 14px;
+                            line-height: 1.6;
                             min-width: 0;
                             overflow: hidden;
                             text-overflow: ellipsis;
                         }
 
                         .node-count-text {
-                            font-size: 12px;
+                            font-size: 13px;
                             color: var(--irify-text-secondary);
                             margin-left: auto;
                             flex-shrink: 0;

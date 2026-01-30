@@ -22,7 +22,7 @@ import {
     Dropdown,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined, MoreOutlined, PlusOutlined, ExportOutlined, ImportOutlined, DeleteOutlined, CloudUploadOutlined } from '@ant-design/icons';
+import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined, MoreOutlined, PlusOutlined, ExportOutlined, ImportOutlined, DeleteOutlined, CloudUploadOutlined, SettingOutlined, RocketOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 // 语言官方图标
 import { 
@@ -96,7 +96,7 @@ const renderTreeNodeTitle = (node: FilterTreeNode) => {
                     title={node.language}
                 >
                     {React.createElement(langConfig.icon, { 
-                        size: 14, 
+                        size: 15, 
                         color: langConfig.color 
                     })}
                 </span>
@@ -826,58 +826,14 @@ const RuleManagement: React.FC = () => {
                 <div className="sider-header" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span className="title">规则导航</span>
-                        <Space size={4}>
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={<ShrinkOutlined />}
-                                onClick={handleCollapseAll}
-                                disabled={expandedKeys.length === 0}
-                                title="收起所有分组"
-                            />
-                            <Dropdown
-                                menu={{
-                                    items: [
-                                        {
-                                            key: 'import',
-                                            label: '导入规则',
-                                            icon: <ImportOutlined />,
-                                            onClick: handleImportClick,
-                                        },
-                                        {
-                                            key: 'export',
-                                            label: '导出规则',
-                                            icon: <ExportOutlined />,
-                                            onClick: handleExportClick,
-                                        },
-                                        {
-                                            key: 'publish',
-                                            label: '发布快照',
-                                            icon: <CloudUploadOutlined />,
-                                            onClick: handlePublishSnapshot,
-                                        },
-                                        {
-                                            type: 'divider',
-                                        },
-                                        {
-                                            key: 'clear',
-                                            label: '清空规则库',
-                                            icon: <DeleteOutlined />,
-                                            danger: true,
-                                            onClick: handleClearRules,
-                                        },
-                                    ],
-                                }}
-                                trigger={['click']}
-                            >
-                                <Button
-                                    type="text"
-                                    size="small"
-                                    icon={<MoreOutlined />}
-                                    title="更多操作"
-                                />
-                            </Dropdown>
-                        </Space>
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<ShrinkOutlined />}
+                            onClick={handleCollapseAll}
+                            disabled={expandedKeys.length === 0}
+                            title="收起所有分组"
+                        />
                     </div>
                     
                     {/* 语言筛选（多选） */}
@@ -947,12 +903,68 @@ const RuleManagement: React.FC = () => {
                                     </div>
                                 );
                             }}
-                            virtual
-                            height={600}
+                            virtual={false}
                         />
                     ) : (
-                        <Empty description="暂无规则" />
+                        <Empty description="暂无规则" style={{ margin: 0 }} />
                     )}
+                </div>
+
+                {/* 底部操作栏 */}
+                <div className="sider-footer" style={{ 
+                    padding: '12px 16px', 
+                    borderTop: '1px solid var(--irify-border-color, #e8e8e8)',
+                    flexShrink: 0,
+                    background: 'var(--irify-bg-container, #fff)',
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'center'
+                }}>
+                    <Button 
+                        type="primary"
+                        icon={<RocketOutlined />}
+                        onClick={handlePublishSnapshot}
+                        style={{ flex: 1 }}
+                        size="middle"
+                    >
+                        发布快照
+                    </Button>
+                    <Dropdown
+                        menu={{
+                            items: [
+                                {
+                                    key: 'import',
+                                    label: '导入规则',
+                                    icon: <ImportOutlined />,
+                                    onClick: handleImportClick,
+                                },
+                                {
+                                    key: 'export',
+                                    label: '导出规则',
+                                    icon: <ExportOutlined />,
+                                    onClick: handleExportClick,
+                                },
+                                {
+                                    type: 'divider',
+                                },
+                                {
+                                    key: 'clear',
+                                    label: '清空规则库',
+                                    icon: <DeleteOutlined />,
+                                    danger: true,
+                                    onClick: handleClearRules,
+                                },
+                            ],
+                        }}
+                        trigger={['click']}
+                        placement="topRight"
+                    >
+                        <Button
+                            icon={<SettingOutlined />}
+                            size="middle"
+                            title="规则管理"
+                        />
+                    </Dropdown>
                 </div>
             </Sider>
 
