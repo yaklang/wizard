@@ -24,6 +24,21 @@ import {
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined, MoreOutlined, PlusOutlined, ExportOutlined, ImportOutlined, DeleteOutlined, CloudUploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
+// 语言官方图标
+import { 
+    SiPhp, 
+    SiJavascript, 
+    SiTypescript, 
+    SiPython, 
+    SiGo, 
+    SiRuby, 
+    SiRust,
+    SiC,
+    SiCplusplus,
+    SiKotlin,
+    SiSwift,
+} from 'react-icons/si';
+import { DiJava, DiMsqlServer } from 'react-icons/di';
 import {
     getSyntaxFlowRules,
     deleteSyntaxFlowRule,
@@ -44,19 +59,21 @@ import './RuleManagement.scss';
 
 const { Sider, Content } = Layout;
 
-// 语言图标映射
-const languageIconMap: Record<string, { icon: string; color: string }> = {
-    php: { icon: '🐘', color: '#777BB4' },
-    java: { icon: '☕', color: '#007396' },
-    javascript: { icon: '📜', color: '#F7DF1E' },
-    typescript: { icon: '📘', color: '#3178C6' },
-    python: { icon: '🐍', color: '#3776AB' },
-    go: { icon: '🔷', color: '#00ADD8' },
-    golang: { icon: '🔷', color: '#00ADD8' },
-    ruby: { icon: '💎', color: '#CC342D' },
-    rust: { icon: '🦀', color: '#CE422B' },
-    c: { icon: '🔧', color: '#555555' },
-    'c++': { icon: '⚙️', color: '#00599C' },
+// 语言图标映射（官方品牌 SVG 图标）
+const languageIconMap: Record<string, { icon: React.ComponentType<{ size?: number; color?: string }>; color: string }> = {
+    php: { icon: SiPhp, color: '#777BB4' },
+    java: { icon: DiJava, color: '#007396' },
+    javascript: { icon: SiJavascript, color: '#F7DF1E' },
+    typescript: { icon: SiTypescript, color: '#3178C6' },
+    python: { icon: SiPython, color: '#3776AB' },
+    go: { icon: SiGo, color: '#00ADD8' },
+    golang: { icon: SiGo, color: '#00ADD8' },
+    ruby: { icon: SiRuby, color: '#CC342D' },
+    rust: { icon: SiRust, color: '#CE422B' },
+    c: { icon: SiC, color: '#555555' },
+    'c++': { icon: SiCplusplus, color: '#00599C' },
+    kotlin: { icon: SiKotlin, color: '#7F52FF' },
+    swift: { icon: SiSwift, color: '#FA7343' },
 };
 
 const renderTreeNodeTitle = (node: FilterTreeNode) => {
@@ -71,14 +88,17 @@ const renderTreeNodeTitle = (node: FilterTreeNode) => {
                 <span 
                     className="lang-icon"
                     style={{ 
-                        fontSize: '14px', 
-                        marginRight: '6px',
-                        display: 'inline-block',
-                        lineHeight: '1'
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '2px'
                     }}
                     title={node.language}
                 >
-                    {langConfig.icon}
+                    {React.createElement(langConfig.icon, { 
+                        size: 14, 
+                        color: langConfig.color 
+                    })}
                 </span>
             )}
             {!isRuleNode && (
