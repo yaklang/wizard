@@ -209,9 +209,14 @@ const RuleManagement: React.FC = () => {
     );
     const [loadingRuleDetail, setLoadingRuleDetail] = useState(false);
     const [savingRule, setSavingRule] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [isAlertDescModified, setIsAlertDescModified] = useState(false);
 
     // 告警信息状态
     const [alertDescState, setAlertDescState] = useState<{
+        [key: string]: TSyntaxFlowAlertDesc;
+    }>({});
+    const [initialAlertDescState, setInitialAlertDescState] = useState<{
         [key: string]: TSyntaxFlowAlertDesc;
     }>({});
 
@@ -610,7 +615,12 @@ const RuleManagement: React.FC = () => {
                 if (res.code === 200 && res.data) {
                     setSelectedRule(res.data);
                     // 初始化告警信息
-                    setAlertDescState(res.data.alert_desc || {});
+                    const alertDesc = res.data.alert_desc || {};
+                    setAlertDescState(alertDesc);
+                    setInitialAlertDescState(JSON.parse(JSON.stringify(alertDesc)));
+                    // 重置脏状态
+                    setIsDirty(false);
+                    setIsAlertDescModified(false);
                     // 填充表单
                     form.setFieldsValue({
                         title: res.data.title,
@@ -631,6 +641,20 @@ const RuleManagement: React.FC = () => {
         },
         [form],
     );
+
+    // 监听 alertDescState 变化，设置脏状态
+    useEffect(() => {
+        if (!selectedRule) {
+            setIsDirty(false);
+            setIsAlertDescModified(false);
+            return;
+        }
+        
+        // 比较当前状态与初始状态
+        const hasChanges = JSON.stringify(alertDescState) !== JSON.stringify(initialAlertDescState);
+        setIsDirty(hasChanges);
+        setIsAlertDescModified(hasChanges);
+    }, [alertDescState, initialAlertDescState, selectedRule]);
 
     const handleSearch = (value: string) => {
         const newFilters = { ...filters, rule_name: value };
@@ -734,15 +758,25 @@ const RuleManagement: React.FC = () => {
         if (!selectedRule) return;
 
         try {
-            const values = await form.validateFields();
             setSavingRule(true);
 
-            const res = await updateSyntaxFlowRuleMetadata({
+            // 构建请求参数
+            const params: any = {
                 rule_name: selectedRule.rule_name,
                 rule_id: selectedRule.rule_id,
-                ...values,
-                alert_desc: alertDescState, // 包含漏洞告警信息
-            });
+            };
+
+            // 如果只修改了漏洞信息，只提交 alert_desc
+            if (isAlertDescModified) {
+                params.alert_desc = alertDescState;
+            } else {
+                // 如果修改了基础信息，提交所有字段
+                const values = await form.validateFields();
+                Object.assign(params, values);
+                params.alert_desc = alertDescState;
+            }
+
+            const res = await updateSyntaxFlowRuleMetadata(params);
 
             if (res.code === 200) {
                 message.success('保存成功');
@@ -1367,8 +1401,19 @@ const RuleManagement: React.FC = () => {
                                             onClick={handleSaveRule}
                                             loading={savingRule}
                                             size="middle"
+                                            style={{
+                                                backgroundColor: isDirty
+                                                    ? (isDark ? '#722ed1' : '#722ed1')
+                                                    : undefined,
+                                                borderColor: isDirty
+                                                    ? '#722ed1'
+                                                    : undefined,
+                                                animation: isDirty
+                                                    ? 'pulse 2s ease-in-out infinite'
+                                                    : 'none',
+                                            }}
                                         >
-                                            保存修改
+                                            保存修改{isDirty && ' *'}
                                         </Button>
                                     </Space>
                                 </div>
