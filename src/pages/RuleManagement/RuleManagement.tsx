@@ -38,7 +38,7 @@ import {
     SiKotlin,
     SiSwift,
 } from 'react-icons/si';
-import { DiJava, DiMsqlServer } from 'react-icons/di';
+import { DiJava } from 'react-icons/di';
 import {
     getSyntaxFlowRules,
     deleteSyntaxFlowRule,
@@ -188,6 +188,12 @@ const RuleManagement: React.FC = () => {
     const [filterTreeData, setFilterTreeData] = useState<FilterTreeNode[]>([]);
     const [selectedFilterKeys, setSelectedFilterKeys] = useState<string[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+    
+    // 规则缓存（避免重复请求）
+    const [rulesCache, setRulesCache] = useState<Record<string, FilterTreeNode[]>>({});
+    
+    // 节点加载状态
+    const [loadingNodes, setLoadingNodes] = useState<Set<string>>(new Set());
 
     // 收集所有父节点的 key（用于默认展开）
     const collectParentKeys = (nodes: FilterTreeNode[]): string[] => {
@@ -461,53 +467,58 @@ const RuleManagement: React.FC = () => {
         }
     };
 
-    // 加载特定分组下的规则列表（用于填充第三层节点）
+    // 加载特定分组下的规则列表（用于填充第三层节点）- 优化版本
     const loadRulesForGroup = useCallback(
         async (groupName: string, riskType?: string): Promise<FilterTreeNode[]> => {
+            // 生成缓存 key
+            const cacheKey = `${groupName || ''}_${riskType || ''}_${selectedLanguages.join(',')}`;
+            
+            // 检查缓存
+            if (rulesCache[cacheKey]) {
+                return rulesCache[cacheKey];
+            }
+            
             try {
-                const params: any = { limit: 1000 };
+                const params: any = { limit: 500 }; // 减少单次加载量
                 if (groupName) params.group_name = groupName;
                 if (riskType) params.risk_type = riskType;
                 
+                let allRules: TSyntaxFlowRule[] = [];
+                
                 if (selectedLanguages.length > 0) {
-                    // 如果选择了语言，需要逐个加载
-                    const allRules: TSyntaxFlowRule[] = [];
-                    for (const lang of selectedLanguages) {
-                        const res = await getSyntaxFlowRules({ ...params, language: lang });
-                        if (res.data?.list) {
-                            allRules.push(...res.data.list);
-                        }
-                    }
-                    return allRules.map((rule) => ({
-                        title: rule.title_zh || rule.title || rule.rule_name,
-                        key: `rule-${rule.rule_id || rule.rule_name}`,
-                        filterType: 'rule',
-                        filterValue: rule.rule_name,
-                        language: rule.language,
-                        ruleId: rule.rule_id,
-                        ruleName: rule.rule_name,
-                        isLeaf: true,
-                    }));
+                    // 并行加载多个语言的规则（性能优化）
+                    const promises = selectedLanguages.map(lang => 
+                        getSyntaxFlowRules({ ...params, language: lang })
+                            .then(res => res.data?.list || [])
+                    );
+                    const results = await Promise.all(promises);
+                    allRules = results.flat();
                 } else {
                     const res = await getSyntaxFlowRules(params);
-                    const list = res.data?.list ?? [];
-                    return list.map((rule) => ({
-                        title: rule.title_zh || rule.title || rule.rule_name,
-                        key: `rule-${rule.rule_id || rule.rule_name}`,
-                        filterType: 'rule',
-                        filterValue: rule.rule_name,
-                        language: rule.language,
-                        ruleId: rule.rule_id,
-                        ruleName: rule.rule_name,
-                        isLeaf: true,
-                    }));
+                    allRules = res.data?.list ?? [];
                 }
+                
+                const ruleNodes = allRules.map((rule) => ({
+                    title: rule.title_zh || rule.title || rule.rule_name,
+                    key: `rule-${rule.rule_id || rule.rule_name}`,
+                    filterType: 'rule' as FilterTreeNodeType,
+                    filterValue: rule.rule_name,
+                    language: rule.language,
+                    ruleId: rule.rule_id,
+                    ruleName: rule.rule_name,
+                    isLeaf: true,
+                }));
+                
+                // 缓存结果
+                setRulesCache(prev => ({ ...prev, [cacheKey]: ruleNodes }));
+                
+                return ruleNodes;
             } catch (err) {
                 message.error('加载规则列表失败');
                 return [];
             }
         },
-        [selectedLanguages],
+        [selectedLanguages, rulesCache],
     );
 
     // 更新树节点的子节点
@@ -876,7 +887,8 @@ const RuleManagement: React.FC = () => {
                         value={selectedLanguages}
                         onChange={(values) => {
                             setSelectedLanguages(values);
-                            // 语言变化时，清空已加载的规则节点，需要重新加载
+                            // 语言变化时，清空缓存和已加载的规则节点
+                            setRulesCache({});
                             const treeData = buildFilterTree(rawFilterOptions);
                             setFilterTreeData(treeData);
                         }}
@@ -921,7 +933,22 @@ const RuleManagement: React.FC = () => {
                             onExpand={handleTreeExpand}
                             blockNode
                             showIcon={false}
-                            titleRender={renderTreeNodeTitle}
+                            titleRender={(node) => {
+                                const treeNode = node as FilterTreeNode;
+                                const nodeKey = treeNode.key as string;
+                                const isLoading = loadingNodes.has(nodeKey);
+                                
+                                return (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        {renderTreeNodeTitle(treeNode)}
+                                        {isLoading && (
+                                            <Spin size="small" style={{ marginLeft: 'auto' }} />
+                                        )}
+                                    </div>
+                                );
+                            }}
+                            virtual
+                            height={600}
                         />
                     ) : (
                         <Empty description="暂无规则" />
