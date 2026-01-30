@@ -418,3 +418,35 @@ body.irify-app {
 .irify-fade-in {
     animation: irify-fade-in 0.3s ease-out;
 }
+
+// Login page specific overrides for IRify mode
+.irify-login-container {
+    * {
+        box-sizing: border-box;
+    }
+
+    // Override Ant Design theme for login page
+    .ant-input,
+    .ant-input-password {
+        &:hover {
+            border-color: #4a94f8 !important;
+        }
+
+        &:focus,
+        &.ant-input-focused {
+            border-color: #4a94f8 !important;
+        }
+    }
+
+    .ant-btn-primary {
+        &:not(:disabled):hover {
+            background: linear-gradient(135deg, #3a84e8 0%, #58a6fa 100%) !important;
+        }
+    }
+}
+
+// Ensure smooth fonts for IRify
+body[data-app-mode='irify'] {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
