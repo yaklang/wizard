@@ -22,7 +22,7 @@ import {
     Dropdown,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined, MoreOutlined, PlusOutlined, ExportOutlined, ImportOutlined, DeleteOutlined, CloudUploadOutlined, SettingOutlined, RocketOutlined } from '@ant-design/icons';
+import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined, PlusOutlined, ExportOutlined, ImportOutlined, DeleteOutlined, SettingOutlined, RocketOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 // 语言官方图标
 import { 
@@ -193,7 +193,10 @@ const RuleManagement: React.FC = () => {
     const [rulesCache, setRulesCache] = useState<Record<string, FilterTreeNode[]>>({});
     
     // 节点加载状态
-    const [loadingNodes, setLoadingNodes] = useState<Set<string>>(new Set());
+    const [loadingNodes] = useState<Set<string>>(new Set());
+    
+    // Tab 视图模式：group（分组视图） 或 risk-type（缺陷类型视图）
+    const [viewMode, setViewMode] = useState<'group' | 'risk-type'>('group');
 
     // 收集所有父节点的 key（用于默认展开）
     const collectParentKeys = (nodes: FilterTreeNode[]): string[] => {
@@ -212,8 +215,24 @@ const RuleManagement: React.FC = () => {
 
     // 构建筛选树 - 三层结构（Level 1: 标准/分组，Level 2: 具体分类，Level 3: 规则）
     const buildFilterTree = useCallback(
-        (options: TSyntaxFlowRuleFilterOptions): FilterTreeNode[] => {
+        (options: TSyntaxFlowRuleFilterOptions, mode: 'group' | 'risk-type' = 'group'): FilterTreeNode[] => {
             const treeNodes: FilterTreeNode[] = [];
+            
+            // 如果是缺陷类型视图，只显示缺陷类型
+            if (mode === 'risk-type') {
+                if (options.risk_types && options.risk_types.length > 0) {
+                    return options.risk_types.map((rt) => ({
+                        title: rt.name || '',
+                        key: `risk-type-${rt.name}`,
+                        filterType: 'risk_type' as FilterTreeNodeType,
+                        filterValue: rt.name,
+                        count: rt.count,
+                        children: [],
+                        isLeaf: false,
+                    }));
+                }
+                return [];
+            }
 
             // 1. 标准分组 - 按前缀分类
             if (options.groups && options.groups.length > 0) {
@@ -351,26 +370,6 @@ const RuleManagement: React.FC = () => {
                 }
             }
 
-            // 2. 缺陷类型分组 (Risk Types)
-            if (options.risk_types && options.risk_types.length > 0) {
-                const riskTypeChildren = options.risk_types.map((rt) => ({
-                    title: rt.name || '',
-                    key: `risk-type-${rt.name}`,
-                    filterType: 'risk_type' as FilterTreeNodeType,
-                    filterValue: rt.name,
-                    count: rt.count,
-                    children: [],
-                    isLeaf: false,
-                }));
-
-                treeNodes.push({
-                    title: '缺陷类型',
-                    key: 'category-risk-types',
-                    filterType: 'category',
-                    children: riskTypeChildren,
-                });
-            }
-
             return treeNodes;
         },
         [],
@@ -384,13 +383,13 @@ const RuleManagement: React.FC = () => {
         getSyntaxFlowRuleFilterOptions().then((res) => {
             if (res.code === 200 && res.data) {
                 setRawFilterOptions(res.data);
-                const treeData = buildFilterTree(res.data);
+                const treeData = buildFilterTree(res.data, viewMode);
                 setFilterTreeData(treeData);
                 // 默认展开所有父节点
                 setExpandedKeys(collectParentKeys(treeData));
             }
         });
-    }, [buildFilterTree]);
+    }, [buildFilterTree, viewMode]);
 
     const handleExportClick = () => {
         setExportPassword('');
@@ -787,7 +786,7 @@ const RuleManagement: React.FC = () => {
         getSyntaxFlowRuleFilterOptions().then((res) => {
             if (res.code === 200 && res.data) {
                 setRawFilterOptions(res.data);
-                const treeData = buildFilterTree(res.data);
+                const treeData = buildFilterTree(res.data, viewMode);
                 setFilterTreeData(treeData);
                 setExpandedKeys(collectParentKeys(treeData));
             }
@@ -845,7 +844,7 @@ const RuleManagement: React.FC = () => {
                             setSelectedLanguages(values);
                             // 语言变化时，清空缓存和已加载的规则节点
                             setRulesCache({});
-                            const treeData = buildFilterTree(rawFilterOptions);
+                            const treeData = buildFilterTree(rawFilterOptions, viewMode);
                             setFilterTreeData(treeData);
                         }}
                         style={{ width: '100%' }}
@@ -876,6 +875,35 @@ const RuleManagement: React.FC = () => {
                     >
                         新增规则
                     </Button>
+                </div>
+
+                {/* 视图切换 Tab */}
+                <div style={{ 
+                    padding: '0 16px 8px 16px',
+                    borderBottom: '1px solid var(--irify-border-color, #e8e8e8)',
+                    flexShrink: 0
+                }}>
+                    <Tabs
+                        activeKey={viewMode}
+                        onChange={(key) => {
+                            setViewMode(key as 'group' | 'risk-type');
+                            // 切换视图时清空缓存和选中状态
+                            setRulesCache({});
+                            setSelectedFilterKeys([]);
+                            setSelectedRule(null);
+                        }}
+                        size="small"
+                        items={[
+                            {
+                                key: 'group',
+                                label: '分组视图',
+                            },
+                            {
+                                key: 'risk-type',
+                                label: '缺陷类型',
+                            },
+                        ]}
+                    />
                 </div>
 
                 {/* 规则树 */}

@@ -31,6 +31,52 @@
             }
         }
 
+        // 视图切换 Tab 样式（平分空间并居中）
+        .ant-tabs {
+            .ant-tabs-nav {
+                margin-bottom: 0;
+                width: 100%;
+                
+                &::before {
+                    border-bottom: none;
+                }
+                
+                .ant-tabs-nav-list {
+                    width: 100%;
+                    display: flex;
+                }
+            }
+            
+            .ant-tabs-tab {
+                flex: 1;
+                margin: 0 !important;
+                padding: 8px 0;
+                font-size: 13px;
+                display: flex;
+                justify-content: center;
+                
+                .ant-tabs-tab-btn {
+                    width: 100%;
+                    text-align: center;
+                }
+                
+                &:hover {
+                    color: var(--irify-accent, #1890ff);
+                }
+            }
+            
+            .ant-tabs-tab-active {
+                .ant-tabs-tab-btn {
+                    color: var(--irify-accent, #1890ff);
+                    font-weight: 500;
+                }
+            }
+            
+            .ant-tabs-ink-bar {
+                background: var(--irify-accent, #1890ff);
+            }
+        }
+
         .sider-footer {
             border-top: 1px solid var(--irify-border-color, #e8e8e8);
             background: var(--irify-bg-container, #fff);
@@ -347,6 +393,34 @@
 
                 .title {
                     color: var(--irify-text);
+                }
+            }
+
+            // 暗黑模式 Tab 样式（平分空间并居中）
+            .ant-tabs {
+                .ant-tabs-nav {
+                    .ant-tabs-nav-list {
+                        width: 100%;
+                    }
+                }
+                
+                .ant-tabs-tab {
+                    flex: 1;
+                    color: var(--irify-text-secondary);
+                    
+                    &:hover {
+                        color: var(--irify-accent);
+                    }
+                }
+                
+                .ant-tabs-tab-active {
+                    .ant-tabs-tab-btn {
+                        color: var(--irify-accent);
+                    }
+                }
+                
+                .ant-tabs-ink-bar {
+                    background: var(--irify-accent);
                 }
             }
 
