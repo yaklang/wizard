@@ -556,6 +556,27 @@
         }
 
         .rule-content {
+            // Descriptions 组件深色模式
+            .ant-descriptions {
+                &.ant-descriptions-bordered {
+                    .ant-descriptions-item-label {
+                        background: rgba(255, 255, 255, 0.04);
+                        color: var(--irify-text);
+                        border-color: var(--irify-border);
+                    }
+
+                    .ant-descriptions-item-content {
+                        background: var(--irify-bg-container);
+                        color: var(--irify-text);
+                        border-color: var(--irify-border);
+                    }
+
+                    .ant-descriptions-view {
+                        border-color: var(--irify-border);
+                    }
+                }
+            }
+
             // Markdown 预览样式 - 暗黑模式
             .markdown-body {
                 color: var(--irify-text);
@@ -624,5 +645,19 @@
         &:hover {
             color: var(--irify-accent) !important;
         }
+    }
+}
+
+// 基础信息 tab 中的 Markdown 内容区域
+.rule-content-markdown {
+    // 隐藏 Markdown 中的第一个标题（避免与外层标题重复）
+    > div > h1:first-child,
+    > div > h2:first-child,
+    > div > h3:first-child {
+        display: none;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
     }
 }

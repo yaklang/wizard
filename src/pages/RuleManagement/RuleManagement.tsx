@@ -69,6 +69,7 @@ import type {
 import { WizardAceEditor } from '@/compoments';
 import Markdown from '@/compoments/MarkDown';
 import RelatedVulnerabilityList from './RelatedVulnerabilityList';
+import { useTheme } from '@/theme';
 import './RuleManagement.scss';
 
 const { Sider, Content } = Layout;
@@ -197,21 +198,10 @@ interface FilterTreeNode {
     isLeaf?: boolean; // 是否为叶子节点
 }
 
-// 空状态描述
-const EmptyDescription = (
-    <div>
-        <div style={{ fontSize: '16px', marginBottom: '8px' }}>
-            请选择左侧规则进行查看或编辑
-        </div>
-        <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
-            或使用顶部工具栏的&ldquo;新增规则&rdquo;按钮创建规则
-        </div>
-    </div>
-);
-
 const RuleManagement: React.FC = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const { isDark } = useTheme();
 
     // 选中的规则详情
     const [selectedRule, setSelectedRule] = useState<TSyntaxFlowRule | null>(
@@ -920,7 +910,7 @@ const RuleManagement: React.FC = () => {
             <Sider
                 width={320}
                 className="filter-sider"
-                theme="light"
+                theme={isDark ? 'dark' : 'light'}
                 style={{ position: 'relative' }}
             >
                 {/* 顶部筛选区 */}
@@ -1120,7 +1110,9 @@ const RuleManagement: React.FC = () => {
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    background: '#F9FAFB',
+                    background: isDark
+                        ? 'var(--irify-bg-base)'
+                        : '#F9FAFB',
                 }}
             >
                 {/* 内容区域 */}
@@ -1137,7 +1129,21 @@ const RuleManagement: React.FC = () => {
                         >
                             <Empty
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description={EmptyDescription}
+                                description={
+                                    <div>
+                                        <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+                                            请选择左侧规则进行查看或编辑
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontSize: '14px',
+                                                color: isDark ? 'rgba(255, 255, 255, 0.45)' : '#8c8c8c',
+                                            }}
+                                        >
+                                            或使用顶部工具栏的&ldquo;新增规则&rdquo;按钮创建规则
+                                        </div>
+                                    </div>
+                                }
                             />
                         </div>
                     ) : (
@@ -1154,9 +1160,15 @@ const RuleManagement: React.FC = () => {
                                 style={{
                                     marginBottom: '16px',
                                     borderRadius: '12px',
-                                    boxShadow:
-                                        '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
-                                    border: '1px solid rgba(0, 0, 0, 0.06)',
+                                    boxShadow: isDark
+                                        ? '0 1px 3px 0 rgba(0, 0, 0, 0.3)'
+                                        : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+                                    border: isDark
+                                        ? '1px solid var(--irify-border)'
+                                        : '1px solid rgba(0, 0, 0, 0.06)',
+                                    background: isDark
+                                        ? 'var(--irify-bg-container)'
+                                        : undefined,
                                 }}
                                 bodyStyle={{ padding: '20px 24px' }}
                             >
@@ -1288,14 +1300,18 @@ const RuleManagement: React.FC = () => {
                                             className="uuid-container"
                                             style={{
                                                 fontSize: '11px',
-                                                color: '#bfbfbf',
+                                                color: isDark
+                                                    ? 'rgba(255, 255, 255, 0.45)'
+                                                    : '#bfbfbf',
                                                 fontFamily: 'monospace',
                                                 cursor: 'pointer',
                                                 display: 'inline-flex',
                                                 alignItems: 'center',
                                                 gap: '4px',
                                                 padding: '2px 8px',
-                                                background: 'rgba(0,0,0,0.015)',
+                                                background: isDark
+                                                    ? 'rgba(255, 255, 255, 0.05)'
+                                                    : 'rgba(0,0,0,0.015)',
                                                 borderRadius: '4px',
                                                 transition: 'all 0.2s',
                                                 position: 'relative',
@@ -1364,9 +1380,15 @@ const RuleManagement: React.FC = () => {
                                     flex: 1,
                                     overflow: 'hidden',
                                     borderRadius: '12px',
-                                    boxShadow:
-                                        '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
-                                    border: '1px solid rgba(0, 0, 0, 0.06)',
+                                    boxShadow: isDark
+                                        ? '0 1px 3px 0 rgba(0, 0, 0, 0.3)'
+                                        : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+                                    border: isDark
+                                        ? '1px solid var(--irify-border)'
+                                        : '1px solid rgba(0, 0, 0, 0.06)',
+                                    background: isDark
+                                        ? 'var(--irify-bg-container)'
+                                        : undefined,
                                 }}
                                 bodyStyle={{
                                     height: '100%',
@@ -1395,14 +1417,18 @@ const RuleManagement: React.FC = () => {
                                                         {/* 基本属性卡片 */}
                                                         <div
                                                             style={{
-                                                                background:
-                                                                    '#fff',
+                                                                background: isDark
+                                                                    ? 'var(--irify-bg-container)'
+                                                                    : '#fff',
                                                                 padding: '20px',
                                                                 borderRadius:
                                                                     '8px',
-                                                                boxShadow:
-                                                                    '0 1px 2px rgba(0,0,0,0.05)',
-                                                                border: '1px solid rgba(0,0,0,0.06)',
+                                                                boxShadow: isDark
+                                                                    ? '0 1px 2px rgba(0,0,0,0.3)'
+                                                                    : '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: isDark
+                                                                    ? '1px solid var(--irify-border)'
+                                                                    : '1px solid rgba(0,0,0,0.06)',
                                                                 marginBottom:
                                                                     '16px',
                                                             }}
@@ -1427,15 +1453,22 @@ const RuleManagement: React.FC = () => {
                                                                         '-'}
                                                                 </Descriptions.Item>
                                                     <Descriptions.Item label="严重度">
-                                                        {(() => {
-                                                            const sev = selectedRule.severity?.toLowerCase();
-                                                            const sevInfo = sev ? severityMap[sev] : null;
-                                                            return (
-                                                                <Tag color={sevInfo?.color || 'default'}>
-                                                                    {sevInfo?.label || selectedRule.severity || '-'}
-                                                                </Tag>
-                                                            );
-                                                        })()}
+                                                        <Tag
+                                                            color={
+                                                                (selectedRule.severity &&
+                                                                    severityMap[
+                                                                        selectedRule.severity.toLowerCase()
+                                                                    ]?.color) ||
+                                                                'default'
+                                                            }
+                                                        >
+                                                            {(selectedRule.severity &&
+                                                                severityMap[
+                                                                    selectedRule.severity.toLowerCase()
+                                                                ]?.label) ||
+                                                                selectedRule.severity ||
+                                                                '-'}
+                                                        </Tag>
                                                     </Descriptions.Item>
                                                                 <Descriptions.Item label="风险类型">
                                                                     {selectedRule.risk_type ||
@@ -1480,14 +1513,18 @@ const RuleManagement: React.FC = () => {
                                                         {/* 描述卡片 */}
                                                         <div
                                                             style={{
-                                                                background:
-                                                                    '#fff',
+                                                                background: isDark
+                                                                    ? 'var(--irify-bg-container)'
+                                                                    : '#fff',
                                                                 padding: '20px',
                                                                 borderRadius:
                                                                     '8px',
-                                                                boxShadow:
-                                                                    '0 1px 2px rgba(0,0,0,0.05)',
-                                                                border: '1px solid rgba(0,0,0,0.06)',
+                                                                boxShadow: isDark
+                                                                    ? '0 1px 2px rgba(0,0,0,0.3)'
+                                                                    : '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: isDark
+                                                                    ? '1px solid var(--irify-border)'
+                                                                    : '1px solid rgba(0,0,0,0.06)',
                                                                 marginBottom:
                                                                     '16px',
                                                             }}
@@ -1499,13 +1536,20 @@ const RuleManagement: React.FC = () => {
                                                                     fontWeight: 600,
                                                                     marginTop: 0,
                                                                     marginBottom:
-                                                                        '16px',
-                                                                    color: 'rgba(0,0,0,0.85)',
+                                                                        '12px',
+                                                                    paddingBottom: '12px',
+                                                                    borderBottom: isDark
+                                                                        ? '1px solid rgba(255, 255, 255, 0.12)'
+                                                                        : '1px solid #E8E8E8',
+                                                                    color: isDark
+                                                                        ? 'var(--irify-text)'
+                                                                        : 'rgba(0,0,0,0.85)',
                                                                 }}
                                                             >
                                                                 描述
                                                             </h3>
                                                             <div
+                                                                className="rule-content-markdown"
                                                                 style={{
                                                                     maxHeight:
                                                                         '300px',
@@ -1525,14 +1569,18 @@ const RuleManagement: React.FC = () => {
                                                         {/* 修复建议卡片 */}
                                                         <div
                                                             style={{
-                                                                background:
-                                                                    '#fff',
+                                                                background: isDark
+                                                                    ? 'var(--irify-bg-container)'
+                                                                    : '#fff',
                                                                 padding: '20px',
                                                                 borderRadius:
                                                                     '8px',
-                                                                boxShadow:
-                                                                    '0 1px 2px rgba(0,0,0,0.05)',
-                                                                border: '1px solid rgba(0,0,0,0.06)',
+                                                                boxShadow: isDark
+                                                                    ? '0 1px 2px rgba(0,0,0,0.3)'
+                                                                    : '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: isDark
+                                                                    ? '1px solid var(--irify-border)'
+                                                                    : '1px solid rgba(0,0,0,0.06)',
                                                             }}
                                                         >
                                                             <h3
@@ -1542,13 +1590,20 @@ const RuleManagement: React.FC = () => {
                                                                     fontWeight: 600,
                                                                     marginTop: 0,
                                                                     marginBottom:
-                                                                        '16px',
-                                                                    color: 'rgba(0,0,0,0.85)',
+                                                                        '12px',
+                                                                    paddingBottom: '12px',
+                                                                    borderBottom: isDark
+                                                                        ? '1px solid rgba(255, 255, 255, 0.12)'
+                                                                        : '1px solid #E8E8E8',
+                                                                    color: isDark
+                                                                        ? 'var(--irify-text)'
+                                                                        : 'rgba(0,0,0,0.85)',
                                                                 }}
                                                             >
                                                                 修复建议
                                                             </h3>
                                                             <div
+                                                                className="rule-content-markdown"
                                                                 style={{
                                                                     maxHeight:
                                                                         '300px',
@@ -1619,7 +1674,9 @@ const RuleManagement: React.FC = () => {
                                                     <div
                                                         style={{
                                                             height: '500px',
-                                                            border: '1px solid #d9d9d9',
+                                                            border: isDark
+                                                                ? '1px solid var(--irify-border)'
+                                                                : '1px solid #d9d9d9',
                                                             borderRadius: '4px',
                                                         }}
                                                     >

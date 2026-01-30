@@ -209,30 +209,40 @@ const IRifyLayout: React.FC = () => {
         return expandedMenus.has(menuKey);
     };
 
-    // Theme toggle handler
-    const handleThemeToggle = () => {
-        if (themeMode === 'dark') {
-            setThemeMode('light');
-        } else if (themeMode === 'light') {
-            setThemeMode('system');
-        } else {
-            setThemeMode('dark');
-        }
-    };
-
-    // Get theme label
-    const getThemeLabel = () => {
-        if (themeMode === 'system') return '跟随系统';
-        if (themeMode === 'dark') return '深色模式';
-        return '浅色模式';
+    const getThemeLabel = (mode: 'light' | 'dark' | 'system') => {
+        const labels = {
+            light: '浅色模式',
+            dark: '深色模式',
+            system: '跟随系统',
+        };
+        return themeMode === mode ? `${labels[mode]} ✓` : labels[mode];
     };
 
     const userMenuItems: MenuProps['items'] = [
         {
             key: 'theme',
             icon: isDark ? <MoonOutlined /> : <SunOutlined />,
-            label: getThemeLabel(),
-            onClick: handleThemeToggle,
+            label: '主题设置',
+            children: [
+                {
+                    key: 'theme-light',
+                    icon: <SunOutlined />,
+                    label: getThemeLabel('light'),
+                    onClick: () => setThemeMode('light'),
+                },
+                {
+                    key: 'theme-dark',
+                    icon: <MoonOutlined />,
+                    label: getThemeLabel('dark'),
+                    onClick: () => setThemeMode('dark'),
+                },
+                {
+                    key: 'theme-system',
+                    icon: <ControlOutlined />,
+                    label: getThemeLabel('system'),
+                    onClick: () => setThemeMode('system'),
+                },
+            ],
         },
         {
             key: 'profile',
