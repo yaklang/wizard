@@ -76,6 +76,7 @@ const ProjectManagement: React.FC = () => {
     const [data, setData] = useState<TSSAProject[]>([]);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
+    const [scanningProjects, setScanningProjects] = useState<Set<number>>(new Set());
     const [hasMore, setHasMore] = useState(true);
 
     // 抽屉状态
@@ -276,14 +277,47 @@ const ProjectManagement: React.FC = () => {
 
     const handleScan = async (record: TSSAProject) => {
         if (!record.id) return;
+        
+        setScanningProjects(prev => new Set(prev).add(record.id!));
+        
         try {
-            await scanSSAProject(record.id, {
+            const res = await scanSSAProject(record.id, {
                 // node_id 可选，不传则由后端自动分配
                 // rule_groups 可选，使用默认规则集
             });
-            message.success('扫描任务已创建');
+            
+            // 显示带跳转链接的成功提示
+            const taskId = res.data?.task_id;
+            const btn = (
+                <Button
+                    type="link"
+                    size="small"
+                    onClick={() => {
+                        message.destroy();
+                        navigate(getRoutePath(RouteKey.TASK_LIST));
+                    }}
+                    style={{ padding: 0, height: 'auto' }}
+                >
+                    查看实时进度 →
+                </Button>
+            );
+            
+            message.success({
+                content: (
+                    <span>
+                        任务 #{taskId || '...'} 已启动。{btn}
+                    </span>
+                ),
+                duration: 6,
+            });
         } catch (err: any) {
             message.error(`创建扫描失败: ${err.msg || err.message}`);
+        } finally {
+            setScanningProjects(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(record.id!);
+                return newSet;
+            });
         }
     };
 
@@ -554,16 +588,52 @@ const ProjectManagement: React.FC = () => {
                     },
                 ];
 
+                const isScanning = scanningProjects.has(record.id!);
+                const branch = record.config?.CodeSource?.branch || 'master';
+                const url = record.config?.CodeSource?.url || '';
+                const repoName = url.split('/').pop()?.replace(/\.git$/, '') || '代码仓库';
+
                 return (
                     <Space size="small">
-                        <Button
-                            type="primary"
-                            size="small"
-                            icon={<PlayCircleOutlined />}
-                            onClick={() => handleScan(record)}
+                        <Popconfirm
+                            title="确认发起扫描"
+                            description={
+                                <div style={{ maxWidth: 300 }}>
+                                    <div style={{ marginBottom: 4 }}>
+                                        <strong>项目：</strong>{record.project_name}
+                                    </div>
+                                    <div style={{ marginBottom: 4 }}>
+                                        <strong>分支：</strong>{branch}
+                                    </div>
+                                    <div style={{ marginBottom: 4 }}>
+                                        <strong>仓库：</strong>
+                                        <span style={{ 
+                                            fontSize: 12, 
+                                            color: '#666',
+                                            wordBreak: 'break-all' 
+                                        }}>
+                                            {repoName}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+                                        扫描可能需要几分钟，任务将在后台执行
+                                    </div>
+                                </div>
+                            }
+                            onConfirm={() => handleScan(record)}
+                            okText="🚀 确定开始"
+                            cancelText="取消"
+                            placement="topRight"
                         >
-                            发起扫描
-                        </Button>
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<PlayCircleOutlined />}
+                                loading={isScanning}
+                            >
+                                {isScanning ? '初始化中' : '发起扫描'}
+                            </Button>
+                        </Popconfirm>
                         <Dropdown
                             menu={{ items: menuItems }}
                             trigger={['click']}
