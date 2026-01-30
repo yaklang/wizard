@@ -146,6 +146,70 @@
         position: relative;
         background: var(--irify-bg-base, #f0f2f5);
 
+        // Markdown 预览样式
+        .markdown-body {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--irify-text, #333);
+
+            h2 {
+                font-size: 18px;
+                font-weight: 600;
+                margin-top: 16px;
+                margin-bottom: 8px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid var(--irify-border-color, #e8e8e8);
+            }
+
+            h3 {
+                font-size: 16px;
+                font-weight: 600;
+                margin-top: 12px;
+                margin-bottom: 6px;
+            }
+
+            p {
+                margin-bottom: 8px;
+            }
+
+            ul, ol {
+                margin-bottom: 8px;
+                padding-left: 24px;
+            }
+
+            code {
+                background: rgba(0, 0, 0, 0.06);
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 13px;
+                font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            }
+
+            pre {
+                background: rgba(0, 0, 0, 0.03);
+                padding: 12px;
+                border-radius: 4px;
+                overflow-x: auto;
+                margin-bottom: 8px;
+
+                code {
+                    background: transparent;
+                    padding: 0;
+                }
+            }
+
+            blockquote {
+                border-left: 3px solid #1890ff;
+                padding-left: 12px;
+                margin-left: 0;
+                color: rgba(0, 0, 0, 0.65);
+            }
+
+            strong {
+                font-weight: 600;
+            }
+        }
+
         .rule-card {
             height: 100%;
             border-radius: 8px;
@@ -360,6 +424,33 @@
         }
 
         .rule-content {
+            // Markdown 预览样式 - 暗黑模式
+            .markdown-body {
+                color: var(--irify-text);
+
+                h2 {
+                    border-bottom-color: var(--irify-border);
+                }
+
+                code {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #e6e6e6;
+                }
+
+                pre {
+                    background: rgba(255, 255, 255, 0.05);
+
+                    code {
+                        background: transparent;
+                    }
+                }
+
+                blockquote {
+                    border-left-color: var(--irify-accent);
+                    color: var(--irify-text-secondary);
+                }
+            }
+
             .rule-card {
                 .batch-action-bar {
                     background: var(--irify-bg-selected);

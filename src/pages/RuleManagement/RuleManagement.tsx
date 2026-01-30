@@ -21,7 +21,7 @@ import {
     Col,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined } from '@ant-design/icons';
+import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import {
     getSyntaxFlowRules,
@@ -38,6 +38,7 @@ import type {
     TSyntaxFlowRuleFilterOptions,
 } from '@/apis/SyntaxFlowRuleApi/type';
 import { WizardAceEditor } from '@/compoments';
+import Markdown from '@/compoments/MarkDown';
 import './RuleManagement.scss';
 
 const { Sider, Content } = Layout;
@@ -139,6 +140,10 @@ const RuleManagement: React.FC = () => {
     const [selectedRule, setSelectedRule] = useState<TSyntaxFlowRule | null>(null);
     const [loadingRuleDetail, setLoadingRuleDetail] = useState(false);
     const [savingRule, setSavingRule] = useState(false);
+    
+    // Markdown 预览模式
+    const [descriptionPreview, setDescriptionPreview] = useState(false);
+    const [solutionPreview, setSolutionPreview] = useState(false);
     
     // 筛选状态
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
@@ -1044,20 +1049,82 @@ const RuleManagement: React.FC = () => {
                                                         </Col>
                                                     </Row>
 
-                                                    {/* 描述和修复建议 - 全宽 */}
-                                                    <Form.Item label="描述" name="description">
-                                                        <Input.TextArea 
-                                                            rows={5} 
-                                                            placeholder="描述该规则检测的风险&#10;支持 Markdown 格式" 
-                                                            style={{ fontFamily: 'inherit' }}
-                                                        />
+                                                    {/* 描述 - 支持 Markdown 预览 */}
+                                                    <Form.Item 
+                                                        label={
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                                                <span>描述</span>
+                                                                <Button
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={descriptionPreview ? <EditOutlined /> : <EyeOutlined />}
+                                                                    onClick={() => setDescriptionPreview(!descriptionPreview)}
+                                                                    style={{ marginLeft: '8px' }}
+                                                                >
+                                                                    {descriptionPreview ? '编辑' : '预览'}
+                                                                </Button>
+                                                            </div>
+                                                        }
+                                                        name="description"
+                                                    >
+                                                        {descriptionPreview ? (
+                                                            <div style={{ 
+                                                                minHeight: '140px', 
+                                                                padding: '12px', 
+                                                                border: '1px solid #d9d9d9', 
+                                                                borderRadius: '4px',
+                                                                background: '#fafafa'
+                                                            }}>
+                                                                <Markdown>
+                                                                    {form.getFieldValue('description') || '*暂无内容*'}
+                                                                </Markdown>
+                                                            </div>
+                                                        ) : (
+                                                            <Input.TextArea 
+                                                                rows={5} 
+                                                                placeholder="描述该规则检测的风险（支持 Markdown 格式）&#10;&#10;示例：&#10;## 风险说明&#10;该规则检测...&#10;&#10;**影响范围**&#10;- 数据泄露&#10;- 权限绕过" 
+                                                                style={{ fontFamily: 'inherit' }}
+                                                            />
+                                                        )}
                                                     </Form.Item>
-                                                    <Form.Item label="修复建议" name="solution">
-                                                        <Input.TextArea 
-                                                            rows={5} 
-                                                            placeholder="给出修复建议&#10;支持 Markdown 格式" 
-                                                            style={{ fontFamily: 'inherit' }}
-                                                        />
+                                                    
+                                                    {/* 修复建议 - 支持 Markdown 预览 */}
+                                                    <Form.Item 
+                                                        label={
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                                                <span>修复建议</span>
+                                                                <Button
+                                                                    type="text"
+                                                                    size="small"
+                                                                    icon={solutionPreview ? <EditOutlined /> : <EyeOutlined />}
+                                                                    onClick={() => setSolutionPreview(!solutionPreview)}
+                                                                    style={{ marginLeft: '8px' }}
+                                                                >
+                                                                    {solutionPreview ? '编辑' : '预览'}
+                                                                </Button>
+                                                            </div>
+                                                        }
+                                                        name="solution"
+                                                    >
+                                                        {solutionPreview ? (
+                                                            <div style={{ 
+                                                                minHeight: '140px', 
+                                                                padding: '12px', 
+                                                                border: '1px solid #d9d9d9', 
+                                                                borderRadius: '4px',
+                                                                background: '#fafafa'
+                                                            }}>
+                                                                <Markdown>
+                                                                    {form.getFieldValue('solution') || '*暂无内容*'}
+                                                                </Markdown>
+                                                            </div>
+                                                        ) : (
+                                                            <Input.TextArea 
+                                                                rows={5} 
+                                                                placeholder="给出修复建议（支持 Markdown 格式）&#10;&#10;示例：&#10;## 修复方案&#10;1. 使用参数化查询&#10;2. 添加输入验证&#10;&#10;```php&#10;// 正确的做法&#10;$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');&#10;```" 
+                                                                style={{ fontFamily: 'inherit' }}
+                                                            />
+                                                        )}
                                                     </Form.Item>
                                                 </Form>
                                             ),
