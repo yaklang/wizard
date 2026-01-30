@@ -6,8 +6,7 @@ import { NetworkError } from '@/pages/NetworkError';
 import License from '@/pages/License';
 
 // Reuse existing components
-import { ProjectManagement, ProjectEditor } from '@/pages/ProjecManagement';
-import CreateSSAProject from '@/pages/ProjecManagement/CreateSSAProject';
+import { ProjectManagement, ProjectEditor, CreateProject } from '@/pages/ProjecManagement';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import SSARiskAudit from '@/pages/SSARiskAudit';
@@ -49,7 +48,7 @@ const irifyRouters: RouteObject[] = [
                     },
                     {
                         path: 'create',
-                        element: <CreateSSAProject />,
+                        element: <CreateProject />,
                     },
                     {
                         path: ':id/edit',

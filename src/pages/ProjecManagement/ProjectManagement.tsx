@@ -35,7 +35,7 @@ import {
     SiGo, 
 } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
@@ -74,7 +74,6 @@ const ProjectManagement: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<TSSAProject[]>([]);
-    const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [hasMore, setHasMore] = useState(true);
@@ -141,7 +140,6 @@ const ProjectManagement: React.FC = () => {
                 } else {
                     setData(list);
                 }
-                setTotal(res.data?.pagemeta?.total ?? 0);
                 setPage(res.data?.pagemeta?.page ?? p);
                 setLimit(res.data?.pagemeta?.limit ?? l);
                 
@@ -236,8 +234,7 @@ const ProjectManagement: React.FC = () => {
     };
 
     const handleCreate = () => {
-        setEditingProjectId(undefined);
-        setDrawerVisible(true);
+        navigate(getRoutePath(RouteKey.PROJECT_CREATE));
     };
 
     const handleDrawerClose = () => {
