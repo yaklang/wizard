@@ -19,9 +19,10 @@ import {
     Form,
     Row,
     Col,
+    Dropdown,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { BugOutlined, UploadOutlined, ShrinkOutlined, FileTextOutlined, CodeOutlined, CopyOutlined, EyeOutlined, EditOutlined, MoreOutlined, PlusOutlined, ExportOutlined, ImportOutlined, DeleteOutlined, CloudUploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import {
     getSyntaxFlowRules,
@@ -141,9 +142,9 @@ const RuleManagement: React.FC = () => {
     const [loadingRuleDetail, setLoadingRuleDetail] = useState(false);
     const [savingRule, setSavingRule] = useState(false);
     
-    // Markdown 预览模式
-    const [descriptionPreview, setDescriptionPreview] = useState(false);
-    const [solutionPreview, setSolutionPreview] = useState(false);
+    // Markdown 预览模式 - 默认预览
+    const [descriptionPreview, setDescriptionPreview] = useState(true);
+    const [solutionPreview, setSolutionPreview] = useState(true);
     
     // 筛选状态
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
@@ -794,14 +795,58 @@ const RuleManagement: React.FC = () => {
                 <div className="sider-header" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span className="title">规则导航</span>
-                        <Button
-                            type="text"
-                            size="small"
-                            icon={<ShrinkOutlined />}
-                            onClick={handleCollapseAll}
-                            disabled={expandedKeys.length === 0}
-                            title="收起所有分组"
-                        />
+                        <Space size={4}>
+                            <Button
+                                type="text"
+                                size="small"
+                                icon={<ShrinkOutlined />}
+                                onClick={handleCollapseAll}
+                                disabled={expandedKeys.length === 0}
+                                title="收起所有分组"
+                            />
+                            <Dropdown
+                                menu={{
+                                    items: [
+                                        {
+                                            key: 'import',
+                                            label: '导入规则',
+                                            icon: <ImportOutlined />,
+                                            onClick: handleImportClick,
+                                        },
+                                        {
+                                            key: 'export',
+                                            label: '导出规则',
+                                            icon: <ExportOutlined />,
+                                            onClick: handleExportClick,
+                                        },
+                                        {
+                                            key: 'publish',
+                                            label: '发布快照',
+                                            icon: <CloudUploadOutlined />,
+                                            onClick: handlePublishSnapshot,
+                                        },
+                                        {
+                                            type: 'divider',
+                                        },
+                                        {
+                                            key: 'clear',
+                                            label: '清空规则库',
+                                            icon: <DeleteOutlined />,
+                                            danger: true,
+                                            onClick: handleClearRules,
+                                        },
+                                    ],
+                                }}
+                                trigger={['click']}
+                            >
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<MoreOutlined />}
+                                    title="更多操作"
+                                />
+                            </Dropdown>
+                        </Space>
                     </div>
                     
                     {/* 语言筛选（多选） */}
@@ -832,6 +877,17 @@ const RuleManagement: React.FC = () => {
                         allowClear
                         onSearch={handleSearch}
                     />
+                    
+                    {/* 新增规则按钮 */}
+                    <Button 
+                        type="primary" 
+                        icon={<PlusOutlined />} 
+                        onClick={handleCreate}
+                        block
+                        size="middle"
+                    >
+                        新增规则
+                    </Button>
                 </div>
 
                 {/* 规则树 */}
@@ -850,30 +906,6 @@ const RuleManagement: React.FC = () => {
                     ) : (
                         <Empty description="暂无规则" />
                     )}
-                </div>
-
-                {/* 底部全局操作栏 */}
-                <div className="sider-footer" style={{ 
-                    padding: '12px 16px', 
-                    borderTop: '1px solid var(--irify-border-color, #e8e8e8)',
-                    flexShrink: 0,
-                    background: 'var(--irify-bg-container, #fff)'
-                }}>
-                    <Space direction="vertical" style={{ width: '100%' }} size="small">
-                        <Button onClick={handleCreate} type="primary" block>
-                            新增规则
-                        </Button>
-                        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-                            <Button onClick={handleImportClick} size="small">导入</Button>
-                            <Button onClick={handleExportClick} size="small">导出</Button>
-                            <Button onClick={handlePublishSnapshot} size="small" style={{ color: '#52c41a', borderColor: '#52c41a' }}>
-                                发布
-                            </Button>
-                        </Space>
-                        <Button danger onClick={handleClearRules} size="small" block>
-                            清空规则库
-                        </Button>
-                    </Space>
                 </div>
             </Sider>
 
@@ -904,44 +936,47 @@ const RuleManagement: React.FC = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '24px' }}>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     {/* 标题和 UUID */}
-                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '16px' }}>
                                         <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
                                             {selectedRule.title_zh || selectedRule.title || selectedRule.rule_name}
                                         </h2>
                                         <span 
+                                            className="uuid-container"
                                             style={{ 
-                                                fontSize: '12px', 
-                                                color: '#8c8c8c', 
+                                                fontSize: '11px', 
+                                                color: '#bfbfbf', 
                                                 fontFamily: 'monospace',
                                                 cursor: 'pointer',
                                                 display: 'inline-flex',
                                                 alignItems: 'center',
                                                 gap: '4px',
                                                 padding: '2px 8px',
-                                                background: 'rgba(0,0,0,0.02)',
+                                                background: 'rgba(0,0,0,0.015)',
                                                 borderRadius: '4px',
-                                                transition: 'all 0.2s'
+                                                transition: 'all 0.2s',
+                                                position: 'relative'
                                             }}
                                             onClick={() => {
                                                 const uuid = selectedRule.rule_id || selectedRule.rule_name;
                                                 navigator.clipboard.writeText(uuid);
                                                 message.success('已复制 UUID');
                                             }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = 'rgba(0,0,0,0.06)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = 'rgba(0,0,0,0.02)';
-                                            }}
                                             title="点击复制"
                                         >
                                             {selectedRule.rule_id || selectedRule.rule_name}
-                                            <CopyOutlined style={{ fontSize: '10px' }} />
+                                            <CopyOutlined 
+                                                className="copy-icon" 
+                                                style={{ 
+                                                    fontSize: '10px',
+                                                    opacity: 0,
+                                                    transition: 'opacity 0.2s'
+                                                }} 
+                                            />
                                         </span>
                                     </div>
                                     
                                     {/* 标签 */}
-                                    <Space size={[8, 8]} wrap>
+                                    <Space size={[8, 8]} wrap style={{ marginTop: '4px' }}>
                                         {selectedRule.language && (
                                             <Tag color="blue" style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px' }}>
                                                 {standardizeLanguage(selectedRule.language)}
