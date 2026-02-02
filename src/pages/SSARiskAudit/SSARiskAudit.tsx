@@ -463,6 +463,7 @@ const SSARiskAudit: React.FC = () => {
     // 计算严重程度统计
     const calculateSeverityStats = useCallback((risks: TSSARisk[]) => {
         const stats = {
+            critical: { audited: 0, pending: 0, total: 0 },
             high: { audited: 0, pending: 0, total: 0 },
             middle: { audited: 0, pending: 0, total: 0 },
             low: { audited: 0, pending: 0, total: 0 },
@@ -476,7 +477,11 @@ const SSARiskAudit: React.FC = () => {
                 risk.latest_disposal_status &&
                 risk.latest_disposal_status !== 'not_set';
 
-            if (severity === 'high' || severity === 'critical') {
+            if (severity === 'critical') {
+                stats.critical.total++;
+                if (isAudited) stats.critical.audited++;
+                else stats.critical.pending++;
+            } else if (severity === 'high') {
                 stats.high.total++;
                 if (isAudited) stats.high.audited++;
                 else stats.high.pending++;
@@ -503,8 +508,10 @@ const SSARiskAudit: React.FC = () => {
         if (!severityFilter) return riskList;
 
         return riskList.filter((risk) => {
-            if (severityFilter === 'high') {
-                return risk.severity === 'high' || risk.severity === 'critical';
+            if (severityFilter === 'critical') {
+                return risk.severity === 'critical';
+            } else if (severityFilter === 'high') {
+                return risk.severity === 'high';
             } else if (severityFilter === 'middle') {
                 return (
                     risk.severity === 'middle' || risk.severity === 'warning'
@@ -1728,6 +1735,23 @@ const SSARiskAudit: React.FC = () => {
                                 <>
                                     {/* 严重程度统计栏 */}
                                     <div className="severity-stats">
+                                        <div
+                                            className={`stat-item ${severityFilter === 'critical' ? 'active' : ''}`}
+                                            onClick={() =>
+                                                setSeverityFilter(
+                                                    severityFilter === 'critical'
+                                                        ? null
+                                                        : 'critical',
+                                                )
+                                            }
+                                        >
+                                            <span className="label">严重</span>
+                                            <span className="count">
+                                                {severityStats.critical.audited}|
+                                                {severityStats.critical.pending}|
+                                                {severityStats.critical.total}
+                                            </span>
+                                        </div>
                                         <div
                                             className={`stat-item ${severityFilter === 'high' ? 'active' : ''}`}
                                             onClick={() =>
