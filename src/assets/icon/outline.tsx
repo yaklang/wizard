@@ -6821,3 +6821,74 @@ const OutlinePaintbrush = () => (
 export const OutlinePaintbrushIcon = (props: Partial<IconProps>) => {
     return <Icon component={OutlinePaintbrush} {...props} />;
 };
+
+const PositionIcon = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+    >
+        <path
+            d="M2 12H6M12 2V6M18 12H22M12 18V22M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12ZM14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10C13.1046 10 14 10.8954 14 12Z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+export const OutlinePositionIcon = (props: Partial<IconProps>) => {
+    return <Icon component={PositionIcon} {...props} />;
+};
+
+const OutlineSplitScreen = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+    >
+        <path
+            d="M12.6667 2.6665H3.33333C2.59695 2.6665 2 3.19713 2 3.85169V12.148C2 12.8025 2.59695 13.3332 3.33333 13.3332H12.6667C13.403 13.3332 14 12.8025 14 12.148V3.85169C14 3.19713 13.403 2.6665 12.6667 2.6665Z"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M14 8L2 8"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+export const OutlineSplitScreenIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineSplitScreen} {...props} />;
+};
+
+const OutlineDeprecated = () => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path
+            d="M23 12H1M20.1818 12C20.1818 16.4183 16.5187 20 12 20C7.48131 20 3.81818 16.4183 3.81818 12C3.81818 7.58172 7.48131 4 12 4C16.5187 4 20.1818 7.58172 20.1818 12Z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+export const OutlineDeprecatedIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineDeprecated} {...props} />;
+};

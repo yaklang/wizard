@@ -11,7 +11,7 @@ import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
 import { randomString } from '@/utils/randomUtil';
 import { Progress, Tree } from 'antd';
 import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
-import type { apiDebugPlugin, DebugPluginRequest } from '@/pages/plugins/utils';
+import { apiDebugPlugin, type DebugPluginRequest } from '@/pages/plugins/utils';
 import type { HTTPRequestBuilderParams } from '@/models/HTTPRequestBuilder';
 import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 import type {
@@ -116,7 +116,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
 
         useUpdateEffect(() => {
             const startLog = streamInfo.logState.filter(
-                (item) => item.level === 'json',
+                (item: any) => item.level === 'json',
             );
             if (startLog.length > 0) {
                 getData(startLog);
@@ -125,7 +125,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
         const getData = useMemoizedFn(async (startLog: StreamResult.Log[]) => {
             try {
                 const list: AuditNodeProps[] = [];
-                startLog.forEach((item) => {
+                startLog.forEach((item: any) => {
                     if (!!item.data) {
                         const jsonData = JSON.parse(item.data);
                         if (
@@ -181,38 +181,40 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                         if (result) {
                             const childData: AuditNodeProps[] = [];
                             let isEnd = false;
-                            result.Resources.forEach((item, index) => {
-                                if (item.VerboseType !== 'result_id') {
-                                    const {
-                                        ResourceType,
-                                        VerboseType,
-                                        ResourceName,
-                                        Size,
-                                        Extra,
-                                    } = item;
-                                    let value: string = `${index}`;
-                                    const arr = Extra.filter(
-                                        (item) => item.Key === 'index',
-                                    );
-                                    if (arr.length > 0) {
-                                        value = arr[0].Value;
+                            result.Resources.forEach(
+                                (item: any, index: any) => {
+                                    if (item.VerboseType !== 'result_id') {
+                                        const {
+                                            ResourceType,
+                                            VerboseType,
+                                            ResourceName,
+                                            Size,
+                                            Extra,
+                                        } = item;
+                                        let value: string = `${index}`;
+                                        const arr = Extra.filter(
+                                            (item: any) => item.Key === 'index',
+                                        );
+                                        if (arr.length > 0) {
+                                            value = arr[0].Value;
+                                        }
+                                        const newId = `${id}/${value}`;
+                                        childData.push({
+                                            parent: id,
+                                            id: newId,
+                                            name: ResourceName,
+                                            ResourceType,
+                                            VerboseType,
+                                            Size,
+                                            Extra,
+                                            depth: 2,
+                                            isLeaf: true,
+                                        });
+                                    } else {
+                                        isEnd = true;
                                     }
-                                    const newId = `${id}/${value}`;
-                                    childData.push({
-                                        parent: id,
-                                        id: newId,
-                                        name: ResourceName,
-                                        ResourceType,
-                                        VerboseType,
-                                        Size,
-                                        Extra,
-                                        depth: 2,
-                                        isLeaf: true,
-                                    });
-                                } else {
-                                    isEnd = true;
-                                }
-                            });
+                                },
+                            );
                             const loadId = `${id}/load`;
                             if (!isEnd) {
                                 childData.push({
@@ -273,7 +275,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
             },
         );
 
-        const onLoadData = useMemoizedFn((node) => {
+        const onLoadData = useMemoizedFn((node: any) => {
             if (node.parent === null) return Promise.reject();
             return getChildData(1, node.id);
         });
@@ -293,7 +295,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                             trailColor="var(--Colors-Use-Neutral-Bg)"
                             percent={Math.floor(
                                 (streamInfo.progressState.map(
-                                    (item) => item.progress,
+                                    (item: any) => item.progress,
                                 )[0] || 0) * 100,
                             )}
                         />
@@ -321,8 +323,8 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                                     <GlobalFilterFunctionTree
                                         data={data}
                                         onLoadData={onLoadData}
-                                        onSelect={() => {}}
                                         loadTreeMore={loadTreeMore}
+                                        onSelect={() => {}}
                                     />
                                 ) : (
                                     <div style={{ marginTop: 20 }}>
@@ -369,6 +371,7 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
         );
         const handleSelect = useMemoizedFn(
             (node: AuditNodeProps, detail?: AuditNodeDetailProps) => {
+                void detail;
                 setFoucsedKey(node.id);
                 onJumpByCodeRange(node);
             },

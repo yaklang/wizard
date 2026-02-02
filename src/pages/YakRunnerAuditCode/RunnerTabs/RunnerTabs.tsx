@@ -903,7 +903,7 @@ const RunnerTabPane: React.FC<RunnerTabPaneProps> = memo((props) => {
         updateBottomEditorDetails();
     }, [runtimeID]);
 
-    const [highLightFind, setHighLightFind] = useState<Selection[]>([]);
+    const [_highLightFind, setHighLightFind] = useState<Selection[]>([]);
     // 获取编辑器中关联字符
     const getOtherRangeByPosition = useDebounceFn(
         (position: Position) => {
@@ -1248,7 +1248,9 @@ const RunnerTabPane: React.FC<RunnerTabPaneProps> = memo((props) => {
             if (activeFile?.syntaxCheck) {
                 const markers = activeFile.syntaxCheck
                     .map(ConvertAuditStaticAnalyzeErrorToMarker)
-                    .filter((item) => item !== null) as IMonacoEditorMarker[];
+                    .filter(
+                        (item: any) => item !== null,
+                    ) as IMonacoEditorMarker[];
                 monaco.editor.setModelMarkers(model, 'audit', markers);
             } else {
                 monaco.editor.setModelMarkers(model, 'audit', []);
@@ -1300,15 +1302,6 @@ const RunnerTabPane: React.FC<RunnerTabPaneProps> = memo((props) => {
                     type={editorInfo?.language}
                     value={editorInfo?.code || ''}
                     setValue={updateAreaInputInfo}
-                    highLightText={
-                        editorInfo?.highLightRange
-                            ? [editorInfo?.highLightRange]
-                            : undefined
-                    }
-                    highLightClass="hight-light-yak-runner-color"
-                    highLightFind={highLightFind}
-                    // renderValidationDecorations此项为on时可使只读模式下，显示下划线提示
-                    renderValidationDecorations="on"
                 />
             )}
         </div>

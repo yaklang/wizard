@@ -409,7 +409,9 @@ export const YakRunnerAuditCode: React.FC<YakRunnerAuditCodeProps> = (
                 const code = await getCodeByPath(path, 'audit');
                 isReadingRef.current = false;
                 const suffix =
-                    name.indexOf('.') > -1 ? name.split('.').pop() : '';
+                    name.indexOf('.') > -1
+                        ? (name.split('.').pop() as string)
+                        : '';
                 const scratchFile: FileDetailInfo = {
                     name,
                     code,

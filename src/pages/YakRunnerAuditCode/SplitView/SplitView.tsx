@@ -324,6 +324,7 @@ export const SplitView: React.FC<SplitViewProp> = memo((props) => {
                     })}
                 >
                     {elements.map((item, index) => {
+                        void item;
                         if (index === elements.length - 1) return null;
                         return (
                             <div
@@ -361,15 +362,16 @@ export const SplitView: React.FC<SplitViewProp> = memo((props) => {
                     {elements.map((item, index) => {
                         return (
                             <div
-                                ref={(ref) => (divs.current[index] = ref)}
                                 key={
                                     viewIDs.current[index] ||
                                     `view-${wrapperId}-${index}`
                                 }
-                                className={styles['element-view']}
-                                style={{ minWidth: minWidth }}
+                                ref={(ref) => (divs.current[index] = ref)}
+                                className={classNames(
+                                    styles['split-view-item'],
+                                )}
                             >
-                                {elements[index]?.element || null}
+                                {item.element}
                             </div>
                         );
                     })}

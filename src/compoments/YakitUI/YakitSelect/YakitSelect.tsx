@@ -32,7 +32,7 @@ const { Option } = Select;
  */
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const YakitSelectCustom = <ValueType, OptionType>(
+export const YakitSelectCustom = <_ValueType, OptionType>(
     {
         size = 'middle',
         wrapperClassName = '',
@@ -43,6 +43,7 @@ export const YakitSelectCustom = <ValueType, OptionType>(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ref: React.Ref<YakitBaseSelectRef>,
 ) => {
+    void ref;
     const [show, setShow] = useState<boolean>(false);
     const cacheHistoryDataRef = React.useRef<YakitSelectCacheDataHistoryProps>({
         options: [],

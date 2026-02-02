@@ -46,7 +46,7 @@ export const initFileTreeData = (
     list: RequestYakURLResponse,
     path?: string | null,
 ) => {
-    return list.Resources.sort((a, b) => {
+    return list.Resources.sort((a: any, b: any) => {
         // 将 ResourceType 为 'dir' 的对象排在前面
         if (a.ResourceType === 'dir' && b.ResourceType !== 'dir') {
             return -1; // a排在b前面
@@ -55,7 +55,7 @@ export const initFileTreeData = (
         } else {
             return 0; // 保持原有顺序
         }
-    }).map((item) => {
+    }).map((item: any) => {
         const isFile = !item.ResourceType;
         const isFolder = item.ResourceType === 'dir';
         const suffix =
@@ -82,7 +82,7 @@ const getLineFun = (info: YakURLResource) => {
     try {
         if (info.ResourceType === 'risk') {
             const result = info.Extra.find(
-                (item) => item.Key === 'code_range',
+                (item: any) => item.Key === 'code_range',
             )?.Value;
             if (result) {
                 const item: CodeRangeProps = JSON.parse(result);
@@ -95,7 +95,7 @@ const getLineFun = (info: YakURLResource) => {
 };
 
 const initRiskOrRuleTreeData = (list: RequestYakURLResponse, path: string) => {
-    return list.Resources.sort((a, b) => {
+    return list.Resources.sort((a: any, b: any) => {
         // 将 ResourceType 为 'program'与'source' 的对象排在前面
         if (
             ['program', 'source'].includes(a.ResourceType) &&
@@ -110,19 +110,21 @@ const initRiskOrRuleTreeData = (list: RequestYakURLResponse, path: string) => {
         } else {
             return 0; // 保持原有顺序
         }
-    }).map((item) => {
+    }).map((item: any) => {
         const isFile = !item.HaveChildrenNodes;
         const isFolder = item.HaveChildrenNodes;
         let suffix =
             isFile && item.ResourceName.indexOf('.') > -1
                 ? item.ResourceName.split('.').pop()
                 : '';
-        const count = item.Extra.find((item) => item.Key === 'count')?.Value;
+        const count = item.Extra.find(
+            (item: any) => item.Key === 'count',
+        )?.Value;
         const name = item.ResourceName.split('/').pop() || '';
         const severity = item.Extra.find(
-            (item) => item.Key === 'severity',
+            (item: any) => item.Key === 'severity',
         )?.Value;
-        const severityValue = SeverityMapTag.find((item) =>
+        const severityValue = SeverityMapTag.find((item: any) =>
             item.key.includes(severity || ''),
         )?.value;
         let folderIcon = FolderDefault;

@@ -803,7 +803,10 @@ export const RightAuditDetail: React.FC<RightSideBarProps> = (props) => {
                                 graph_info.length <= 10
                             ) {
                                 const expendKey: string[] = graph_info.map(
-                                    (item, index) => `路径${index + 1}`,
+                                    (item: any, index: any) => {
+                                        void item;
+                                        return `路径${index + 1}`;
+                                    },
                                 );
                                 setActiveKey(expendKey);
                             } else {
