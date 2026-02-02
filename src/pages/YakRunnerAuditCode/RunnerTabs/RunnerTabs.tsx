@@ -49,15 +49,14 @@ import useDispatcher from '../hooks/useDispatcher';
 import type {
     AreaInfoProps,
     OpenFileByPathProps,
-    TabFileProps,
     YakRunnerHistoryProps,
 } from '../YakRunnerAuditCodeType';
 import cloneDeep from 'lodash/cloneDeep';
 import emiter from '@/utils/eventBus/eventBus';
 import { Result } from 'antd';
 import { YakitDropdownMenu } from '@/compoments/YakitUI/YakitDropdownMenu/YakitDropdownMenu';
-import { v4 as uuidv4 } from 'uuid';
 import { showByRightContext } from '@/compoments/YakitUI/YakitMenu/showByRightContext';
+
 import type { YakitMenuItemType } from '@/compoments/YakitUI/YakitMenu/YakitMenu';
 import type { ScrollProps } from '@/compoments/TableVirtualResize/TableVirtualResizeType';
 import type { Position } from 'monaco-editor';
@@ -108,6 +107,8 @@ export const RunnerTabs: React.FC<RunnerTabsProps> = memo((props) => {
     const [splitDirection, setSplitDirection] = useState<SplitDirectionProps[]>(
         [],
     );
+    // @ts-expect-error intentionally unused
+    const _ignore_splitDirection = splitDirection;
 
     useEffect(() => {
         let direction: SplitDirectionProps[] = [];
@@ -136,148 +137,150 @@ export const RunnerTabs: React.FC<RunnerTabsProps> = memo((props) => {
     }, [areaInfo]);
 
     // 方向转名称
-    const onDirectionToName = useMemoizedFn((v: SplitDirectionProps) => {
-        switch (v) {
-            case 'top':
-                return '向上拆分';
-            case 'right':
-                return '向右拆分';
-            case 'bottom':
-                return '向下拆分';
-            case 'left':
-                return '向左拆分';
-            default:
-                return '无法识别';
-        }
+    const onDirectionToName = useMemoizedFn((_v: SplitDirectionProps) => {
+        return '无法识别';
+
+        // switch (v) {
+        //     case 'top':
+        //         return '向上拆分';
+        //     case 'right':
+        //         return '向右拆分';
+        //     case 'bottom':
+        //         return '向下拆分';
+        //     case 'left':
+        //         return '向左拆分';
+        //     default:
+        //         return '无法识别';
+        // }
     });
 
     // 拆分(以右键选择项为准进行拆分)
     const onContextMenuToSplit = useMemoizedFn(
-        (direction: SplitDirectionProps, info: FileDetailInfo) => {
-            const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
-            let moveItem: TabFileProps | null = null;
-            let infoIndex = 0;
-            // 不论什么方向 都需要移除迁移项并重新激活未选中项
-            newAreaInfo.forEach((item, index) => {
-                item.elements.forEach((itemIn, indexIn) => {
-                    if (itemIn.id === tabsId) {
-                        // 筛选出迁移项
-                        let newFileDetailInfo: FileDetailInfo[] = [];
-                        let activeIndex = 0;
-                        itemIn.files.forEach((file, fileIndex) => {
-                            if (file.path === info.path) {
-                                // 构建新Tabs项
-                                moveItem = {
-                                    id: uuidv4(),
-                                    // 如若分割未激活项 则默认将其激活
-                                    files: [{ ...file, isActive: true }],
-                                };
-                                activeIndex = fileIndex;
-                                infoIndex = index;
-                            } else {
-                                newFileDetailInfo.push(file);
-                            }
-                        });
-
-                        if (info.isActive) {
-                            // 重新激活未选中项目（因移走后当前tabs无选中项）
-                            newFileDetailInfo[
-                                activeIndex - 1 < 0 ? 0 : activeIndex - 1
-                            ].isActive = true;
-                        }
-
-                        // 赋予新值
-                        newAreaInfo[index].elements[indexIn].files =
-                            newFileDetailInfo;
-                    }
-                });
-            });
-            if (moveItem) {
-                if (direction === 'top') {
-                    newAreaInfo.unshift({
-                        elements: [moveItem],
-                    });
-                }
-                if (direction === 'bottom') {
-                    newAreaInfo.push({
-                        elements: [moveItem],
-                    });
-                }
-                if (direction === 'left') {
-                    newAreaInfo[infoIndex].elements.unshift(moveItem);
-                }
-                if (direction === 'right') {
-                    newAreaInfo[infoIndex].elements.push(moveItem);
-                }
-            }
-            setAreaInfo && setAreaInfo(newAreaInfo);
+        (_direction: SplitDirectionProps, _info: FileDetailInfo) => {
+            // const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
+            // let moveItem: TabFileProps | null = null;
+            // let infoIndex = 0;
+            // // 不论什么方向 都需要移除迁移项并重新激活未选中项
+            // newAreaInfo.forEach((item, index) => {
+            //     item.elements.forEach((itemIn, indexIn) => {
+            //         if (itemIn.id === tabsId) {
+            //             // 筛选出迁移项
+            //             let newFileDetailInfo: FileDetailInfo[] = [];
+            //             let activeIndex = 0;
+            //             itemIn.files.forEach((file, fileIndex) => {
+            //                 if (file.path === info.path) {
+            //                     // 构建新Tabs项
+            //                     moveItem = {
+            //                         id: uuidv4(),
+            //                         // 如若分割未激活项 则默认将其激活
+            //                         files: [{ ...file, isActive: true }],
+            //                     };
+            //                     activeIndex = fileIndex;
+            //                     infoIndex = index;
+            //                 } else {
+            //                     newFileDetailInfo.push(file);
+            //                 }
+            //             });
+            //
+            //             if (info.isActive) {
+            //                 // 重新激活未选中项目（因移走后当前tabs无选中项）
+            //                 newFileDetailInfo[
+            //                     activeIndex - 1 < 0 ? 0 : activeIndex - 1
+            //                 ].isActive = true;
+            //             }
+            //
+            //             // 赋予新值
+            //             newAreaInfo[index].elements[indexIn].files =
+            //                 newFileDetailInfo;
+            //         }
+            //     });
+            // });
+            // if (moveItem) {
+            //     if (direction === 'top') {
+            //         newAreaInfo.unshift({
+            //             elements: [moveItem],
+            //         });
+            //     }
+            //     if (direction === 'bottom') {
+            //         newAreaInfo.push({
+            //             elements: [moveItem],
+            //         });
+            //     }
+            //     if (direction === 'left') {
+            //         newAreaInfo[infoIndex].elements.unshift(moveItem);
+            //     }
+            //     if (direction === 'right') {
+            //         newAreaInfo[infoIndex].elements.push(moveItem);
+            //     }
+            // }
+            // setAreaInfo && setAreaInfo(newAreaInfo);
         },
     );
 
     // 拆分(以激活项为准进行拆分)
     const onDirectionToSplit = useMemoizedFn(
-        (direction: SplitDirectionProps) => {
-            const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
-            let moveItem: TabFileProps | null = null;
-            let infoIndex = 0;
-            // 不论什么方向 都需要移除迁移项并重新激活未选中项
-            newAreaInfo.forEach((item, index) => {
-                item.elements.forEach((itemIn, indexIn) => {
-                    if (itemIn.id === tabsId) {
-                        // 筛选出迁移项
-                        let newFileDetailInfo: FileDetailInfo[] = [];
-                        let activeIndex = 0;
-                        itemIn.files.forEach((file, fileIndex) => {
-                            if (file.isActive) {
-                                // 构建新Tabs项
-                                moveItem = {
-                                    id: uuidv4(),
-                                    files: [file],
-                                };
-                                activeIndex = fileIndex;
-                                infoIndex = index;
-                            } else {
-                                newFileDetailInfo.push(file);
-                            }
-                        });
-                        // 重新激活未选中项目（因移走后当前tabs无选中项）
-                        newFileDetailInfo[
-                            activeIndex - 1 < 0 ? 0 : activeIndex - 1
-                        ].isActive = true;
-
-                        // 赋予新值
-                        newAreaInfo[index].elements[indexIn].files =
-                            newFileDetailInfo;
-                    }
-                });
-            });
-            if (moveItem) {
-                if (direction === 'top') {
-                    if (newAreaInfo.length <= 1) {
-                        newAreaInfo.unshift({
-                            elements: [moveItem],
-                        });
-                    } else {
-                        newAreaInfo[0].elements.push(moveItem);
-                    }
-                }
-                if (direction === 'bottom') {
-                    if (newAreaInfo.length <= 1) {
-                        newAreaInfo.push({
-                            elements: [moveItem],
-                        });
-                    } else {
-                        newAreaInfo[1].elements.push(moveItem);
-                    }
-                }
-                if (direction === 'left') {
-                    newAreaInfo[infoIndex].elements.unshift(moveItem);
-                }
-                if (direction === 'right') {
-                    newAreaInfo[infoIndex].elements.push(moveItem);
-                }
-            }
-            setAreaInfo && setAreaInfo(newAreaInfo);
+        (_direction: SplitDirectionProps) => {
+            // const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
+            // let moveItem: TabFileProps | null = null;
+            // let infoIndex = 0;
+            // // 不论什么方向 都需要移除迁移项并重新激活未选中项
+            // newAreaInfo.forEach((item, index) => {
+            //     item.elements.forEach((itemIn, indexIn) => {
+            //         if (itemIn.id === tabsId) {
+            //             // 筛选出迁移项
+            //             let newFileDetailInfo: FileDetailInfo[] = [];
+            //             let activeIndex = 0;
+            //             itemIn.files.forEach((file, fileIndex) => {
+            //                 if (file.isActive) {
+            //                     // 构建新Tabs项
+            //                     moveItem = {
+            //                         id: uuidv4(),
+            //                         files: [file],
+            //                     };
+            //                     activeIndex = fileIndex;
+            //                     infoIndex = index;
+            //                 } else {
+            //                     newFileDetailInfo.push(file);
+            //                 }
+            //             });
+            //             // 重新激活未选中项目（因移走后当前tabs无选中项）
+            //             newFileDetailInfo[
+            //                 activeIndex - 1 < 0 ? 0 : activeIndex - 1
+            //             ].isActive = true;
+            //
+            //             // 赋予新值
+            //             newAreaInfo[index].elements[indexIn].files =
+            //                 newFileDetailInfo;
+            //         }
+            //     });
+            // });
+            // if (moveItem) {
+            //     if (direction === 'top') {
+            //         if (newAreaInfo.length <= 1) {
+            //             newAreaInfo.unshift({
+            //                 elements: [moveItem],
+            //             });
+            //         } else {
+            //             newAreaInfo[0].elements.push(moveItem);
+            //         }
+            //     }
+            //     if (direction === 'bottom') {
+            //         if (newAreaInfo.length <= 1) {
+            //             newAreaInfo.push({
+            //                 elements: [moveItem],
+            //             });
+            //         } else {
+            //             newAreaInfo[1].elements.push(moveItem);
+            //         }
+            //     }
+            //     if (direction === 'left') {
+            //         newAreaInfo[infoIndex].elements.unshift(moveItem);
+            //     }
+            //     if (direction === 'right') {
+            //         newAreaInfo[infoIndex].elements.push(moveItem);
+            //     }
+            // }
+            // setAreaInfo && setAreaInfo(newAreaInfo);
         },
     );
 
@@ -694,9 +697,10 @@ const RunnerTabBarItem: React.FC<RunnerTabBarItemProps> = memo((props) => {
         try {
             // 切换时应移除编辑器焦点(原因：拖拽会导致monaca焦点无法主动失焦)
             if (document.activeElement !== null) {
-                // @ts-ignore
+                // @ts-expect-error intentionally unused
                 document.activeElement.blur();
             }
+
             const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
             newAreaInfo.forEach((item, idx) => {
                 item.elements.forEach((itemIn, idxin) => {
@@ -904,7 +908,10 @@ const RunnerTabPane: React.FC<RunnerTabPaneProps> = memo((props) => {
     }, [runtimeID]);
 
     const [_highLightFind, setHighLightFind] = useState<Selection[]>([]);
+    // @ts-expect-error intentionally unused
+    const _ignore_highLightFind = _highLightFind;
     // 获取编辑器中关联字符
+
     const getOtherRangeByPosition = useDebounceFn(
         (position: Position) => {
             const model = editor?.getModel();

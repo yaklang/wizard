@@ -685,6 +685,7 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
     // 漏洞树Map
     const [, { set: setRiskMap, get: getRiskMap, reset: resetRiskMap }] =
         useMap<string, FileNodeMapProps>();
+    void setRiskMap;
     // setRiskMap;
     const [
         ,
@@ -694,6 +695,7 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
             reset: resetRiskChildMap,
         },
     ] = useMap<string, string[]>();
+    void setRiskChildMap;
     // setRiskChildMap;
     // 选中的文件或文件夹
     const [foucsedKey, setFoucsedKey] = React.useState<string>('');
@@ -748,6 +750,7 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
     });
 
     const onInitRiskTreeFun = useMemoizedFn(async (program: string) => {
+        void program;
         // program;
         // program;
         try {
@@ -781,6 +784,7 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
 
     const onLoadRiskTree = useMemoizedFn((path: string, program: string) => {
         void program;
+        // program;
         return new Promise((resolve, reject) => {
             // 校验其子项是否存在
             const childArr = getRiskChildMap(path) || [];
@@ -857,6 +861,7 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
     // 文件树选中
     const onSelectFileTree = useMemoizedFn(
         (
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             _selectedKeys: string[],
             e: {
                 selected: boolean;
@@ -864,7 +869,6 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
                 node: FileNodeProps;
             },
         ) => {
-            // _selectedKeys;
             if (onSelectedNodes) {
                 onSelectedNodes(e.node);
                 return;
