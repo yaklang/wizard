@@ -22,6 +22,7 @@ export interface TSSATask {
     execute_node?: string;
     program_name?: string;
     risk_count?: number;
+    risk_count_critical?: number;
     risk_count_high?: number;
     risk_count_medium?: number;
     risk_count_low?: number;

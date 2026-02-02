@@ -106,6 +106,10 @@ const TaskList: React.FC = () => {
                             if (msg.data?.risk_count !== undefined) {
                                 updates.risk_count = msg.data.risk_count;
                             }
+                            if (msg.data?.risk_count_critical !== undefined) {
+                                updates.risk_count_critical =
+                                    msg.data.risk_count_critical;
+                            }
                             if (msg.data?.risk_count_high !== undefined) {
                                 updates.risk_count_high =
                                     msg.data.risk_count_high;
@@ -310,6 +314,11 @@ const TaskList: React.FC = () => {
                     <div className="vulnerability-stats">
                         <span className="stat-label">缺陷数</span>
                         <div className="stat-boxes">
+                            <Tooltip title="严重">
+                                <div className="stat-box critical">
+                                    严重 {task.risk_count_critical || 0}
+                                </div>
+                            </Tooltip>
                             <Tooltip title="高危">
                                 <div className="stat-box high">
                                     高 {task.risk_count_high || 0}
@@ -555,6 +564,11 @@ const TaskList: React.FC = () => {
                         </Descriptions.Item>
                         <Descriptions.Item label="执行节点">
                             {overviewTask.execute_node || '-'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="严重漏洞数">
+                            <Tag color="magenta">
+                                {overviewTask.risk_count_critical || 0}
+                            </Tag>
                         </Descriptions.Item>
                         <Descriptions.Item label="高危漏洞数">
                             <Tag color="red">

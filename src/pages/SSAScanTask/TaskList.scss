@@ -152,6 +152,7 @@
                         min-width: 50px;
                         justify-content: center;
 
+                        &.critical { background: #b71c4a; }
                         &.high { background: #ff4d4f; }
                         &.medium { background: #fa8c16; }
                         &.low { background: #ffec3d; color: #595959; }
