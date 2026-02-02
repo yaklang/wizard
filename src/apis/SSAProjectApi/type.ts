@@ -42,6 +42,14 @@ export interface TSSAProjectConfig {
             url?: string;
         };
     };
+    ScanPolicy?: {
+        policy_type?: string;
+        custom_rules?: {
+            compliance_rules?: string[];
+            tech_stack_rules?: string[];
+            special_rules?: string[];
+        };
+    };
 }
 
 // SSA 项目请求类型
@@ -51,5 +59,42 @@ interface TSSAProjectRequest {
 
 // SSA 项目列表响应类型
 type TSSAProjectListResponse = TableResponseData<TSSAProject>;
+
+// 扫描策略配置类型
+export interface TScanPolicyConfig {
+    version?: string;
+    policies?: Record<string, TPolicyDefinition>;
+    categories?: TPolicyCategory[];
+    custom_rule_groups?: TCustomRuleGroupsConfig;
+}
+
+export interface TPolicyDefinition {
+    name: string;
+    description: string;
+    icon: string;
+    rule_groups: string[];
+}
+
+export interface TPolicyCategory {
+    id: string;
+    name: string;
+    policies: string[];
+}
+
+export interface TCustomRuleGroupsConfig {
+    compliance_rules?: TRuleGroupCategory[];
+    tech_stack_rules?: TRuleGroupCategory[];
+    special_rules?: TRuleGroupCategory[];
+}
+
+export interface TRuleGroupCategory {
+    category: string;
+    groups: TRuleGroup[];
+}
+
+export interface TRuleGroup {
+    name: string;
+    display_name: string;
+}
 
 export type { TSSAProject, TSSAProjectRequest, TSSAProjectListResponse };

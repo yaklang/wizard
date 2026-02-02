@@ -33,8 +33,14 @@ import {
     SiC,
 } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
-import { postSSAProject as createSSAProject } from '@/apis/SSAProjectApi';
-import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
+import { 
+    postSSAProject as createSSAProject,
+    getScanPolicyConfig 
+} from '@/apis/SSAProjectApi';
+import type { 
+    TSSAProjectRequest,
+    TScanPolicyConfig
+} from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import dayjs from 'dayjs';
 import './CreateProject.scss';
@@ -53,47 +59,50 @@ const languageOptions = [
     { label: 'C', value: 'c', icon: <SiC size={48} /> },
 ];
 
-// 预置策略选项
-const presetStrategies = [
-    {
-        key: 'owasp-web',
-        title: 'OWASP Web 合规扫描',
-        icon: '🛡️',
-        description: '覆盖注入、失效的访问控制等最常见的 Web 风险',
-        tags: ['Web 合规'],
-        ruleCount: '135',
-        mapping: ['owasp-top10'],
+// 前端 UI 配置（标签、推荐等）
+const frontendUIConfig: Record<string, { tags: string[]; recommended?: boolean; expandable?: boolean; smartMatch?: boolean }> = {
+    'owasp-web': {
+        tags: ['Web 合规', '推荐'],
         recommended: true,
     },
-    {
-        key: 'critical-high',
-        title: '高危漏洞快速扫描',
-        icon: '🚀',
-        description: '仅扫描"高危"及"严重"级别的漏洞，过滤低风险噪音',
+    'critical-high': {
         tags: ['CI/CD 极速'],
-        ruleCount: '89',
-        mapping: ['critical', 'high', 'cwe-top25'],
     },
-    {
-        key: 'fullstack',
-        title: '全栈深度扫描',
-        icon: '☕',
-        description: '包含语言特性、常用框架及依赖组件安全检查',
+    'fullstack': {
         tags: ['深度 SCA'],
-        ruleCount: '动态',
-        mapping: [], // 动态根据语言填充
         smartMatch: true,
     },
-    {
-        key: 'custom',
-        title: '自定义规则',
-        icon: '⚙️',
-        description: '点击展开，手动选择需要的规则集',
+    'cwe-top25': {
+        tags: ['CWE 标准'],
+    },
+    'custom': {
         tags: ['灵活配置'],
-        ruleCount: '-',
         expandable: true,
     },
-];
+};
+
+// 动态生成策略选项（合并后端数据和前端 UI 配置）
+const generatePresetStrategies = (config: TScanPolicyConfig | null) => {
+    if (!config?.policies) {
+        return [];
+    }
+
+    return Object.entries(config.policies).map(([key, policy]) => {
+        const uiConfig = frontendUIConfig[key] || { tags: [] };
+        return {
+            key,
+            title: policy.name,
+            icon: policy.icon,
+            description: policy.description,
+            tags: uiConfig.tags,
+            ruleCount: policy.rule_groups?.length?.toString() || '-',
+            mapping: policy.rule_groups || [],
+            recommended: uiConfig.recommended,
+            expandable: uiConfig.expandable,
+            smartMatch: uiConfig.smartMatch,
+        };
+    });
+};
 
 // 常用标签建议
 const commonTags = [
@@ -186,6 +195,32 @@ const CreateProject: React.FC = () => {
     const [selectedComplianceRules, setSelectedComplianceRules] = useState<React.Key[]>([]);
     const [selectedTechStackRules, setSelectedTechStackRules] = useState<React.Key[]>([]);
     const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>([]);
+    
+    // 策略配置动态数据
+    const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(null);
+    const [loadingPolicyConfig, setLoadingPolicyConfig] = useState(false);
+
+    // 加载策略配置
+    useEffect(() => {
+        const loadPolicyConfig = async () => {
+            setLoadingPolicyConfig(true);
+            try {
+                const response = await getScanPolicyConfig();
+                if (response && response.data) {
+                    setPolicyConfig(response.data);
+                } else {
+                    console.warn('加载策略配置失败，将使用空配置');
+                }
+            } catch (error) {
+                console.warn('Failed to load policy config:', error);
+                // 静默失败，不阻塞页面使用
+            } finally {
+                setLoadingPolicyConfig(false);
+            }
+        };
+        
+        loadPolicyConfig();
+    }, []);
 
     // 智能联动：根据选择的语言自动勾选对应的技术栈规则
     useEffect(() => {
@@ -611,7 +646,12 @@ const CreateProject: React.FC = () => {
 
                 {/* 预置策略卡片 */}
                 <div className="preset-strategies">
-                    {presetStrategies.map((strategy) => (
+                    {loadingPolicyConfig ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                            <div>加载策略配置...</div>
+                        </div>
+                    ) : (
+                        generatePresetStrategies(policyConfig).map((strategy) => (
                         <div
                             key={strategy.key}
                             className={`strategy-card ${selectedStrategy === strategy.key ? 'selected' : ''} ${strategy.expandable ? 'expandable' : ''}`}
@@ -656,7 +696,8 @@ const CreateProject: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                        ))
+                    )}
                 </div>
 
                 {/* 自定义规则展开区域 */}

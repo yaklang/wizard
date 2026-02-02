@@ -22,7 +22,6 @@ import type { DataNode } from 'antd/es/tree';
 import {
     CheckCircleOutlined,
     CloseCircleOutlined,
-    LoadingOutlined,
     SettingOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -31,8 +30,13 @@ import {
     fetchSSAProject,
     postSSAProject,
     testGitConnection,
+    getScanPolicyConfig,
 } from '@/apis/SSAProjectApi';
-import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
+import type { 
+    TSSAProjectRequest, 
+    TScanPolicyConfig,
+    TRuleGroupCategory 
+} from '@/apis/SSAProjectApi/type';
 
 interface ProjectDrawerProps {
     visible: boolean;
@@ -62,60 +66,33 @@ const scanPolicyOptions = [
 ];
 
 // 规则树数据（用于自定义策略Modal）
-const complianceRules: DataNode[] = [
-    {
-        title: 'OWASP Top 10',
-        key: 'owasp-top10',
-        children: [
-            { title: 'A01: 失效的访问控制', key: 'owasp-a01' },
-            { title: 'A02: 加密机制失败', key: 'owasp-a02' },
-            { title: 'A03: 注入', key: 'owasp-a03' },
-            { title: 'A04: 不安全设计', key: 'owasp-a04' },
-            { title: 'A05: 安全配置错误', key: 'owasp-a05' },
-            { title: 'A06: 易受攻击和过时的组件', key: 'owasp-a06' },
-            { title: 'A07: 识别和认证失败', key: 'owasp-a07' },
-            { title: 'A08: 软件和数据完整性故障', key: 'owasp-a08' },
-            { title: 'A09: 安全日志和监控失败', key: 'owasp-a09' },
-            { title: 'A10: 服务器端请求伪造', key: 'owasp-a10' },
-        ],
-    },
-    { title: 'CWE Top 25 (2023)', key: 'cwe-top25' },
-];
+// 将规则组分类转换为 Tree DataNode 格式
+const convertRuleGroupCategoriesToDataNodes = (categories?: TRuleGroupCategory[]): DataNode[] => {
+    if (!categories || categories.length === 0) return [];
+    
+    return categories.map(category => ({
+        title: category.category,
+        key: `${category.category}-group`,
+        children: category.groups.map(group => ({
+            title: group.display_name,
+            key: group.name,
+        })),
+    }));
+};
 
-const techStackRules: DataNode[] = [
-    {
-        title: '语言库',
-        key: 'language-group',
-        children: [
-            { title: 'Java', key: 'lang-java' },
-            { title: 'Golang', key: 'lang-go' },
-            { title: 'PHP', key: 'lang-php' },
-            { title: 'JavaScript', key: 'lang-js' },
-            { title: 'Python', key: 'lang-python' },
-            { title: 'C', key: 'lang-c' },
-        ],
-    },
-    {
-        title: '框架/组件',
-        key: 'framework-group',
-        children: [
-            { title: 'Spring', key: 'framework-spring' },
-            { title: 'Apache Shiro', key: 'framework-shiro' },
-            { title: 'ThinkPHP', key: 'framework-thinkphp' },
-        ],
-    },
-];
+// 将规则组分类转换为 Checkbox.Group 的 options 格式
+const convertRuleGroupCategoriesToCheckboxOptions = (categories?: TRuleGroupCategory[]): Array<{ label: string; value: string }> => {
+    if (!categories || categories.length === 0) return [];
+    
+    return categories.flatMap(category => 
+        category.groups.map(group => ({
+            label: group.display_name,
+            value: group.name,
+        }))
+    );
+};
 
-const specialRules = [
-    { label: '严重', value: 'critical' },
-    { label: '高危', value: 'high' },
-    { label: '中危', value: 'middle' },
-    { label: '低危', value: 'low' },
-    { label: '审计', value: 'audit' },
-    { label: '配置', value: 'config' },
-    { label: '安全', value: 'security' },
-    { label: 'SCA / 其他', value: 'sca' },
-];
+// complianceRules, techStackRules, specialRules 均已改为从后端动态获取，不再硬编码
 
 const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     visible,
@@ -141,8 +118,34 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     const [selectedTechStackRules, setSelectedTechStackRules] = useState<React.Key[]>([]);
     const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>([]);
     const [enableSchedule, setEnableSchedule] = useState(false);
+    
+    // 策略配置动态数据
+    const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(null);
+    const [loadingPolicyConfig, setLoadingPolicyConfig] = useState(false);
 
     const isEdit = !!projectId;
+
+    // 加载策略配置
+    useEffect(() => {
+        const loadPolicyConfig = async () => {
+            setLoadingPolicyConfig(true);
+            try {
+                const response = await getScanPolicyConfig();
+                if (response && response.data) {
+                    setPolicyConfig(response.data);
+                } else {
+                    console.warn('加载策略配置失败，将使用空配置');
+                }
+            } catch (error) {
+                console.warn('Failed to load policy config:', error);
+                // 静默失败，不阻塞页面使用
+            } finally {
+                setLoadingPolicyConfig(false);
+            }
+        };
+        
+        loadPolicyConfig();
+    }, []);
 
     useEffect(() => {
         if (visible && projectId) {
@@ -152,6 +155,9 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             setAuthType('none');
             setSourceKind('git');
             setConnectionStatus('idle');
+            setScanPolicy('owasp-web');
+            setSelectedComplianceRules([]);
+            setSelectedTechStackRules([]);
         }
     }, [visible, projectId]);
 
@@ -181,6 +187,23 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 }
                 if (res.data.config?.CodeSource?.kind) {
                     setSourceKind(res.data.config.CodeSource.kind);
+                }
+                
+                // 加载扫描策略配置
+                if (res.data.config?.ScanPolicy) {
+                    const policyType = res.data.config.ScanPolicy.policy_type;
+                    if (policyType) {
+                        setScanPolicy(policyType);
+                    }
+                    if (res.data.config.ScanPolicy.custom_rules) {
+                        const customRules = res.data.config.ScanPolicy.custom_rules;
+                        if (customRules.compliance_rules) {
+                            setSelectedComplianceRules(customRules.compliance_rules);
+                        }
+                        if (customRules.tech_stack_rules) {
+                            setSelectedTechStackRules(customRules.tech_stack_rules);
+                        }
+                    }
                 }
             }
         } catch (error) {
@@ -282,6 +305,17 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 values.config.BaseInfo.tags = (tags as string).split(',');
             }
 
+            // 添加扫描策略配置
+            if (!values.config) values.config = {};
+            values.config.ScanPolicy = {
+                policy_type: scanPolicy,
+                custom_rules: scanPolicy === 'custom' ? {
+                    compliance_rules: selectedComplianceRules as string[],
+                    tech_stack_rules: selectedTechStackRules as string[],
+                    special_rules: selectedSpecialRules as string[],
+                } : undefined,
+            };
+
             setSaving(true);
             await postSSAProject(values);
             message.success(isEdit ? '保存成功' : '创建成功');
@@ -332,7 +366,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             },
                             CodeSource: {
                                 kind: 'git',
-                                branch: 'master',
+                                branch: '',
                                 auth: {
                                     kind: 'none',
                                 },
@@ -699,13 +733,21 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             label: '合规标准',
                             children: (
                                 <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
-                                    <Tree
-                                        checkable
-                                        defaultExpandAll
-                                        treeData={complianceRules}
-                                        checkedKeys={selectedComplianceRules}
-                                        onCheck={(checked) => setSelectedComplianceRules(checked as React.Key[])}
-                                    />
+                                    {loadingPolicyConfig ? (
+                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                            <Spin tip="加载规则组配置..." />
+                                        </div>
+                                    ) : (
+                                        <Tree
+                                            checkable
+                                            defaultExpandAll
+                                            treeData={convertRuleGroupCategoriesToDataNodes(
+                                                policyConfig?.custom_rule_groups?.compliance_rules
+                                            )}
+                                            checkedKeys={selectedComplianceRules}
+                                            onCheck={(checked) => setSelectedComplianceRules(checked as React.Key[])}
+                                        />
+                                    )}
                                 </div>
                             ),
                         },
@@ -714,13 +756,21 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             label: '技术栈',
                             children: (
                                 <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
-                                    <Tree
-                                        checkable
-                                        defaultExpandAll
-                                        treeData={techStackRules}
-                                        checkedKeys={selectedTechStackRules}
-                                        onCheck={(checked) => setSelectedTechStackRules(checked as React.Key[])}
-                                    />
+                                    {loadingPolicyConfig ? (
+                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                            <Spin tip="加载规则组配置..." />
+                                        </div>
+                                    ) : (
+                                        <Tree
+                                            checkable
+                                            defaultExpandAll
+                                            treeData={convertRuleGroupCategoriesToDataNodes(
+                                                policyConfig?.custom_rule_groups?.tech_stack_rules
+                                            )}
+                                            checkedKeys={selectedTechStackRules}
+                                            onCheck={(checked) => setSelectedTechStackRules(checked as React.Key[])}
+                                        />
+                                    )}
                                 </div>
                             ),
                         },
@@ -729,16 +779,24 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             label: '专项/标签',
                             children: (
                                 <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
-                                    <Checkbox.Group
-                                        options={specialRules}
-                                        value={selectedSpecialRules}
-                                        onChange={(checked) => setSelectedSpecialRules(checked as string[])}
-                                        style={{ 
-                                            display: 'flex', 
-                                            flexDirection: 'column', 
-                                            gap: 12 
-                                        }}
-                                    />
+                                    {loadingPolicyConfig ? (
+                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                            <Spin tip="加载规则组配置..." />
+                                        </div>
+                                    ) : (
+                                        <Checkbox.Group
+                                            options={convertRuleGroupCategoriesToCheckboxOptions(
+                                                policyConfig?.custom_rule_groups?.special_rules
+                                            )}
+                                            value={selectedSpecialRules}
+                                            onChange={(checked) => setSelectedSpecialRules(checked as string[])}
+                                            style={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
+                                                gap: 12 
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             ),
                         },

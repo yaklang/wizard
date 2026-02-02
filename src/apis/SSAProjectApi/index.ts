@@ -4,6 +4,7 @@ import type {
     TSSAProject,
     TSSAProjectListResponse,
     TSSAProjectRequest,
+    TScanPolicyConfig,
 } from './type';
 
 // GET /ssa/project - 查询项目列表
@@ -64,10 +65,19 @@ const testGitConnection = (data: {
         data,
     );
 
+// GET /ssa/scan-policy-config - 获取扫描策略配置
+const getScanPolicyConfig = (
+    signal?: AbortSignal,
+): Promise<ResponseData<TScanPolicyConfig>> =>
+    axios.get<never, ResponseData<TScanPolicyConfig>>(`/ssa/scan-policy-config`, {
+        signal,
+    });
+
 export {
     getSSAProjects,
     fetchSSAProject,
     postSSAProject,
     deleteSSAProject,
     testGitConnection,
+    getScanPolicyConfig,
 };
