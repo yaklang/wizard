@@ -20,6 +20,7 @@ export interface TSSATask {
     progress: number;
     phase?: string;
     execute_node?: string;
+    rule_groups?: string; // 规则组列表(JSON字符串)
     program_name?: string;
     risk_count?: number;
     risk_count_critical?: number;

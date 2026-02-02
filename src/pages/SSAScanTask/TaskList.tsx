@@ -8,7 +8,6 @@ import {
     message,
     Select,
     Tooltip,
-    Modal,
     Tabs,
     Form,
     Input,
@@ -20,6 +19,7 @@ import {
     Spin,
     Pagination,
     Descriptions,
+    Typography,
 } from 'antd';
 import {
     ReloadOutlined,
@@ -32,9 +32,13 @@ import {
     DownloadOutlined,
     DeleteOutlined,
 } from '@ant-design/icons';
+import { SiPhp, SiJavascript, SiPython, SiGo, SiC } from 'react-icons/si';
+import { DiJava } from 'react-icons/di';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { querySSATasks } from '@/apis/SSAScanTaskApi';
 import type { TSSATask, TSSATaskQueryParams } from '@/apis/SSAScanTaskApi/type';
+import { fetchSSAProject } from '@/apis/SSAProjectApi';
+import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { useEventSource } from '@/hooks';
 import dayjs from 'dayjs';
@@ -62,8 +66,8 @@ const TaskList: React.FC = () => {
 
     const [form] = Form.useForm();
 
-    const [overviewTask, setOverviewTask] = useState<TSSATask | null>(null);
-    const [isOverviewVisible, setIsOverviewVisible] = useState(false);
+    const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+    const [projectDetails, setProjectDetails] = useState<Record<number, TSSAProject>>({});
 
     // SSE连接，自动接收任务更新事件
     const { disconnect } = useEventSource<{ msg: any }>(
@@ -226,12 +230,57 @@ const TaskList: React.FC = () => {
         return textMap[status] || status;
     };
 
-    const showOverview = (task: TSSATask) => {
-        setOverviewTask(task);
-        setIsOverviewVisible(true);
+    const toggleTaskDetail = async (taskId: string, projectId?: number) => {
+        const newExpandedId = expandedTaskId === taskId ? null : taskId;
+        setExpandedTaskId(newExpandedId);
+        
+        // 如果展开且有project_id，且还没有加载过该项目详情，则加载
+        if (newExpandedId && projectId && !projectDetails[projectId]) {
+            try {
+                const res = await fetchSSAProject({ id: projectId });
+                if (res.data) {
+                    setProjectDetails(prev => ({
+                        ...prev,
+                        [projectId]: res.data
+                    }));
+                }
+            } catch (err: any) {
+                console.error('获取项目详情失败:', err);
+            }
+        }
+    };
+
+    // 语言图标映射
+    const languageIconMap: Record<string, { icon: React.ComponentType<{ size?: number; color?: string }>; color: string; label: string }> = {
+        php: { icon: SiPhp, color: '#777BB4', label: 'PHP' },
+        java: { icon: DiJava, color: '#007396', label: 'Java' },
+        javascript: { icon: SiJavascript, color: '#F7DF1E', label: 'JavaScript' },
+        js: { icon: SiJavascript, color: '#F7DF1E', label: 'JavaScript' },
+        go: { icon: SiGo, color: '#00ADD8', label: 'Go' },
+        golang: { icon: SiGo, color: '#00ADD8', label: 'Go' },
+        python: { icon: SiPython, color: '#3776AB', label: 'Python' },
+        c: { icon: SiC, color: '#A8B9CC', label: 'C' },
+    };
+
+    const getLanguageDisplay = (language?: string) => {
+        if (!language) return { icon: null, label: '-', color: undefined };
+        const langKey = language.toLowerCase();
+        const langConfig = languageIconMap[langKey];
+        if (!langConfig) return { icon: null, label: language, color: undefined };
+        
+        const IconComponent = langConfig.icon;
+        return {
+            icon: <IconComponent size={16} color={langConfig.color} />,
+            label: langConfig.label,
+            color: langConfig.color
+        };
     };
 
     const renderTaskCard = (task: TSSATask) => {
+        const isExpanded = expandedTaskId === task.task_id;
+        const projectDetail = task.project_id ? projectDetails[task.project_id] : null;
+        const projectConfig = projectDetail?.config;
+        
         return (
             <div className="task-card" key={task.task_id}>
                 <div className="task-main-info">
@@ -240,10 +289,7 @@ const TaskList: React.FC = () => {
                     />
                     <div className="task-details">
                         <div className="task-header">
-                            <span
-                                className="task-title"
-                                onClick={() => showOverview(task)}
-                            >
+                            <span className="task-title">
                                 {task.project_name ||
                                     task.task_id.substring(0, 8)}
                             </span>
@@ -290,7 +336,10 @@ const TaskList: React.FC = () => {
                                 </span>
                             </div>
                             <div className="meta-item">
-                                检测语言: <span>{task.language || 'Java'}</span>
+                                检测语言: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    {getLanguageDisplay(task.language).icon}
+                                    {getLanguageDisplay(task.language).label}
+                                </span>
                             </div>
                             <div className="meta-item">
                                 源代码来源:{' '}
@@ -344,14 +393,7 @@ const TaskList: React.FC = () => {
 
                     <div className="action-buttons">
                         <Button
-                            type="link"
-                            icon={<EyeOutlined />}
-                            onClick={() => showOverview(task)}
-                        >
-                            查看结果
-                        </Button>
-                        <Button
-                            type="link"
+                            type="primary"
                             icon={<AuditOutlined />}
                             onClick={() =>
                                 navigate(
@@ -360,6 +402,12 @@ const TaskList: React.FC = () => {
                             }
                         >
                             缺陷审计
+                        </Button>
+                        <Button
+                            icon={<EyeOutlined />}
+                            onClick={() => toggleTaskDetail(task.task_id, task.project_id)}
+                        >
+                            详情
                         </Button>
                         <Button type="link" icon={<FileTextOutlined />}>
                             生成报告
@@ -372,6 +420,196 @@ const TaskList: React.FC = () => {
                         </Button>
                     </div>
                 </div>
+
+                {isExpanded && (
+                    <div className="task-detail-panel">
+                        <div className="detail-section">
+                            <h4>项目信息</h4>
+                            <Descriptions bordered column={2} size="small">
+                                <Descriptions.Item label="任务 ID" span={2}>
+                                    <Typography.Text copyable>{task.task_id}</Typography.Text>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="项目名称">
+                                    {task.project_name || '-'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="项目 ID">
+                                    {task.project_id || '-'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="检测语言">
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                        {getLanguageDisplay(task.language).icon}
+                                        {getLanguageDisplay(task.language).label}
+                                    </span>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="总行数">
+                                    {task.total_lines?.toLocaleString() || 0} 行
+                                </Descriptions.Item>
+                                {projectConfig?.BaseInfo?.tags && (
+                                    <Descriptions.Item label="项目标签" span={2}>
+                                        {projectConfig.BaseInfo.tags.map((tag: string) => (
+                                            <Tag key={tag}>{tag}</Tag>
+                                        ))}
+                                    </Descriptions.Item>
+                                )}
+                            </Descriptions>
+                        </div>
+
+                        <div className="detail-section">
+                            <h4>代码来源</h4>
+                            <Descriptions bordered column={2} size="small">
+                                <Descriptions.Item label="来源类型">
+                                    {projectConfig?.CodeSource?.kind === 'git' ? 'Git 仓库' :
+                                     projectConfig?.CodeSource?.kind === 'svn' ? 'SVN 仓库' :
+                                     projectConfig?.CodeSource?.kind === 'local' ? '本地文件' :
+                                     projectConfig?.CodeSource?.kind === 'compression' ? '压缩包' :
+                                     projectConfig?.CodeSource?.kind === 'jar' ? 'JAR 包' :
+                                     task.source_origin || '本地'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="程序名称">
+                                    {task.program_name || '-'}
+                                </Descriptions.Item>
+                                {projectConfig?.CodeSource?.url && (
+                                    <Descriptions.Item label="仓库地址" span={2}>
+                                        <Typography.Text copyable ellipsis={{ tooltip: projectConfig.CodeSource.url }}>
+                                            {projectConfig.CodeSource.url}
+                                        </Typography.Text>
+                                    </Descriptions.Item>
+                                )}
+                                {projectConfig?.CodeSource?.branch && (
+                                    <Descriptions.Item label="分支">
+                                        <Tag color="blue">{projectConfig.CodeSource.branch}</Tag>
+                                    </Descriptions.Item>
+                                )}
+                                {projectConfig?.CodeSource?.auth?.kind && (
+                                    <Descriptions.Item label="认证方式">
+                                        {projectConfig.CodeSource.auth.kind === 'none' ? '无需认证' :
+                                         projectConfig.CodeSource.auth.kind === 'basic' ? '用户名密码' :
+                                         projectConfig.CodeSource.auth.kind === 'ssh' ? 'SSH 密钥' :
+                                         '-'}
+                                    </Descriptions.Item>
+                                )}
+                            </Descriptions>
+                        </div>
+
+                        <div className="detail-section">
+                            <h4>扫描策略</h4>
+                            <Descriptions bordered column={1} size="small">
+                                <Descriptions.Item label="规则集">
+                                    {(() => {
+                                        try {
+                                            if (task.rule_groups) {
+                                                const groups = JSON.parse(task.rule_groups);
+                                                if (Array.isArray(groups) && groups.length > 0) {
+                                                    return groups.map((group: string) => (
+                                                        <Tag key={group} color="blue" style={{ marginBottom: 4 }}>
+                                                            {group}
+                                                        </Tag>
+                                                    ));
+                                                }
+                                            }
+                                        } catch (e) {
+                                            console.error('解析规则组失败:', e);
+                                        }
+                                        return <span style={{ color: '#999' }}>使用默认规则集</span>;
+                                    })()}
+                                </Descriptions.Item>
+                            </Descriptions>
+                        </div>
+
+                        <div className="detail-section">
+                            <h4>执行信息</h4>
+                            <Descriptions bordered column={2} size="small">
+                                <Descriptions.Item label="检测状态">
+                                    <Tag
+                                        color={
+                                            task.status === 'completed'
+                                                ? 'success'
+                                                : task.status === 'failed'
+                                                  ? 'error'
+                                                  : task.status === 'running'
+                                                    ? 'processing'
+                                                    : 'default'
+                                        }
+                                    >
+                                        {getStatusText(task.status)}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="执行节点">
+                                    {task.execute_node || '-'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="创建者">
+                                    {task.creator || 'tester'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="创建时间">
+                                    {task.created_at
+                                        ? dayjs
+                                              .unix(task.created_at)
+                                              .format('YYYY-MM-DD HH:mm:ss')
+                                        : '-'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="开始时间">
+                                    {task.started_at
+                                        ? dayjs
+                                              .unix(task.started_at)
+                                              .format('YYYY-MM-DD HH:mm:ss')
+                                        : '-'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="结束时间">
+                                    {task.finished_at
+                                        ? dayjs
+                                              .unix(task.finished_at)
+                                              .format('YYYY-MM-DD HH:mm:ss')
+                                        : '-'}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="耗时">
+                                    {task.started_at && task.finished_at
+                                        ? `${Math.round((task.finished_at - task.started_at) / 60)} 分钟`
+                                        : '-'}
+                                </Descriptions.Item>
+                            </Descriptions>
+                        </div>
+
+                        <div className="detail-section">
+                            <h4>检测结果</h4>
+                            <Descriptions bordered column={2} size="small">
+                                <Descriptions.Item label="严重漏洞">
+                                    <Tag color="magenta">
+                                        {task.risk_count_critical || 0}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="高危漏洞">
+                                    <Tag color="red">
+                                        {task.risk_count_high || 0}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="中危漏洞">
+                                    <Tag color="orange">
+                                        {task.risk_count_medium || 0}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="低危漏洞">
+                                    <Tag color="gold">
+                                        {task.risk_count_low || 0}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="总漏洞数" span={2}>
+                                    <Tag color="blue">
+                                        {task.risk_count || 0}
+                                    </Tag>
+                                </Descriptions.Item>
+                            </Descriptions>
+                        </div>
+
+                        {task.error_message && (
+                            <div className="detail-section">
+                                <h4>错误信息</h4>
+                                <div className="error-message">
+                                    {task.error_message}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         );
     };
@@ -504,102 +742,6 @@ const TaskList: React.FC = () => {
                 />
             </div>
 
-            <Modal
-                title="任务概况"
-                open={isOverviewVisible}
-                onCancel={() => setIsOverviewVisible(false)}
-                footer={[
-                    <Button
-                        key="close"
-                        onClick={() => setIsOverviewVisible(false)}
-                    >
-                        关闭
-                    </Button>,
-                ]}
-                width={800}
-            >
-                {overviewTask && (
-                    <Descriptions bordered column={2}>
-                        <Descriptions.Item label="任务 ID" span={2}>
-                            {overviewTask.task_id}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="项目名称">
-                            {overviewTask.project_name}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="检测语言">
-                            {overviewTask.language}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="检测状态">
-                            <Tag
-                                color={getStatusClass(
-                                    overviewTask.status,
-                                ).replace('status-', '')}
-                            >
-                                {getStatusText(overviewTask.status)}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="当前阶段">
-                            {overviewTask.phase || '-'}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="创建时间">
-                            {dayjs
-                                .unix(overviewTask.created_at!)
-                                .format('YYYY-MM-DD HH:mm:ss')}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="结束时间">
-                            {overviewTask.finished_at
-                                ? dayjs
-                                      .unix(overviewTask.finished_at)
-                                      .format('YYYY-MM-DD HH:mm:ss')
-                                : '-'}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="总行数">
-                            {overviewTask.total_lines?.toLocaleString() || 0} 行
-                        </Descriptions.Item>
-                        <Descriptions.Item label="创建者">
-                            {overviewTask.creator || 'tester'}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="源码来源">
-                            {overviewTask.source_origin || '本地'}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="执行节点">
-                            {overviewTask.execute_node || '-'}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="严重漏洞数">
-                            <Tag color="magenta">
-                                {overviewTask.risk_count_critical || 0}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="高危漏洞数">
-                            <Tag color="red">
-                                {overviewTask.risk_count_high || 0}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="中危漏洞数">
-                            <Tag color="orange">
-                                {overviewTask.risk_count_medium || 0}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="低危漏洞数">
-                            <Tag color="gold">
-                                {overviewTask.risk_count_low || 0}
-                            </Tag>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="总漏洞数">
-                            <Tag color="blue">
-                                {overviewTask.risk_count || 0}
-                            </Tag>
-                        </Descriptions.Item>
-                        {overviewTask.error_message && (
-                            <Descriptions.Item label="错误信息" span={2}>
-                                <div style={{ color: 'red' }}>
-                                    {overviewTask.error_message}
-                                </div>
-                            </Descriptions.Item>
-                        )}
-                    </Descriptions>
-                )}
-            </Modal>
         </div>
     );
 };

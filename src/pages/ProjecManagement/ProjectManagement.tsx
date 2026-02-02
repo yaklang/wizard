@@ -281,9 +281,13 @@ const ProjectManagement: React.FC = () => {
         setScanningProjects(prev => new Set(prev).add(record.id!));
         
         try {
+            // 从项目的tags或description中提取规则组信息（如果有的话）
+            // 目前使用默认规则集，后续可以扩展为从项目配置中读取
+            const ruleGroups: string[] = [];
+            
             const res = await scanSSAProject(record.id, {
+                rule_groups: ruleGroups.length > 0 ? ruleGroups : undefined,
                 // node_id 可选，不传则由后端自动分配
-                // rule_groups 可选，使用默认规则集
             });
             
             // 显示带跳转链接的成功提示

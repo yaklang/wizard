@@ -40,11 +40,11 @@
         padding: 20px 24px;
         border-radius: 4px;
         border: 1px solid var(--irify-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         box-shadow: 0 1px 2px var(--irify-glass-shadow);
         transition: all 0.3s;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
 
         &:hover {
             box-shadow: 0 4px 12px var(--irify-glass-shadow);
@@ -53,15 +53,15 @@
 
         .task-main-info {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 16px;
-            flex: 1;
+            flex: 1 1 auto;
 
             .task-status-dot {
                 width: 12px;
                 height: 12px;
                 border-radius: 50%;
-                margin-top: 6px;
+                flex-shrink: 0;
                 
                 &.status-success { background: #52c41a; }
                 &.status-running { background: var(--irify-accent); }
@@ -70,6 +70,8 @@
             }
 
             .task-details {
+                flex: 1;
+                
                 .task-header {
                     display: flex;
                     align-items: center;
@@ -126,6 +128,7 @@
             display: flex;
             align-items: center;
             gap: 48px;
+            flex: 0 0 auto;
 
             .vulnerability-stats {
                 display: flex;
@@ -163,7 +166,7 @@
 
             .action-buttons {
                 display: flex;
-                gap: 16px;
+                gap: 12px;
 
                 .ant-btn-link {
                     padding: 0;
@@ -173,6 +176,84 @@
                     
                     &:hover {
                         color: var(--irify-accent);
+                    }
+                }
+            }
+        }
+
+        .task-detail-panel {
+            flex: 0 0 100%;
+            width: 100%;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--irify-border);
+            animation: slideDown 0.3s ease-out;
+
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .detail-section {
+                margin-bottom: 24px;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+
+                h4 {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--irify-text);
+                    margin-bottom: 12px;
+                    padding-left: 8px;
+                    border-left: 3px solid var(--irify-accent);
+                }
+
+                .ant-descriptions {
+                    background: var(--irify-bg-base);
+
+                    .ant-descriptions-item-label {
+                        background: var(--irify-bg-container);
+                        color: var(--irify-text-secondary);
+                        font-weight: 500;
+                    }
+
+                    .ant-descriptions-item-content {
+                        background: var(--irify-bg-container);
+                        color: var(--irify-text);
+                    }
+                }
+
+                .error-message {
+                    padding: 12px;
+                    background: rgba(255, 77, 79, 0.1);
+                    border: 1px solid rgba(255, 77, 79, 0.3);
+                    border-radius: 4px;
+                    color: #ff4d4f;
+                    font-size: 13px;
+                    line-height: 1.6;
+                }
+            }
+        }
+    }
+}
+
+// Dark mode adaptations
+.irify-dark {
+    .ssa-task-list {
+        .task-card {
+            .task-detail-panel {
+                .detail-section {
+                    .error-message {
+                        background: rgba(255, 77, 79, 0.15);
+                        border-color: rgba(255, 77, 79, 0.4);
                     }
                 }
             }
