@@ -9,7 +9,6 @@ import {
     Select,
     Tooltip,
     Modal,
-    Switch,
     Tabs,
     Form,
     Input,
@@ -37,6 +36,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { querySSATasks } from '@/apis/SSAScanTaskApi';
 import type { TSSATask, TSSATaskQueryParams } from '@/apis/SSAScanTaskApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import { useEventSource } from '@/hooks';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
@@ -61,10 +61,82 @@ const TaskList: React.FC = () => {
     const [limit, setLimit] = useState(10);
 
     const [form] = Form.useForm();
-    const [autoRefresh, setAutoRefresh] = useState(false);
 
     const [overviewTask, setOverviewTask] = useState<TSSATask | null>(null);
     const [isOverviewVisible, setIsOverviewVisible] = useState(false);
+
+    // SSE连接，自动接收任务更新事件
+    const { disconnect } = useEventSource<{ msg: any }>(
+        'events?stream_type=ssa_task_update',
+        {
+            maxRetries: 3,
+            onsuccess: (data: any) => {
+                const { msg } = data;
+                if (msg?.taskId) {
+                    // 更新单个任务的状态
+                    setData((prevData) =>
+                        prevData.map((task) => {
+                            if (task.task_id !== msg.taskId) {
+                                return task;
+                            }
+
+                            // 构建更新对象
+                            const updates: Partial<TSSATask> = {};
+
+                            // 更新状态（如果不是 progress/phase 事件）
+                            if (
+                                msg.status &&
+                                msg.status !== 'progress' &&
+                                msg.status !== 'phase'
+                            ) {
+                                updates.status = msg.status;
+                            }
+
+                            // 更新进度
+                            if (msg.progress !== undefined) {
+                                updates.progress = msg.progress;
+                            }
+
+                            // 更新阶段
+                            if (msg.data?.phase) {
+                                updates.phase = msg.data.phase;
+                            }
+
+                            // 更新风险统计
+                            if (msg.data?.risk_count !== undefined) {
+                                updates.risk_count = msg.data.risk_count;
+                            }
+                            if (msg.data?.risk_count_high !== undefined) {
+                                updates.risk_count_high =
+                                    msg.data.risk_count_high;
+                            }
+                            if (msg.data?.risk_count_medium !== undefined) {
+                                updates.risk_count_medium =
+                                    msg.data.risk_count_medium;
+                            }
+                            if (msg.data?.risk_count_low !== undefined) {
+                                updates.risk_count_low =
+                                    msg.data.risk_count_low;
+                            }
+
+                            // 更新其他字段
+                            if (msg.data?.total_lines !== undefined) {
+                                updates.total_lines = msg.data.total_lines;
+                            }
+                            if (msg.data?.program_name) {
+                                updates.program_name = msg.data.program_name;
+                            }
+                            if (msg.data?.error) {
+                                updates.error_message = msg.data.error;
+                            }
+
+                            return { ...task, ...updates };
+                        }),
+                    );
+                }
+            },
+        },
+    );
 
     // 获取任务列表
     const fetchList = useCallback(
@@ -114,19 +186,12 @@ const TaskList: React.FC = () => {
         fetchList(1, limit);
     }, [fetchList]);
 
-    // 自动刷新逻辑
+    // 清理SSE连接
     useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        if (autoRefresh) {
-            interval = setInterval(() => {
-                const values = form.getFieldsValue();
-                handleSearch(values);
-            }, 5000);
-        }
         return () => {
-            if (interval) clearInterval(interval);
+            disconnect();
         };
-    }, [autoRefresh, limit]);
+    }, [disconnect]);
 
     // 状态点样式
     const getStatusClass = (status: string) => {
@@ -405,21 +470,6 @@ const TaskList: React.FC = () => {
                 <Button icon={<DeleteOutlined />} disabled>
                     删除
                 </Button>
-                <div
-                    style={{
-                        marginLeft: 'auto',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                    }}
-                >
-                    <span>自动刷新:</span>
-                    <Switch
-                        checked={autoRefresh}
-                        onChange={setAutoRefresh}
-                        size="small"
-                    />
-                </div>
             </div>
 
             <Spin spinning={loading}>
