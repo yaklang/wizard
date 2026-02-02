@@ -40,7 +40,7 @@ export const YakitSelectCustom = <_ValueType, OptionType>(
         defaultOptions,
         ...props
     }: YakitSelectProps<OptionType>,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     ref: React.Ref<YakitBaseSelectRef>,
 ) => {
     void ref;

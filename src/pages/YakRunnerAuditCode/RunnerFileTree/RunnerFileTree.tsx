@@ -857,7 +857,6 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
     // 文件树选中
     const onSelectFileTree = useMemoizedFn(
         (
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             _selectedKeys: string[],
             e: {
                 selected: boolean;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
+import type {
     GlobalFilterFunctionProps,
     GlobalFilterFunctionTreeProps,
 } from './GlobalFilterFunctionType';
@@ -126,7 +126,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
             try {
                 const list: AuditNodeProps[] = [];
                 startLog.forEach((item: any) => {
-                    if (!!item.data) {
+                    if (item.data) {
                         const jsonData = JSON.parse(item.data);
                         if (
                             !!jsonData &&
@@ -191,7 +191,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                                             Size,
                                             Extra,
                                         } = item;
-                                        let value: string = `${index}`;
+                                        let value = `${index}`;
                                         const arr = Extra.filter(
                                             (item: any) => item.Key === 'index',
                                         );
@@ -248,7 +248,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                                     return {
                                         ...item,
                                         children:
-                                            +result.Page === 1
+                                            Number(result.Page) === 1
                                                 ? childData
                                                 : [
                                                       ...(
@@ -281,7 +281,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
         });
         const loadTreeMore = useMemoizedFn(async (node: AuditNodeProps) => {
             if (node.parent && node.page) {
-                getChildData(+node.page + 1, node.parent);
+                getChildData(Number(node.page) + 1, node.parent);
             }
         });
 
@@ -385,41 +385,39 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
             // 获取详情
             const getDetail = getDetailFun(info);
             return (
-                <>
-                    <div
-                        className={classNames(
-                            styles['global-filter-function-item'],
-                        )}
-                    >
-                        <div className={styles['item-left']}>
-                            <div title={info.name} className={styles['name']}>
-                                {info.name}
-                            </div>
-                            {getDetail?.start_line && (
-                                <YakitTag size="small" color="info">
-                                    {getDetail?.start_line}
-                                </YakitTag>
-                            )}
+                <div
+                    className={classNames(
+                        styles['global-filter-function-item'],
+                    )}
+                >
+                    <div className={styles['item-left']}>
+                        <div title={info.name} className={styles['name']}>
+                            {info.name}
                         </div>
-                        {info.isLeaf && (
-                            <div className={styles['item-right']}>
-                                <div
-                                    title={getDetail?.fileName}
-                                    className={styles['fileName']}
-                                >
-                                    {getDetail?.fileName}
-                                </div>
-                                <OutlineSearchIcon
-                                    className={styles['search-icon']}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSearch(info);
-                                    }}
-                                />
-                            </div>
+                        {getDetail?.start_line && (
+                            <YakitTag size="small" color="info">
+                                {getDetail?.start_line}
+                            </YakitTag>
                         )}
                     </div>
-                </>
+                    {info.isLeaf && (
+                        <div className={styles['item-right']}>
+                            <div
+                                title={getDetail?.fileName}
+                                className={styles['fileName']}
+                            >
+                                {getDetail?.fileName}
+                            </div>
+                            <OutlineSearchIcon
+                                className={styles['search-icon']}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSearch(info);
+                                }}
+                            />
+                        </div>
+                    )}
+                </div>
             );
         });
         return (

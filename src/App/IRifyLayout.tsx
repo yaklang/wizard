@@ -265,7 +265,9 @@ const IRifyLayout: React.FC = () => {
     }
 
     return (
-        <Layout className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'}`}>
+        <Layout
+            className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'}`}
+        >
             <Sider
                 className="irify-layout-sider"
                 theme={isDark ? 'dark' : 'light'}
