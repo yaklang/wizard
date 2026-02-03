@@ -158,6 +158,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             setScanPolicy('owasp-web');
             setSelectedComplianceRules([]);
             setSelectedTechStackRules([]);
+            setSelectedSpecialRules([]);
         }
     }, [visible, projectId]);
 
@@ -192,18 +193,25 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 // 加载扫描策略配置
                 if (res.data.config?.ScanPolicy) {
                     const policyType = res.data.config.ScanPolicy.policy_type;
-                    if (policyType) {
-                        setScanPolicy(policyType);
-                    }
+                    setScanPolicy(policyType || 'owasp-web');
+                    
                     if (res.data.config.ScanPolicy.custom_rules) {
                         const customRules = res.data.config.ScanPolicy.custom_rules;
-                        if (customRules.compliance_rules) {
-                            setSelectedComplianceRules(customRules.compliance_rules);
-                        }
-                        if (customRules.tech_stack_rules) {
-                            setSelectedTechStackRules(customRules.tech_stack_rules);
-                        }
+                        setSelectedComplianceRules(customRules.compliance_rules || []);
+                        setSelectedTechStackRules(customRules.tech_stack_rules || []);
+                        setSelectedSpecialRules(customRules.special_rules || []);
+                    } else {
+                        // 如果没有 custom_rules，重置为空
+                        setSelectedComplianceRules([]);
+                        setSelectedTechStackRules([]);
+                        setSelectedSpecialRules([]);
                     }
+                } else {
+                    // 如果没有 ScanPolicy，重置为默认值
+                    setScanPolicy('owasp-web');
+                    setSelectedComplianceRules([]);
+                    setSelectedTechStackRules([]);
+                    setSelectedSpecialRules([]);
                 }
             }
         } catch (error) {
@@ -500,7 +508,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                     label="分支"
                                     name={['config', 'CodeSource', 'branch']}
                                 >
-                                    <Input placeholder="默认主分支 (master/main)" />
+                                    <Input placeholder="留空则使用仓库默认分支" />
                                 </Form.Item>
 
                                 {/* 测试连接（移到这里） */}

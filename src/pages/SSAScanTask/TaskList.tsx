@@ -497,6 +497,36 @@ const TaskList: React.FC = () => {
                                 <Descriptions.Item label="规则集">
                                     {(() => {
                                         try {
+                                            // 优先从 task.scan_policy 获取（新字段）
+                                            if (task.scan_policy) {
+                                                const policy = JSON.parse(task.scan_policy);
+                                                if (policy.policy_type === 'custom' && policy.custom_rules) {
+                                                    const allGroups = [
+                                                        ...(policy.custom_rules.compliance_rules || []),
+                                                        ...(policy.custom_rules.tech_stack_rules || []),
+                                                        ...(policy.custom_rules.special_rules || [])
+                                                    ];
+                                                    if (allGroups.length > 0) {
+                                                        return allGroups.map((group: string) => (
+                                                            <Tag key={group} color="blue" style={{ marginBottom: 4 }}>
+                                                                {group}
+                                                            </Tag>
+                                                        ));
+                                                    }
+                                                }
+                                                // 显示预设策略名称
+                                                if (policy.policy_type && policy.policy_type !== 'custom') {
+                                                    const policyNames: Record<string, string> = {
+                                                        'owasp-web': 'OWASP Web 合规扫描',
+                                                        'critical-high': '高危漏洞快速扫描',
+                                                        'cwe-top25': 'CWE Top 25',
+                                                        'fullstack': '全栈深度扫描'
+                                                    };
+                                                    return <Tag color="green">{policyNames[policy.policy_type] || policy.policy_type}</Tag>;
+                                                }
+                                            }
+                                            
+                                            // 回退1：从 task.rule_groups 获取（旧字段）
                                             if (task.rule_groups) {
                                                 const groups = JSON.parse(task.rule_groups);
                                                 if (Array.isArray(groups) && groups.length > 0) {
@@ -507,8 +537,36 @@ const TaskList: React.FC = () => {
                                                     ));
                                                 }
                                             }
+                                            
+                                            // 回退2：从 projectConfig.ScanPolicy 获取
+                                            if (projectConfig?.ScanPolicy) {
+                                                const policy = projectConfig.ScanPolicy;
+                                                if (policy.policy_type === 'custom' && policy.custom_rules) {
+                                                    const allGroups = [
+                                                        ...(policy.custom_rules.compliance_rules || []),
+                                                        ...(policy.custom_rules.tech_stack_rules || []),
+                                                        ...(policy.custom_rules.special_rules || [])
+                                                    ];
+                                                    if (allGroups.length > 0) {
+                                                        return allGroups.map((group: string) => (
+                                                            <Tag key={group} color="blue" style={{ marginBottom: 4 }}>
+                                                                {group}
+                                                            </Tag>
+                                                        ));
+                                                    }
+                                                }
+                                                if (policy.policy_type && policy.policy_type !== 'custom') {
+                                                    const policyNames: Record<string, string> = {
+                                                        'owasp-web': 'OWASP Web 合规扫描',
+                                                        'critical-high': '高危漏洞快速扫描',
+                                                        'cwe-top25': 'CWE Top 25',
+                                                        'fullstack': '全栈深度扫描'
+                                                    };
+                                                    return <Tag color="green">{policyNames[policy.policy_type] || policy.policy_type}</Tag>;
+                                                }
+                                            }
                                         } catch (e) {
-                                            console.error('解析规则组失败:', e);
+                                            console.error('解析扫描策略失败:', e);
                                         }
                                         return <span style={{ color: '#999' }}>使用默认规则集</span>;
                                     })()}
