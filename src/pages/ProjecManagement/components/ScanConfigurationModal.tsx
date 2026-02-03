@@ -50,10 +50,18 @@ const ScanConfigurationModal: React.FC<ScanConfigurationModalProps> = ({
 
     const fetchNodes = async () => {
         try {
-            const res = await getNodeManage({ page: 1, limit: 100 });
+            const res = await getNodeManage({
+                page: 1,
+                limit: 1000,
+                node_type: 'scanner',
+                alive: true,
+            });
             if (res?.data?.list) {
                 const nodes = res.data.list.map((node: any) => ({
                     name: node.nickname || node.hostname || node.node_id,
+                    display_name:
+                        node.nickname || node.hostname || node.node_id,
+                    value: node.node_id,
                     size: node.task_running || 0,
                     date: node.updated_at
                         ? dayjs().unix() - node.updated_at
@@ -106,9 +114,11 @@ const ScanConfigurationModal: React.FC<ScanConfigurationModalProps> = ({
             onSuccess();
         } catch (error: any) {
             if (error.errorFields) {
-                 return;
+                return;
             }
-            message.error(`创建扫描失败: ${error.message || error.msg || '未知错误'}`);
+            message.error(
+                `创建扫描失败: ${error.message || error.msg || '未知错误'}`,
+            );
         } finally {
             setLoading(false);
         }
@@ -190,7 +200,9 @@ const ScanConfigurationModal: React.FC<ScanConfigurationModalProps> = ({
             .with(3, () => (
                 <>
                     <Item
-                        label={<div className="min-w-[124px]">第一次是否执行</div>}
+                        label={
+                            <div className="min-w-[124px]">第一次是否执行</div>
+                        }
                         name="first"
                         valuePropName="checked"
                     >
@@ -201,7 +213,10 @@ const ScanConfigurationModal: React.FC<ScanConfigurationModalProps> = ({
                         label="设定周期时间范围"
                         rules={[
                             { required: true, message: '请设定周期时间范围' },
-                            { validator: (_, value) => validateStartTime(value) },
+                            {
+                                validator: (_, value) =>
+                                    validateStartTime(value),
+                            },
                         ]}
                     >
                         <RangePicker
@@ -280,7 +295,9 @@ const ScanConfigurationModal: React.FC<ScanConfigurationModalProps> = ({
                     name="scanner"
                     label="扫描节点"
                     rules={[{ required: true, message: '请选择节点' }]}
-                    initialValue={nodeList.length > 0 ? [nodeList[0].name] : []}
+                    initialValue={
+                        nodeList.length > 0 ? [nodeList[0].value] : []
+                    }
                 >
                     {nodeList.length > 0 ? (
                         <NodeCard list={nodeList} />
@@ -289,11 +306,7 @@ const ScanConfigurationModal: React.FC<ScanConfigurationModalProps> = ({
                     )}
                 </Item>
 
-                <Item
-                    label="调度类型"
-                    name="sched_type"
-                    initialValue={1}
-                >
+                <Item label="调度类型" name="sched_type" initialValue={1}>
                     <Select
                         options={[
                             { label: '无', value: 1 },
