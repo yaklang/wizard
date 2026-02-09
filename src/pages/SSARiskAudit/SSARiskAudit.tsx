@@ -61,6 +61,7 @@ import type {
 } from '@/apis/SSARiskApi/type';
 import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
 import Markdown from '@/compoments/MarkDown';
+import { fetchSyntaxFlowRule } from '@/apis/SyntaxFlowRuleApi';
 import { instance } from '@viz-js/viz';
 import './SSARiskAudit.scss';
 
@@ -184,6 +185,25 @@ const SSARiskAudit: React.FC = () => {
         [],
     );
     const [loadingHistory, setLoadingHistory] = useState(false);
+
+    // 规则 UUID
+    const [ruleUUID, setRuleUUID] = useState<string | null>(null);
+    useEffect(() => {
+        const ruleName = auditInfo?.risk?.from_rule;
+        if (!ruleName) {
+            setRuleUUID(null);
+            return;
+        }
+        const ctrl = new AbortController();
+        fetchSyntaxFlowRule({ rule_name: ruleName }, ctrl.signal)
+            .then((res) => {
+                if (res.code === 200 && res.data?.rule_id) {
+                    setRuleUUID(res.data.rule_id);
+                }
+            })
+            .catch(() => {});
+        return () => ctrl.abort();
+    }, [auditInfo?.risk?.from_rule]);
 
     // 左侧面板拖拽调整宽度
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1987,17 +2007,38 @@ const SSARiskAudit: React.FC = () => {
                                                                 span={2}
                                                             >
                                                                 <Text
-                                                                    ellipsis
+                                                                    copyable
                                                                     style={{
-                                                                        maxWidth: 400,
+                                                                        wordBreak: 'break-all',
                                                                     }}
                                                                 >
-                                                                    {auditInfo
-                                                                        .risk
-                                                                        ?.code_source_url ||
-                                                                        '-'}
+                                                                    {auditInfo.risk?.code_source_url?.replace(
+                                                                        /^\/[^/]+\//,
+                                                                        '',
+                                                                    ) || '-'}
                                                                 </Text>
                                                             </Descriptions.Item>
+                                                            {(ruleUUID ||
+                                                                auditInfo.risk
+                                                                    ?.from_rule) && (
+                                                                <Descriptions.Item
+                                                                    label="规则ID"
+                                                                    span={2}
+                                                                >
+                                                                    <Text
+                                                                        copyable
+                                                                        style={{
+                                                                            wordBreak:
+                                                                                'break-all',
+                                                                        }}
+                                                                    >
+                                                                        {ruleUUID ||
+                                                                            auditInfo
+                                                                                .risk
+                                                                                ?.from_rule}
+                                                                    </Text>
+                                                                </Descriptions.Item>
+                                                            )}
                                                             {auditInfo.risk
                                                                 ?.line && (
                                                                 <Descriptions.Item label="行号">

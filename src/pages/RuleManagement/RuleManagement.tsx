@@ -1012,16 +1012,26 @@ const RuleManagement: React.FC = () => {
                         onSearch={handleSearch}
                     />
 
-                    {/* 新增规则按钮 */}
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleCreate}
-                        block
-                        size="middle"
-                    >
-                        新增规则
-                    </Button>
+                    {/* 导入 / 新增规则 */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <Button
+                            icon={<ImportOutlined />}
+                            onClick={handleImportClick}
+                            size="middle"
+                            style={{ flex: 1 }}
+                        >
+                            导入
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleCreate}
+                            size="middle"
+                            style={{ flex: 1 }}
+                        >
+                            新增
+                        </Button>
+                    </div>
                 </div>
 
                 {/* 视图切换 Tab */}
@@ -1101,12 +1111,6 @@ const RuleManagement: React.FC = () => {
                     <Dropdown
                         menu={{
                             items: [
-                                {
-                                    key: 'import',
-                                    label: '导入规则',
-                                    icon: <ImportOutlined />,
-                                    onClick: handleImportClick,
-                                },
                                 {
                                     key: 'export',
                                     label: '导出规则',
