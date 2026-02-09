@@ -790,7 +790,7 @@ const CreateProject: React.FC = () => {
                                             'SyntaxFlowScan',
                                             'concurrency',
                                         ]}
-                                        extra="不填或填 0 表示使用默认并发(后端默认 5)。并发不是本轮优化重点，建议保持默认作为基准。"
+                                        extra="不填或填 0 表示使用默认并发(后端默认 5)"
                                     >
                                         <InputNumber
                                             min={0}

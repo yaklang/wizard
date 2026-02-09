@@ -79,7 +79,7 @@ const CreateSSAProject: React.FC = () => {
             <Form.Item
                 label="扫描并发(可选)"
                 name={['config', 'SyntaxFlowScan', 'concurrency']}
-                extra="不填或填 0 表示使用默认并发(后端默认 5)，本项不作为性能优化重点"
+                extra="不填或填 0 表示使用默认并发(后端默认 5)"
             >
                 <InputNumber
                     min={0}
