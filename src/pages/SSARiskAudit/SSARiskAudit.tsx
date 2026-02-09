@@ -487,6 +487,7 @@ const SSARiskAudit: React.FC = () => {
             high: { audited: 0, pending: 0, total: 0 },
             middle: { audited: 0, pending: 0, total: 0 },
             low: { audited: 0, pending: 0, total: 0 },
+            info: { audited: 0, pending: 0, total: 0 },
             all: { audited: 0, pending: 0, total: 0 },
         };
 
@@ -509,10 +510,15 @@ const SSARiskAudit: React.FC = () => {
                 stats.middle.total++;
                 if (isAudited) stats.middle.audited++;
                 else stats.middle.pending++;
-            } else {
+            } else if (severity === 'low') {
                 stats.low.total++;
                 if (isAudited) stats.low.audited++;
                 else stats.low.pending++;
+            } else {
+                // Treat unknown/empty severity as info to avoid inflating "low".
+                stats.info.total++;
+                if (isAudited) stats.info.audited++;
+                else stats.info.pending++;
             }
 
             stats.all.total++;
@@ -537,7 +543,9 @@ const SSARiskAudit: React.FC = () => {
                     risk.severity === 'middle' || risk.severity === 'warning'
                 );
             } else if (severityFilter === 'low') {
-                return risk.severity === 'low' || risk.severity === 'info';
+                return risk.severity === 'low';
+            } else if (severityFilter === 'info') {
+                return !risk.severity || risk.severity === 'info';
             }
             return true;
         });
@@ -1821,6 +1829,23 @@ const SSARiskAudit: React.FC = () => {
                                                 {severityStats.low.audited}|
                                                 {severityStats.low.pending}|
                                                 {severityStats.low.total}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={`stat-item ${severityFilter === 'info' ? 'active' : ''}`}
+                                            onClick={() =>
+                                                setSeverityFilter(
+                                                    severityFilter === 'info'
+                                                        ? null
+                                                        : 'info',
+                                                )
+                                            }
+                                        >
+                                            <span className="label">信息</span>
+                                            <span className="count">
+                                                {severityStats.info.audited}|
+                                                {severityStats.info.pending}|
+                                                {severityStats.info.total}
                                             </span>
                                         </div>
                                         <div
