@@ -662,14 +662,14 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                         <Form.Item
                             label="扫描并发(可选)"
                             name={['config', 'SyntaxFlowScan', 'concurrency']}
-                            extra="不填或填 0 表示使用默认并发(后端默认 5)"
+                            extra="不填或填 0 表示使用默认并发"
                         >
                             <InputNumber
                                 min={0}
                                 max={64}
                                 precision={0}
                                 style={{ width: '100%' }}
-                                placeholder="默认(5)"
+                                placeholder="默认"
                             />
                         </Form.Item>
 
