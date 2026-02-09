@@ -5,6 +5,7 @@ import {
     Steps,
     Form,
     Input,
+    InputNumber,
     Button,
     message,
     Space,
@@ -772,6 +773,38 @@ const CreateProject: React.FC = () => {
                         )}
                     </div>
                 )}
+
+                <Collapse
+                    ghost
+                    style={{ marginTop: 16 }}
+                    items={[
+                        {
+                            key: 'advanced',
+                            label: '高级选项(可选)',
+                            children: (
+                                <div style={{ paddingTop: 8 }}>
+                                    <Form.Item
+                                        label="扫描并发"
+                                        name={[
+                                            'config',
+                                            'SyntaxFlowScan',
+                                            'concurrency',
+                                        ]}
+                                        extra="不填或填 0 表示使用默认并发(后端默认 5)。并发不是本轮优化重点，建议保持默认作为基准。"
+                                    >
+                                        <InputNumber
+                                            min={0}
+                                            max={64}
+                                            precision={0}
+                                            style={{ width: '100%' }}
+                                            placeholder="默认(5)"
+                                        />
+                                    </Form.Item>
+                                </div>
+                            ),
+                        },
+                    ]}
+                />
 
                 {/* 定时扫描 */}
                 <div className="schedule-section">

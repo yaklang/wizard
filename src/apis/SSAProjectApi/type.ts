@@ -50,6 +50,11 @@ export interface TSSAProjectConfig {
             special_rules?: string[];
         };
     };
+    // SyntaxFlow scan manager options (optional).
+    SyntaxFlowScan?: {
+        // Scan concurrency (0/undefined means default on backend).
+        concurrency?: number;
+    };
 }
 
 // SSA 项目请求类型

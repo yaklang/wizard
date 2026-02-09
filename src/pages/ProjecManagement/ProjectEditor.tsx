@@ -5,6 +5,7 @@ import {
     Card,
     Form,
     Input,
+    InputNumber,
     Select,
     Space,
     Spin,
@@ -459,6 +460,20 @@ const ProjectEditor = () => {
                             <Input.TextArea
                                 rows={4}
                                 placeholder="请输入项目描述（可选）"
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="扫描并发(可选)"
+                            name={['config', 'SyntaxFlowScan', 'concurrency']}
+                            extra="不填或填 0 表示使用默认并发(后端默认 5)。并发不是本轮优化重点，建议保持默认作为基准。"
+                        >
+                            <InputNumber
+                                min={0}
+                                max={64}
+                                precision={0}
+                                style={{ width: '100%' }}
+                                placeholder="默认(5)"
                             />
                         </Form.Item>
 
