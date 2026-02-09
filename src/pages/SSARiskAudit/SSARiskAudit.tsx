@@ -126,6 +126,8 @@ const severityLabelMap: Record<string, string> = {
     info: '信息',
 };
 
+const normalizeSeverity = (s?: string) => (s || 'info').toLowerCase();
+
 const SSARiskAudit: React.FC = () => {
     const [searchParams] = useSearchParams();
     const hash = searchParams.get('hash') || '';
@@ -335,17 +337,35 @@ const SSARiskAudit: React.FC = () => {
 
         setLoadingRisks(true);
         try {
-            const res = await getSSARisks({
-                task_id: taskId,
-                program_name: programName,
-                limit: 1000, // 加载所有风险
-            });
-            if (res?.data?.list) {
-                setRiskList(res.data.list);
-                // 如果有风险，默认选中第一个
-                if (res.data.list.length > 0 && res.data.list[0].hash) {
-                    setSelectedRiskHash(res.data.list[0].hash);
-                }
+            // /ssa/risk 是分页接口。这里必须分页拉取全量，否则会出现:
+            // 1) 统计显示 critical=0 但数据库里确实存在
+            // 2) 点击某个 severity 后提示“暂无漏洞”，因为对应条目不在第一页
+            const limit = 1000;
+            let page = 1;
+            let all: TSSARisk[] = [];
+            // 最多循环 1000 页，避免后端 pagemeta 异常导致死循环
+            for (let i = 0; i < 1000; i++) {
+                const res = await getSSARisks({
+                    task_id: taskId,
+                    program_name: programName,
+                    page,
+                    limit,
+                });
+                const list = res?.data?.list || [];
+                const pagemeta = res?.data?.pagemeta;
+
+                all = all.concat(list);
+                if (!pagemeta) break;
+                if (all.length >= (pagemeta.total || 0)) break;
+                if (pagemeta.total_page && page >= pagemeta.total_page) break;
+                if (list.length === 0) break;
+                page++;
+            }
+
+            setRiskList(all);
+            // 如果有风险，默认选中第一个
+            if (all.length > 0 && all[0].hash) {
+                setSelectedRiskHash(all[0].hash);
             }
         } catch (err: any) {
             message.error(`加载风险列表失败: ${err.message}`);
@@ -461,7 +481,7 @@ const SSARiskAudit: React.FC = () => {
         const grouped: Record<string, Record<string, TSSARisk[]>> = {};
         risks.forEach((risk) => {
             const type = risk.risk_type_verbose || risk.risk_type || '未分类';
-            const severity = risk.severity || 'info';
+            const severity = normalizeSeverity(risk.severity);
             if (!grouped[type]) grouped[type] = {};
             if (!grouped[type][severity]) grouped[type][severity] = [];
             grouped[type][severity].push(risk);
@@ -492,7 +512,7 @@ const SSARiskAudit: React.FC = () => {
         };
 
         risks.forEach((risk) => {
-            const severity = risk.severity || 'info';
+            const severity = normalizeSeverity(risk.severity);
             // 只要有处置状态且不是 not_set，就认为是已审计
             const isAudited =
                 risk.latest_disposal_status &&
@@ -534,18 +554,20 @@ const SSARiskAudit: React.FC = () => {
         if (!severityFilter) return riskList;
 
         return riskList.filter((risk) => {
+            const severity = normalizeSeverity(risk.severity);
             if (severityFilter === 'critical') {
-                return risk.severity === 'critical';
+                return severity === 'critical';
             } else if (severityFilter === 'high') {
-                return risk.severity === 'high';
+                return severity === 'high';
             } else if (severityFilter === 'middle') {
                 return (
-                    risk.severity === 'middle' || risk.severity === 'warning'
+                    severity === 'middle' || severity === 'warning'
                 );
             } else if (severityFilter === 'low') {
-                return risk.severity === 'low';
+                return severity === 'low';
             } else if (severityFilter === 'info') {
-                return !risk.severity || risk.severity === 'info';
+                // 兼容后端返回空/未知 severity 的老数据: 统一按 info 处理
+                return severity === 'info';
             }
             return true;
         });
