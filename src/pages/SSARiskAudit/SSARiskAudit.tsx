@@ -128,6 +128,30 @@ const severityLabelMap: Record<string, string> = {
 
 const normalizeSeverity = (s?: string) => (s || 'info').toLowerCase();
 
+const dedupRisksByHash = (list: TSSARisk[]) => {
+    const byHash = new Map<string, TSSARisk>();
+    const noHash: TSSARisk[] = [];
+    for (const r of list) {
+        const h = (r.hash || '').trim();
+        if (!h) {
+            noHash.push(r);
+            continue;
+        }
+        const prev = byHash.get(h);
+        if (!prev) {
+            byHash.set(h, r);
+            continue;
+        }
+        // Keep the newest one for stable UI selection and correct counts.
+        const prevTs = prev.updated_at || prev.created_at || 0;
+        const curTs = r.updated_at || r.created_at || 0;
+        if (curTs >= prevTs) {
+            byHash.set(h, r);
+        }
+    }
+    return [...byHash.values(), ...noHash];
+};
+
 const SSARiskAudit: React.FC = () => {
     const [searchParams] = useSearchParams();
     const hash = searchParams.get('hash') || '';
@@ -361,11 +385,13 @@ const SSARiskAudit: React.FC = () => {
                 if (list.length === 0) break;
                 page++;
             }
-
-            setRiskList(all);
+            // Historical data may already have duplicates (same hash) due to past importer races.
+            // Dedupe in UI to avoid inflated counts and multi-select highlighting.
+            const deduped = dedupRisksByHash(all);
+            setRiskList(deduped);
             // 如果有风险，默认选中第一个
-            if (all.length > 0 && all[0].hash) {
-                setSelectedRiskHash(all[0].hash);
+            if (deduped.length > 0 && deduped[0].hash) {
+                setSelectedRiskHash(deduped[0].hash);
             }
         } catch (err: any) {
             message.error(`加载风险列表失败: ${err.message}`);
