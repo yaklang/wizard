@@ -115,22 +115,24 @@ export const clearSSARisks = (): Promise<ResponseData<boolean>> =>
 // GET /ssa/risk/audit - 获取 SSA 风险审计信息
 export const getSSARiskAudit = (
     hash: string,
+    taskId?: string,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskAuditInfo>> =>
     axios.get<never, ResponseData<TSSARiskAuditInfo>>('/ssa/risk/audit', {
-        params: { hash },
+        params: { hash, task_id: taskId },
         signal,
     });
 
 // GET /ssa/risk/audit/files - 获取风险关联的文件列表
 export const getSsaRiskAuditFiles = (
     hash: string,
+    taskId?: string,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskRelatedFiles>> =>
     axios.get<never, ResponseData<TSSARiskRelatedFiles>>(
         '/ssa/risk/audit/files',
         {
-            params: { hash },
+            params: { hash, task_id: taskId },
             signal,
         },
     );
@@ -138,13 +140,14 @@ export const getSsaRiskAuditFiles = (
 // GET /ssa/risk/audit/file/content - 获取指定文件的内容
 export const getSsaRiskFileContent = (
     hash: string,
+    taskId: string | undefined,
     filePath: string,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskFileContent>> =>
     axios.get<never, ResponseData<TSSARiskFileContent>>(
         '/ssa/risk/audit/file/content',
         {
-            params: { hash, file_path: filePath },
+            params: { hash, task_id: taskId, file_path: filePath },
             signal,
         },
     );

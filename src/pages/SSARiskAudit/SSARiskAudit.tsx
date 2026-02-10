@@ -471,7 +471,7 @@ const SSARiskAudit: React.FC = () => {
         console.log('Fetching audit info for hash:', hashToUse);
         setLoading(true);
         try {
-            const res = await getSSARiskAudit(hashToUse);
+            const res = await getSSARiskAudit(hashToUse, taskId);
             console.log('API Response:', res);
             if (res?.data) {
                 setAuditInfo(res.data);
@@ -492,7 +492,7 @@ const SSARiskAudit: React.FC = () => {
         if (!hashToUse) return;
 
         try {
-            const res = await getSsaRiskAuditFiles(hashToUse);
+            const res = await getSsaRiskAuditFiles(hashToUse, taskId);
             if (res?.data?.files && res.data.files.length > 0) {
                 // 从扁平列表构建目录树
                 const tree = buildFileTree(res.data.files);
@@ -653,7 +653,7 @@ const SSARiskAudit: React.FC = () => {
 
             setLoadingFile(true);
             try {
-                const res = await getSsaRiskFileContent(hashToUse, filePath);
+                const res = await getSsaRiskFileContent(hashToUse, taskId, filePath);
                 if (res?.data) {
                     setFileContent(res.data);
                     return true;
