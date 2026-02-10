@@ -220,6 +220,10 @@ const SSARiskAudit: React.FC = () => {
 
     // 点击漏洞后待跳转的 risk 对象
     const pendingJumpRiskRef = useRef<TSSARisk | null>(null);
+    // 用 ref 持有最新的 jumpToCodeLocation，避免函数引用变化触发 effect 误执行
+    const jumpToCodeLocationRef = useRef<(nodeInfo: any) => Promise<void>>();
+    // 当前正在请求的 auditInfo hash，用于丢弃过期响应
+    const pendingAuditHashRef = useRef<string | null>(null);
 
     // DOT 图相关状态
     const svgBoxRef = useRef<HTMLDivElement>(null);
@@ -466,26 +470,26 @@ const SSARiskAudit: React.FC = () => {
 
     const fetchAuditInfo = async (targetHash?: string) => {
         const hashToUse = targetHash || hash;
-        if (!hashToUse) {
-            console.log('No hash provided');
-            return;
-        }
+        if (!hashToUse) return;
 
-        console.log('Fetching audit info for hash:', hashToUse);
+        pendingAuditHashRef.current = hashToUse;
         setLoading(true);
         try {
             const res = await getSSARiskAudit(hashToUse, taskId);
-            console.log('API Response:', res);
+            // 丢弃过期响应：用户可能已经切换到另一个漏洞
+            if (pendingAuditHashRef.current !== hashToUse) return;
             if (res?.data) {
                 setAuditInfo(res.data);
-            } else {
-                console.warn('No data in response');
             }
         } catch (err: any) {
-            console.error('Failed to fetch audit info:', err);
-            message.error(`加载审计信息失败: ${err.message}`);
+            if (pendingAuditHashRef.current === hashToUse) {
+                console.error('Failed to fetch audit info:', err);
+                message.error(`加载审计信息失败: ${err.message}`);
+            }
         } finally {
-            setLoading(false);
+            if (pendingAuditHashRef.current === hashToUse) {
+                setLoading(false);
+            }
         }
     };
 
@@ -518,39 +522,13 @@ const SSARiskAudit: React.FC = () => {
                 };
                 setExpandedKeys(collectDirKeys(tree));
 
-                // 优先选中漏洞所在文件（参考 yakit 的 code_range 跳转逻辑）
-                const pendingRisk = pendingJumpRiskRef.current;
-                let targetFilePath: string | null = null;
-
-                if (pendingRisk?.code_source_url) {
-                    const relPath = extractRelativePath(pendingRisk.code_source_url, programName);
-                    const matched = res.data.files.find(f => f.path === relPath);
-                    if (matched) targetFilePath = matched.path;
-                }
-
-                // 回退到第一个文件
-                if (!targetFilePath && res.data.files[0]) {
-                    targetFilePath = res.data.files[0].path;
-                }
-
-                if (targetFilePath) {
-                    setSelectedFilePath(targetFilePath);
-                    const loaded = await fetchFileContent(targetFilePath, hashToUse);
-
-                    // 文件加载成功后，跳转到漏洞代码位置并高亮
-                    if (loaded && pendingRisk) {
-                        const parsed = parseCodeRange(pendingRisk.code_range);
-                        const line = parsed?.startLine || pendingRisk.line;
-                        if (line) {
-                            setCodeHighlight(null);
-                            setTimeout(() => {
-                                setCodeHighlight({
-                                    from: { line, ch: parsed?.startCol || 1 },
-                                    to: { line: parsed?.endLine || line, ch: parsed?.endCol || 100 },
-                                });
-                            }, 200);
-                        }
-                        pendingJumpRiskRef.current = null;
+                // 有待跳转的漏洞时由 jumpToCodeLocation 负责加载文件，
+                // 避免与 jumpToCodeLocation 竞态覆盖文件内容和高亮
+                if (!pendingJumpRiskRef.current) {
+                    const firstFile = res.data.files[0];
+                    if (firstFile) {
+                        setSelectedFilePath(firstFile.path);
+                        fetchFileContent(firstFile.path, hashToUse);
                     }
                 }
             }
@@ -798,15 +776,9 @@ const SSARiskAudit: React.FC = () => {
     // 跳转到代码位置并高亮
     const jumpToCodeLocation = useCallback(
         async (nodeInfo: TGraphNodeInfo) => {
-            console.log('jumpToCodeLocation called with:', nodeInfo);
-
-            if (!nodeInfo.code_range) {
-                console.warn('No code_range in nodeInfo');
-                return;
-            }
+            if (!nodeInfo.code_range) return;
 
             const codeRange = nodeInfo.code_range;
-            console.log('Code range:', codeRange);
 
             // 从完整 URL 提取相对路径
             const filePath = extractRelativePath(
@@ -814,25 +786,17 @@ const SSARiskAudit: React.FC = () => {
                 auditInfo?.program_name,
             );
 
-            if (!filePath) {
-                console.warn('无法提取文件路径:', codeRange.url);
-                return;
-            }
-
-            console.log('Extracted file path:', filePath);
-            console.log('Current file path:', fileContent?.path);
+            if (!filePath) return;
 
             // 更新选中的文件路径
             setSelectedFilePath(filePath);
 
-            // 先获取文件内容
-            if (filePath !== fileContent?.path) {
-                const success = await fetchFileContent(filePath);
-                if (!success) {
-                    console.error('Failed to load file:', filePath);
-                    return;
-                }
-            }
+            // 先清除旧高亮，确保编辑器重新渲染
+            setCodeHighlight(null);
+
+            // 加载文件内容（总是重新获取以保证内容最新）
+            const success = await fetchFileContent(filePath);
+            if (!success) return;
 
             // 计算高亮位置
             const sourceCodeStart =
@@ -848,27 +812,32 @@ const SSARiskAudit: React.FC = () => {
                 },
             };
 
-            console.log('Highlight range:', highlightRange);
-
-            // 先清除旧高亮，再设置新高亮
-            setCodeHighlight(null);
-
-            // 延迟设置高亮，确保文件内容已渲染
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 setCodeHighlight(highlightRange);
-                console.log(
-                    'Code highlight set, line:',
-                    highlightRange.from.line,
-                );
-            }, 200);
+            });
         },
-        [
-            fileContent?.path,
-            fetchFileContent,
-            extractRelativePath,
-            auditInfo?.program_name,
-        ],
+        [fetchFileContent, extractRelativePath, auditInfo?.program_name],
     );
+
+    // 每次渲染同步更新 ref，保证 effect 中始终调用最新版本
+    jumpToCodeLocationRef.current = jumpToCodeLocation;
+
+    // 当 auditInfo 加载完成时，自动跳转到漏洞代码位置
+    // 仅依赖 auditInfo，不依赖 jumpToCodeLocation（通过 ref 调用最新版本）
+    useEffect(() => {
+        if (!pendingJumpRiskRef.current || !auditInfo?.graph_info) return;
+
+        // 校验 auditInfo 属于当前待跳转的漏洞，防止过期数据触发跳转
+        const pendingHash = pendingJumpRiskRef.current.hash;
+        const auditHash = auditInfo.risk?.hash;
+        if (pendingHash && auditHash && pendingHash !== auditHash) return;
+
+        const targetNode = auditInfo.graph_info.find(n => n.code_range?.url);
+        if (targetNode) {
+            jumpToCodeLocationRef.current?.(targetNode);
+        }
+        pendingJumpRiskRef.current = null;
+    }, [auditInfo]);
 
     // DOT 图节点点击处理
     const handleGraphNodeClick = useCallback(
