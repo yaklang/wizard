@@ -6,7 +6,6 @@ import { useRequest, useSafeState } from 'ahooks';
 import {
     DashboardOutlined,
     FolderOutlined,
-    BugOutlined,
     ThunderboltOutlined,
     LogoutOutlined,
     UserOutlined,
@@ -41,12 +40,6 @@ const mainNavItems = [
         icon: <FolderOutlined />,
         label: '项目管理',
         path: '/projects',
-    },
-    {
-        key: '/vulnerabilities',
-        icon: <BugOutlined />,
-        label: '漏洞管理',
-        path: '/vulnerabilities',
     },
     {
         key: '/scans',
@@ -275,7 +268,9 @@ const IRifyLayout: React.FC = () => {
     }
 
     return (
-        <Layout className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'}`}>
+        <Layout
+            className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'}`}
+        >
             <Sider
                 className="irify-layout-sider"
                 theme={isDark ? 'dark' : 'light'}

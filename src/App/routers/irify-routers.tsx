@@ -6,7 +6,11 @@ import { NetworkError } from '@/pages/NetworkError';
 import License from '@/pages/License';
 
 // Reuse existing components
-import { ProjectManagement, ProjectEditor, CreateProject } from '@/pages/ProjecManagement';
+import {
+    ProjectManagement,
+    ProjectEditor,
+    CreateProject,
+} from '@/pages/ProjecManagement';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import SSARiskAudit from '@/pages/SSARiskAudit';
@@ -57,17 +61,8 @@ const irifyRouters: RouteObject[] = [
                 ],
             },
             {
-                path: 'vulnerabilities',
-                children: [
-                    {
-                        index: true,
-                        element: <SSARiskAudit />,
-                    },
-                    {
-                        path: 'audit',
-                        element: <SSARiskAudit />,
-                    },
-                ],
+                path: 'vulnerabilities/audit',
+                element: <SSARiskAudit />,
             },
             {
                 path: 'scans',

@@ -17,7 +17,6 @@ import {
     Col,
     Empty,
     Spin,
-    Pagination,
     Descriptions,
     Typography,
 } from 'antd';
@@ -60,14 +59,16 @@ const TaskList: React.FC = () => {
     const [activeTab, setActiveTab] = useState('defect');
     const [data, setData] = useState<TSSATask[]>([]);
     const [loading, setLoading] = useState(false);
-    const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit] = useState(20);
+    const [hasMore, setHasMore] = useState(true);
 
     const [form] = Form.useForm();
 
     const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-    const [projectDetails, setProjectDetails] = useState<Record<number, TSSAProject>>({});
+    const [projectDetails, setProjectDetails] = useState<
+        Record<number, TSSAProject>
+    >({});
 
     // SSE连接，自动接收任务更新事件
     const { disconnect } = useEventSource<{ msg: any }>(
@@ -77,17 +78,14 @@ const TaskList: React.FC = () => {
             onsuccess: (data: any) => {
                 const { msg } = data;
                 if (msg?.taskId) {
-                    // 更新单个任务的状态
                     setData((prevData) =>
                         prevData.map((task) => {
                             if (task.task_id !== msg.taskId) {
                                 return task;
                             }
 
-                            // 构建更新对象
                             const updates: Partial<TSSATask> = {};
 
-                            // 更新状态（如果不是 progress/phase 事件）
                             if (
                                 msg.status &&
                                 msg.status !== 'progress' &&
@@ -96,17 +94,14 @@ const TaskList: React.FC = () => {
                                 updates.status = msg.status;
                             }
 
-                            // 更新进度
                             if (msg.progress !== undefined) {
                                 updates.progress = msg.progress;
                             }
 
-                            // 更新阶段
                             if (msg.data?.phase) {
                                 updates.phase = msg.data.phase;
                             }
 
-                            // 更新风险统计
                             if (msg.data?.risk_count !== undefined) {
                                 updates.risk_count = msg.data.risk_count;
                             }
@@ -127,7 +122,6 @@ const TaskList: React.FC = () => {
                                     msg.data.risk_count_low;
                             }
 
-                            // 更新其他字段
                             if (msg.data?.total_lines !== undefined) {
                                 updates.total_lines = msg.data.total_lines;
                             }
@@ -146,9 +140,14 @@ const TaskList: React.FC = () => {
         },
     );
 
-    // 获取任务列表
     const fetchList = useCallback(
-        async (p: number, l: number, filters: any = {}) => {
+        async (options: {
+            p: number;
+            l: number;
+            filters?: any;
+            append?: boolean;
+        }) => {
+            const { p, l, filters = {}, append = false } = options;
             setLoading(true);
             try {
                 const params: TSSATaskQueryParams = {
@@ -162,10 +161,19 @@ const TaskList: React.FC = () => {
 
                 const res = await querySSATasks(params);
                 const list = res.data?.list ?? [];
-                setData(list);
-                setTotal(res.data?.pagemeta?.total ?? 0);
+
+                if (append) {
+                    setData((prev) => [...prev, ...list]);
+                } else {
+                    setData(list);
+                }
+
                 setPage(res.data?.pagemeta?.page ?? p);
-                setLimit(res.data?.pagemeta?.limit ?? l);
+
+                const currentTotal = append
+                    ? data.length + list.length
+                    : list.length;
+                setHasMore(currentTotal < (res.data?.pagemeta?.total ?? 0));
             } catch (err: any) {
                 message.error(`获取任务列表失败: ${err.msg || err.message}`);
             } finally {
@@ -182,26 +190,57 @@ const TaskList: React.FC = () => {
             filters.end_date = values.date_range[1].format('YYYY-MM-DD');
             delete filters.date_range;
         }
-        fetchList(1, limit, filters);
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        fetchList({ p: 1, l: limit, filters });
     };
 
     const handleReset = () => {
         form.resetFields();
-        fetchList(1, limit);
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        fetchList({ p: 1, l: limit });
     };
 
     useEffect(() => {
-        fetchList(1, limit);
+        fetchList({ p: 1, l: limit });
     }, [fetchList]);
 
-    // 清理SSE连接
     useEffect(() => {
         return () => {
             disconnect();
         };
     }, [disconnect]);
 
-    // 状态点样式
+    const handleLoadMore = useCallback(() => {
+        if (loading || !hasMore) return;
+        const filters = form.getFieldsValue();
+        if (filters.date_range) {
+            filters.start_date = filters.date_range[0].format('YYYY-MM-DD');
+            filters.end_date = filters.date_range[1].format('YYYY-MM-DD');
+            delete filters.date_range;
+        }
+        fetchList({ p: page + 1, l: limit, filters, append: true });
+    }, [loading, hasMore, page, limit, form, fetchList]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop =
+                window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+
+            if (scrollTop + clientHeight >= scrollHeight - 200) {
+                handleLoadMore();
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [handleLoadMore]);
+
     const getStatusClass = (status: string) => {
         switch (status) {
             case 'completed':
@@ -233,15 +272,14 @@ const TaskList: React.FC = () => {
     const toggleTaskDetail = async (taskId: string, projectId?: number) => {
         const newExpandedId = expandedTaskId === taskId ? null : taskId;
         setExpandedTaskId(newExpandedId);
-        
-        // 如果展开且有project_id，且还没有加载过该项目详情，则加载
+
         if (newExpandedId && projectId && !projectDetails[projectId]) {
             try {
                 const res = await fetchSSAProject({ id: projectId });
                 if (res.data) {
-                    setProjectDetails(prev => ({
+                    setProjectDetails((prev) => ({
                         ...prev,
-                        [projectId]: res.data
+                        [projectId]: res.data,
                     }));
                 }
             } catch (err: any) {
@@ -250,11 +288,21 @@ const TaskList: React.FC = () => {
         }
     };
 
-    // 语言图标映射
-    const languageIconMap: Record<string, { icon: React.ComponentType<{ size?: number; color?: string }>; color: string; label: string }> = {
+    const languageIconMap: Record<
+        string,
+        {
+            icon: React.ComponentType<{ size?: number; color?: string }>;
+            color: string;
+            label: string;
+        }
+    > = {
         php: { icon: SiPhp, color: '#777BB4', label: 'PHP' },
         java: { icon: DiJava, color: '#007396', label: 'Java' },
-        javascript: { icon: SiJavascript, color: '#F7DF1E', label: 'JavaScript' },
+        javascript: {
+            icon: SiJavascript,
+            color: '#F7DF1E',
+            label: 'JavaScript',
+        },
         js: { icon: SiJavascript, color: '#F7DF1E', label: 'JavaScript' },
         go: { icon: SiGo, color: '#00ADD8', label: 'Go' },
         golang: { icon: SiGo, color: '#00ADD8', label: 'Go' },
@@ -266,21 +314,24 @@ const TaskList: React.FC = () => {
         if (!language) return { icon: null, label: '-', color: undefined };
         const langKey = language.toLowerCase();
         const langConfig = languageIconMap[langKey];
-        if (!langConfig) return { icon: null, label: language, color: undefined };
-        
+        if (!langConfig)
+            return { icon: null, label: language, color: undefined };
+
         const IconComponent = langConfig.icon;
         return {
             icon: <IconComponent size={16} color={langConfig.color} />,
             label: langConfig.label,
-            color: langConfig.color
+            color: langConfig.color,
         };
     };
 
     const renderTaskCard = (task: TSSATask) => {
         const isExpanded = expandedTaskId === task.task_id;
-        const projectDetail = task.project_id ? projectDetails[task.project_id] : null;
+        const projectDetail = task.project_id
+            ? projectDetails[task.project_id]
+            : null;
         const projectConfig = projectDetail?.config;
-        
+
         return (
             <div className="task-card" key={task.task_id}>
                 <div className="task-main-info">
@@ -336,7 +387,14 @@ const TaskList: React.FC = () => {
                                 </span>
                             </div>
                             <div className="meta-item">
-                                检测语言: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                检测语言:{' '}
+                                <span
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                    }}
+                                >
                                     {getLanguageDisplay(task.language).icon}
                                     {getLanguageDisplay(task.language).label}
                                 </span>
@@ -385,7 +443,11 @@ const TaskList: React.FC = () => {
                             </Tooltip>
                             <Tooltip title="总数（不含信息级别）">
                                 <div className="stat-box total">
-                                    总 {(task.risk_count_critical || 0) + (task.risk_count_high || 0) + (task.risk_count_medium || 0) + (task.risk_count_low || 0)}
+                                    总{' '}
+                                    {(task.risk_count_critical || 0) +
+                                        (task.risk_count_high || 0) +
+                                        (task.risk_count_medium || 0) +
+                                        (task.risk_count_low || 0)}
                                 </div>
                             </Tooltip>
                         </div>
@@ -405,7 +467,9 @@ const TaskList: React.FC = () => {
                         </Button>
                         <Button
                             icon={<EyeOutlined />}
-                            onClick={() => toggleTaskDetail(task.task_id, task.project_id)}
+                            onClick={() =>
+                                toggleTaskDetail(task.task_id, task.project_id)
+                            }
                         >
                             详情
                         </Button>
@@ -427,7 +491,9 @@ const TaskList: React.FC = () => {
                             <h4>项目信息</h4>
                             <Descriptions bordered column={2} size="small">
                                 <Descriptions.Item label="任务 ID" span={2}>
-                                    <Typography.Text copyable>{task.task_id}</Typography.Text>
+                                    <Typography.Text copyable>
+                                        {task.task_id}
+                                    </Typography.Text>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="项目名称">
                                     {task.project_name || '-'}
@@ -436,19 +502,33 @@ const TaskList: React.FC = () => {
                                     {task.project_id || '-'}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="检测语言">
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                    <span
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                        }}
+                                    >
                                         {getLanguageDisplay(task.language).icon}
-                                        {getLanguageDisplay(task.language).label}
+                                        {
+                                            getLanguageDisplay(task.language)
+                                                .label
+                                        }
                                     </span>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="总行数">
                                     {task.total_lines?.toLocaleString() || 0} 行
                                 </Descriptions.Item>
                                 {projectConfig?.BaseInfo?.tags && (
-                                    <Descriptions.Item label="项目标签" span={2}>
-                                        {projectConfig.BaseInfo.tags.map((tag: string) => (
-                                            <Tag key={tag}>{tag}</Tag>
-                                        ))}
+                                    <Descriptions.Item
+                                        label="项目标签"
+                                        span={2}
+                                    >
+                                        {projectConfig.BaseInfo.tags.map(
+                                            (tag: string) => (
+                                                <Tag key={tag}>{tag}</Tag>
+                                            ),
+                                        )}
                                     </Descriptions.Item>
                                 )}
                             </Descriptions>
@@ -458,34 +538,61 @@ const TaskList: React.FC = () => {
                             <h4>代码来源</h4>
                             <Descriptions bordered column={2} size="small">
                                 <Descriptions.Item label="来源类型">
-                                    {projectConfig?.CodeSource?.kind === 'git' ? 'Git 仓库' :
-                                     projectConfig?.CodeSource?.kind === 'svn' ? 'SVN 仓库' :
-                                     projectConfig?.CodeSource?.kind === 'local' ? '本地文件' :
-                                     projectConfig?.CodeSource?.kind === 'compression' ? '压缩包' :
-                                     projectConfig?.CodeSource?.kind === 'jar' ? 'JAR 包' :
-                                     task.source_origin || '本地'}
+                                    {projectConfig?.CodeSource?.kind === 'git'
+                                        ? 'Git 仓库'
+                                        : projectConfig?.CodeSource?.kind ===
+                                            'svn'
+                                          ? 'SVN 仓库'
+                                          : projectConfig?.CodeSource?.kind ===
+                                              'local'
+                                            ? '本地文件'
+                                            : projectConfig?.CodeSource
+                                                    ?.kind === 'compression'
+                                              ? '压缩包'
+                                              : projectConfig?.CodeSource
+                                                      ?.kind === 'jar'
+                                                ? 'JAR 包'
+                                                : task.source_origin || '本地'}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="程序名称">
                                     {task.program_name || '-'}
                                 </Descriptions.Item>
                                 {projectConfig?.CodeSource?.url && (
-                                    <Descriptions.Item label="仓库地址" span={2}>
-                                        <Typography.Text copyable ellipsis={{ tooltip: projectConfig.CodeSource.url }}>
+                                    <Descriptions.Item
+                                        label="仓库地址"
+                                        span={2}
+                                    >
+                                        <Typography.Text
+                                            copyable
+                                            ellipsis={{
+                                                tooltip:
+                                                    projectConfig.CodeSource
+                                                        .url,
+                                            }}
+                                        >
                                             {projectConfig.CodeSource.url}
                                         </Typography.Text>
                                     </Descriptions.Item>
                                 )}
                                 {projectConfig?.CodeSource?.branch && (
                                     <Descriptions.Item label="分支">
-                                        <Tag color="blue">{projectConfig.CodeSource.branch}</Tag>
+                                        <Tag color="blue">
+                                            {projectConfig.CodeSource.branch}
+                                        </Tag>
                                     </Descriptions.Item>
                                 )}
                                 {projectConfig?.CodeSource?.auth?.kind && (
                                     <Descriptions.Item label="认证方式">
-                                        {projectConfig.CodeSource.auth.kind === 'none' ? '无需认证' :
-                                         projectConfig.CodeSource.auth.kind === 'basic' ? '用户名密码' :
-                                         projectConfig.CodeSource.auth.kind === 'ssh' ? 'SSH 密钥' :
-                                         '-'}
+                                        {projectConfig.CodeSource.auth.kind ===
+                                        'none'
+                                            ? '无需认证'
+                                            : projectConfig.CodeSource.auth
+                                                    .kind === 'basic'
+                                              ? '用户名密码'
+                                              : projectConfig.CodeSource.auth
+                                                      .kind === 'ssh'
+                                                ? 'SSH 密钥'
+                                                : '-'}
                                     </Descriptions.Item>
                                 )}
                             </Descriptions>
@@ -497,78 +604,171 @@ const TaskList: React.FC = () => {
                                 <Descriptions.Item label="规则集">
                                     {(() => {
                                         try {
-                                            // 优先从 task.scan_policy 获取（新字段）
                                             if (task.scan_policy) {
-                                                const policy = JSON.parse(task.scan_policy);
-                                                if (policy.policy_type === 'custom' && policy.custom_rules) {
+                                                const policy = JSON.parse(
+                                                    task.scan_policy,
+                                                );
+                                                if (
+                                                    policy.policy_type ===
+                                                        'custom' &&
+                                                    policy.custom_rules
+                                                ) {
                                                     const allGroups = [
-                                                        ...(policy.custom_rules.compliance_rules || []),
-                                                        ...(policy.custom_rules.tech_stack_rules || []),
-                                                        ...(policy.custom_rules.special_rules || [])
+                                                        ...(policy.custom_rules
+                                                            .compliance_rules ||
+                                                            []),
+                                                        ...(policy.custom_rules
+                                                            .tech_stack_rules ||
+                                                            []),
+                                                        ...(policy.custom_rules
+                                                            .special_rules ||
+                                                            []),
                                                     ];
                                                     if (allGroups.length > 0) {
-                                                        return allGroups.map((group: string) => (
-                                                            <Tag key={group} color="blue" style={{ marginBottom: 4 }}>
-                                                                {group}
-                                                            </Tag>
-                                                        ));
+                                                        return allGroups.map(
+                                                            (group: string) => (
+                                                                <Tag
+                                                                    key={group}
+                                                                    color="blue"
+                                                                    style={{
+                                                                        marginBottom: 4,
+                                                                    }}
+                                                                >
+                                                                    {group}
+                                                                </Tag>
+                                                            ),
+                                                        );
                                                     }
                                                 }
-                                                // 显示预设策略名称
-                                                if (policy.policy_type && policy.policy_type !== 'custom') {
-                                                    const policyNames: Record<string, string> = {
-                                                        'owasp-web': 'OWASP Web 合规扫描',
-                                                        'critical-high': '高危漏洞快速扫描',
-                                                        'cwe-top25': 'CWE Top 25',
-                                                        'fullstack': '全栈深度扫描'
+                                                if (
+                                                    policy.policy_type &&
+                                                    policy.policy_type !==
+                                                        'custom'
+                                                ) {
+                                                    const policyNames: Record<
+                                                        string,
+                                                        string
+                                                    > = {
+                                                        'owasp-web':
+                                                            'OWASP Web 合规扫描',
+                                                        'critical-high':
+                                                            '高危漏洞快速扫描',
+                                                        'cwe-top25':
+                                                            'CWE Top 25',
+                                                        fullstack:
+                                                            '全栈深度扫描',
                                                     };
-                                                    return <Tag color="green">{policyNames[policy.policy_type] || policy.policy_type}</Tag>;
-                                                }
-                                            }
-                                            
-                                            // 回退1：从 task.rule_groups 获取（旧字段）
-                                            if (task.rule_groups) {
-                                                const groups = JSON.parse(task.rule_groups);
-                                                if (Array.isArray(groups) && groups.length > 0) {
-                                                    return groups.map((group: string) => (
-                                                        <Tag key={group} color="blue" style={{ marginBottom: 4 }}>
-                                                            {group}
+                                                    return (
+                                                        <Tag color="green">
+                                                            {policyNames[
+                                                                policy
+                                                                    .policy_type
+                                                            ] ||
+                                                                policy.policy_type}
                                                         </Tag>
-                                                    ));
+                                                    );
                                                 }
                                             }
-                                            
-                                            // 回退2：从 projectConfig.ScanPolicy 获取
-                                            if (projectConfig?.ScanPolicy) {
-                                                const policy = projectConfig.ScanPolicy;
-                                                if (policy.policy_type === 'custom' && policy.custom_rules) {
-                                                    const allGroups = [
-                                                        ...(policy.custom_rules.compliance_rules || []),
-                                                        ...(policy.custom_rules.tech_stack_rules || []),
-                                                        ...(policy.custom_rules.special_rules || [])
-                                                    ];
-                                                    if (allGroups.length > 0) {
-                                                        return allGroups.map((group: string) => (
-                                                            <Tag key={group} color="blue" style={{ marginBottom: 4 }}>
+
+                                            if (task.rule_groups) {
+                                                const groups = JSON.parse(
+                                                    task.rule_groups,
+                                                );
+                                                if (
+                                                    Array.isArray(groups) &&
+                                                    groups.length > 0
+                                                ) {
+                                                    return groups.map(
+                                                        (group: string) => (
+                                                            <Tag
+                                                                key={group}
+                                                                color="blue"
+                                                                style={{
+                                                                    marginBottom: 4,
+                                                                }}
+                                                            >
                                                                 {group}
                                                             </Tag>
-                                                        ));
+                                                        ),
+                                                    );
+                                                }
+                                            }
+
+                                            if (projectConfig?.ScanPolicy) {
+                                                const policy =
+                                                    projectConfig.ScanPolicy;
+                                                if (
+                                                    policy.policy_type ===
+                                                        'custom' &&
+                                                    policy.custom_rules
+                                                ) {
+                                                    const allGroups = [
+                                                        ...(policy.custom_rules
+                                                            .compliance_rules ||
+                                                            []),
+                                                        ...(policy.custom_rules
+                                                            .tech_stack_rules ||
+                                                            []),
+                                                        ...(policy.custom_rules
+                                                            .special_rules ||
+                                                            []),
+                                                    ];
+                                                    if (allGroups.length > 0) {
+                                                        return allGroups.map(
+                                                            (group: string) => (
+                                                                <Tag
+                                                                    key={group}
+                                                                    color="blue"
+                                                                    style={{
+                                                                        marginBottom: 4,
+                                                                    }}
+                                                                >
+                                                                    {group}
+                                                                </Tag>
+                                                            ),
+                                                        );
                                                     }
                                                 }
-                                                if (policy.policy_type && policy.policy_type !== 'custom') {
-                                                    const policyNames: Record<string, string> = {
-                                                        'owasp-web': 'OWASP Web 合规扫描',
-                                                        'critical-high': '高危漏洞快速扫描',
-                                                        'cwe-top25': 'CWE Top 25',
-                                                        'fullstack': '全栈深度扫描'
+                                                if (
+                                                    policy.policy_type &&
+                                                    policy.policy_type !==
+                                                        'custom'
+                                                ) {
+                                                    const policyNames: Record<
+                                                        string,
+                                                        string
+                                                    > = {
+                                                        'owasp-web':
+                                                            'OWASP Web 合规扫描',
+                                                        'critical-high':
+                                                            '高危漏洞快速扫描',
+                                                        'cwe-top25':
+                                                            'CWE Top 25',
+                                                        fullstack:
+                                                            '全栈深度扫描',
                                                     };
-                                                    return <Tag color="green">{policyNames[policy.policy_type] || policy.policy_type}</Tag>;
+                                                    return (
+                                                        <Tag color="green">
+                                                            {policyNames[
+                                                                policy
+                                                                    .policy_type
+                                                            ] ||
+                                                                policy.policy_type}
+                                                        </Tag>
+                                                    );
                                                 }
                                             }
                                         } catch (e) {
-                                            console.error('解析扫描策略失败:', e);
+                                            console.error(
+                                                '解析扫描策略失败:',
+                                                e,
+                                            );
                                         }
-                                        return <span style={{ color: '#999' }}>使用默认规则集</span>;
+                                        return (
+                                            <span style={{ color: '#999' }}>
+                                                使用默认规则集
+                                            </span>
+                                        );
                                     })()}
                                 </Descriptions.Item>
                             </Descriptions>
@@ -650,9 +850,15 @@ const TaskList: React.FC = () => {
                                         {task.risk_count_low || 0}
                                     </Tag>
                                 </Descriptions.Item>
-                                <Descriptions.Item label="总漏洞数（不含信息级别）" span={2}>
+                                <Descriptions.Item
+                                    label="总漏洞数（不含信息级别）"
+                                    span={2}
+                                >
                                     <Tag color="blue">
-                                        {(task.risk_count_critical || 0) + (task.risk_count_high || 0) + (task.risk_count_medium || 0) + (task.risk_count_low || 0)}
+                                        {(task.risk_count_critical || 0) +
+                                            (task.risk_count_high || 0) +
+                                            (task.risk_count_medium || 0) +
+                                            (task.risk_count_low || 0)}
                                     </Tag>
                                 </Descriptions.Item>
                             </Descriptions>
@@ -777,29 +983,33 @@ const TaskList: React.FC = () => {
                 </Button>
             </div>
 
-            <Spin spinning={loading}>
+            <Spin spinning={loading && page === 1}>
                 <div className="task-card-list">
-                    {data.length > 0 ? (
-                        data.map((task) => renderTaskCard(task))
-                    ) : (
-                        <Card>
-                            <Empty description="暂无任务数据" />
-                        </Card>
-                    )}
+                    {data.length > 0
+                        ? data.map((task) => renderTaskCard(task))
+                        : !loading && (
+                              <Card>
+                                  <Empty description="暂无任务数据" />
+                              </Card>
+                          )}
                 </div>
             </Spin>
 
-            <div style={{ marginTop: 24, textAlign: 'right' }}>
-                <Pagination
-                    current={page}
-                    pageSize={limit}
-                    total={total}
-                    onChange={(p, s) => fetchList(p, s, form.getFieldsValue())}
-                    showSizeChanger
-                    showTotal={(total) => `共 ${total} 条`}
-                />
+            <div
+                style={{
+                    textAlign: 'center',
+                    padding: '20px 0',
+                    color: '#999',
+                }}
+            >
+                {loading && page > 1 && <span>加载中...</span>}
+                {!loading && hasMore && data.length > 0 && (
+                    <span>向下滚动加载更多</span>
+                )}
+                {!loading && !hasMore && data.length > 0 && (
+                    <span>已加载全部 {data.length} 条任务</span>
+                )}
             </div>
-
         </div>
     );
 };

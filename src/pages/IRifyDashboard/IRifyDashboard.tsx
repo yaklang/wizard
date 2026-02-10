@@ -218,9 +218,7 @@ const IRifyDashboard: React.FC = () => {
                     <Card
                         className="stats-card vulns-card"
                         onClick={() =>
-                            navigate(
-                                getRoutePath(RouteKey.IRIFY_VULNERABILITIES),
-                            )
+                            navigate(getRoutePath(RouteKey.IRIFY_SCANS))
                         }
                     >
                         <div className="stats-icon">
@@ -372,11 +370,7 @@ const IRifyDashboard: React.FC = () => {
                             <Button
                                 type="link"
                                 onClick={() =>
-                                    navigate(
-                                        getRoutePath(
-                                            RouteKey.IRIFY_VULNERABILITIES,
-                                        ),
-                                    )
+                                    navigate(getRoutePath(RouteKey.IRIFY_SCANS))
                                 }
                             >
                                 查看全部
