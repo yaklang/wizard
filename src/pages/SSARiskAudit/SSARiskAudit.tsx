@@ -218,6 +218,9 @@ const SSARiskAudit: React.FC = () => {
     const [leftPanelWidth, setLeftPanelWidth] = useState(280);
     const [isResizing, setIsResizing] = useState(false);
 
+    // 点击漏洞后待跳转的 risk 对象
+    const pendingJumpRiskRef = useRef<TSSARisk | null>(null);
+
     // DOT 图相关状态
     const svgBoxRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement | null>(null);
@@ -515,11 +518,40 @@ const SSARiskAudit: React.FC = () => {
                 };
                 setExpandedKeys(collectDirKeys(tree));
 
-                // 默认选中第一个文件
-                const firstFile = res.data.files[0];
-                if (firstFile) {
-                    setSelectedFilePath(firstFile.path);
-                    fetchFileContent(firstFile.path, hashToUse);
+                // 优先选中漏洞所在文件（参考 yakit 的 code_range 跳转逻辑）
+                const pendingRisk = pendingJumpRiskRef.current;
+                let targetFilePath: string | null = null;
+
+                if (pendingRisk?.code_source_url) {
+                    const relPath = extractRelativePath(pendingRisk.code_source_url, programName);
+                    const matched = res.data.files.find(f => f.path === relPath);
+                    if (matched) targetFilePath = matched.path;
+                }
+
+                // 回退到第一个文件
+                if (!targetFilePath && res.data.files[0]) {
+                    targetFilePath = res.data.files[0].path;
+                }
+
+                if (targetFilePath) {
+                    setSelectedFilePath(targetFilePath);
+                    const loaded = await fetchFileContent(targetFilePath, hashToUse);
+
+                    // 文件加载成功后，跳转到漏洞代码位置并高亮
+                    if (loaded && pendingRisk) {
+                        const parsed = parseCodeRange(pendingRisk.code_range);
+                        const line = parsed?.startLine || pendingRisk.line;
+                        if (line) {
+                            setCodeHighlight(null);
+                            setTimeout(() => {
+                                setCodeHighlight({
+                                    from: { line, ch: parsed?.startCol || 1 },
+                                    to: { line: parsed?.endLine || line, ch: parsed?.endCol || 100 },
+                                });
+                            }, 200);
+                        }
+                        pendingJumpRiskRef.current = null;
+                    }
                 }
             }
         } catch (err: any) {
@@ -1382,6 +1414,7 @@ const SSARiskAudit: React.FC = () => {
     // 处理漏洞选择
     const handleRiskSelect = (risk: TSSARisk) => {
         if (risk.hash) {
+            pendingJumpRiskRef.current = risk;
             setSelectedRiskHash(risk.hash);
         }
     };
