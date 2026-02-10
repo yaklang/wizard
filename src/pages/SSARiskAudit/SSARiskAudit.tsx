@@ -152,6 +152,34 @@ const dedupRisksByHash = (list: TSSARisk[]) => {
     return [...byHash.values(), ...noHash];
 };
 
+const parseCodeRange = (codeRange?: string) => {
+    if (!codeRange) return null;
+    try {
+        const obj = JSON.parse(codeRange);
+        if (!obj || typeof obj !== 'object') return null;
+        return {
+            startLine: Number(obj.start_line) || undefined,
+            endLine: Number(obj.end_line) || undefined,
+            startCol: Number(obj.start_column) || undefined,
+            endCol: Number(obj.end_column) || undefined,
+        };
+    } catch {
+        return null;
+    }
+};
+
+const formatLineAndCol = (risk: TSSARisk) => {
+    const line = risk.line;
+    const r = parseCodeRange(risk.code_range);
+    if (!line && !r?.startLine) return '';
+    const l = line || r?.startLine;
+    if (!l) return '';
+    if (r?.startCol && r?.endCol) {
+        return `[${l}:${r.startCol}-${r.endCol}]`;
+    }
+    return `[${l}]`;
+};
+
 const SSARiskAudit: React.FC = () => {
     const [searchParams] = useSearchParams();
     const hash = searchParams.get('hash') || '';
@@ -1443,8 +1471,9 @@ const SSARiskAudit: React.FC = () => {
                                                             )}
                                                             {risk.line && (
                                                                 <span className="line-number">
-                                                                    [{risk.line}
-                                                                    ]
+                                                                    {formatLineAndCol(
+                                                                        risk,
+                                                                    )}
                                                                 </span>
                                                             )}
                                                             {' - '}
@@ -1543,7 +1572,10 @@ const SSARiskAudit: React.FC = () => {
                                             }
                                         >
                                             <div className="risk-location">
-                                                {fileName}[{risk.line || '?'}] -{' '}
+                                                {fileName}
+                                                {formatLineAndCol(risk) ||
+                                                    `[${risk.line || '?'}]`}{' '}
+                                                -{' '}
                                                 {risk.program_name || 'admin'}
                                             </div>
                                             <div className="risk-type-info">
