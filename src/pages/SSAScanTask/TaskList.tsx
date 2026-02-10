@@ -383,9 +383,9 @@ const TaskList: React.FC = () => {
                                     低 {task.risk_count_low || 0}
                                 </div>
                             </Tooltip>
-                            <Tooltip title="总数">
+                            <Tooltip title="总数（不含信息级别）">
                                 <div className="stat-box total">
-                                    总 {task.risk_count || 0}
+                                    总 {(task.risk_count_critical || 0) + (task.risk_count_high || 0) + (task.risk_count_medium || 0) + (task.risk_count_low || 0)}
                                 </div>
                             </Tooltip>
                         </div>
@@ -650,9 +650,9 @@ const TaskList: React.FC = () => {
                                         {task.risk_count_low || 0}
                                     </Tag>
                                 </Descriptions.Item>
-                                <Descriptions.Item label="总漏洞数" span={2}>
+                                <Descriptions.Item label="总漏洞数（不含信息级别）" span={2}>
                                     <Tag color="blue">
-                                        {task.risk_count || 0}
+                                        {(task.risk_count_critical || 0) + (task.risk_count_high || 0) + (task.risk_count_medium || 0) + (task.risk_count_low || 0)}
                                     </Tag>
                                 </Descriptions.Item>
                             </Descriptions>

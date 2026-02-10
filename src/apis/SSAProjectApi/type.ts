@@ -55,6 +55,12 @@ export interface TSSAProjectConfig {
         // Scan concurrency (0/undefined means default on backend).
         concurrency?: number;
     };
+    SyntaxFlowRule?: {
+        rule_filter?: {
+            // "noLib": 不包含lib规则, "lib": 只包含lib规则, "": 所有规则
+            FilterLibRuleKind?: string;
+        };
+    };
 }
 
 // SSA 项目请求类型

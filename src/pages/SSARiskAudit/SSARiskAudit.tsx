@@ -549,11 +549,17 @@ const SSARiskAudit: React.FC = () => {
         return stats;
     }, []);
 
+    // 排除 info 级别的风险列表
+    const nonInfoRiskList = useMemo(
+        () => riskList.filter((r) => normalizeSeverity(r.severity) !== 'info'),
+        [riskList],
+    );
+
     // 过滤风险列表
     const filteredRisks = useMemo(() => {
-        if (!severityFilter) return riskList;
+        if (!severityFilter) return nonInfoRiskList;
 
-        return riskList.filter((risk) => {
+        return nonInfoRiskList.filter((risk) => {
             const severity = normalizeSeverity(risk.severity);
             if (severityFilter === 'critical') {
                 return severity === 'critical';
@@ -565,13 +571,10 @@ const SSARiskAudit: React.FC = () => {
                 );
             } else if (severityFilter === 'low') {
                 return severity === 'low';
-            } else if (severityFilter === 'info') {
-                // 兼容后端返回空/未知 severity 的老数据: 统一按 info 处理
-                return severity === 'info';
             }
             return true;
         });
-    }, [riskList, severityFilter]);
+    }, [nonInfoRiskList, severityFilter]);
 
     // 文件折叠切换
     const toggleFileExpand = useCallback((filePath: string) => {
@@ -584,8 +587,8 @@ const SSARiskAudit: React.FC = () => {
 
     // 计算当前统计
     const severityStats = useMemo(
-        () => calculateSeverityStats(riskList),
-        [riskList, calculateSeverityStats],
+        () => calculateSeverityStats(nonInfoRiskList),
+        [nonInfoRiskList, calculateSeverityStats],
     );
 
     // 获取文件内容
@@ -1671,7 +1674,7 @@ const SSARiskAudit: React.FC = () => {
                             <Text type="secondary">任务 ID: {taskId}</Text>
                             <Divider type="vertical" />
                             <Text type="secondary">
-                                漏洞总数: <Text strong>{riskList.length}</Text>
+                                漏洞总数: <Text strong>{nonInfoRiskList.length}</Text>
                             </Text>
                             {auditInfo?.risk && (
                                 <>
@@ -1750,7 +1753,7 @@ const SSARiskAudit: React.FC = () => {
                         <Card
                             title={
                                 <div className="panel-header">
-                                    <span>漏洞列表 ({riskList.length})</span>
+                                    <span>漏洞列表 ({nonInfoRiskList.length})</span>
                                 </div>
                             }
                             size="small"
@@ -1785,104 +1788,41 @@ const SSARiskAudit: React.FC = () => {
                                 <>
                                     {/* 严重程度统计栏 */}
                                     <div className="severity-stats">
-                                        <div
-                                            className={`stat-item ${severityFilter === 'critical' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'critical'
-                                                        ? null
-                                                        : 'critical',
-                                                )
-                                            }
-                                        >
-                                            <span className="label">严重</span>
-                                            <span className="count">
-                                                {severityStats.critical.audited}|
-                                                {severityStats.critical.pending}|
-                                                {severityStats.critical.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === 'high' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'high'
-                                                        ? null
-                                                        : 'high',
-                                                )
-                                            }
-                                        >
-                                            <span className="label">高</span>
-                                            <span className="count">
-                                                {severityStats.high.audited}|
-                                                {severityStats.high.pending}|
-                                                {severityStats.high.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === 'middle' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'middle'
-                                                        ? null
-                                                        : 'middle',
-                                                )
-                                            }
-                                        >
-                                            <span className="label">中</span>
-                                            <span className="count">
-                                                {severityStats.middle.audited}|
-                                                {severityStats.middle.pending}|
-                                                {severityStats.middle.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === 'low' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'low'
-                                                        ? null
-                                                        : 'low',
-                                                )
-                                            }
-                                        >
-                                            <span className="label">低</span>
-                                            <span className="count">
-                                                {severityStats.low.audited}|
-                                                {severityStats.low.pending}|
-                                                {severityStats.low.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === 'info' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'info'
-                                                        ? null
-                                                        : 'info',
-                                                )
-                                            }
-                                        >
-                                            <span className="label">信息</span>
-                                            <span className="count">
-                                                {severityStats.info.audited}|
-                                                {severityStats.info.pending}|
-                                                {severityStats.info.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === null ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(null)
-                                            }
-                                        >
-                                            <span className="label">所有</span>
-                                            <span className="count">
-                                                {severityStats.all.audited}|
-                                                {severityStats.all.pending}|
-                                                {severityStats.all.total}
-                                            </span>
-                                        </div>
+                                        {([
+                                            { key: 'critical', label: '严重' },
+                                            { key: 'high', label: '高' },
+                                            { key: 'middle', label: '中' },
+                                            { key: 'low', label: '低' },
+                                        ] as const).map(({ key, label }) => {
+                                            const s = severityStats[key];
+                                            return (
+                                                <Tooltip
+                                                    key={key}
+                                                    title={`已审计 ${s.audited} / 待审计 ${s.pending} / 总计 ${s.total}`}
+                                                >
+                                                    <div
+                                                        className={`stat-item ${severityFilter === key ? 'active' : ''}`}
+                                                        onClick={() =>
+                                                            setSeverityFilter(
+                                                                severityFilter === key ? null : key,
+                                                            )
+                                                        }
+                                                    >
+                                                        <span className="label">{label}</span>
+                                                        <span className="count">{s.total}</span>
+                                                    </div>
+                                                </Tooltip>
+                                            );
+                                        })}
+                                        <Tooltip title={`已审计 ${severityStats.all.audited} / 待审计 ${severityStats.all.pending} / 总计 ${severityStats.all.total}`}>
+                                            <div
+                                                className={`stat-item ${severityFilter === null ? 'active' : ''}`}
+                                                onClick={() => setSeverityFilter(null)}
+                                            >
+                                                <span className="label">所有</span>
+                                                <span className="count">{severityStats.all.total}</span>
+                                            </div>
+                                        </Tooltip>
                                     </div>
 
                                     {leftViewMode === 'type' &&
