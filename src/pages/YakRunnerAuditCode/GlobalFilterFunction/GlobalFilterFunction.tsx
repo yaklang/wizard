@@ -376,7 +376,7 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
         );
         const handleSelect = useMemoizedFn(
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            (node: AuditNodeProps, detail?: AuditNodeDetailProps) => {
+            (node: AuditNodeProps, _?: AuditNodeDetailProps) => {
                 setFoucsedKey(node.id);
                 onJumpByCodeRange(node);
             },
