@@ -165,7 +165,7 @@ export default function useHoldGRPCStream(params: HoldGRPCStreamParams) {
 
     /** 自定义tab页放前面还是后面 */
     const placeTab = useMemoizedFn(
-        (isHead: boolean, info: HoldGRPCStreamProps.InfoTab) => {
+        (_: boolean, info: HoldGRPCStreamProps.InfoTab) => {
             topTabs.current.unshift(info);
         },
     );
