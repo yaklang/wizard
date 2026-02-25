@@ -18,6 +18,7 @@ import {
     RightOutlined,
     NodeIndexOutlined,
     SafetyCertificateOutlined,
+    BugOutlined,
 } from '@ant-design/icons';
 import { getLicense } from '@/apis/login';
 import { useNetworkStatus } from '@/hooks';
@@ -40,6 +41,12 @@ const mainNavItems = [
         icon: <FolderOutlined />,
         label: '项目管理',
         path: '/projects',
+    },
+    {
+        key: '/vulnerabilities',
+        icon: <BugOutlined />,
+        label: '漏洞管理',
+        path: '/vulnerabilities',
     },
     {
         key: '/scans',

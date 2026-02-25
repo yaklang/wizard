@@ -20,6 +20,7 @@ import SystemManagement from '@/pages/SystemManagement';
 import ReportManage from '@/pages/ReportManage';
 
 import IRifyDashboard from '@/pages/IRifyDashboard';
+import VulnerabilityList from '@/pages/VulnerabilityList';
 import { CreateTask } from '@/pages/CreateTask/CreateTask';
 import { SpecialTask } from '@/pages/SpecialTask/SpecialTask';
 import { TaskPageList } from '@/pages/TaskPageList/TaskPageList';
@@ -61,8 +62,17 @@ const irifyRouters: RouteObject[] = [
                 ],
             },
             {
-                path: 'vulnerabilities/audit',
-                element: <SSARiskAudit />,
+                path: 'vulnerabilities',
+                children: [
+                    {
+                        index: true,
+                        element: <VulnerabilityList />,
+                    },
+                    {
+                        path: 'audit',
+                        element: <SSARiskAudit />,
+                    },
+                ],
             },
             {
                 path: 'scans',

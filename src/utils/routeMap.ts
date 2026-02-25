@@ -25,6 +25,7 @@ export enum RouteKey {
     IRIFY_SETTINGS_NODES = 'IRIFY_SETTINGS_NODES',
     IRIFY_SETTINGS_USERS = 'IRIFY_SETTINGS_USERS',
     IRIFY_SETTINGS_REPORTS = 'IRIFY_SETTINGS_REPORTS',
+    IRIFY_VULNERABILITIES = 'IRIFY_VULNERABILITIES',
 
     // Common Routes
     LOGIN = 'LOGIN',
@@ -75,6 +76,7 @@ const wizardRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_PROJECTS]: '/projects',
     [RouteKey.IRIFY_PROJECT_CREATE]: '/projects/create',
     [RouteKey.IRIFY_SCANS]: '/scans',
+    [RouteKey.IRIFY_VULNERABILITIES]: '/vulnerabilities',
     [RouteKey.IRIFY_SETTINGS_RULES]: '/settings/rules',
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
@@ -98,6 +100,7 @@ const irifyRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_PROJECTS]: '/projects',
     [RouteKey.IRIFY_PROJECT_CREATE]: '/projects/create',
     [RouteKey.IRIFY_SCANS]: '/scans',
+    [RouteKey.IRIFY_VULNERABILITIES]: '/vulnerabilities',
     [RouteKey.IRIFY_SETTINGS_RULES]: '/settings/rules',
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
@@ -153,6 +156,7 @@ export const ROUTES = {
     IRIFY_PROJECTS: getRoutePath(RouteKey.IRIFY_PROJECTS),
     IRIFY_PROJECT_CREATE: getRoutePath(RouteKey.IRIFY_PROJECT_CREATE),
     IRIFY_SCANS: getRoutePath(RouteKey.IRIFY_SCANS),
+    IRIFY_VULNERABILITIES: getRoutePath(RouteKey.IRIFY_VULNERABILITIES),
     IRIFY_SETTINGS_RULES: getRoutePath(RouteKey.IRIFY_SETTINGS_RULES),
     IRIFY_SETTINGS_NODES: getRoutePath(RouteKey.IRIFY_SETTINGS_NODES),
     IRIFY_SETTINGS_USERS: getRoutePath(RouteKey.IRIFY_SETTINGS_USERS),
