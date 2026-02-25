@@ -5,7 +5,7 @@ import classNames from 'classnames';
 export interface YakitProtoCheckboxProps {
     checked?: boolean;
     indeterminate?: boolean;
-    onChange?: (e) => void;
+    onChange?: (e: any) => void;
     disabled?: boolean;
     wrapperClassName?: string;
     wrapperStyle?: React.CSSProperties;

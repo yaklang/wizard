@@ -1028,7 +1028,7 @@ export const AuditCode: React.FC<AuditCodeProps> = (props) => {
     );
 
     // 流式审计 PS:流式审计成功后，根据result_id走正常结构查询
-    const onAuditStreamRuleSubmitFun = useMemoizedFn(async (textArea = '') => {
+    const onAuditStreamRuleSubmitFun = useMemoizedFn(async () => {
         // if (!textArea) {
         //     warn('请输入规则');
         //     return;

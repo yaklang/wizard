@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 interface YakitProtoSwitchProps {
     checked?: boolean;
-    onChange?: (e) => void;
+    onChange?: (e: any) => void;
     disabled?: boolean;
     wrapperClassName?: string;
     wrapperStyle?: React.CSSProperties;

@@ -210,7 +210,7 @@ export const RollingLoadList = <T,>(props: RollingLoadListProps<T>) => {
     return (
         <>
             <ReactResizeDetector
-                onResize={(width, height) => {
+                onResize={(_, height) => {
                     if (!height) {
                         return;
                     }
