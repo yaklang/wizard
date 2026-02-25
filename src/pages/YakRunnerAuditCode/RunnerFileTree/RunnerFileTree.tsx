@@ -166,7 +166,7 @@ export const RunnerFileTree: React.FC<RunnerFileTreeProps> = memo((props) => {
     // 文件树选中
     const onSelectFileTree = useMemoizedFn(
         (
-            selectedKeys: string[],
+            _: string[],
             e: {
                 selected: boolean;
                 selectedNodes: FileNodeProps[];
@@ -816,7 +816,7 @@ export const RiskTree: React.FC<RiskTreeProps> = memo((props) => {
     // 文件树选中
     const onSelectFileTree = useMemoizedFn(
         (
-            selectedKeys: string[],
+            _: string[],
             e: {
                 selected: boolean;
                 selectedNodes: FileNodeProps[];

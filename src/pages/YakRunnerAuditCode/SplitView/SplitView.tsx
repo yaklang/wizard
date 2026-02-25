@@ -323,7 +323,7 @@ export const SplitView: React.FC<SplitViewProp> = memo((props) => {
                         [styles['hover']]: !isOver,
                     })}
                 >
-                    {elements.map((item, index) => {
+                    {elements.map((_, index) => {
                         if (index === elements.length - 1) return null;
                         return (
                             <div
@@ -358,7 +358,7 @@ export const SplitView: React.FC<SplitViewProp> = memo((props) => {
                 })}
             >
                 <div className={styles['split-view-container']}>
-                    {elements.map((item, index) => {
+                    {elements.map((_, index) => {
                         return (
                             <div
                                 ref={(ref) => (divs.current[index] = ref)}

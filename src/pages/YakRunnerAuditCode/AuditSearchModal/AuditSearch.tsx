@@ -11,15 +11,11 @@ import { warn } from '@/utils/notification';
 import type {
     AuditSearchProps,
     ExtraSettingDataProps,
-    ExtraSettingProps,
 } from './AuditSearchModalType';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
 import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput';
-import { grpcFetchLocalPluginDetail } from '@/pages/pluginHub/utils/grpc';
 import { YakitHintWhite } from '@/compoments/YakitUI/YakitHint/YakitHint';
 import YakitTabs from '@/compoments/YakitUI/YakitTabs/YakitTabs';
-import { apiDebugPlugin, type DebugPluginRequest } from '@/pages/plugins/utils';
-
 import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
 import { Progress } from 'antd';
 import type {
@@ -44,9 +40,7 @@ export const AuditSearchModal: React.FC<AuditSearchProps> = memo((props) => {
     const { visible, projectName, onClose } = props;
     const [checked, setChecked] = useState<boolean>(true);
     const [keywords, setKeywords] = useState<string>('');
-    const [extraSettingData, setExtraSettingData] = useState<
-        ExtraSettingDataProps[]
-    >([]);
+    const [extraSettingData] = useState<ExtraSettingDataProps[]>([]);
     const [activeKey, setActiveKey] = useState<string>('all');
     const [executing, setExecuting] = useGetState<boolean>(false);
     const tokenRef = useRef<string>(randomString(40));
@@ -200,48 +194,48 @@ export const AuditSearchModal: React.FC<AuditSearchProps> = memo((props) => {
                 Value: `${checked}`,
             });
         }
-        const requestParams: DebugPluginRequest = {
-            Code: '',
-            PluginType: 'yak',
-            Input: '',
-            HTTPRequestTemplate: {},
-            ExecParams: requestParamsExecParams,
-            PluginName: 'SyntaxFlow Searcher',
-        };
-        debugPluginStreamEvent.reset();
-        apiDebugPlugin({
-            params: requestParams,
-            token: tokenRef.current,
-            isShowStartInfo: false,
-        })
-            .then(() => {
-                debugPluginStreamEvent.start();
-                setExecuting(true);
-            })
-            .catch(() => {});
+        // const requestParams: DebugPluginRequest = {
+        //     Code: '',
+        //     PluginType: 'yak',
+        //     Input: '',
+        //     HTTPRequestTemplate: {},
+        //     ExecParams: requestParamsExecParams,
+        //     PluginName: 'SyntaxFlow Searcher',
+        // };
+        // debugPluginStreamEvent.reset();
+        // apiDebugPlugin({
+        //     params: requestParams,
+        //     token: tokenRef.current,
+        //     isShowStartInfo: false,
+        // })
+        //     .then(() => {
+        //         debugPluginStreamEvent.start();
+        //         setExecuting(true);
+        //     })
+        //     .catch(() => {});
     });
 
-    // 获取参数
-    const handleFetchParams = useDebounceFn(
-        useMemoizedFn(async () => {
-            try {
-                const newPlugin = await grpcFetchLocalPluginDetail(
-                    { Name: 'SyntaxFlow Searcher' },
-                    true,
-                );
-                const ExtraSetting =
-                    newPlugin?.Params.find((item: any) => item.Field === 'kind')
-                        ?.ExtraSetting || '';
-                let obj = JSON.parse(ExtraSetting) as ExtraSettingProps;
-                setExtraSettingData(obj.data);
-            } catch (error) {}
-        }),
-        { wait: 300 },
-    ).run;
+    // // 获取参数
+    // const handleFetchParams = useDebounceFn(
+    //     useMemoizedFn(async () => {
+    //         try {
+    //             const newPlugin = await grpcFetchLocalPluginDetail(
+    //                 { Name: 'SyntaxFlow Searcher' },
+    //                 true,
+    //             );
+    //             const ExtraSetting =
+    //                 newPlugin?.Params.find((item: any) => item.Field === 'kind')
+    //                     ?.ExtraSetting || '';
+    //             let obj = JSON.parse(ExtraSetting) as ExtraSettingProps;
+    //             setExtraSettingData(obj.data);
+    //         } catch (error) {}
+    //     }),
+    //     { wait: 300 },
+    // ).run;
 
-    useEffect(() => {
-        handleFetchParams();
-    }, []);
+    // useEffect(() => {
+    //     handleFetchParams();
+    // }, []);
 
     const keyDownRef = useRef<HTMLDivElement>(null);
 

@@ -1,49 +1,77 @@
 import { getRemoteValue, setRemoteValue } from '@/utils/kv';
-import { RequestYakURLResponse, YakURLResource } from '../yakURLTree/data';
-import {
-    FileDefault,
-    FileSuffix,
-    FolderDefault,
-} from '../yakRunner/FileTree/icon';
-import {
+import { FileDefault, FileSuffix, FolderDefault } from './FileTree/icon';
+import type {
     AuditDetailItemProps,
     AuditYakUrlProps,
 } from './AuditCode/AuditCodeType';
 
 import emiter from '@/utils/eventBus/eventBus';
-import { failed, warn, yakitNotify } from '@/utils/notification';
-import {
+import { failed } from '@/utils/notification';
+import type {
     AreaInfoProps,
     OpenFileByPathProps,
+    SSARisk,
     TabFileProps,
     YakRunnerHistoryProps,
 } from './YakRunnerAuditCodeType';
 import cloneDeep from 'lodash/cloneDeep';
-import { randomString } from '@/utils/randomUtil';
-import { StringToUint8Array, Uint8ArrayToString } from '@/utils/str';
-import {
+// import { randomString } from '@/utils/randomUtil';
+// import { Uint8ArrayToString } from '@/utils/str';
+import type {
     FileDetailInfo,
     OptionalFileDetailInfo,
     Selection,
 } from './RunnerTabs/RunnerTabsType';
 import { v4 as uuidv4 } from 'uuid';
-import { FileNodeMapProps, FileNodeProps } from './FileTree/FileTreeType';
-import { SeverityMapTag } from '../risks/YakitRiskTable/YakitRiskTable';
-import { CodeRangeProps } from './RightAuditDetail/RightAuditDetail';
-import {
-    QuerySyntaxFlowScanTaskRequest,
-    QuerySyntaxFlowScanTaskResponse,
-} from '../yakRunnerCodeScan/CodeScanTaskListDrawer/CodeScanTaskListDrawer';
-import { genDefaultPagination } from '../invoker/schema';
-import { APIFunc } from '@/apiUtils/type';
-import { JumpToAuditEditorProps } from './BottomEditorDetails/BottomEditorDetailsType';
-const { ipcRenderer } = window.require('electron');
+import type { FileNodeMapProps, FileNodeProps } from './FileTree/FileTreeType';
+// import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
+import type { CodeRangeProps } from './RightAuditDetail/RightAuditDetail';
+import { genDefaultPagination, type YakScript } from '../invoker/schema';
+import type { APIFunc } from '@/apiUtils/type';
+import type { JumpToAuditEditorProps } from './BottomEditorDetails/BottomEditorDetailsType';
+
+export interface YakURLKVPair {
+    Key: string;
+    Value: string;
+}
+
+export interface YakURL {
+    FromRaw: string;
+    Schema: string;
+    User: string;
+    Pass: string;
+    Location: string;
+    Path: string;
+    Query: YakURLKVPair[];
+}
+
+export interface YakURLResource {
+    ResourceType: string;
+    VerboseType: string;
+    ResourceName: string;
+    VerboseName: string;
+    Size: number;
+    SizeVerbose: string;
+    ModifiedTimestamp: number;
+    Path: string;
+    YakURLVerbose: string;
+    Url: YakURL; // Assuming YakURL is another interface
+    Extra: YakURLKVPair[]; // Assuming KVPair is another interface
+    HaveChildrenNodes: boolean;
+}
+
+export interface RequestYakURLResponse {
+    Page: number;
+    PageSize: number;
+    Total: number;
+    Resources: YakURLResource[];
+}
 
 export const initFileTreeData = (
     list: RequestYakURLResponse,
     path?: string | null,
 ) => {
-    return list.Resources.sort((a, b) => {
+    return list.Resources.sort((a: any, b: any) => {
         // 将 ResourceType 为 'dir' 的对象排在前面
         if (a.ResourceType === 'dir' && b.ResourceType !== 'dir') {
             return -1; // a排在b前面
@@ -52,7 +80,7 @@ export const initFileTreeData = (
         } else {
             return 0; // 保持原有顺序
         }
-    }).map((item) => {
+    }).map((item: any) => {
         const isFile = !item.ResourceType;
         const isFolder = item.ResourceType === 'dir';
         const suffix =
@@ -75,117 +103,118 @@ export const initFileTreeData = (
     });
 };
 
-const getLineFun = (info: YakURLResource) => {
-    try {
-        if (info.ResourceType === 'risk') {
-            const result = info.Extra.find(
-                (item) => item.Key === 'code_range',
-            )?.Value;
-            if (result) {
-                const item: CodeRangeProps = JSON.parse(result);
-                const { start_line } = item;
-                return start_line;
-            }
-        }
-        return undefined;
-    } catch (error) {}
-};
+// const getLineFun = (info: YakURLResource) => {
+//     try {
+//         if (info.ResourceType === 'risk') {
+//             const result = info.Extra.find(
+//                 (item: any) => item.Key === 'code_range',
+//             )?.Value;
+//             if (result) {
+//                 const item: CodeRangeProps = JSON.parse(result);
+//                 const { start_line } = item;
+//                 return start_line;
+//             }
+//         }
+//         return undefined;
+//     } catch (error) {}
+// };
 
-const initRiskOrRuleTreeData = (list: RequestYakURLResponse, path) => {
-    return list.Resources.sort((a, b) => {
-        // 将 ResourceType 为 'program'与'source' 的对象排在前面
-        if (
-            ['program', 'source'].includes(a.ResourceType) &&
-            !['program', 'source'].includes(b.ResourceType)
-        ) {
-            return -1; // a排在b前面
-        } else if (
-            !['program', 'source'].includes(a.ResourceType) &&
-            ['program', 'source'].includes(b.ResourceType)
-        ) {
-            return 1; // b排在a前面
-        } else {
-            return 0; // 保持原有顺序
-        }
-    }).map((item) => {
-        const isFile = !item.HaveChildrenNodes;
-        const isFolder = item.HaveChildrenNodes;
-        let suffix =
-            isFile && item.ResourceName.indexOf('.') > -1
-                ? item.ResourceName.split('.').pop()
-                : '';
-        const count = item.Extra.find((item) => item.Key === 'count')?.Value;
-        const name = item.ResourceName.split('/').pop() || '';
-        const severity = item.Extra.find(
-            (item) => item.Key === 'severity',
-        )?.Value;
-        const severityValue = SeverityMapTag.find((item) =>
-            item.key.includes(severity || ''),
-        )?.value;
-        let folderIcon = FolderDefault;
-        let description: string | undefined = undefined;
-        let line: number | undefined = undefined;
-        if (item.ResourceType === 'source') {
-            folderIcon = FileSuffix[item.ResourceName.split('.').pop() || ''];
-            description = path ? item.Path.replace(path, '') : item.Path;
-        }
-        if (item.ResourceType === 'function') {
-            folderIcon = FileSuffix['function'];
-        }
-        if (item.ResourceType === 'risk') {
-            line = getLineFun(item);
-        }
-        if (item.ResourceType === 'risk' && severityValue) {
-            suffix = severityValue;
-        }
-        return {
-            parent: path || null,
-            name,
-            path: item.Path,
-            isFolder,
-            icon: isFolder
-                ? folderIcon
-                : suffix
-                  ? FileSuffix[suffix] || FileDefault
-                  : FileDefault,
-            isLeaf: isFile,
-            count,
-            description,
-            line,
-            data: item,
-        };
-    });
-};
+// const initRiskOrRuleTreeData = (list: RequestYakURLResponse, path: any) => {
+//     return list.Resources.sort((a: any, b: any) => {
+//         // 将 ResourceType 为 'program'与'source' 的对象排在前面
+//         if (
+//             ['program', 'source'].includes(a.ResourceType) &&
+//             !['program', 'source'].includes(b.ResourceType)
+//         ) {
+//             return -1; // a排在b前面
+//         } else if (
+//             !['program', 'source'].includes(a.ResourceType) &&
+//             ['program', 'source'].includes(b.ResourceType)
+//         ) {
+//             return 1; // b排在a前面
+//         } else {
+//             return 0; // 保持原有顺序
+//         }
+//     }).map((item: any) => {
+//         const isFile = !item.HaveChildrenNodes;
+//         const isFolder = item.HaveChildrenNodes;
+//         let suffix =
+//             isFile && item.ResourceName.indexOf('.') > -1
+//                 ? item.ResourceName.split('.').pop()
+//                 : '';
+//         const count = item.Extra.find(
+//             (item: any) => item.Key === 'count',
+//         )?.Value;
+//         const name = item.ResourceName.split('/').pop() || '';
+//         const severity = item.Extra.find(
+//             (item: any) => item.Key === 'severity',
+//         )?.Value;
+//         const severityValue = SeverityMapTag.find((item) =>
+//             item.key.includes(severity || ''),
+//         )?.value;
+//         let folderIcon = FolderDefault;
+//         let description: string | undefined;
+//         let line: number | undefined;
+//         if (item.ResourceType === 'source') {
+//             folderIcon = FileSuffix[item.ResourceName.split('.').pop() || ''];
+//             description = path ? item.Path.replace(path, '') : item.Path;
+//         }
+//         if (item.ResourceType === 'function') {
+//             folderIcon = FileSuffix['function'];
+//         }
+//         if (item.ResourceType === 'risk') {
+//             line = getLineFun(item);
+//         }
+//         if (item.ResourceType === 'risk' && severityValue) {
+//             suffix = severityValue;
+//         }
+//         return {
+//             parent: path || null,
+//             name,
+//             path: item.Path,
+//             isFolder,
+//             icon: isFolder
+//                 ? folderIcon
+//                 : suffix
+//                   ? FileSuffix[suffix] || FileDefault
+//                   : FileDefault,
+//             isLeaf: isFile,
+//             count,
+//             description,
+//             line,
+//             data: item,
+//         };
+//     });
+// };
 
 /**
  * @name 审计完整树获取
  */
 export const grpcFetchAuditTree: (
     path: string,
-) => Promise<{ res: RequestYakURLResponse; data: FileNodeMapProps[] }> = (
+) => Promise<{ res: RequestYakURLResponse; data: FileNodeMapProps[] }> = async (
     path,
 ) => {
-    return new Promise(async (resolve, reject) => {
-        // ssadb path为/时 展示最近编译
-        const params = {
-            Method: 'GET',
-            Url: {
-                Schema: 'ssadb',
-                Query: [{ Key: 'op', Value: 'list' }],
-                Path: path,
-            },
-        };
-        try {
-            const res: RequestYakURLResponse = await ipcRenderer.invoke(
-                'RequestYakURL',
-                params,
-            );
-            const data: FileNodeMapProps[] = initFileTreeData(res, path);
-            resolve({ res, data });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    const params = {
+        Method: 'GET',
+        Url: {
+            Schema: 'ssadb',
+            Query: [{ Key: 'op', Value: 'list' }],
+            Path: path,
+        },
+    };
+    try {
+        return Promise.reject(new Error(JSON.stringify(params)));
+
+        // const res: RequestYakURLResponse = await ipcRenderer.invoke(
+        //     'RequestYakURL',
+        //     params,
+        // );
+        // const data: FileNodeMapProps[] = initFileTreeData(res, path);
+        // return Promise.resolve({ res, data });
+    } catch (error) {
+        return Promise.reject(error);
+    }
 };
 
 /**
@@ -201,61 +230,60 @@ export const grpcFetchRiskOrRuleTree: (
         result_id?: string;
         increment?: boolean;
     },
-) => Promise<{ res: RequestYakURLResponse; data: FileNodeMapProps[] }> = (
+) => Promise<{ res: RequestYakURLResponse; data: FileNodeMapProps[] }> = async (
     path,
     { program, type, search, task_id, result_id, increment },
 ) => {
-    return new Promise(async (resolve, reject) => {
-        // ssadb path为/时 展示最近编译
-        const params = {
-            Method: 'GET',
-            Url: {
-                Schema: 'ssarisk',
-                Path: path,
-                Query: [
-                    {
-                        Key: 'type',
-                        Value: type,
-                    },
-                    {
-                        Key: 'program',
-                        Value: type !== 'risk' ? program : '',
-                    },
-                    {
-                        Key: 'search',
-                        Value: search,
-                    },
-                    {
-                        Key: 'task_id',
-                        Value: task_id,
-                    },
-                    {
-                        Key: 'result_id',
-                        Value: result_id,
-                    },
-                ],
-            },
-        };
-        if (increment) {
-            params.Url.Query.push({
-                Key: 'increment',
-                Value: 'true',
-            });
-        }
-        try {
-            const res: RequestYakURLResponse = await ipcRenderer.invoke(
-                'RequestYakURL',
-                params,
-            );
-            const data: FileNodeMapProps[] = initRiskOrRuleTreeData(
-                res,
-                path === '/' ? program : path,
-            );
-            resolve({ res, data });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    // ssadb path为/时 展示最近编译
+    const params = {
+        Method: 'GET',
+        Url: {
+            Schema: 'ssarisk',
+            Path: path,
+            Query: [
+                {
+                    Key: 'type',
+                    Value: type,
+                },
+                {
+                    Key: 'program',
+                    Value: type !== 'risk' ? program : '',
+                },
+                {
+                    Key: 'search',
+                    Value: search,
+                },
+                {
+                    Key: 'task_id',
+                    Value: task_id,
+                },
+                {
+                    Key: 'result_id',
+                    Value: result_id,
+                },
+            ],
+        },
+    };
+    if (increment) {
+        params.Url.Query.push({
+            Key: 'increment',
+            Value: 'true',
+        });
+    }
+    try {
+        return Promise.reject(new Error(JSON.stringify(params)));
+        // const res: RequestYakURLResponse = await ipcRenderer.invoke(
+        //     'RequestYakURL',
+        //     params,
+        // );
+        // const data: FileNodeMapProps[] = initRiskOrRuleTreeData(
+        //     res,
+        //     path === '/' ? program : path,
+        // );
+        // return Promise.resolve({ res, data });
+    } catch (error) {
+        return Promise.reject(error);
+    }
 };
 
 /**
@@ -263,50 +291,48 @@ export const grpcFetchRiskOrRuleTree: (
  */
 export const grpcFetchAuditCodeRiskOrRuleList: (
     Programs: string,
-) => Promise<QuerySyntaxFlowScanTaskResponse> = (Programs) => {
-    return new Promise(async (resolve, reject) => {
-        const params: QuerySyntaxFlowScanTaskRequest = {
-            Pagination: genDefaultPagination(100, 1),
-            Filter: {
-                Programs: [Programs],
-                HaveRisk: true,
-            },
-        };
-        try {
-            const res: QuerySyntaxFlowScanTaskResponse =
-                await ipcRenderer.invoke('QuerySyntaxFlowScanTask', params);
-            resolve(res);
-        } catch (error) {
-            reject(error);
-        }
-    });
+) => Promise<any> = async (Programs) => {
+    const params = {
+        Pagination: genDefaultPagination(100, 1),
+        Filter: {
+            Programs: [Programs],
+            HaveRisk: true,
+        },
+    };
+    try {
+        return Promise.reject(new Error(JSON.stringify(params)));
+        // const res: any = await ipcRenderer.invoke(
+        //     'QuerySyntaxFlowScanTask',
+        //     params,
+        // );
+        // return Promise.resolve(res);
+    } catch (error) {
+        return Promise.reject(error);
+    }
 };
 
 /**
  * @name 代码审计
  */
-export const loadAuditFromYakURLRaw = (
+export const loadAuditFromYakURLRaw = async (
     params: AuditYakUrlProps,
     body?: Buffer,
     Page?: number,
     PageSize?: number,
 ): Promise<RequestYakURLResponse | null> => {
-    return new Promise(async (resolve, reject) => {
-        ipcRenderer
-            .invoke('RequestYakURL', {
-                Method: 'GET',
-                Url: params,
-                Body: body,
-                Page,
-                PageSize,
-            })
-            .then((rsp: RequestYakURLResponse) => {
-                resolve(rsp);
-            })
-            .catch((e) => {
-                reject(e);
-            });
-    });
+    const newParams = {
+        Method: 'GET',
+        Url: params,
+        Body: body,
+        Page,
+        PageSize,
+    };
+    try {
+        return Promise.reject(new Error(JSON.stringify(newParams)));
+        // const res: RequestYakURLResponse = await ipcRenderer.invoke('RequestYakURL', newParams);
+    } catch (error) {
+        return Promise.reject(error);
+    }
 };
 
 const YakRunnerAuditOpenHistory = 'YakRunnerAuditOpenHistory';
@@ -352,7 +378,7 @@ export const setAuditCodeHistory = (newHistory: YakRunnerHistoryProps) => {
  * @name 获取Audit历史记录
  */
 export const getAuditCodeHistory = (): Promise<YakRunnerHistoryProps[]> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve) => {
         getRemoteValue(YakRunnerAuditOpenHistory).then((data) => {
             try {
                 if (!data) {
@@ -374,12 +400,12 @@ export const getAuditCodeHistory = (): Promise<YakRunnerHistoryProps[]> => {
 export const judgeAreaExistAuditPath = (
     areaInfo: AreaInfoProps[],
 ): Promise<string[]> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve) => {
         const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
         let hasPath: string[] = [];
-        newAreaInfo.forEach((item, index) => {
-            item.elements.forEach((itemIn, indexIn) => {
-                itemIn.files.forEach((file, fileIndex) => {
+        newAreaInfo.forEach((item) => {
+            item.elements.forEach((itemIn) => {
+                itemIn.files.forEach((file) => {
                     if (file.fileSourceType === 'audit') {
                         hasPath.push(file.path);
                     }
@@ -398,11 +424,11 @@ export const removeAuditCodeAreaFilesInfo = (
     removePath: string[],
 ) => {
     // 如若有为空项则删除
-    const buildAreaInfo = (areaInfo) => {
+    const buildAreaInfo = (areaInfo: any) => {
         const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
         // 移除elements中的files层
         newAreaInfo.forEach((item, idx) => {
-            item.elements.forEach((itemIn, idxin) => {
+            item.elements.forEach((itemIn) => {
                 if (itemIn.files.length === 0) {
                     newAreaInfo[idx].elements = newAreaInfo[
                         idx
@@ -427,9 +453,10 @@ export const removeAuditCodeAreaFilesInfo = (
     const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
     newAreaInfo.forEach((item, idx) => {
         item.elements.forEach((itemIn, idxin) => {
-            itemIn.files.forEach((file, fileIndex) => {
+            itemIn.files.forEach((file) => {
                 if (removePath.includes(file.path)) {
                     newAreaInfo[idx].elements[idxin].files =
+                        // eslint-disable-next-line max-nested-callbacks
                         itemIn.files.filter((item) => item.path !== file.path);
                 }
             });
@@ -452,6 +479,7 @@ export const setAuditCodeAreaFileActive = (
                 if (file.path === path) {
                     newAreaInfo[index].elements[indexIn].files = newAreaInfo[
                         index
+                        // eslint-disable-next-line max-nested-callbacks
                     ].elements[indexIn].files.map((item) => ({
                         ...item,
                         isActive: false,
@@ -500,11 +528,11 @@ export const judgeAuditCodeAreaExistFilePath = (
     areaInfo: AreaInfoProps[],
     path: string,
 ): Promise<FileDetailInfo | null> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve) => {
         const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
-        newAreaInfo.forEach((item, index) => {
-            item.elements.forEach((itemIn, indexIn) => {
-                itemIn.files.forEach((file, fileIndex) => {
+        newAreaInfo.forEach((item) => {
+            item.elements.forEach((itemIn) => {
+                itemIn.files.forEach((file) => {
                     if (file.path === path) {
                         resolve(file);
                     }
@@ -535,6 +563,7 @@ export const addAuditCodeAreaFileInfo = (
                         if (file.path === activeFile.path) {
                             newAreaInfo[index].elements[indexIn].files =
                                 newAreaInfo[index].elements[indexIn].files.map(
+                                    // eslint-disable-next-line max-nested-callbacks
                                     (item) => ({
                                         ...item,
                                         isActive: false,
@@ -590,7 +619,7 @@ export const removeAuditCodeAreaFileInfo = (
     info: FileDetailInfo,
 ) => {
     const newAreaInfo: AreaInfoProps[] = cloneDeep(areaInfo);
-    let newActiveFile: FileDetailInfo | undefined = undefined;
+    let newActiveFile: FileDetailInfo | undefined;
     let activeFileArr: FileDetailInfo[] = [];
     newAreaInfo.forEach((item, idx) => {
         item.elements.forEach((itemIn, idxin) => {
@@ -604,8 +633,10 @@ export const removeAuditCodeAreaFileInfo = (
                         newAreaInfo[idx].elements = newAreaInfo[
                             idx
                         ].elements.filter(
+                            // eslint-disable-next-line max-nested-callbacks
                             (item) =>
                                 !item.files
+                                    // eslint-disable-next-line max-nested-callbacks
                                     .map((item) => item.path)
                                     .includes(info.path),
                         );
@@ -620,6 +651,7 @@ export const removeAuditCodeAreaFileInfo = (
                         newAreaInfo[idx].elements[idxin].files = newAreaInfo[
                             idx
                         ].elements[idxin].files.filter(
+                            // eslint-disable-next-line max-nested-callbacks
                             (item) => item.path !== info.path,
                         );
                         // 重新激活未选中项目（因删除后当前tabs无选中项）
@@ -651,24 +683,30 @@ export const removeAuditCodeAreaFileInfo = (
 /**
  * @name 漏洞汇总
  */
-export const onSyntaxRisk = ({ ProgramName, CodeSourceUrl, RuntimeID }) => {
-    return new Promise(async (resolve, reject) => {
-        ipcRenderer
-            .invoke('QuerySSARisks', {
-                Filter: {
-                    ProgramName,
-                    CodeSourceUrl,
-                    RuntimeID,
-                },
-            })
-            .then((res: QuerySSARisksResponse) => {
-                const { Data } = res;
-                resolve(Data);
-            })
-            .catch(() => {
-                resolve([]);
-            });
-    });
+export const onSyntaxRisk = async ({
+    ProgramName,
+    CodeSourceUrl,
+    RuntimeID,
+}: {
+    ProgramName: string[];
+    CodeSourceUrl: string[];
+    RuntimeID: string[];
+}) => {
+    const params = {
+        Filter: {
+            ProgramName,
+            CodeSourceUrl,
+            RuntimeID,
+        },
+    };
+    try {
+        return Promise.reject(new Error(JSON.stringify(params)));
+        // const res = await ipcRenderer.invoke('QuerySSARisks', params);
+        // const { Data } = res;
+        // return Promise.resolve(Data);
+    } catch (error) {
+        return Promise.resolve([]);
+    }
 };
 
 /**
@@ -723,86 +761,80 @@ export const grpcFetchAuditCodeRenameFileTree: (
     path: string,
     newName: string,
     parentPath: string | null,
-) => Promise<FileNodeMapProps[]> = (path, newName, parentPath) => {
-    return new Promise(async (resolve, reject) => {
-        const params = {
-            Method: 'POST',
-            Url: {
-                Schema: 'file',
-                Query: [
-                    { Key: 'op', Value: 'rename' },
-                    {
-                        Key: 'newname',
-                        Value: newName,
-                    },
-                ],
-                Path: path,
-            },
-        };
-        try {
-            const list: RequestYakURLResponse = await ipcRenderer.invoke(
-                'RequestYakURL',
-                params,
-            );
-            // console.log("文件树重命名", params, list)
-            const data: FileNodeMapProps[] = initFileTreeData(list, parentPath);
-            resolve(data);
-        } catch (error) {
-            reject(error);
-        }
-    });
+) => Promise<FileNodeMapProps[]> = async (path, newName) => {
+    const params = {
+        Method: 'POST',
+        Url: {
+            Schema: 'file',
+            Query: [
+                { Key: 'op', Value: 'rename' },
+                {
+                    Key: 'newname',
+                    Value: newName,
+                },
+            ],
+            Path: path,
+        },
+    };
+    try {
+        return Promise.reject(new Error(JSON.stringify(params)));
+        // const list: RequestYakURLResponse = await ipcRenderer.invoke(
+        //     'RequestYakURL',
+        //     params,
+        // );
+        // // console.log("文件树重命名", params, list)
+        // const data: FileNodeMapProps[] = initFileTreeData(list, parentPath);
+        // return Promise.resolve(data);
+    } catch (error) {
+        return Promise.reject(error);
+    }
 };
 
-/**Extra找到code_range，根据其进行跳转到文件对应的位置 */
-export const onJumpByCodeRange: APIFunc<AuditDetailItemProps, null> = (
+/** Extra找到code_range，根据其进行跳转到文件对应的位置 */
+export const onJumpByCodeRange: APIFunc<AuditDetailItemProps, null> = async (
     data,
 ) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const arr = data.Extra.filter((item) => item.Key === 'code_range');
-            if (arr.length > 0) {
-                const item: CodeRangeProps = JSON.parse(arr[0].Value);
-                const { url, start_line, start_column, end_line, end_column } =
-                    item;
-                const name = await getNameByPath(url);
-                // console.log("monaca跳转", item, name)
-                const highLightRange: Selection = {
-                    startLineNumber: start_line,
-                    startColumn: start_column,
-                    endLineNumber: end_line,
-                    endColumn: end_column,
+    try {
+        const arr = data.Extra.filter((item) => item.Key === 'code_range');
+        if (arr.length > 0) {
+            const item: CodeRangeProps = JSON.parse(arr[0].Value);
+            const { url, start_line, start_column, end_line, end_column } =
+                item;
+            const name = await getNameByPath(url);
+            // console.log("monaca跳转", item, name)
+            const highLightRange: Selection = {
+                startLineNumber: start_line,
+                startColumn: start_column,
+                endLineNumber: end_line,
+                endColumn: end_column,
+            };
+            const OpenFileByPathParams: OpenFileByPathProps = {
+                params: {
+                    path: url,
+                    name,
+                    highLightRange,
+                },
+            };
+            emiter.emit(
+                'onCodeAuditOpenFileByPath',
+                JSON.stringify(OpenFileByPathParams),
+            );
+            // 纯跳转行号
+            setTimeout(() => {
+                const obj: JumpToAuditEditorProps = {
+                    selections: highLightRange,
+                    path: url,
+                    isSelect: false,
                 };
-                const OpenFileByPathParams: OpenFileByPathProps = {
-                    params: {
-                        path: url,
-                        name,
-                        highLightRange,
-                    },
-                };
-                emiter.emit(
-                    'onCodeAuditOpenFileByPath',
-                    JSON.stringify(OpenFileByPathParams),
-                );
-                // 纯跳转行号
-                setTimeout(() => {
-                    const obj: JumpToAuditEditorProps = {
-                        selections: highLightRange,
-                        path: url,
-                        isSelect: false,
-                    };
-                    emiter.emit(
-                        'onCodeAuditJumpEditorDetail',
-                        JSON.stringify(obj),
-                    );
-                }, 100);
-                resolve(null);
-            } else {
-                reject('未找到code_range字段,无法跳转');
-            }
-        } catch (error) {
-            reject(error);
+                emiter.emit('onCodeAuditJumpEditorDetail', JSON.stringify(obj));
+            }, 100);
+            return Promise.resolve(null);
+        } else {
+            return Promise.reject(new Error('未找到code_range字段,无法跳转'));
         }
-    });
+    } catch (error) {
+        return Promise.reject(error);
+    }
 };
 
 /**
@@ -812,118 +844,120 @@ export const getCodeByPath = (
     path: string,
     loadTreeType?: 'file' | 'audit',
 ): Promise<string> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let content: string = '';
-            const token = randomString(60);
-            ipcRenderer.invoke(
-                'ReadFile',
-                {
-                    FilePath: path,
-                    FileSystem: loadTreeType === 'audit' ? 'ssadb' : 'local',
-                },
-                token,
-            );
-            ipcRenderer.on(
-                `${token}-data`,
-                (e, result: { Data: Uint8Array; EOF: boolean }) => {
-                    content += Uint8ArrayToString(result.Data);
-                    if (result.EOF) {
-                        resolve(content);
-                    }
-                },
-            );
-            ipcRenderer.on(`${token}-error`, async (e, error) => {
-                // 此处在 ssadb 模式时不做node兼容处理
-                try {
-                    let newContent = await getCodeByNode(path);
-                    resolve(newContent);
-                } catch (error) {
-                    failed(`无法获取该文件内容，请检查后后重试:  ${error}`);
-                    reject();
-                }
-            });
-            ipcRenderer.on(`${token}-end`, (e, data) => {
-                ipcRenderer.removeAllListeners(`${token}-data`);
-                ipcRenderer.removeAllListeners(`${token}-error`);
-                ipcRenderer.removeAllListeners(`${token}-end`);
-            });
-        } catch (error) {}
-    });
+    return Promise.resolve(JSON.stringify({ path, loadTreeType }));
+    // return new Promise(async (resolve, reject) => {
+    //     try {
+    //         let content: string = '';
+    //         const token = randomString(60);
+    //         ipcRenderer.invoke(
+    //             'ReadFile',
+    //             {
+    //                 FilePath: path,
+    //                 FileSystem: loadTreeType === 'audit' ? 'ssadb' : 'local',
+    //             },
+    //             token,
+    //         );
+    //         ipcRenderer.on(
+    //             `${token}-data`,
+    //             (e, result: { Data: Uint8Array; EOF: boolean }) => {
+    //                 content += Uint8ArrayToString(result.Data);
+    //                 if (result.EOF) {
+    //                     resolve(content);
+    //                 }
+    //             },
+    //         );
+    //         ipcRenderer.on(`${token}-error`, async (e, error) => {
+    //             // 此处在 ssadb 模式时不做node兼容处理
+    //             try {
+    //                 let newContent = await getCodeByNode(path);
+    //                 resolve(newContent);
+    //             } catch (error) {
+    //                 failed(`无法获取该文件内容，请检查后后重试:  ${error}`);
+    //                 reject();
+    //             }
+    //         });
+    //         ipcRenderer.on(`${token}-end`, (e, data) => {
+    //             ipcRenderer.removeAllListeners(`${token}-data`);
+    //             ipcRenderer.removeAllListeners(`${token}-error`);
+    //             ipcRenderer.removeAllListeners(`${token}-end`);
+    //         });
+    //     } catch (error) {}
+    // });
 };
 
 /**
  * @name 根据文件path获取其大小并判断其是否为文本
  */
-export const getCodeSizeByPath = (
+export const getCodeSizeByPath = async (
     path: string,
     loadTreeType?: 'file' | 'audit',
 ): Promise<{ size: number; isPlainText: boolean }> => {
-    return new Promise(async (resolve, reject) => {
-        const params = {
-            Method: 'GET',
-            Url: {
-                Schema: loadTreeType === 'audit' ? 'ssadb' : 'file',
-                Path: path,
-                Query: [{ Key: 'detectPlainText', Value: 'true' }],
-            },
-        };
-        try {
-            const list: RequestYakURLResponse = await ipcRenderer.invoke(
-                'RequestYakURL',
-                params,
-            );
-            const size = parseInt(list.Resources[0].Size + '');
-            let isPlainText: boolean = true;
-            list.Resources[0].Extra.forEach((item) => {
-                if (item.Key === 'IsPlainText' && item.Value === 'false') {
-                    isPlainText = false;
-                }
-            });
-            resolve({
-                size,
-                isPlainText,
-            });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    const params = {
+        Method: 'GET',
+        Url: {
+            Schema: loadTreeType === 'audit' ? 'ssadb' : 'file',
+            Path: path,
+            Query: [{ Key: 'detectPlainText', Value: 'true' }],
+        },
+    };
+    try {
+        return Promise.reject(new Error(JSON.stringify(params)));
+        // const list: RequestYakURLResponse = await ipcRenderer.invoke(
+        //     'RequestYakURL',
+        //     params,
+        // );
+        // const size = parseInt(String(list.Resources[0].Size), 10);
+        // let isPlainText = true;
+        // list.Resources[0].Extra.forEach((item: any) => {
+        //     if (item.Key === 'IsPlainText' && item.Value === 'false') {
+        //         isPlainText = false;
+        //     }
+        // });
+        // return Promise.resolve({
+        //     size,
+        //     isPlainText,
+        // });
+    } catch (error) {
+        return Promise.reject(error);
+    }
 };
 
 /**
  * @name 获取路径上的(文件/文件夹)名（兼容多系统）
  */
 export const getNameByPath = (filePath: string): Promise<string> => {
-    return new Promise(async (resolve, reject) => {
-        ipcRenderer
-            .invoke('pathFileName', {
-                filePath,
-            })
-            .then((currentName: string) => {
-                resolve(currentName);
-            })
-            .catch(() => {
-                resolve('');
-            });
-    });
+    return Promise.reject(new Error(filePath));
+    // return new Promise(async (resolve, reject) => {
+    //     ipcRenderer
+    //         .invoke('pathFileName', {
+    //             filePath,
+    //         })
+    //         .then((currentName: string) => {
+    //             resolve(currentName);
+    //         })
+    //         .catch(() => {
+    //             resolve('');
+    //         });
+    // });
 };
 
 /**
  * @name 获取上一级的路径（兼容多系统）
  */
 export const getPathParent = (filePath: string): Promise<string> => {
-    return new Promise(async (resolve, reject) => {
-        ipcRenderer
-            .invoke('pathParent', {
-                filePath,
-            })
-            .then((currentPath: string) => {
-                resolve(currentPath);
-            })
-            .catch(() => {
-                resolve('');
-            });
-    });
+    return Promise.reject(new Error(filePath));
+    // return new Promise(async (resolve) => {
+    //     ipcRenderer
+    //         .invoke('pathParent', {
+    //             filePath,
+    //         })
+    //         .then((currentPath: string) => {
+    //             resolve(currentPath);
+    //         })
+    //         .catch(() => {
+    //             resolve('');
+    //         });
+    // });
 };
 
 interface FetchLocalPluginDetail {
@@ -935,26 +969,29 @@ export const grpcFetchLocalPluginDetail: APIFunc<
     FetchLocalPluginDetail,
     YakScript
 > = (params, hiddenError) => {
-    return new Promise((resolve, reject) => {
-        const { Name, UUID } = params;
-        if (!Name) {
-            if (!hiddenError) yakitNotify('error', '查询插件名不能为空');
-            reject(new Error('查询插件名不能为空'));
-            return;
-        }
+    return Promise.reject<YakScript>(
+        new Error(JSON.stringify({ params, hiddenError })),
+    );
+    // return new Promise((resolve, reject) => {
+    //     const { Name, UUID } = params;
+    //     if (!Name) {
+    //         if (!hiddenError) yakitNotify('error', '查询插件名不能为空');
+    //         reject(new Error('查询插件名不能为空'));
+    //         return;
+    //     }
 
-        ipcRenderer
-            .invoke('GetYakScriptByName', {
-                UUID: UUID || undefined,
-                Name: Name,
-            })
-            .then(resolve)
-            .catch((e) => {
-                if (!hiddenError)
-                    yakitNotify('error', '查询本地插件详情失败:' + e);
-                reject(e);
-            });
-    });
+    //     ipcRenderer
+    //         .invoke('GetYakScriptByName', {
+    //             UUID: UUID || undefined,
+    //             Name: Name,
+    //         })
+    //         .then(resolve)
+    //         .catch((e) => {
+    //             if (!hiddenError)
+    //                 yakitNotify('error', '查询本地插件详情失败:' + e);
+    //             reject(e);
+    //         });
+    // });
 };
 
 export interface QuerySyntaxFlowResultRequest {
@@ -966,19 +1003,20 @@ export interface QuerySyntaxFlowResultRequest {
 export const apiFetchQuerySyntaxFlowResult: (
     params: QuerySyntaxFlowResultRequest,
 ) => Promise<any> = (params) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((_, reject) => {
         const queryParams: QuerySyntaxFlowResultRequest = {
             ...params,
         };
-        ipcRenderer
-            .invoke('QuerySyntaxFlowResult', queryParams)
-            .then((res: any) => {
-                resolve(res);
-            })
-            .catch((e) => {
-                reject(e);
-                yakitNotify('error', '获取审计结果：' + e);
-            });
+        reject(JSON.stringify(queryParams));
+        // ipcRenderer
+        //     .invoke('QuerySyntaxFlowResult', queryParams)
+        //     .then((res: any) => {
+        //         resolve(res);
+        //     })
+        //     .catch((e) => {
+        //         reject(e);
+        //         yakitNotify('error', '获取审计结果：' + e);
+        //     });
     });
 };
 
@@ -1000,14 +1038,15 @@ export const apiGetSSARiskDisposal: (params: {
     RiskId?: number;
     RiskHash?: string;
 }) => Promise<GetSSARiskDisposalResponse> = (params) => {
-    return new Promise((resolve, reject) => {
-        ipcRenderer
-            .invoke('GetSSARiskDisposal', params)
-            .then(resolve)
-            .catch((e) => {
-                yakitNotify('error', `获取失败: ${e}`);
-                reject(e);
-            });
+    return new Promise((_, reject) => {
+        reject(JSON.stringify(params));
+        // ipcRenderer
+        //     .invoke('GetSSARiskDisposal', params)
+        //     .then(resolve)
+        //     .catch((e) => {
+        //         yakitNotify('error', `获取失败: ${e}`);
+        //         reject(e);
+        //     });
     });
 };
 
@@ -1040,14 +1079,15 @@ export interface DeleteSSARiskDisposalsRequest {
 export const apiDeleteSSARiskDisposals: (
     params: DeleteSSARiskDisposalsRequest,
 ) => Promise<DeleteSSARiskDisposalsResponse> = (params) => {
-    return new Promise((resolve, reject) => {
-        ipcRenderer
-            .invoke('DeleteSSARiskDisposals', params)
-            .then(resolve)
-            .catch((e: any) => {
-                yakitNotify('error', `删除失败: ${e}`);
-                reject(e);
-            });
+    return new Promise((_, reject) => {
+        reject(JSON.stringify(params));
+        // ipcRenderer
+        //     .invoke('DeleteSSARiskDisposals', params)
+        //     .then(resolve)
+        //     .catch((e: any) => {
+        //         yakitNotify('error', `删除失败: ${e}`);
+        //         reject(e);
+        //     });
     });
 };
 
@@ -1061,14 +1101,15 @@ export interface CreateSSARiskDisposalsRequest {
 export const apiCreateSSARiskDisposals: (
     params: CreateSSARiskDisposalsRequest,
 ) => Promise<null> = (params) => {
-    return new Promise((resolve, reject) => {
-        ipcRenderer
-            .invoke('CreateSSARiskDisposals', params)
-            .then(resolve)
-            .catch((e: any) => {
-                yakitNotify('error', `设置失败: ${e}`);
-                reject(e);
-            });
+    return new Promise((_, reject) => {
+        reject(JSON.stringify(params));
+        // ipcRenderer
+        //     .invoke('CreateSSARiskDisposals', params)
+        //     .then(resolve)
+        //     .catch((e: any) => {
+        //         yakitNotify('error', `设置失败: ${e}`);
+        //         reject(e);
+        //     });
     });
 };
 

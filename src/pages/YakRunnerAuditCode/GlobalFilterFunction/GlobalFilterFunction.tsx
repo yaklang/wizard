@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
+import React, { useRef, useState } from 'react';
+import type {
     GlobalFilterFunctionProps,
     GlobalFilterFunctionTreeProps,
 } from './GlobalFilterFunctionType';
@@ -11,8 +11,6 @@ import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
 import { randomString } from '@/utils/randomUtil';
 import { Progress, Tree } from 'antd';
 import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
-import type { apiDebugPlugin, DebugPluginRequest } from '@/pages/plugins/utils';
-import type { HTTPRequestBuilderParams } from '@/models/HTTPRequestBuilder';
 import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 import type {
     AuditNodeDetailProps,
@@ -26,7 +24,6 @@ import { OutlineSearchIcon } from '@/assets/icon/outline';
 import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import { onSetSelectedSearchVal } from '../AuditSearchModal/AuditSearch';
 import classNames from 'classnames';
-import { grpcFetchLocalPluginDetail } from '@/pages/pluginHub/utils/grpc';
 
 const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
     (props) => {
@@ -35,7 +32,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
 
         const [executing, setExecuting] = useState<boolean>(false);
 
-        const [queryPluginError, setQueryPluginError] = useState<string>('');
+        const [queryPluginError] = useState<string>('');
 
         const tokenRef = useRef<string>(randomString(40));
         const [streamInfo, debugPluginStreamEvent] = useHoldGRPCStream({
@@ -51,68 +48,68 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
             isShowEnd: false,
         });
 
-        useEffect(() => {
-            onInit();
-        }, [projectName]);
+        // useEffect(() => {
+        //     onInit();
+        // }, [projectName]);
 
         const onStopExecute = useMemoizedFn(() => {
             debugPluginStreamEvent.cancel();
             debugPluginStreamEvent.reset();
         });
 
-        const onInit = useMemoizedFn(() => {
-            grpcFetchLocalPluginDetail(
-                { Name: 'SyntaxFlow 查询项目信息' },
-                true,
-            )
-                .then(() => {
-                    getList();
-                })
-                .catch((err: any) => {
-                    setQueryPluginError(`${err}`);
-                });
-        });
+        // const onInit = useMemoizedFn(() => {
+        //     grpcFetchLocalPluginDetail(
+        //         { Name: 'SyntaxFlow 查询项目信息' },
+        //         true,
+        //     )
+        //         .then(() => {
+        //             getList();
+        //         })
+        //         .catch((err: any) => {
+        //             setQueryPluginError(`${err}`);
+        //         });
+        // });
 
-        const getList = useMemoizedFn(() => {
-            if (!projectName) {
-                yakitNotify('warning', '请先选择项目');
-                return;
-            }
-            if (executing) {
-                yakitNotify('warning', '请等待上一次搜索结束');
-                return;
-            }
-            const httpRequestTemplate: HTTPRequestBuilderParams = {};
-            const requestParams: DebugPluginRequest = {
-                Code: '',
-                PluginType: 'yak',
-                Input: '',
-                HTTPRequestTemplate: httpRequestTemplate,
-                ExecParams: [
-                    {
-                        Key: 'progName',
-                        Value: projectName || '',
-                    },
-                    {
-                        Key: 'kind',
-                        Value: 'filterFunc',
-                    },
-                ],
-                PluginName: 'SyntaxFlow 查询项目信息',
-            };
-            setData([]);
-            debugPluginStreamEvent.reset();
-            apiDebugPlugin({
-                params: requestParams,
-                token: tokenRef.current,
-                isShowStartInfo: false,
-            })
-                .then(() => {
-                    debugPluginStreamEvent.start();
-                    setExecuting(true);
-                })
-                .catch(() => {});
-        });
+        // const getList = useMemoizedFn(() => {
+        //     if (!projectName) {
+        //         yakitNotify('warning', '请先选择项目');
+        //         return;
+        //     }
+        //     if (executing) {
+        //         yakitNotify('warning', '请等待上一次搜索结束');
+        //         return;
+        //     }
+        //     const httpRequestTemplate: HTTPRequestBuilderParams = {};
+        //     const requestParams: DebugPluginRequest = {
+        //         Code: '',
+        //         PluginType: 'yak',
+        //         Input: '',
+        //         HTTPRequestTemplate: httpRequestTemplate,
+        //         ExecParams: [
+        //             {
+        //                 Key: 'progName',
+        //                 Value: projectName || '',
+        //             },
+        //             {
+        //                 Key: 'kind',
+        //                 Value: 'filterFunc',
+        //             },
+        //         ],
+        //         PluginName: 'SyntaxFlow 查询项目信息',
+        //     };
+        //     setData([]);
+        //     debugPluginStreamEvent.reset();
+        //     apiDebugPlugin({
+        //         params: requestParams,
+        //         token: tokenRef.current,
+        //         isShowStartInfo: false,
+        //     })
+        //         .then(() => {
+        //             debugPluginStreamEvent.start();
+        //             setExecuting(true);
+        //         })
+        //         .catch(() => {});
+        // });
 
         useUpdateEffect(() => {
             const startLog = streamInfo.logState.filter(
@@ -126,7 +123,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
             try {
                 const list: AuditNodeProps[] = [];
                 startLog.forEach((item) => {
-                    if (!!item.data) {
+                    if (item.data) {
                         const jsonData = JSON.parse(item.data);
                         if (
                             !!jsonData &&
@@ -159,8 +156,12 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
         });
         const getChildData = useMemoizedFn(
             (page: number, id: string): Promise<void> => {
+                // eslint-disable-next-line no-async-promise-executor
                 return new Promise(async (resolve, reject) => {
-                    if (!id || !projectName) return reject();
+                    if (!id || !projectName) {
+                        reject(new Error('缺少必要参数'));
+                        return;
+                    }
                     const params: AuditYakUrlProps = {
                         Schema: 'syntaxflow',
                         Location: projectName,
@@ -181,38 +182,40 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                         if (result) {
                             const childData: AuditNodeProps[] = [];
                             let isEnd = false;
-                            result.Resources.forEach((item, index) => {
-                                if (item.VerboseType !== 'result_id') {
-                                    const {
-                                        ResourceType,
-                                        VerboseType,
-                                        ResourceName,
-                                        Size,
-                                        Extra,
-                                    } = item;
-                                    let value: string = `${index}`;
-                                    const arr = Extra.filter(
-                                        (item) => item.Key === 'index',
-                                    );
-                                    if (arr.length > 0) {
-                                        value = arr[0].Value;
+                            result.Resources.forEach(
+                                (item: any, index: number) => {
+                                    if (item.VerboseType !== 'result_id') {
+                                        const {
+                                            ResourceType,
+                                            VerboseType,
+                                            ResourceName,
+                                            Size,
+                                            Extra,
+                                        } = item;
+                                        let value = `${index}`;
+                                        const arr = Extra.filter(
+                                            (item: any) => item.Key === 'index',
+                                        );
+                                        if (arr.length > 0) {
+                                            value = arr[0].Value;
+                                        }
+                                        const newId = `${id}/${value}`;
+                                        childData.push({
+                                            parent: id,
+                                            id: newId,
+                                            name: ResourceName,
+                                            ResourceType,
+                                            VerboseType,
+                                            Size,
+                                            Extra,
+                                            depth: 2,
+                                            isLeaf: true,
+                                        });
+                                    } else {
+                                        isEnd = true;
                                     }
-                                    const newId = `${id}/${value}`;
-                                    childData.push({
-                                        parent: id,
-                                        id: newId,
-                                        name: ResourceName,
-                                        ResourceType,
-                                        VerboseType,
-                                        Size,
-                                        Extra,
-                                        depth: 2,
-                                        isLeaf: true,
-                                    });
-                                } else {
-                                    isEnd = true;
-                                }
-                            });
+                                },
+                            );
                             const loadId = `${id}/load`;
                             if (!isEnd) {
                                 childData.push({
@@ -246,7 +249,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                                     return {
                                         ...item,
                                         children:
-                                            +result.Page === 1
+                                            Number(result.Page) === 1
                                                 ? childData
                                                 : [
                                                       ...(
@@ -274,12 +277,14 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
         );
 
         const onLoadData = useMemoizedFn((node) => {
-            if (node.parent === null) return Promise.reject();
+            if (node.parent === null) {
+                return Promise.reject(new Error('根节点不加载'));
+            }
             return getChildData(1, node.id);
         });
         const loadTreeMore = useMemoizedFn(async (node: AuditNodeProps) => {
             if (node.parent && node.page) {
-                getChildData(+node.page + 1, node.parent);
+                getChildData(Number(node.page) + 1, node.parent);
             }
         });
 
@@ -307,6 +312,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                         </YakitButton>
                     </div>
                 ) : (
+                    // eslint-disable-next-line react/jsx-no-useless-fragment
                     <>
                         {queryPluginError ? (
                             <div style={{ marginTop: 20 }}>
@@ -316,6 +322,7 @@ const GlobalFilterFunction: React.FC<GlobalFilterFunctionProps> = React.memo(
                                 />
                             </div>
                         ) : (
+                            // eslint-disable-next-line react/jsx-no-useless-fragment
                             <>
                                 {data.length > 0 ? (
                                     <GlobalFilterFunctionTree
@@ -368,6 +375,7 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
             },
         );
         const handleSelect = useMemoizedFn(
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             (node: AuditNodeProps, detail?: AuditNodeDetailProps) => {
                 setFoucsedKey(node.id);
                 onJumpByCodeRange(node);
@@ -382,6 +390,7 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
             // 获取详情
             const getDetail = getDetailFun(info);
             return (
+                // eslint-disable-next-line react/jsx-no-useless-fragment
                 <>
                     <div
                         className={classNames(
@@ -431,11 +440,13 @@ const GlobalFilterFunctionTree: React.FC<GlobalFilterFunctionTreeProps> =
                     }}
                     treeData={data}
                     blockNode={true}
+                    // eslint-disable-next-line react/jsx-no-useless-fragment
                     switcherIcon={<></>}
                     expandedKeys={expandedKeys}
                     loadData={onLoadData}
                     // 解决重复打开一个节点时 能加载
                     loadedKeys={[]}
+                    // eslint-disable-next-line react/no-unstable-nested-components
                     titleRender={(nodeData) => {
                         return (
                             <AuditTreeNode
