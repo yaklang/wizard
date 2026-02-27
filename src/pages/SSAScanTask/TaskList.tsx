@@ -34,8 +34,17 @@ import {
 import { SiPhp, SiJavascript, SiPython, SiGo, SiC } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { querySSATasks } from '@/apis/SSAScanTaskApi';
-import type { TSSATask, TSSATaskQueryParams } from '@/apis/SSAScanTaskApi/type';
+import {
+    querySSATasks,
+    querySSAArtifactSummary,
+    querySSAArtifactEvents,
+} from '@/apis/SSAScanTaskApi';
+import type {
+    TSSATask,
+    TSSATaskQueryParams,
+    TSSAArtifactMetricsSummary,
+    TSSAArtifactEvent,
+} from '@/apis/SSAScanTaskApi/type';
 import { fetchSSAProject } from '@/apis/SSAProjectApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
@@ -68,6 +77,21 @@ const TaskList: React.FC = () => {
     const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
     const [projectDetails, setProjectDetails] = useState<
         Record<number, TSSAProject>
+    >({});
+    const [artifactSummaryMap, setArtifactSummaryMap] = useState<
+        Record<string, TSSAArtifactMetricsSummary>
+    >({});
+    const [artifactEventsMap, setArtifactEventsMap] = useState<
+        Record<string, TSSAArtifactEvent[]>
+    >({});
+    const [artifactLoadingMap, setArtifactLoadingMap] = useState<
+        Record<string, boolean>
+    >({});
+    const [artifactErrorMap, setArtifactErrorMap] = useState<
+        Record<string, string>
+    >({});
+    const [artifactPanelOpenMap, setArtifactPanelOpenMap] = useState<
+        Record<string, boolean>
     >({});
 
     // SSE连接，自动接收任务更新事件
@@ -273,6 +297,10 @@ const TaskList: React.FC = () => {
         const newExpandedId = expandedTaskId === taskId ? null : taskId;
         setExpandedTaskId(newExpandedId);
 
+        if (newExpandedId) {
+            fetchArtifactMetrics(newExpandedId);
+        }
+
         if (newExpandedId && projectId && !projectDetails[projectId]) {
             try {
                 const res = await fetchSSAProject({ id: projectId });
@@ -286,6 +314,62 @@ const TaskList: React.FC = () => {
                 console.error('获取项目详情失败:', err);
             }
         }
+    };
+
+    const fetchArtifactMetrics = useCallback(async (taskId: string) => {
+        if (!taskId) return;
+        setArtifactLoadingMap((prev) => ({ ...prev, [taskId]: true }));
+        setArtifactErrorMap((prev) => ({ ...prev, [taskId]: '' }));
+        try {
+            const [summaryRes, eventsRes] = await Promise.all([
+                querySSAArtifactSummary(taskId),
+                querySSAArtifactEvents(taskId, { limit: 400 }),
+            ]);
+            const summaryPayload =
+                (summaryRes as any)?.data?.data?.data ||
+                (summaryRes as any)?.data?.data ||
+                (summaryRes as any)?.data;
+            const eventsPayload =
+                (eventsRes as any)?.data?.data?.data?.list ||
+                (eventsRes as any)?.data?.data?.list ||
+                (eventsRes as any)?.data?.list ||
+                [];
+            const normalizedSummary: TSSAArtifactMetricsSummary =
+                summaryPayload || {};
+            setArtifactSummaryMap((prev) => ({
+                ...prev,
+                [taskId]: normalizedSummary,
+            }));
+            setArtifactEventsMap((prev) => ({
+                ...prev,
+                [taskId]: Array.isArray(eventsPayload) ? eventsPayload : [],
+            }));
+        } catch (err: any) {
+            const msg = err?.message || err?.msg || '加载传输导入指标失败';
+            setArtifactErrorMap((prev) => ({ ...prev, [taskId]: msg }));
+        } finally {
+            setArtifactLoadingMap((prev) => ({ ...prev, [taskId]: false }));
+        }
+    }, []);
+
+    const formatBytes = (size?: number) => {
+        const n = Number(size || 0);
+        if (n <= 0) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let v = n;
+        let i = 0;
+        while (v >= 1024 && i < units.length - 1) {
+            v /= 1024;
+            i++;
+        }
+        return `${v.toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
+    };
+
+    const formatMS = (ms?: number) => {
+        const n = Number(ms || 0);
+        if (n <= 0) return '0 ms';
+        if (n < 1000) return `${n} ms`;
+        return `${(n / 1000).toFixed(2)} s`;
     };
 
     const languageIconMap: Record<
@@ -331,6 +415,46 @@ const TaskList: React.FC = () => {
             ? projectDetails[task.project_id]
             : null;
         const projectConfig = projectDetail?.config;
+        const artifactSummary = artifactSummaryMap[task.task_id];
+        const artifactEvents = artifactEventsMap[task.task_id] || [];
+        const artifactLoading = artifactLoadingMap[task.task_id];
+        const artifactError = artifactErrorMap[task.task_id];
+        const isArtifactPanelOpen = !!artifactPanelOpenMap[task.task_id];
+        const uploadSegments = Number(artifactSummary?.upload_segments || 0);
+        const importSegments = Number(artifactSummary?.import_segments || 0);
+        const isTerminalStatus =
+            task.status === 'completed' ||
+            task.status === 'failed' ||
+            task.status === 'canceled';
+        const scanPercent = Math.max(
+            0,
+            Math.min(100, Math.round(task.progress || 0)),
+        );
+        const hasImportSegments = uploadSegments > 0;
+        const importPercent = hasImportSegments
+            ? Math.min(
+                  100,
+                  Math.round((importSegments / Math.max(uploadSegments, 1)) * 100),
+              )
+            : 0;
+        const isImportPhase =
+            task.phase === 'importing' || task.phase === 'finalizing';
+        const showImportProgress =
+            !isTerminalStatus &&
+            (isImportPhase ||
+                scanPercent >= 100 ||
+                (hasImportSegments && importSegments > 0));
+        const showProgressBar =
+            !isTerminalStatus &&
+            (task.status === 'running' ||
+                task.status === 'scanning' ||
+                task.status === 'compiling' ||
+                showImportProgress);
+        const progressPercent = showImportProgress
+            ? hasImportSegments
+                ? importPercent
+                : 1
+            : scanPercent;
 
         return (
             <div className="task-card" key={task.task_id}>
@@ -360,15 +484,23 @@ const TaskList: React.FC = () => {
                                     {getStatusText(task.status)}
                                 </span>
                             </div>
-                            {(task.status === 'running' ||
-                                task.status === 'scanning' ||
-                                task.status === 'compiling') && (
-                                <Progress
-                                    percent={Math.round(task.progress)}
-                                    size="small"
-                                    style={{ width: 150, marginLeft: 16 }}
-                                    status="active"
-                                />
+                            {showProgressBar && (
+                                <div className="task-progress-wrapper">
+                                    <Progress
+                                        percent={progressPercent}
+                                        size="small"
+                                        style={{ width: 180, marginLeft: 16 }}
+                                        status="active"
+                                    />
+                                    {showImportProgress && (
+                                        <span className="import-progress-meta">
+                                            解压入库{' '}
+                                            {hasImportSegments
+                                                ? `${importSegments}/${uploadSegments}`
+                                                : '进行中'}
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </div>
 
@@ -872,6 +1004,232 @@ const TaskList: React.FC = () => {
                                 </div>
                             </div>
                         )}
+
+                        <div className="detail-section">
+                            <div className="detail-section-header">
+                                <h4>诊断信息 / 执行日志</h4>
+                                <Space size={8}>
+                                    {isArtifactPanelOpen && (
+                                        <Button
+                                            size="small"
+                                            onClick={() =>
+                                                fetchArtifactMetrics(
+                                                    task.task_id,
+                                                )
+                                            }
+                                            loading={artifactLoading}
+                                        >
+                                            刷新
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="small"
+                                        onClick={() => {
+                                            const nextOpen = !isArtifactPanelOpen;
+                                            setArtifactPanelOpenMap((prev) => ({
+                                                ...prev,
+                                                [task.task_id]: nextOpen,
+                                            }));
+                                            if (nextOpen) {
+                                                fetchArtifactMetrics(task.task_id);
+                                            }
+                                        }}
+                                    >
+                                        {isArtifactPanelOpen ? '收起' : '展开'}
+                                    </Button>
+                                </Space>
+                            </div>
+                            {isArtifactPanelOpen && (
+                                <>
+                                    <h4>传输导入</h4>
+                                    {artifactError ? (
+                                        <div className="error-message">
+                                            {artifactError}
+                                        </div>
+                                    ) : (
+                                        <Spin spinning={!!artifactLoading}>
+                                            <Descriptions
+                                                bordered
+                                                column={2}
+                                                size="small"
+                                            >
+                                        <Descriptions.Item label="产物格式">
+                                            {artifactSummary?.manifest_format ||
+                                                '-'}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="任务阶段">
+                                            {artifactSummary?.phase || '-'}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Manifest Codec">
+                                            {artifactSummary?.manifest_codec ||
+                                                '-'}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Manifest 大小">
+                                            {formatBytes(
+                                                artifactSummary?.manifest_compressed_size,
+                                            )}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="上传分段数">
+                                            {artifactSummary?.upload_segments ||
+                                                0}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="导入分段数">
+                                            {artifactSummary?.import_segments ||
+                                                0}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="上传总量(原始)">
+                                            {formatBytes(
+                                                artifactSummary?.upload_raw_bytes,
+                                            )}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="上传总量(压缩)">
+                                            {formatBytes(
+                                                artifactSummary?.upload_compressed_bytes,
+                                            )}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="上传总耗时">
+                                            {formatMS(
+                                                artifactSummary?.upload_duration_ms,
+                                            )}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="导入总耗时">
+                                            {formatMS(
+                                                artifactSummary?.import_duration_ms,
+                                            )}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="导入下载耗时">
+                                            {formatMS(
+                                                artifactSummary?.import_download_ms,
+                                            )}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="导入解码耗时">
+                                            {formatMS(
+                                                artifactSummary?.import_decode_ms,
+                                            )}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="导入新增风险">
+                                            {artifactSummary?.import_risk_delta ||
+                                                0}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="错误计数">
+                                            {artifactSummary?.error_count || 0}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item
+                                            label="Manifest 对象"
+                                            span={2}
+                                        >
+                                            <Typography.Text
+                                                copyable={
+                                                    !!artifactSummary?.manifest_object_key
+                                                }
+                                                ellipsis={{
+                                                    tooltip:
+                                                        artifactSummary?.manifest_object_key,
+                                                }}
+                                            >
+                                                {artifactSummary?.manifest_object_key ||
+                                                    '-'}
+                                            </Typography.Text>
+                                        </Descriptions.Item>
+                                        {artifactSummary?.last_error && (
+                                            <Descriptions.Item
+                                                label="最新错误"
+                                                span={2}
+                                            >
+                                                {artifactSummary.last_error}
+                                            </Descriptions.Item>
+                                        )}
+                                            </Descriptions>
+
+                                            <div className="artifact-events">
+                                                <div className="artifact-events-title">
+                                                    分段事件（上传/导入）
+                                                </div>
+                                                {artifactEvents.length === 0 ? (
+                                                    <Empty
+                                                        image={
+                                                            Empty.PRESENTED_IMAGE_SIMPLE
+                                                        }
+                                                        description="暂无事件数据"
+                                                    />
+                                                ) : (
+                                                    <div className="artifact-events-list">
+                                                        {artifactEvents.map(
+                                                            (evt) => (
+                                                                <div
+                                                                    className="artifact-event-row"
+                                                                    key={`${evt.stage}-${evt.seq}-${evt.id || 0}`}
+                                                                >
+                                                                    <span>
+                                                                        [
+                                                                        {
+                                                                            evt.stage
+                                                                        }
+                                                                        ] seq=
+                                                                        {
+                                                                            evt.seq
+                                                                        }
+                                                                    </span>
+                                                                    <span>
+                                                                        raw=
+                                                                        {formatBytes(
+                                                                            evt.uncompressed_size,
+                                                                        )}
+                                                                    </span>
+                                                                    <span>
+                                                                        compressed=
+                                                                        {formatBytes(
+                                                                            evt.compressed_size,
+                                                                        )}
+                                                                    </span>
+                                                                    <span>
+                                                                        upload=
+                                                                        {formatMS(
+                                                                            evt.upload_ms,
+                                                                        )}
+                                                                    </span>
+                                                                    <span>
+                                                                        download=
+                                                                        {formatMS(
+                                                                            evt.download_ms,
+                                                                        )}
+                                                                    </span>
+                                                                    <span>
+                                                                        decode=
+                                                                        {formatMS(
+                                                                            evt.decode_ms,
+                                                                        )}
+                                                                    </span>
+                                                                    <span>
+                                                                        import=
+                                                                        {formatMS(
+                                                                            evt.import_ms,
+                                                                        )}
+                                                                    </span>
+                                                                    <span>
+                                                                        risk+
+                                                                        {evt.risk_delta ||
+                                                                            0}
+                                                                    </span>
+                                                                    {evt.error_message && (
+                                                                        <span className="artifact-event-error">
+                                                                            err=
+                                                                            {
+                                                                                evt.error_message
+                                                                            }
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Spin>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

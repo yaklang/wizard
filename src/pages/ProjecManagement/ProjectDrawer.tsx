@@ -128,6 +128,9 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
 
     // 加载策略配置
     useEffect(() => {
+        if (!visible) {
+            return;
+        }
         const loadPolicyConfig = async () => {
             setLoadingPolicyConfig(true);
             try {
@@ -146,7 +149,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
         };
         
         loadPolicyConfig();
-    }, []);
+    }, [visible, projectId]);
 
     useEffect(() => {
         if (visible && projectId) {

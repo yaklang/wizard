@@ -105,6 +105,18 @@
                             margin-left: 4px;
                         }
                     }
+
+                    .task-progress-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+
+                    .import-progress-meta {
+                        color: var(--irify-text-secondary);
+                        font-size: 12px;
+                        white-space: nowrap;
+                    }
                 }
 
                 .task-meta-grid {
@@ -216,6 +228,22 @@
                     border-left: 3px solid var(--irify-accent);
                 }
 
+                .detail-section-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 12px;
+
+                    h4 {
+                        margin-bottom: 0;
+                    }
+                }
+
+                .ant-collapse {
+                    background: var(--irify-bg-base);
+                    border-color: var(--irify-border);
+                }
+
                 .ant-descriptions {
                     background: var(--irify-bg-base);
 
@@ -239,6 +267,44 @@
                     color: #ff4d4f;
                     font-size: 13px;
                     line-height: 1.6;
+                }
+
+                .artifact-events {
+                    margin-top: 12px;
+                    border: 1px solid var(--irify-border);
+                    border-radius: 4px;
+                    padding: 10px;
+                    background: var(--irify-bg-base);
+
+                    .artifact-events-title {
+                        font-size: 13px;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                        color: var(--irify-text);
+                    }
+
+                    .artifact-events-list {
+                        max-height: 240px;
+                        overflow: auto;
+                    }
+
+                    .artifact-event-row {
+                        display: flex;
+                        gap: 12px;
+                        flex-wrap: wrap;
+                        font-size: 12px;
+                        line-height: 1.5;
+                        padding: 6px 0;
+                        border-bottom: 1px dashed var(--irify-border);
+
+                        &:last-child {
+                            border-bottom: none;
+                        }
+                    }
+
+                    .artifact-event-error {
+                        color: #ff4d4f;
+                    }
                 }
             }
         }

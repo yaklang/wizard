@@ -64,3 +64,50 @@ export interface TSSATaskListResponse {
         total_page: number;
     };
 }
+
+export interface TSSAArtifactMetricsSummary {
+    task_id: string;
+    task_status: string;
+    phase: string;
+    manifest_object_key: string;
+    manifest_codec: string;
+    manifest_format: string;
+    manifest_compressed_size: number;
+    manifest_uncompressed_size: number;
+    upload_segments: number;
+    upload_raw_bytes: number;
+    upload_compressed_bytes: number;
+    upload_duration_ms: number;
+    import_segments: number;
+    import_download_ms: number;
+    import_decode_ms: number;
+    import_duration_ms: number;
+    import_risk_delta: number;
+    error_count: number;
+    last_error: string;
+}
+
+export interface TSSAArtifactEvent {
+    id?: number;
+    task_id: string;
+    stage: string;
+    seq: number;
+    object_key?: string;
+    codec?: string;
+    format?: string;
+    compressed_size?: number;
+    uncompressed_size?: number;
+    upload_ms?: number;
+    download_ms?: number;
+    decode_ms?: number;
+    import_ms?: number;
+    risk_delta?: number;
+    error_message?: string;
+    event_time?: number;
+    created_at?: number;
+    updated_at?: number;
+}
+
+export interface TSSAArtifactEventsResponse {
+    list: TSSAArtifactEvent[];
+}
