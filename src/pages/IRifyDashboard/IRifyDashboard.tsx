@@ -47,6 +47,10 @@ const statusLabels: Record<string, string> = {
     cancelled: '已取消',
 };
 
+const getTotalFromRiskResp = (res: any) => Number(res?.data?.pagemeta?.total) || 0;
+const severityOrder = ['critical', 'high', 'middle', 'low', 'info'] as const;
+type SeverityKey = (typeof severityOrder)[number];
+
 const IRifyDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isDark } = useTheme();
@@ -60,8 +64,33 @@ const IRifyDashboard: React.FC = () => {
 
     // Fetch risks summary
     const { data: risksData } = useRequest(async () => {
-        const res = await getSSARisks({ page: 1, limit: 5 });
+        const res = await getSSARisks({ page: 1, limit: 1 });
         return res.data;
+    });
+
+    // Fetch severity counts using backend total for each severity.
+    // Do not use a small page list for stats; that causes obvious undercount.
+    const { data: severitySummary } = useRequest(async () => {
+        const [criticalRes, highRes, middleRes, warningRes, lowRes, infoRes] =
+            await Promise.all([
+                getSSARisks({ page: 1, limit: 1, severity: 'critical' }),
+                getSSARisks({ page: 1, limit: 1, severity: 'high' }),
+                getSSARisks({ page: 1, limit: 1, severity: 'middle' }),
+                getSSARisks({ page: 1, limit: 1, severity: 'warning' }),
+                getSSARisks({ page: 1, limit: 1, severity: 'low' }),
+                getSSARisks({ page: 1, limit: 1, severity: 'info' }),
+            ]);
+
+        return {
+            critical: getTotalFromRiskResp(criticalRes),
+            high: getTotalFromRiskResp(highRes),
+            // warning 视为中危展示
+            middle:
+                getTotalFromRiskResp(middleRes) +
+                getTotalFromRiskResp(warningRes),
+            low: getTotalFromRiskResp(lowRes),
+            info: getTotalFromRiskResp(infoRes),
+        };
     });
 
     // Fetch recent scans
@@ -87,16 +116,14 @@ const IRifyDashboard: React.FC = () => {
     const riskCount = risksData?.pagemeta?.total || 0;
     const scanCount = scansData?.pagemeta?.total || 0;
 
-    // Get severity breakdown
-    const recentRisks = risksData?.list || [];
-    const severityCounts = recentRisks.reduce(
-        (acc: Record<string, number>, risk: any) => {
-            const severity = risk.severity || 'info';
-            acc[severity] = (acc[severity] || 0) + 1;
-            return acc;
-        },
-        {},
-    );
+    // Severity breakdown should reflect global totals, not only the first page list.
+    const severityCounts: Record<SeverityKey, number> = {
+        critical: severitySummary?.critical || 0,
+        high: severitySummary?.high || 0,
+        middle: severitySummary?.middle || 0,
+        low: severitySummary?.low || 0,
+        info: severitySummary?.info || 0,
+    };
 
     const recentScans = scansData?.list || [];
 
@@ -379,13 +406,7 @@ const IRifyDashboard: React.FC = () => {
                     >
                         {riskCount > 0 ? (
                             <div className="severity-summary">
-                                {[
-                                    'critical',
-                                    'high',
-                                    'middle',
-                                    'low',
-                                    'info',
-                                ].map((severity) => (
+                                {severityOrder.map((severity) => (
                                     <div
                                         key={severity}
                                         className="severity-row"

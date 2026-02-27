@@ -1722,6 +1722,8 @@ const SSARiskAudit: React.FC = () => {
     }
 
     const treeData = buildTreeData(fileTree);
+    const currentRiskTitle =
+        auditInfo?.risk?.title_verbose || auditInfo?.risk?.title || '-';
 
     return (
         <div className="ssa-risk-audit">
@@ -1740,7 +1742,7 @@ const SSARiskAudit: React.FC = () => {
                                 <>
                                     <Divider type="vertical" />
                                     <Text type="secondary">
-                                        当前: {auditInfo.risk.title || '-'}
+                                        当前: {currentRiskTitle}
                                     </Text>
                                 </>
                             )}
@@ -1749,7 +1751,7 @@ const SSARiskAudit: React.FC = () => {
                 ) : (
                     <>
                         <Title level={4}>
-                            {auditInfo?.risk?.title || '风险审计'}
+                            {currentRiskTitle || '风险审计'}
                         </Title>
                         <div className="risk-meta">
                             <Text type="secondary">
