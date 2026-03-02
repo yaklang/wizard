@@ -3,6 +3,10 @@
     padding: 24px;
     min-height: 100vh;
 
+    &.has-selection-bar {
+        padding-bottom: 104px;
+    }
+
     .ant-tabs-nav {
         background: var(--irify-bg-container);
         padding: 0 24px;
@@ -28,17 +32,6 @@
         display: flex;
         align-items: center;
         gap: 8px;
-
-        .selected-summary {
-            margin-left: 8px;
-            font-size: 13px;
-            color: var(--irify-text-secondary);
-
-            .selected-count {
-                color: var(--irify-accent);
-                font-weight: 700;
-            }
-        }
     }
 
     .task-card-list {
@@ -114,7 +107,8 @@
                     display: flex;
                     align-items: center;
                     gap: 24px;
-                    margin-bottom: 12px;
+                    margin-top: 12px;
+                    margin-bottom: 0;
 
                     .status-label {
                         color: var(--irify-text-secondary);
@@ -173,7 +167,7 @@
 
                 .stat-boxes {
                     display: flex;
-                    gap: 4px;
+                    gap: 8px;
 
                     .stat-box {
                         display: flex;
@@ -328,11 +322,86 @@
             }
         }
     }
+
+    .task-selection-bar {
+        position: fixed;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        width: min(960px, calc(100vw - 148px));
+        z-index: 1002;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        box-shadow:
+            0 18px 40px rgba(0, 0, 0, 0.35),
+            0 6px 16px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(8px);
+        animation: selectionBarRise 0.22s ease-out;
+
+        @keyframes selectionBarRise {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 10px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .selection-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .selected-count {
+            color: #7dd3fc;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .ant-btn:not(.ant-btn-dangerous) {
+            border-color: rgba(255, 255, 255, 0.32);
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+
+            &:hover {
+                border-color: rgba(255, 255, 255, 0.5);
+                background: rgba(255, 255, 255, 0.16);
+                color: #fff;
+            }
+        }
+    }
+
+    @media (max-width: 992px) {
+        .task-selection-bar {
+            width: calc(100vw - 24px);
+            padding: 12px 14px;
+            gap: 10px;
+
+            .selection-info {
+                font-size: 13px;
+            }
+        }
+    }
 }
 
 // Dark mode adaptations
 .irify-dark {
     .ssa-task-list {
+        .task-selection-bar {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 18px 40px rgba(0, 0, 0, 0.46),
+                0 6px 16px rgba(0, 0, 0, 0.35);
+        }
+
         .task-card {
             &.selected {
                 background: rgba(24, 144, 255, 0.16);

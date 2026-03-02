@@ -687,40 +687,6 @@ const TaskList: React.FC = () => {
                                 {task.project_name ||
                                     task.task_id.substring(0, 8)}
                             </span>
-                            <span className="task-line-count">
-                                (总行数:{' '}
-                                {task.total_lines?.toLocaleString() || '0'} 行)
-                            </span>
-                            {task.status === 'completed' && (
-                                <Tag color="success">●</Tag>
-                            )}
-                        </div>
-
-                        <div className="task-status-row">
-                            <div className="status-label">
-                                检测状态{' '}
-                                <span className="status-text">
-                                    {getStatusText(task.status)}
-                                </span>
-                            </div>
-                            {showProgressBar && (
-                                <div className="task-progress-wrapper">
-                                    <Progress
-                                        percent={progressPercent}
-                                        size="small"
-                                        style={{ width: 180, marginLeft: 16 }}
-                                        status="active"
-                                    />
-                                    {showImportProgress && (
-                                        <span className="import-progress-meta">
-                                            解压入库{' '}
-                                            {hasImportSegments
-                                                ? `${importSegments}/${uploadSegments}`
-                                                : '进行中'}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
                         </div>
 
                         <div className="task-meta-grid">
@@ -764,6 +730,39 @@ const TaskList: React.FC = () => {
                                         : '-'}
                                 </span>
                             </div>
+                            <div className="meta-item">
+                                总行数:{' '}
+                                <span>
+                                    {task.total_lines?.toLocaleString() || '0'} 行
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="task-status-row">
+                            <div className="status-label">
+                                检测状态{' '}
+                                <span className="status-text">
+                                    {getStatusText(task.status)}
+                                </span>
+                            </div>
+                            {showProgressBar && (
+                                <div className="task-progress-wrapper">
+                                    <Progress
+                                        percent={progressPercent}
+                                        size="small"
+                                        style={{ width: 180, marginLeft: 16 }}
+                                        status="active"
+                                    />
+                                    {showImportProgress && (
+                                        <span className="import-progress-meta">
+                                            解压入库{' '}
+                                            {hasImportSegments
+                                                ? `${importSegments}/${uploadSegments}`
+                                                : '进行中'}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1458,7 +1457,9 @@ const TaskList: React.FC = () => {
     };
 
     return (
-        <div className="ssa-task-list">
+        <div
+            className={`ssa-task-list ${selectedTaskIds.size > 0 ? 'has-selection-bar' : ''}`}
+        >
             <Tabs
                 activeKey={activeTab}
                 onChange={setActiveTab}
@@ -1560,23 +1561,6 @@ const TaskList: React.FC = () => {
                         ? '取消全选'
                         : '全选当前列表'}
                 </Button>
-                <Button
-                    icon={<DeleteOutlined />}
-                    danger
-                    disabled={selectedTaskIds.size === 0}
-                    onClick={handleBatchDelete}
-                >
-                    删除
-                </Button>
-                {selectedTaskIds.size > 0 && (
-                    <span className="selected-summary">
-                        已选中{' '}
-                        <span className="selected-count">
-                            {selectedTaskIds.size}
-                        </span>{' '}
-                        个任务
-                    </span>
-                )}
             </div>
 
             <Spin spinning={loading && page === 1}>
@@ -1606,6 +1590,30 @@ const TaskList: React.FC = () => {
                     <span>已加载全部 {data.length} 条任务</span>
                 )}
             </div>
+
+            {selectedTaskIds.size > 0 && (
+                <div className="task-selection-bar">
+                    <div className="selection-info">
+                        已选中{' '}
+                        <span className="selected-count">
+                            {selectedTaskIds.size}
+                        </span>{' '}
+                        个任务
+                    </div>
+                    <Space>
+                        <Button onClick={() => setSelectedTaskIds(new Set())}>
+                            取消选择
+                        </Button>
+                        <Button
+                            icon={<DeleteOutlined />}
+                            danger
+                            onClick={handleBatchDelete}
+                        >
+                            删除所选
+                        </Button>
+                    </Space>
+                </div>
+            )}
         </div>
     );
 };
