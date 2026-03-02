@@ -107,3 +107,14 @@ export interface YakScript {
     /** 全局变量 */
     PluginEnvKey?: string[];
 }
+
+export interface ExecResult {
+    Hash: string;
+    OutputJson: string;
+    Raw: Uint8Array;
+    IsMessage: boolean;
+    Message: Uint8Array;
+    Id?: number;
+    Progress: number;
+    RuntimeID?: string;
+}

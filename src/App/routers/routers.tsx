@@ -38,6 +38,7 @@ import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
 import CodecEntry from '@/pages/Codec';
 import SpecialTask from '@/pages/SpecialTask';
 import CreateTask from '@/pages/CreateTask';
+import { AIAgent } from '@/pages/AIAgent/ai-agent/AIAgent';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -259,6 +260,12 @@ const routers: RouteObjectRootMy[] = [
                         element: <GlobalReverseLink />,
                     },
                 ],
+            },
+            {
+                name: 'ai',
+                path: 'ai-aigent',
+                key: 'ai-agent',
+                element: <AIAgent />,
             },
         ],
     },
