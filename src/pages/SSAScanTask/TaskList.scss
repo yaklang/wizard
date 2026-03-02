@@ -26,7 +26,19 @@
     .list-actions {
         margin-bottom: 16px;
         display: flex;
+        align-items: center;
         gap: 8px;
+
+        .selected-summary {
+            margin-left: 8px;
+            font-size: 13px;
+            color: var(--irify-text-secondary);
+
+            .selected-count {
+                color: var(--irify-accent);
+                font-weight: 700;
+            }
+        }
     }
 
     .task-card-list {
@@ -45,10 +57,17 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        cursor: pointer;
 
         &:hover {
             box-shadow: 0 4px 12px var(--irify-glass-shadow);
             border-color: var(--irify-accent);
+        }
+
+        &.selected {
+            background: rgba(24, 144, 255, 0.08);
+            border-color: rgba(24, 144, 255, 0.45);
+            box-shadow: 0 0 0 1px rgba(24, 144, 255, 0.2);
         }
 
         .task-main-info {
@@ -315,6 +334,12 @@
 .irify-dark {
     .ssa-task-list {
         .task-card {
+            &.selected {
+                background: rgba(24, 144, 255, 0.16);
+                border-color: rgba(24, 144, 255, 0.55);
+                box-shadow: 0 0 0 1px rgba(24, 144, 255, 0.28);
+            }
+
             .task-detail-panel {
                 .detail-section {
                     .error-message {

@@ -19,17 +19,20 @@ import {
     Spin,
     Descriptions,
     Typography,
+    Dropdown,
+    Modal,
 } from 'antd';
+import type { MenuProps } from 'antd';
 import {
     ReloadOutlined,
     SearchOutlined,
-    FilterOutlined,
     AuditOutlined,
     EyeOutlined,
     FileTextOutlined,
     LockOutlined,
     DownloadOutlined,
     DeleteOutlined,
+    MoreOutlined,
 } from '@ant-design/icons';
 import { SiPhp, SiJavascript, SiPython, SiGo, SiC } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
@@ -38,6 +41,7 @@ import {
     querySSATasks,
     querySSAArtifactSummary,
     querySSAArtifactEvents,
+    cancelSSATask,
 } from '@/apis/SSAScanTaskApi';
 import type {
     TSSATask,
@@ -71,6 +75,9 @@ const TaskList: React.FC = () => {
     const [page, setPage] = useState(1);
     const [limit] = useState(20);
     const [hasMore, setHasMore] = useState(true);
+    const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(
+        new Set(),
+    );
 
     const [form] = Form.useForm();
 
@@ -217,6 +224,7 @@ const TaskList: React.FC = () => {
         setPage(1);
         setData([]);
         setHasMore(true);
+        setSelectedTaskIds(new Set());
         fetchList({ p: 1, l: limit, filters });
     };
 
@@ -225,6 +233,7 @@ const TaskList: React.FC = () => {
         setPage(1);
         setData([]);
         setHasMore(true);
+        setSelectedTaskIds(new Set());
         fetchList({ p: 1, l: limit });
     };
 
@@ -292,6 +301,187 @@ const TaskList: React.FC = () => {
         };
         return textMap[status] || status;
     };
+
+    const isTaskRunningStatus = useCallback((status?: string) => {
+        return (
+            status === 'running' ||
+            status === 'scanning' ||
+            status === 'compiling'
+        );
+    }, []);
+
+    const getCurrentFilters = useCallback(() => {
+        const filters: any = form.getFieldsValue();
+        if (filters.date_range) {
+            filters.start_date = filters.date_range[0].format('YYYY-MM-DD');
+            filters.end_date = filters.date_range[1].format('YYYY-MM-DD');
+            delete filters.date_range;
+        }
+        return filters;
+    }, [form]);
+
+    const refreshList = useCallback(() => {
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        setSelectedTaskIds(new Set());
+        fetchList({ p: 1, l: limit, filters: getCurrentFilters() });
+    }, [fetchList, getCurrentFilters, limit]);
+
+    const deleteTasksByIDs = useCallback(
+        async (taskIDs: string[]) => {
+            const uniqueIDs = Array.from(
+                new Set(taskIDs.filter((id) => !!id && id.trim() !== '')),
+            );
+            if (uniqueIDs.length === 0) {
+                return;
+            }
+
+            const results = await Promise.allSettled(
+                uniqueIDs.map((id) => cancelSSATask(id)),
+            );
+            const success = results.filter(
+                (r) => r.status === 'fulfilled',
+            ).length;
+            const failed = results.length - success;
+
+            if (failed === 0) {
+                message.success(`任务删除成功，共 ${success} 条`);
+            } else if (success > 0) {
+                message.warning(`任务删除部分成功：成功 ${success}，失败 ${failed}`);
+            } else {
+                message.error('任务删除失败');
+            }
+            refreshList();
+        },
+        [refreshList],
+    );
+
+    const handleTaskDelete = useCallback(
+        (task: TSSATask) => {
+            if (isTaskRunningStatus(task.status)) {
+                message.warning('运行中的任务暂不支持删除');
+                return;
+            }
+            Modal.confirm({
+                title: '删除任务',
+                content: `确定删除任务 ${task.project_name || task.task_id.substring(0, 8)} 吗？此操作不可恢复。`,
+                okText: '删除',
+                cancelText: '取消',
+                okButtonProps: { danger: true },
+                onOk: async () => {
+                    await deleteTasksByIDs([task.task_id]);
+                },
+            });
+        },
+        [deleteTasksByIDs, isTaskRunningStatus],
+    );
+
+    const handleTaskMoreAction = useCallback(
+        (task: TSSATask, key: string) => {
+            switch (key) {
+                case 'report':
+                    message.info('生成报告功能开发中');
+                    return;
+                case 'permission':
+                    message.info('修改访问权限功能开发中');
+                    return;
+                case 'download_log':
+                    message.info('下载日志功能开发中');
+                    return;
+                case 'delete':
+                    handleTaskDelete(task);
+                    return;
+                default:
+                    return;
+            }
+        },
+        [handleTaskDelete],
+    );
+
+    const handleTaskCardClick = useCallback(
+        (event: React.MouseEvent<HTMLDivElement>, taskId: string) => {
+            const target = event.target as HTMLElement;
+            const ignoreSelect =
+                target.closest('button') ||
+                target.closest('a') ||
+                target.closest('input') ||
+                target.closest('.task-detail-panel') ||
+                target.closest('.ant-dropdown') ||
+                target.closest('.ant-dropdown-menu');
+            if (ignoreSelect) {
+                return;
+            }
+            setSelectedTaskIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(taskId)) {
+                    next.delete(taskId);
+                } else {
+                    next.add(taskId);
+                }
+                return next;
+            });
+        },
+        [],
+    );
+
+    const toggleSelectAllVisible = useCallback(() => {
+        if (data.length === 0) {
+            return;
+        }
+        const allSelected = data.every((task) => selectedTaskIds.has(task.task_id));
+        if (allSelected) {
+            setSelectedTaskIds(new Set());
+            return;
+        }
+        setSelectedTaskIds(new Set(data.map((task) => task.task_id)));
+    }, [data, selectedTaskIds]);
+
+    const handleBatchDelete = useCallback(() => {
+        if (selectedTaskIds.size === 0) {
+            message.warning('请先选择要删除的任务');
+            return;
+        }
+        const selectedTasks = data.filter((task) =>
+            selectedTaskIds.has(task.task_id),
+        );
+        const runningTasks = selectedTasks.filter((task) =>
+            isTaskRunningStatus(task.status),
+        );
+        const deletableTasks = selectedTasks.filter(
+            (task) => !isTaskRunningStatus(task.status),
+        );
+
+        if (deletableTasks.length === 0) {
+            message.warning('选中的任务均在运行中，当前无法删除');
+            return;
+        }
+
+        if (runningTasks.length > 0) {
+            Modal.confirm({
+                title: '包含运行中任务',
+                content: `已选择 ${selectedTasks.length} 条任务，其中 ${runningTasks.length} 条正在运行中，无法删除。是否仅删除其余 ${deletableTasks.length} 条任务？`,
+                okText: '仅删除可删除项',
+                cancelText: '取消',
+                okButtonProps: { danger: true },
+                onOk: async () => {
+                    await deleteTasksByIDs(deletableTasks.map((task) => task.task_id));
+                },
+            });
+            return;
+        }
+
+        Modal.confirm({
+            title: '批量删除任务',
+            content: `确定删除选中的 ${selectedTaskIds.size} 条任务吗？此操作不可恢复。`,
+            okText: '删除',
+            cancelText: '取消',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                await deleteTasksByIDs(Array.from(selectedTaskIds));
+            },
+        });
+    }, [data, deleteTasksByIDs, isTaskRunningStatus, selectedTaskIds]);
 
     const toggleTaskDetail = async (taskId: string, projectId?: number) => {
         const newExpandedId = expandedTaskId === taskId ? null : taskId;
@@ -411,6 +601,7 @@ const TaskList: React.FC = () => {
 
     const renderTaskCard = (task: TSSATask) => {
         const isExpanded = expandedTaskId === task.task_id;
+        const isSelected = selectedTaskIds.has(task.task_id);
         const projectDetail = task.project_id
             ? projectDetails[task.project_id]
             : null;
@@ -455,9 +646,37 @@ const TaskList: React.FC = () => {
                 ? importPercent
                 : 1
             : scanPercent;
+        const moreMenuItems: MenuProps['items'] = [
+            {
+                key: 'report',
+                icon: <FileTextOutlined />,
+                label: '生成报告',
+            },
+            {
+                key: 'permission',
+                icon: <LockOutlined />,
+                label: '修改访问权限',
+            },
+            {
+                key: 'download_log',
+                icon: <DownloadOutlined />,
+                label: '下载日志',
+            },
+            { type: 'divider' },
+            {
+                key: 'delete',
+                icon: <DeleteOutlined />,
+                label: '删除任务',
+                danger: true,
+            },
+        ];
 
         return (
-            <div className="task-card" key={task.task_id}>
+            <div
+                className={`task-card ${isSelected ? 'selected' : ''}`}
+                key={task.task_id}
+                onClick={(e) => handleTaskCardClick(e, task.task_id)}
+            >
                 <div className="task-main-info">
                     <div
                         className={`task-status-dot ${getStatusClass(task.status)}`}
@@ -605,15 +824,17 @@ const TaskList: React.FC = () => {
                         >
                             详情
                         </Button>
-                        <Button type="link" icon={<FileTextOutlined />}>
-                            生成报告
-                        </Button>
-                        <Button type="link" icon={<LockOutlined />}>
-                            修改访问权限
-                        </Button>
-                        <Button type="link" icon={<DownloadOutlined />}>
-                            下载日志
-                        </Button>
+                        <Dropdown
+                            menu={{
+                                items: moreMenuItems,
+                                onClick: ({ key }) =>
+                                    handleTaskMoreAction(task, String(key)),
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button icon={<MoreOutlined />} />
+                        </Dropdown>
                     </div>
                 </div>
 
@@ -1333,12 +1554,29 @@ const TaskList: React.FC = () => {
             </div>
 
             <div className="list-actions">
-                <Button type="primary" icon={<FilterOutlined />}>
-                    发起检测
+                <Button onClick={toggleSelectAllVisible} disabled={data.length === 0}>
+                    {data.length > 0 &&
+                    data.every((task) => selectedTaskIds.has(task.task_id))
+                        ? '取消全选'
+                        : '全选当前列表'}
                 </Button>
-                <Button icon={<DeleteOutlined />} disabled>
+                <Button
+                    icon={<DeleteOutlined />}
+                    danger
+                    disabled={selectedTaskIds.size === 0}
+                    onClick={handleBatchDelete}
+                >
                     删除
                 </Button>
+                {selectedTaskIds.size > 0 && (
+                    <span className="selected-summary">
+                        已选中{' '}
+                        <span className="selected-count">
+                            {selectedTaskIds.size}
+                        </span>{' '}
+                        个任务
+                    </span>
+                )}
             </div>
 
             <Spin spinning={loading && page === 1}>
