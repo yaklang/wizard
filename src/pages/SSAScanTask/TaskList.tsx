@@ -28,6 +28,7 @@ import {
     SearchOutlined,
     AuditOutlined,
     EyeOutlined,
+    EyeInvisibleOutlined,
     FileTextOutlined,
     LockOutlined,
     DownloadOutlined,
@@ -816,12 +817,19 @@ const TaskList: React.FC = () => {
                             缺陷审计
                         </Button>
                         <Button
-                            icon={<EyeOutlined />}
+                            className={`detail-toggle-btn ${isExpanded ? 'is-expanded' : ''}`}
+                            icon={
+                                isExpanded ? (
+                                    <EyeInvisibleOutlined />
+                                ) : (
+                                    <EyeOutlined />
+                                )
+                            }
                             onClick={() =>
                                 toggleTaskDetail(task.task_id, task.project_id)
                             }
                         >
-                            详情
+                            {isExpanded ? '收起详情' : '详情'}
                         </Button>
                         <Dropdown
                             menu={{
