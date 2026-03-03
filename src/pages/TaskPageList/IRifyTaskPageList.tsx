@@ -688,30 +688,39 @@ const TaskPageList = () => {
                                                         '未分组'}
                                                 </Tag>
                                             </div>
-                                            <div className="task-subline">
-                                                {(item as any).account ||
-                                                    'root'}{' '}
-                                                | 运行节点{' '}
-                                                {item.scanner?.join('、') ||
-                                                    '-'}
-                                            </div>
                                             <div className="task-meta-grid">
                                                 <div className="meta-item">
-                                                    <span className="meta-value">
+                                                    创建者:{' '}
+                                                    <span>
+                                                        {(item as any)
+                                                            .account || 'root'}
+                                                    </span>
+                                                </div>
+                                                <div className="meta-item">
+                                                    运行节点:{' '}
+                                                    <span>
+                                                        {item.scanner?.join(
+                                                            '、',
+                                                        ) || '-'}
+                                                    </span>
+                                                </div>
+                                                <div className="meta-item">
+                                                    调度规则:{' '}
+                                                    <span>
                                                         {renderScheduleText(
                                                             item,
                                                         )}
                                                     </span>
                                                 </div>
                                                 <div className="meta-item">
-                                                    <span className="meta-value">
-                                                        上次执行:{' '}
+                                                    上次执行:{' '}
+                                                    <span>
                                                         {getLastRunText(item)}
                                                     </span>
                                                 </div>
                                                 <div className="meta-item">
-                                                    <span className="meta-value">
-                                                        下次执行:{' '}
+                                                    下次执行:{' '}
+                                                    <span>
                                                         {getNextRunText(item)}
                                                     </span>
                                                 </div>
@@ -719,7 +728,7 @@ const TaskPageList = () => {
                                         </div>
                                     </div>
 
-                                    <div className="task-actions">
+                                    <div className="task-stats-actions">
                                         <div className="switch-line">
                                             <span className="switch-label">
                                                 状态：
