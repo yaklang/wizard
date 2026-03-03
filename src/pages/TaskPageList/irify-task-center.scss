@@ -21,7 +21,7 @@
     .irify-task-type-tab {
         border: none;
         background: transparent;
-        color: #667085;
+        color: #475467;
         font-size: 14px;
         line-height: 22px;
         padding: 12px 0;
@@ -31,12 +31,12 @@
     }
 
     .irify-task-type-tab:hover {
-        color: #2f3a4b;
+        color: #1d4ed8;
     }
 
     .irify-task-type-tab.active {
-        color: var(--irify-accent);
-        border-bottom-color: var(--irify-accent);
+        color: #1e40af;
+        border-bottom-color: #1e40af;
         font-weight: 600;
     }
 }
