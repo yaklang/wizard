@@ -71,6 +71,7 @@
         "react-monaco-editor": "0.54.0",
         "react-resize-detector": "6.7.8",
         "react-router-dom": "^6.26.2",
+        "react-virtuoso": "4.14.1",
         "react-wordcloud": "^1.2.7",
         "rehype-highlight": "^7.0.1",
         "rehype-raw": "^7.0.0",

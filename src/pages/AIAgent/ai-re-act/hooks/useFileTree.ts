@@ -1,22 +1,18 @@
 import type {
     FileNodeMapProps,
     FileNodeProps,
-} from '@/pages/yakRunner/FileTree/FileTreeType';
+} from '@/pages/YakRunnerAuditCode/FileTree/FileTreeType';
 import {
     FileDefault,
     FileSuffix,
     FolderDefault,
-} from '@/pages/yakRunner/FileTree/icon';
-import {
-    getNameByPath,
-    getPathParent,
-    grpcFetchFileTree,
-} from '@/pages/yakRunner/utils';
-import type {
-    FileMonitorItemProps,
-    FileMonitorProps,
-} from '@/utils/duplex/duplex';
-import { sendDuplexConn } from '@/utils/duplex/duplex';
+} from '@/pages/YakRunnerAuditCode/FileTree/icon';
+import { getNameByPath, getPathParent } from '@/pages/YakRunnerAuditCode/utils';
+// import type {
+//     FileMonitorItemProps,
+//     FileMonitorProps,
+//     sendDuplexConn,
+// } from '@/utils/duplex/duplex';
 import emiter from '@/utils/eventBus/eventBus';
 import { StringToUint8Array } from '@/utils/str';
 import { useMemoizedFn, useThrottleFn } from 'ahooks';
@@ -24,6 +20,10 @@ import cloneDeep from 'lodash/cloneDeep';
 import type { MutableRefObject } from 'react';
 import { useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import type {
+    FileMonitorItemProps,
+    FileMonitorProps,
+} from '../../enums/external';
 
 // #region useFileTree 相关定义
 export interface UseFileTreeParams {
@@ -71,21 +71,23 @@ function useFileTree(params: UseFileTreeParams) {
     const watchToken = useRef(uuidv4());
     // 结束文件夹监听
     const stopWatchFolder = useMemoizedFn(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const stopData = StringToUint8Array(
             JSON.stringify({
                 operate: 'stop',
                 id: watchToken.current,
             }),
         );
-        sendDuplexConn({
-            Data: stopData,
-            MessageType: 'file_monitor',
-            Timestamp: new Date().getTime(),
-        });
+        // sendDuplexConn({
+        //     Data: stopData,
+        //     MessageType: 'file_monitor',
+        //     Timestamp: new Date().getTime(),
+        // });
     });
     // 启动文件夹监听
     const startWatchFolder = useMemoizedFn((folderPath: string) => {
         stopWatchFolder();
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const startData = StringToUint8Array(
             JSON.stringify({
                 operate: 'new',
@@ -93,11 +95,11 @@ function useFileTree(params: UseFileTreeParams) {
                 id: watchToken.current,
             }),
         );
-        sendDuplexConn({
-            Data: startData,
-            MessageType: 'file_monitor',
-            Timestamp: new Date().getTime(),
-        });
+        // sendDuplexConn({
+        //     Data: startData,
+        //     MessageType: 'file_monitor',
+        //     Timestamp: new Date().getTime(),
+        // });
     });
     // #endregion
 
@@ -178,6 +180,7 @@ function useFileTree(params: UseFileTreeParams) {
             }
             if (!treeData.current.children?.length) return;
 
+            // eslint-disable-next-line no-inner-declarations
             function diffNode(
                 parent: FileNodeProps,
                 oldNode: FileNodeProps,
@@ -216,6 +219,7 @@ function useFileTree(params: UseFileTreeParams) {
             if (!treeData.current.children?.length) return null;
 
             let nodeDetail: FileNodeMapProps | null = null;
+            // eslint-disable-next-line no-inner-declarations
             function diffNode(nodeInfo: FileNodeProps, parentPath: string) {
                 if (parentPath.startsWith(nodeInfo.path)) {
                     if (nodeInfo.path === parentPath) {
@@ -392,58 +396,58 @@ function useFileTree(params: UseFileTreeParams) {
     const pollingTimer = useRef<NodeJS.Timeout | null>(null);
 
     // 处理接口返回的子集数据并更新所有数据
-    const handleFetchChildrenResponse = useMemoizedFn(
-        (parentPath: string, res: FileNodeMapProps[], cb?: () => void) => {
-            try {
-                const parentNode = nodeDetailMap.current.get(parentPath);
-                if (!parentNode) return;
+    // const handleFetchChildrenResponse = useMemoizedFn(
+    //     (parentPath: string, res: FileNodeMapProps[], cb?: () => void) => {
+    //         try {
+    //             const parentNode = nodeDetailMap.current.get(parentPath);
+    //             if (!parentNode) return;
 
-                if (!res?.length) {
-                    // 需要将空文件夹节点的信息标注为叶子结点
-                    const newParentNode = { ...parentNode, isLeaf: true };
-                    setNodeDetailMap(newParentNode);
-                    updateTreeNodeData({ ...newParentNode });
-                    return;
-                } else {
-                    // 添加子节点信息
-                    const childs: FileNodeProps[] = [];
-                    for (let item of res) {
-                        const childNode: FileNodeProps = {
-                            ...item,
-                            depth: parentNode.depth + 1,
-                        };
-                        if (!item.isFolder) childNode.isLeaf = true;
-                        if (item.isFolder)
-                            pendingFolderList.current.push(item.path);
-                        setNodeDetailMap(childNode);
-                        childs.push(childNode);
-                    }
-                    // 更新树上的节点数据
-                    updateTreeNodeData({ ...parentNode, children: childs });
-                }
-                folderNodeSet.current.add(parentPath);
-            } catch (error) {
-            } finally {
-                cb && cb();
-            }
-        },
-    );
+    //             if (!res?.length) {
+    //                 // 需要将空文件夹节点的信息标注为叶子结点
+    //                 const newParentNode = { ...parentNode, isLeaf: true };
+    //                 setNodeDetailMap(newParentNode);
+    //                 updateTreeNodeData({ ...newParentNode });
+    //                 return;
+    //             } else {
+    //                 // 添加子节点信息
+    //                 const childs: FileNodeProps[] = [];
+    //                 for (let item of res) {
+    //                     const childNode: FileNodeProps = {
+    //                         ...item,
+    //                         depth: parentNode.depth + 1,
+    //                     };
+    //                     if (!item.isFolder) childNode.isLeaf = true;
+    //                     if (item.isFolder)
+    //                         pendingFolderList.current.push(item.path);
+    //                     setNodeDetailMap(childNode);
+    //                     childs.push(childNode);
+    //                 }
+    //                 // 更新树上的节点数据
+    //                 updateTreeNodeData({ ...parentNode, children: childs });
+    //             }
+    //             folderNodeSet.current.add(parentPath);
+    //         } catch (error) {
+    //         } finally {
+    //             cb && cb();
+    //         }
+    //     },
+    // );
 
     // 获取文件夹的子集
     const fetchFolderChildren = useMemoizedFn((folderPath: string) => {
         executingQueue.current.push(folderPath);
-        grpcFetchFileTree(folderPath)
-            .then((res) => {
-                handleFetchChildrenResponse(folderPath, res);
-            })
-            .catch(() => {
-                // pendingFolderList.current.unshift(folderPath)
-            })
-            .finally(() => {
-                executingQueue.current = executingQueue.current.filter(
-                    (item) => item !== folderPath,
-                );
-            });
+        // grpcFetchFileTree(folderPath)
+        //     .then((res) => {
+        //         handleFetchChildrenResponse(folderPath, res);
+        //     })
+        //     .catch(() => {
+        //         // pendingFolderList.current.unshift(folderPath)
+        //     })
+        //     .finally(() => {
+        //         executingQueue.current = executingQueue.current.filter(
+        //             (item) => item !== folderPath,
+        //         );
+        //     });
     });
 
     // 开启轮询获取文件树
@@ -485,6 +489,7 @@ function useFileTree(params: UseFileTreeParams) {
         return new Promise<void>((resolve, reject) => {
             try {
                 if (!folderPath) {
+                    // eslint-disable-next-line prefer-promise-reject-errors
                     reject('path is empty');
                     return;
                 }
@@ -496,20 +501,20 @@ function useFileTree(params: UseFileTreeParams) {
                 }
 
                 executingQueue.current.push(`${folderPath}-trigger`);
-                grpcFetchFileTree(folderPath)
-                    .then((res) => {
-                        handleFetchChildrenResponse(folderPath, res, () => {
-                            resolve();
-                        });
-                    })
-                    .catch((err) => {
-                        reject(err);
-                    })
-                    .finally(() => {
-                        executingQueue.current = executingQueue.current.filter(
-                            (item) => item !== `${folderPath}-trigger`,
-                        );
-                    });
+                // grpcFetchFileTree(folderPath)
+                //     .then((res) => {
+                //         handleFetchChildrenResponse(folderPath, res, () => {
+                //             resolve();
+                //         });
+                //     })
+                //     .catch((err) => {
+                //         reject(err);
+                //     })
+                //     .finally(() => {
+                //         executingQueue.current = executingQueue.current.filter(
+                //             (item) => item !== `${folderPath}-trigger`,
+                //         );
+                //     });
             } catch (error) {
                 reject(error);
             }
@@ -527,7 +532,7 @@ function useFileTree(params: UseFileTreeParams) {
 
     // 刷新整棵文件树
     const onResetTree = useMemoizedFn(async () => {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
             stopPolling();
             handleReset();
             initData();

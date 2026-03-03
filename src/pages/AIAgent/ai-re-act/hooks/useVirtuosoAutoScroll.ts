@@ -2,12 +2,12 @@ import { useMemoizedFn, useMount, useThrottleFn } from 'ahooks';
 import { useRef } from 'react';
 import type { VirtuosoHandle } from 'react-virtuoso';
 
-interface UseVirtuosoAutoScrollOptions<T> {
+interface UseVirtuosoAutoScrollOptions {
     atBottomThreshold?: number;
     total?: number;
 }
 
-const useVirtuosoAutoScroll = <T>(options: UseVirtuosoAutoScrollOptions<T>) => {
+const useVirtuosoAutoScroll = (options: UseVirtuosoAutoScrollOptions) => {
     const { atBottomThreshold = 80, total } = options;
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const isAtBottomRef = useRef(true);

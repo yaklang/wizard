@@ -31,4 +31,26 @@ interface CustomPluginExecuteFormValue {
         | number[];
 }
 
-export { KVPair, KnowledgeBaseEntry, CustomPluginExecuteFormValue };
+interface FileMonitorItemProps {
+    // 是否为文件夹
+    IsDir: boolean;
+    // 操作
+    Op: 'delete' | 'create';
+    // 路径
+    Path: string;
+}
+
+export interface FileMonitorProps {
+    Id: string;
+    ChangeEvents: FileMonitorItemProps[];
+    CreateEvents: FileMonitorItemProps[];
+    DeleteEvents: FileMonitorItemProps[];
+}
+
+export {
+    KVPair,
+    KnowledgeBaseEntry,
+    CustomPluginExecuteFormValue,
+    FileMonitorItemProps,
+    FileMonitorProps,
+};

@@ -6,8 +6,8 @@ import { Uint8ArrayToString } from '@/utils/str';
 import { v4 as uuidv4 } from 'uuid';
 import type { AIAgentGrpcApi, AIOutputEvent } from './grpcApi';
 import type { AITaskInfoProps } from './aiRender';
-import type { AIAgentSetting } from '@/pages/ai-agent/aiAgentType';
 import type { AIChatLogData, AIChatLogToInfo } from './type';
+import type { AIAgentSetting } from '../../ai-agent/aiAgentType';
 
 /** 生成AI-UI展示的必须基础数据 */
 export const genBaseAIChatData = (info: AIOutputEvent) => {

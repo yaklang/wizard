@@ -27,8 +27,8 @@ import type {
     ReActChatRenderItem,
 } from './aiRender';
 import { AIChatQSDataTypeEnum } from './aiRender';
-import useGetSetState from '@/pages/pluginHub/hooks/useGetSetState';
 import useChatContent from './useChatContent';
+import useGetSetState from '@/hooks/useGetSetState';
 
 function useTaskChat(
     params?: UseTaskChatParams,

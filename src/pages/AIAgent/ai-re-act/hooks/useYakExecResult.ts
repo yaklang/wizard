@@ -16,7 +16,7 @@ import { handleGrpcDataPushLog } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 import type { AIAgentGrpcApi, AIOutputEvent } from './grpcApi';
 import type { AIYakExecFileRecord } from './aiRender';
-import useThrottleState from '@/hook/useThrottleState';
+import useThrottleState from '@/hooks/useThrottleState';
 
 // 属于该 hook 处理数据的类型
 export const UseYakExecResultTypes = ['yak_exec_result'];
@@ -104,15 +104,15 @@ function useYakExecResult(params?: UseYakExecResultParams) {
     /**
      * @description 该方法可以记录yak_exec_result中所有的日志，根但是目前只对接level:file;后续据可需求更改
      */
-    const onHandleYakExecResultLogs = useMemoizedFn(
-        (obj: AIAgentGrpcApi.AICardMessage) => {
-            const log = obj.content as StreamResult.Log;
-            setYakExecResultLogs((perLog) => [
-                ...perLog,
-                { ...log, id: uuidv4() },
-            ]);
-        },
-    );
+    // const onHandleYakExecResultLogs = useMemoizedFn(
+    //     (obj: AIAgentGrpcApi.AICardMessage) => {
+    //         const log = obj.content as StreamResult.Log;
+    //         setYakExecResultLogs((perLog) => [
+    //             ...perLog,
+    //             { ...log, id: uuidv4() },
+    //         ]);
+    //     },
+    // );
 
     const onHandleYakExecResult = useMemoizedFn(
         (CallToolID: string, value: AIAgentGrpcApi.AIPluginExecResult) => {
