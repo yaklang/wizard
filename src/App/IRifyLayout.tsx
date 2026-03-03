@@ -19,8 +19,9 @@ import {
     NodeIndexOutlined,
     SafetyCertificateOutlined,
     BugOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
 } from '@ant-design/icons';
-import { SiderClose, SiderOpen } from '@/assets/compoments';
 import { getLicense } from '@/apis/login';
 import { useNetworkStatus } from '@/hooks';
 import useLoginStore from '@/App/store/loginStore';
@@ -52,7 +53,7 @@ const mainNavItems = [
     {
         key: '/scans',
         icon: <ThunderboltOutlined />,
-        label: '扫描任务',
+        label: '扫描历史',
         path: '/scans',
     },
     {
@@ -65,26 +66,10 @@ const mainNavItems = [
 
 const collapsibleNavItems = [
     {
-        key: '/task',
+        key: '/task/task-list',
         icon: <AppstoreOutlined />,
-        label: '任务中心',
-        children: [
-            {
-                key: '/task/new-create-task',
-                label: '新建扫描',
-                path: '/task/new-create-task',
-            },
-            {
-                key: '/task/special-task',
-                label: '专项扫描',
-                path: '/task/special-task',
-            },
-            {
-                key: '/task/task-list',
-                label: '任务列表',
-                path: '/task/task-list',
-            },
-        ],
+        label: '自动化策略',
+        path: '/task/task-list',
     },
     {
         key: '/reports',
@@ -194,6 +179,10 @@ const IRifyLayout: React.FC = () => {
         navigate(path);
     };
 
+    const toggleSiderCollapsed = () => {
+        setCollapsed((prev) => !prev);
+    };
+
     const toggleMenu = (menuKey: string) => {
         setExpandedMenus((prev) => {
             const newSet = new Set(prev);
@@ -277,7 +266,7 @@ const IRifyLayout: React.FC = () => {
 
     return (
         <Layout
-            className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'}`}
+            className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'} ${collapsed ? 'sider-collapsed' : 'sider-expanded'}`}
         >
             <Sider
                 className="irify-layout-sider"
@@ -385,12 +374,24 @@ const IRifyLayout: React.FC = () => {
 
                 {/* Bottom Section */}
                 <div className="irify-sider-footer">
-                    <div
-                        className="irify-collapse-trigger"
-                        onClick={() => setCollapsed(!collapsed)}
+                    <Tooltip
+                        title={collapsed ? '展开菜单' : '收起菜单'}
+                        placement="right"
                     >
-                        {collapsed ? <SiderOpen /> : <SiderClose />}
-                    </div>
+                        <button
+                            type="button"
+                            className="irify-sider-toggle-btn"
+                            onClick={toggleSiderCollapsed}
+                            aria-label={collapsed ? '展开菜单' : '收起菜单'}
+                        >
+                            {collapsed ? (
+                                <MenuUnfoldOutlined />
+                            ) : (
+                                <MenuFoldOutlined />
+                            )}
+                            {!collapsed && <span>收起</span>}
+                        </button>
+                    </Tooltip>
 
                     {/* User */}
                     <Dropdown

@@ -88,7 +88,7 @@ const TaskPageList = () => {
     const openCreateTaskModalRef = useRef<UseModalRefType>(null);
     const editTaskModalRef = useRef<UseModalRefType>(null);
 
-    const [taskType, setTaskType] = useSafeState<1 | 2 | 3>(1);
+    const [taskType, setTaskType] = useSafeState<2 | 3>(2);
     const [taskGroupKey, setTaskGroupKey] = useSafeState<string>('全部');
     const [groupManageVisible, setGroupManageVisible] = useSafeState(false);
     const [taskGroups, setTaskGroups] = useSafeState<TaskGroupItem[]>(
@@ -363,9 +363,6 @@ const TaskPageList = () => {
     };
 
     const renderScheduleText = (item: TaskListRequest) => {
-        if (taskType === 1) {
-            return '普通任务（手动触发）';
-        }
         if (taskType === 2) {
             return item.start_timestamp
                 ? `定时：${dayjs.unix(item.start_timestamp).format('YYYY-MM-DD HH:mm')}`
@@ -405,7 +402,7 @@ const TaskPageList = () => {
                         key={tab.value}
                         className={`irify-task-type-tab ${taskType === tab.value ? 'active' : ''}`}
                         onClick={() => {
-                            setTaskType(tab.value as 1 | 2 | 3);
+                            setTaskType(tab.value as 2 | 3);
                             setListState((prev) => ({ ...prev, page: 1 }));
                         }}
                     >
