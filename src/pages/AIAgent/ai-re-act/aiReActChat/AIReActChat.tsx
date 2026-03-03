@@ -1,27 +1,41 @@
-import React, {forwardRef, useImperativeHandle, useRef} from "react"
+import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 
-import styles from "./AIReActChat.module.scss"
-import {AIHandleStartResProps, AIReActChatProps, AISendResProps} from "./AIReActChatType"
-import {AIChatTextarea} from "@/pages/ai-agent/template/template"
-import {AIReActChatContents} from "../aiReActChatContents/AIReActChatContents"
-import {AIChatTextareaRefProps, AIChatTextareaSubmit} from "@/pages/ai-agent/template/type"
-import {useControllableValue, useCreation, useMemoizedFn} from "ahooks"
-import {yakitNotify} from "@/utils/notification"
-import {ColorsChatIcon} from "@/assets/icon/colors"
-import useAIAgentStore from "@/pages/ai-agent/useContext/useStore"
-import classNames from "classnames"
-import useChatIPCStore from "@/pages/ai-agent/useContext/ChatIPCContent/useStore"
-import useChatIPCDispatcher from "@/pages/ai-agent/useContext/ChatIPCContent/useDispatcher"
-import {ChevrondownButton, ChevronleftButton, RoundedStopButton} from "./AIReActComponent"
-import {AIInputEvent, AIStartParams} from "../hooks/grpcApi"
-import {AITaskQuery} from "@/pages/ai-agent/components/aiTaskQuery/AITaskQuery"
-import {HandleStartParams} from "@/pages/ai-agent/aiAgentChat/type"
-import {formatAIAgentSetting, getAIReActRequestParams} from "@/pages/ai-agent/utils"
-import {YakitTag} from "@/components/yakitUI/YakitTag/YakitTag"
-import {v4 as uuidv4} from "uuid"
-import {AIChatInfo} from "@/pages/ai-agent/type/aiChat"
-import useAIAgentDispatcher from "@/pages/ai-agent/useContext/useDispatcher"
-import {randomString} from "@/utils/randomUtil"
+import styles from './AIReActChat.module.scss';
+import type {
+    AIHandleStartResProps,
+    AIReActChatProps,
+    AISendResProps,
+} from './AIReActChatType';
+import { AIChatTextarea } from '@/pages/AIAgent/ai-agent/template/template';
+import { AIReActChatContents } from '../aiReActChatContents/AIReActChatContents';
+import type {
+    AIChatTextareaRefProps,
+    AIChatTextareaSubmit,
+} from '@/pages/AIAgent/ai-agent/template/type';
+import { useControllableValue, useCreation, useMemoizedFn } from 'ahooks';
+import { yakitNotify } from '@/utils/notification';
+import { ColorsChatIcon } from '@/assets/icon/colors';
+import useAIAgentStore from '@/pages/AIAgent/ai-agent/useContext/useStore';
+import classNames from 'classnames';
+import useChatIPCStore from '@/pages/AIAgent/ai-agent/useContext/ChatIPCContent/useStore';
+import useChatIPCDispatcher from '@/pages/AIAgent/ai-agent/useContext/ChatIPCContent/useDispatcher';
+import {
+    ChevrondownButton,
+    ChevronleftButton,
+    RoundedStopButton,
+} from './AIReActComponent';
+import type { AIInputEvent, AIStartParams } from '../hooks/grpcApi';
+import { AITaskQuery } from '@/pages/AIAgent/ai-agent/components/aiTaskQuery/AITaskQuery';
+import type { HandleStartParams } from '@/pages/AIAgent/ai-agent/aiAgentChat/type';
+import {
+    formatAIAgentSetting,
+    getAIReActRequestParams,
+} from '@/pages/AIAgent/ai-agent/utils';
+import { v4 as uuidv4 } from 'uuid';
+import type { AIChatInfo } from '@/pages/AIAgent/ai-agent/type/aiChat';
+import useAIAgentDispatcher from '@/pages/AIAgent/ai-agent/useContext/useDispatcher';
+import { randomString } from '@/utils/randomUtil';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 
 export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
     forwardRef((props, ref) => {
@@ -29,92 +43,101 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
             mode,
             chatContainerClassName,
             chatContainerHeaderClassName,
-            title = "自由对话",
+            title = '自由对话',
             sendRequest,
             startRequest,
-            externalParameters
-        } = props
-        const {setChats, setActiveChat} = useAIAgentDispatcher()
+            externalParameters,
+        } = props;
+        const { setChats, setActiveChat } = useAIAgentDispatcher();
 
-        const {chatIPCData} = useChatIPCStore()
-        const {chatIPCEvents, handleStop, handleSendSyncMessage} = useChatIPCDispatcher()
-        const execute = useCreation(() => chatIPCData.execute, [chatIPCData.execute])
-        const focusMode = useCreation(() => chatIPCData.focusMode, [chatIPCData.focusMode])
+        const { chatIPCData } = useChatIPCStore();
+        const { chatIPCEvents, handleStop } = useChatIPCDispatcher();
+        const execute = useCreation(
+            () => chatIPCData.execute,
+            [chatIPCData.execute],
+        );
+        const focusMode = useCreation(
+            () => chatIPCData.focusMode,
+            [chatIPCData.focusMode],
+        );
 
-        const wrapperRef = useRef<HTMLDivElement>(null)
+        const wrapperRef = useRef<HTMLDivElement>(null);
 
-        const [showFreeChat, setShowFreeChat] = useControllableValue<boolean>(props, {
-            defaultValue: true,
-            valuePropName: "showFreeChat",
-            trigger: "setShowFreeChat"
-        })
+        const [showFreeChat, setShowFreeChat] = useControllableValue<boolean>(
+            props,
+            {
+                defaultValue: true,
+                valuePropName: 'showFreeChat',
+                trigger: 'setShowFreeChat',
+            },
+        );
 
-        const {activeChat, setting} = useAIAgentStore()
+        const { activeChat, setting } = useAIAgentStore();
 
-        const questionQueue = useCreation(() => chatIPCData.questionQueue, [chatIPCData.questionQueue])
+        const questionQueue = useCreation(
+            () => chatIPCData.questionQueue,
+            [chatIPCData.questionQueue],
+        );
 
         const aiChatTextareaRef = useRef<AIChatTextareaRefProps>({
             setMention: () => {},
             setValue: () => {},
-            getValue: () => {}
-        })
-        useImperativeHandle(
-            ref,
-            () => {
-                return {
-                    ...aiChatTextareaRef.current,
-                    handleStart: (value) => handleStart(value)
-                }
-            },
-            []
-        )
+            getValue: () => {},
+        });
+        useImperativeHandle(ref, () => {
+            return {
+                ...aiChatTextareaRef.current,
+                handleStart: (value) => handleStart(value),
+            };
+        }, []);
         // #region 问题相关逻辑
         // 初始化 AI ReAct
         const handleSubmit = useMemoizedFn((value: AIChatTextareaSubmit) => {
             if (!setting) {
-                yakitNotify("error", "请先配置 AI ReAct 参数")
-                return
+                yakitNotify('error', '请先配置 AI ReAct 参数');
+                return;
             }
             if (execute) {
-                handleSend(value)
+                handleSend(value);
             } else {
-                handleStart(value)
+                handleStart(value);
             }
-            onSetQuestion("")
-        })
+            onSetQuestion('');
+        });
 
         const handleStart = useMemoizedFn((value: HandleStartParams) => {
-            const {qs} = value
-            const sessionID = activeChat?.session || "" // 判断历史还是新建
+            const { qs } = value;
+            const sessionID = activeChat?.session || ''; // 判断历史还是新建
 
             const request: AIStartParams = {
                 ...formatAIAgentSetting(setting),
                 UserQuery: qs,
-                CoordinatorId: "",
-                Sequence: 1
-            }
+                CoordinatorId: '',
+                Sequence: 1,
+            };
 
-            let session = ""
-            if (!!sessionID) {
-                session = sessionID
-            } else if (!!setting.TimelineSessionID) {
-                session = setting.TimelineSessionID
+            let session = '';
+            if (sessionID) {
+                session = sessionID;
+            } else if (setting.TimelineSessionID) {
+                session = setting.TimelineSessionID;
             } else {
-                session = uuidv4().replace(/-/g, "").substring(0, 16)
+                session = uuidv4().replace(/-/g, '').substring(0, 16);
             }
-            request.TimelineSessionID = session
-            const {extra, attachedResourceInfo} = getAIReActRequestParams(value)
+            request.TimelineSessionID = session;
+            const { extra, attachedResourceInfo } =
+                getAIReActRequestParams(value);
             // 发送初始化参数
             const aiInputEvent: AIInputEvent = {
                 IsStart: true,
                 Params: {
-                    ...request
+                    ...request,
                 },
                 AttachedResourceInfo: attachedResourceInfo,
-                FocusModeLoop: value.focusMode
-            }
+                FocusModeLoop: value.focusMode,
+            };
             const onStart = (res: AIHandleStartResProps) => {
-                const {params, extraParams, onChat, onChatFromHistory} = res
+                const { params, extraParams, onChat, onChatFromHistory } = res;
                 if (!sessionID) {
                     // 创建新的聊天记录
                     const newChat: AIChatInfo = {
@@ -123,167 +146,208 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
                         question: qs,
                         time: new Date().getTime(),
                         request,
-                        session
-                    }
+                        session,
+                    };
 
-                    setActiveChat && setActiveChat(newChat)
-                    setChats && setChats((old) => [...old, newChat])
+                    setActiveChat && setActiveChat(newChat);
+                    setChats && setChats((old) => [...old, newChat]);
                     // 新建的额外操作
-                    onChat?.()
+                    onChat?.();
                 } else {
                     // 历史中的额外操作
-                    onChatFromHistory?.(sessionID)
+                    onChatFromHistory?.(sessionID);
                 }
                 aiChatTextareaRef.current.setMention({
                     mentionId: params.FocusModeLoop || randomString(8),
-                    mentionType: "focusMode",
-                    mentionName: params.FocusModeLoop || ""
-                })
-                chatIPCEvents.onStart({token: request.TimelineSessionID!, params, extraValue: extra})
-            }
-            if (!!startRequest) {
+                    mentionType: 'focusMode',
+                    mentionName: params.FocusModeLoop || '',
+                });
+                chatIPCEvents.onStart({
+                    token: request.TimelineSessionID!,
+                    params,
+                    extraValue: extra,
+                });
+            };
+            if (startRequest) {
                 startRequest({
-                    params: aiInputEvent
+                    params: aiInputEvent,
                 })
                     .then((res) => {
-                        onStart(res)
+                        onStart(res);
                     })
                     .catch(() => {
                         onStart({
-                            params: aiInputEvent
-                        })
-                    })
+                            params: aiInputEvent,
+                        });
+                    });
             } else {
                 onStart({
-                    params: aiInputEvent
-                })
+                    params: aiInputEvent,
+                });
             }
-        })
+        });
 
-        /**自由对话 */
+        /** 自由对话 */
         const handleSend = useMemoizedFn((data: HandleStartParams) => {
-            if (!activeChat?.session) return
+            if (!activeChat?.session) return;
             try {
-                const {extra, attachedResourceInfo} = getAIReActRequestParams(data)
+                const { extra, attachedResourceInfo } =
+                    getAIReActRequestParams(data);
                 const chatMessage: AIInputEvent = {
                     IsFreeInput: true,
                     FreeInput: data.qs,
                     AttachedResourceInfo: attachedResourceInfo,
-                    FocusModeLoop: data.focusMode
-                }
+                    FocusModeLoop: data.focusMode,
+                };
                 const onSend = (res: AISendResProps) => {
-                    const {params} = res
+                    const { params } = res;
                     chatIPCEvents.onSend({
                         token: activeChat.session,
-                        type: "casual",
+                        type: 'casual',
                         params: {
                             IsFreeInput: true,
-                            ...params
+                            ...params,
                         },
-                        extraValue: extra
-                    })
-                }
-                if (!!sendRequest) {
-                    sendRequest?.({params: chatMessage})
+                        extraValue: extra,
+                    });
+                };
+                if (sendRequest) {
+                    sendRequest?.({ params: chatMessage })
                         .then((res) => {
-                            const {params} = res
+                            const { params } = res;
                             // 发送到服务端
                             onSend({
-                                params
-                            })
+                                params,
+                            });
                         })
                         .catch(() => {
                             onSend({
-                                params: chatMessage
-                            })
-                        })
+                                params: chatMessage,
+                            });
+                        });
                 } else {
                     onSend({
-                        params: chatMessage
-                    })
+                        params: chatMessage,
+                    });
                 }
             } catch (error) {}
-        })
+        });
 
         // #endregion
 
         const isShowRetract = useCreation(() => {
-            return mode === "task" && showFreeChat
-        }, [mode, showFreeChat])
+            return mode === 'task' && showFreeChat;
+        }, [mode, showFreeChat]);
         const isShowExpand = useCreation(() => {
-            return mode === "task" && !showFreeChat
-        }, [mode, showFreeChat])
+            return mode === 'task' && !showFreeChat;
+        }, [mode, showFreeChat]);
         const handleSwitchShowFreeChat = useMemoizedFn((v) => {
-            setShowFreeChat(v)
-        })
+            setShowFreeChat(v);
+        });
 
         const onSetQuestion = useMemoizedFn((value: string) => {
-            aiChatTextareaRef?.current?.setValue(value ?? "")
-        })
+            aiChatTextareaRef?.current?.setValue(value ?? '');
+        });
         return (
-            <>
+            <div
+                className={classNames(styles['ai-re-act'], {
+                    [styles['content-re-act-side']]: isShowRetract,
+                    [styles['content-re-act-side-hidden']]: isShowExpand,
+                })}
+            >
                 <div
-                    className={classNames(styles["ai-re-act"], {
-                        [styles["content-re-act-side"]]: isShowRetract,
-                        [styles["content-re-act-side-hidden"]]: isShowExpand
+                    ref={wrapperRef}
+                    className={classNames(styles['ai-re-act-chat'], {
+                        [styles['ai-re-act-chat-hidden']]: !showFreeChat,
                     })}
                 >
                     <div
-                        ref={wrapperRef}
-                        className={classNames(styles["ai-re-act-chat"], {
-                            [styles["ai-re-act-chat-hidden"]]: !showFreeChat
-                        })}
+                        className={classNames(
+                            styles['chat-container'],
+                            chatContainerClassName,
+                        )}
                     >
-                        <div className={classNames(styles["chat-container"], chatContainerClassName)}>
-                            <div className={classNames(styles["chat-header"], chatContainerHeaderClassName)}>
-                                <div className={styles["chat-header-title"]}>
-                                    <ColorsChatIcon />
-                                    {title}
-                                    {focusMode && <YakitTag fullRadius={true}>专注模式:{focusMode}</YakitTag>}
-                                </div>
-                                <div className={styles["chat-header-extra"]}>
-                                    {isShowRetract &&
-                                        (externalParameters?.rightIcon ?? (
-                                            <ChevronleftButton onClick={() => handleSwitchShowFreeChat(false)} />
-                                        ))}
-                                </div>
+                        <div
+                            className={classNames(
+                                styles['chat-header'],
+                                chatContainerHeaderClassName,
+                            )}
+                        >
+                            <div className={styles['chat-header-title']}>
+                                <ColorsChatIcon />
+                                {title}
+                                {focusMode && (
+                                    <YakitTag fullRadius={true}>
+                                        专注模式:{focusMode}
+                                    </YakitTag>
+                                )}
                             </div>
-                            <AIReActChatContents chats={chatIPCData.casualChat} />
-                        </div>
-                        <div className={classNames(styles["chat-footer"])}>
-                            <div className={styles["footer-body"]}>
-                                <div className={styles["footer-inputs"]}>
-                                    {execute && questionQueue?.total > 0 && <AITaskQuery />}
-                                    <div className={classNames(styles["footer-inputs-file-list"])}>
-                                        <AIChatTextarea
-                                            ref={aiChatTextareaRef}
-                                            loading={false}
-                                            onSubmit={handleSubmit}
-                                            filterMentionType={externalParameters?.filterMentionType}
-                                            isOpen={externalParameters?.isOpen}
-                                            inputFooterRight={
-                                                <div className={styles["extra-footer-right"]}>
-                                                    {execute && (
-                                                        <RoundedStopButton
-                                                            onClick={handleStop}
-                                                            style={{width: 24, height: 24}}
-                                                        />
-                                                    )}
-                                                </div>
+                            <div className={styles['chat-header-extra']}>
+                                {isShowRetract &&
+                                    (externalParameters?.rightIcon ?? (
+                                        <ChevronleftButton
+                                            onClick={() =>
+                                                handleSwitchShowFreeChat(false)
                                             }
-                                            footerLeftTypes={externalParameters?.footerLeftTypes}
                                         />
-                                    </div>
+                                    ))}
+                            </div>
+                        </div>
+                        <AIReActChatContents chats={chatIPCData.casualChat} />
+                    </div>
+                    <div className={classNames(styles['chat-footer'])}>
+                        <div className={styles['footer-body']}>
+                            <div className={styles['footer-inputs']}>
+                                {execute && questionQueue?.total > 0 && (
+                                    <AITaskQuery />
+                                )}
+                                <div
+                                    className={classNames(
+                                        styles['footer-inputs-file-list'],
+                                    )}
+                                >
+                                    <AIChatTextarea
+                                        ref={aiChatTextareaRef}
+                                        loading={false}
+                                        onSubmit={handleSubmit}
+                                        filterMentionType={
+                                            externalParameters?.filterMentionType
+                                        }
+                                        isOpen={externalParameters?.isOpen}
+                                        inputFooterRight={
+                                            <div
+                                                className={
+                                                    styles['extra-footer-right']
+                                                }
+                                            >
+                                                {execute && (
+                                                    <RoundedStopButton
+                                                        onClick={handleStop}
+                                                        style={{
+                                                            width: 24,
+                                                            height: 24,
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                        }
+                                        footerLeftTypes={
+                                            externalParameters?.footerLeftTypes
+                                        }
+                                    />
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div className={styles["open-wrapper"]} onClick={() => handleSwitchShowFreeChat(true)}>
-                        <ChevrondownButton />
-                        <div className={styles["text"]}>自由对话</div>
                     </div>
                 </div>
-            </>
-        )
-    })
-)
+                <div
+                    className={styles['open-wrapper']}
+                    onClick={() => handleSwitchShowFreeChat(true)}
+                >
+                    <ChevrondownButton />
+                    <div className={styles['text']}>自由对话</div>
+                </div>
+            </div>
+        );
+    }),
+);

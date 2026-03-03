@@ -6,25 +6,25 @@ import type {
 } from './AIReActChatContentsType';
 import styles from './AIReActChatContents.module.scss';
 import { useCreation } from 'ahooks';
-import { AIChatToolColorCard } from '@/pages/ai-agent/components/aiChatToolColorCard/AIChatToolColorCard';
-import { AIMarkdown } from '@/pages/ai-agent/components/aiMarkdown/AIMarkdown';
-import { AIStreamChatContent } from '@/pages/ai-agent/components/aiStreamChatContent/AIStreamChatContent';
-import StreamCard from '@/pages/ai-agent/components/StreamCard';
-import { taskAnswerToIconMap } from '@/pages/ai-agent/defaultConstant';
+import { AIChatToolColorCard } from '@/pages/AIAgent/ai-agent/components/aiChatToolColorCard/AIChatToolColorCard';
+import { AIMarkdown } from '@/pages/AIAgent/ai-agent/components/aiMarkdown/AIMarkdown';
+import { AIStreamChatContent } from '@/pages/AIAgent/ai-agent/components/aiStreamChatContent/AIStreamChatContent';
+import StreamCard from '@/pages/AIAgent/ai-agent/components/StreamCard';
+import { taskAnswerToIconMap } from '@/pages/AIAgent/ai-agent/defaultConstant';
 import useAINodeLabel from '../hooks/useAINodeLabel';
-import { AIChatListItem } from '@/pages/ai-agent/components/aiChatListItem/AIChatListItem';
-import { AIYaklangCode } from '@/pages/ai-agent/components/aiYaklangCode/AIYaklangCode';
-import type { ModalInfoProps } from '@/pages/ai-agent/components/ModelInfo';
+import { AIChatListItem } from '@/pages/AIAgent/ai-agent/components/aiChatListItem/AIChatListItem';
+import { AIYaklangCode } from '@/pages/AIAgent/ai-agent/components/aiYaklangCode/AIYaklangCode';
+import type { ModalInfoProps } from '@/pages/AIAgent/ai-agent/components/ModelInfo';
 import { AIStreamContentType } from '../hooks/defaultConstant';
 import { Virtuoso } from 'react-virtuoso';
 import useVirtuosoAutoScroll from '../hooks/useVirtuosoAutoScroll';
 import type { ReActChatRenderItem } from '../hooks/aiRender';
-import useChatIPCStore from '@/pages/ai-agent/useContext/ChatIPCContent/useStore';
-import Loading from '@/components/Loading/Loading';
+import useChatIPCStore from '@/pages/AIAgent/ai-agent/useContext/ChatIPCContent/useStore';
+import Loading from '@/compoments/Loading/Loading';
 import useAISystemStream from '../hooks/useAISystemStream';
-import { ScrollText } from '@/pages/ai-agent/chatTemplate/TaskLoading/TaskLoading';
-import { YakitModal } from '@/components/yakitUI/YakitModal/YakitModal';
-import { Code } from '@/pages/ai-agent/components/aiGroupStreamCard/AIGroupStreamCard';
+import { ScrollText } from '@/pages/AIAgent/ai-agent/chatTemplate/TaskLoading/TaskLoading';
+import { Code } from '@/pages/AIAgent/ai-agent/components/aiGroupStreamCard/AIGroupStreamCard';
+import { YakitModal } from '@/compoments/YakitUI/YakitModal/YakitModal';
 
 const getAIReferenceNodeByType = (contentType?: string) => {
     switch (contentType) {
@@ -64,6 +64,7 @@ export const AIStreamNode: React.FC<AIStreamNodeProps> = React.memo((props) => {
                 className={className}
             />
         ) : (
+            // eslint-disable-next-line react/jsx-no-useless-fragment
             <></>
         );
     }, [reference, ContentType]);
@@ -91,7 +92,9 @@ export const AIStreamNode: React.FC<AIStreamNodeProps> = React.memo((props) => {
                 />
             );
         case AIStreamContentType.TEXT_PLAIN:
+            // eslint-disable-next-line no-case-declarations
             const { execFileRecord } = yakExecResult;
+            // eslint-disable-next-line no-case-declarations
             const fileList = execFileRecord.get(CallToolID);
             return (
                 <StreamCard
@@ -111,6 +114,7 @@ export const AIStreamNode: React.FC<AIStreamNodeProps> = React.memo((props) => {
                 />
             );
         case AIStreamContentType.LOG_TOOL_ERROR_OUTPUT:
+            // eslint-disable-next-line react/jsx-no-useless-fragment
             return <></>;
         default:
             return (
@@ -152,7 +156,15 @@ export const AIReActChatContents: React.FC<AIReActChatContentsPProps> =
         );
 
         const Item = useCallback(
-            ({ children, style, 'data-index': dataIndex }) => (
+            ({
+                children,
+                style,
+                'data-index': dataIndex,
+            }: {
+                children?: React.ReactNode;
+                style?: React.CSSProperties;
+                'data-index'?: number;
+            }) => (
                 <div
                     key={dataIndex}
                     style={style}

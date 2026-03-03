@@ -1,73 +1,85 @@
-import React, {useEffect, useRef, useState} from "react"
-import {AIFocusModeProps} from "./type"
-import {OutlineMicroscopeIcon, OutlineXIcon} from "@/assets/icon/outline"
-import {YakitSelect} from "@/components/yakitUI/YakitSelect/YakitSelect"
-import {useInViewport, useMemoizedFn} from "ahooks"
-import classNames from "classnames"
-import {AIChatSelect} from "../aiReviewRuleSelect/AIReviewRuleSelect"
-import {AIInputEvent} from "../hooks/grpcApi"
-import styles from "./AIFocusMode.module.scss"
-import {grpcQueryAIFocus} from "@/pages/ai-agent/grpc"
-import {AIFocus} from "@/pages/ai-agent/type/forge"
-import {YakitSelectProps} from "@/components/yakitUI/YakitSelect/YakitSelectType"
+import React, { useEffect, useRef, useState } from 'react';
+import type { AIFocusModeProps } from './type';
+import { OutlineMicroscopeIcon, OutlineXIcon } from '@/assets/icon/outline';
+import { useInViewport, useMemoizedFn } from 'ahooks';
+import classNames from 'classnames';
+import { AIChatSelect } from '../aiReviewRuleSelect/AIReviewRuleSelect';
+import type { AIInputEvent } from '../hooks/grpcApi';
+import styles from './AIFocusMode.module.scss';
+import { grpcQueryAIFocus } from '@/pages/AIAgent/ai-agent/grpc';
+import type { AIFocus } from '@/pages/AIAgent/ai-agent/type/forge';
+import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
+import type { YakitSelectProps } from '@/compoments/YakitUI/YakitSelect/YakitSelectType';
 
 export const AIFocusMode: React.FC<AIFocusModeProps> = React.memo((props) => {
-    const {value, onChange, className} = props
+    const { value, onChange, className } = props;
 
-    const [focusModeList, setFocusModeList] = useState<YakitSelectProps["options"]>([])
-    const [open, setOpen] = useState<boolean>(false)
-    const ref = useRef<HTMLDivElement>(null)
+    const [focusModeList, setFocusModeList] = useState<
+        YakitSelectProps['options']
+    >([]);
+    const [open, setOpen] = useState<boolean>(false);
+    const ref = useRef<HTMLDivElement>(null);
 
-    const [inViewPort = true] = useInViewport(ref)
+    const [inViewPort = true] = useInViewport(ref);
 
     useEffect(() => {
-        if (inViewPort) getFocusMode()
-    }, [inViewPort])
-    const getFocusMode = useMemoizedFn(() => {
-        grpcQueryAIFocus().then((res) => {
-            const list = (res?.Data || []).map((item: AIFocus) => ({label: item.Name, value: item.Name}))
-            setFocusModeList(list)
-        })
-    })
-    const onSelectModel = useMemoizedFn((value: AIInputEvent["FocusModeLoop"]) => {
-        onChange(value)
-    })
+        if (inViewPort) getFocusMode();
+    }, [inViewPort]);
+    const getFocusMode = useMemoizedFn(async () => {
+        const res = await grpcQueryAIFocus();
+        const list = (res?.Data || []).map((item: AIFocus) => ({
+            label: item.Name,
+            value: item.Name,
+            describe: item.Description,
+        }));
+        setFocusModeList(list);
+    });
+    const onSelectModel = useMemoizedFn(
+        (value: AIInputEvent['FocusModeLoop']) => {
+            onChange(value);
+        },
+    );
 
     const onSetOpen = useMemoizedFn((v: boolean) => {
-        setOpen(v)
-    })
+        setOpen(v);
+    });
     const onRemove = useMemoizedFn(() => {
-        onChange(undefined)
-        setOpen(false)
-    })
+        onChange(undefined);
+        setOpen(false);
+    });
     return (
         <div ref={ref} className={className}>
             <AIChatSelect
+                // eslint-disable-next-line react/no-unstable-nested-components
                 dropdownRender={(menu) => {
                     return (
-                        <div className={styles["drop-select-wrapper"]}>
-                            <div className={styles["select-title"]}>
+                        <div className={styles['drop-select-wrapper']}>
+                            <div className={styles['select-title']}>
                                 <OutlineMicroscopeIcon />
                                 专注模式
                             </div>
                             {menu}
                         </div>
-                    )
+                    );
                 }}
                 value={
                     value || {
                         label: (
-                            <div className={styles["select-option"]}>
-                                <OutlineMicroscopeIcon className={styles["icon-wrapper"]} />
-                                <span className={styles["select-option-text"]}>请选择</span>
+                            <div className={styles['select-option']}>
+                                <OutlineMicroscopeIcon
+                                    className={styles['icon-wrapper']}
+                                />
+                                <span className={styles['select-option-text']}>
+                                    请选择
+                                </span>
                             </div>
                         ),
-                        value: ""
+                        value: '',
                     }
                 }
                 // placeholder="请选择"
                 onSelect={onSelectModel}
-                optionLabelProp='label'
+                optionLabelProp="label"
                 open={open}
                 setOpen={onSetOpen}
             >
@@ -76,26 +88,41 @@ export const AIFocusMode: React.FC<AIFocusModeProps> = React.memo((props) => {
                         key={item.value}
                         value={item.value}
                         label={
-                            <div className={styles["select-option"]}>
-                                <OutlineMicroscopeIcon className={styles["icon-wrapper"]} />
-                                <span className={styles["select-option-text"]} title={`${item.label}`}>
+                            <div className={styles['select-option']}>
+                                <OutlineMicroscopeIcon
+                                    className={styles['icon-wrapper']}
+                                />
+                                <span
+                                    className={styles['select-option-text']}
+                                    title={`${item.label}`}
+                                >
                                     {item.label}
                                 </span>
-                                <OutlineXIcon className={styles["icon-wrapper"]} onClick={onRemove} />
+                                <OutlineXIcon
+                                    className={styles['icon-wrapper']}
+                                    onClick={onRemove}
+                                />
                             </div>
                         }
                     >
                         <div
-                            className={classNames(styles["select-option-wrapper"], {
-                                [styles["select-option-active-wrapper"]]: item.value === value
-                            })}
+                            className={classNames(
+                                styles['select-option-wrapper'],
+                                {
+                                    [styles['select-option-active-wrapper']]:
+                                        item.value === value,
+                                },
+                            )}
                         >
-                            <div className={styles["text"]}>{item.label}</div>
-                            <div className={styles["describe"]}> {item.describe}</div>
+                            <div className={styles['text']}>{item.label}</div>
+                            <div className={styles['describe']}>
+                                {' '}
+                                {item.describe}
+                            </div>
                         </div>
                     </YakitSelect.Option>
                 ))}
             </AIChatSelect>
         </div>
-    )
-})
+    );
+});
