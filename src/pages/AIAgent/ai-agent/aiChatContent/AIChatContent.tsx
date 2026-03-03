@@ -1,333 +1,395 @@
-import React, {forwardRef, ReactNode, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react"
-import {AIAgentTabPayload, AIChatContentProps} from "./type"
-import styles from "./AIChatContent.module.scss"
-import {ExpandAndRetract} from "@/pages/plugins/operator/expandAndRetract/ExpandAndRetract"
-import {useCreation, useInterval, useMemoizedFn} from "ahooks"
-import {HorizontalScrollCard} from "@/pages/plugins/operator/horizontalScrollCard/HorizontalScrollCard"
-import classNames from "classnames"
-import {YakitSideTab} from "@/components/yakitSideTab/YakitSideTab"
-import {AITabs, AITabsEnum} from "../defaultConstant"
-import {AITabsEnumType} from "../aiAgentType"
-import {YakitSideTabProps, YakitTabsProps} from "@/components/yakitSideTab/YakitSideTabType"
-import {AIReActChat} from "@/pages/ai-re-act/aiReActChat/AIReActChat"
-import {AIFileSystemList} from "../components/aiFileSystemList/AIFileSystemList"
+import React, {
+    forwardRef,
+    type ReactNode,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
+import type { AIAgentTabPayload, AIChatContentProps } from './type';
+import styles from './AIChatContent.module.scss';
+import { ExpandAndRetract } from '@/pages/AIAgent/plugins/operator/expandAndRetract/ExpandAndRetract';
+import { useCreation, useInterval, useMemoizedFn } from 'ahooks';
+import { HorizontalScrollCard } from '@/pages/AIAgent/plugins/operator/horizontalScrollCard/HorizontalScrollCard';
+import classNames from 'classnames';
+import { YakitSideTab } from '@/compoments/yakitSideTab/YakitSideTab';
+import { AITabs, AITabsEnum } from '../defaultConstant';
+import type { AITabsEnumType } from '../aiAgentType';
+import type {
+    YakitSideTabProps,
+    YakitTabsProps,
+} from '@/compoments/yakitSideTab/YakitSideTabType';
+import { AIReActChat } from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChat';
+import { AIFileSystemList } from '../components/aiFileSystemList/AIFileSystemList';
 import {
     PluginExecuteHttpFlow,
-    VulnerabilitiesRisksTable
-} from "@/pages/plugins/operator/pluginExecuteResult/PluginExecuteResult"
-import {YakitEmpty} from "@/components/yakitUI/YakitEmpty/YakitEmpty"
-import {apiQueryRisksTotalByRuntimeIds} from "@/pages/risks/YakitRiskTable/utils"
-import AIReActTaskChat from "@/pages/ai-re-act/aiReActTaskChat/AIReActTaskChat"
-import emiter from "@/utils/eventBus/eventBus"
-import {YakitButton} from "@/components/yakitUI/YakitButton/YakitButton"
-import {OutlineClouddownloadIcon, OutlineNewspaperIcon, OutlinePlussmIcon} from "@/assets/icon/outline"
-import {SolidChatalt2Icon} from "@/assets/icon/solid"
-import useAiChatLog from "@/hook/useAiChatLog/useAiChatLog.ts"
-import {YakitResizeBox} from "@/components/yakitUI/YakitResizeBox/YakitResizeBox"
-import {grpcExportAILogs, grpcQueryHTTPFlows} from "../grpc"
-import useChatIPCStore from "../useContext/ChatIPCContent/useStore"
-import {YakitTag} from "@/components/yakitUI/YakitTag/YakitTag"
-import {TabKey} from "../components/aiFileSystemList/type"
-import {onNewChat} from "../historyChat/HistoryChat"
-import {SideSettingButton} from "../aiChatWelcome/AIChatWelcome"
-import {Divider} from "antd"
-import useAIAgentStore from "../useContext/useStore"
-import {useAIChatResizeBox} from "./hooks/useAIChatResizeBox"
-import {ExportAILogsModal} from "../components/ExportAILogsModal/ExportAILogsModal"
-import {failed, yakitNotify} from "@/utils/notification"
+    VulnerabilitiesRisksTable,
+} from '@/pages/AIAgent/plugins/operator/pluginExecuteResult/PluginExecuteResult';
+import { YakitEmpty } from '@/components/yakitUI/YakitEmpty/YakitEmpty';
+import { apiQueryRisksTotalByRuntimeIds } from '@/pages/risks/YakitRiskTable/utils';
+import AIReActTaskChat from '@/pages/ai-re-act/aiReActTaskChat/AIReActTaskChat';
+import emiter from '@/utils/eventBus/eventBus';
+import { YakitButton } from '@/components/yakitUI/YakitButton/YakitButton';
+import {
+    OutlineClouddownloadIcon,
+    OutlineNewspaperIcon,
+    OutlinePlussmIcon,
+} from '@/assets/icon/outline';
+import { SolidChatalt2Icon } from '@/assets/icon/solid';
+import useAiChatLog from '@/hook/useAiChatLog/useAiChatLog.ts';
+import { YakitResizeBox } from '@/components/yakitUI/YakitResizeBox/YakitResizeBox';
+import { grpcExportAILogs, grpcQueryHTTPFlows } from '../grpc';
+import useChatIPCStore from '../useContext/ChatIPCContent/useStore';
+import { YakitTag } from '@/components/yakitUI/YakitTag/YakitTag';
+import { TabKey } from '../components/aiFileSystemList/type';
+import { onNewChat } from '../historyChat/HistoryChat';
+import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome';
+import { Divider } from 'antd';
+import useAIAgentStore from '../useContext/useStore';
+import { useAIChatResizeBox } from './hooks/useAIChatResizeBox';
+import { ExportAILogsModal } from '../components/ExportAILogsModal/ExportAILogsModal';
+import { failed, yakitNotify } from '@/utils/notification';
 import {
     AIHandleStartParams,
     AIHandleStartResProps,
-    AIReActChatRefProps
-} from "@/pages/ai-re-act/aiReActChat/AIReActChatType"
-import {aiChatDataStore} from "../store/ChatDataStore"
-import AIContextToken from "./AIContextToken/AIContextToken"
-import OperationLog from "../components/aiFileSystemList/OperationLog/OperationLog"
+    AIReActChatRefProps,
+} from '@/pages/ai-re-act/aiReActChat/AIReActChatType';
+import { aiChatDataStore } from '../store/ChatDataStore';
+import AIContextToken from './AIContextToken/AIContextToken';
+import OperationLog from '../components/aiFileSystemList/OperationLog/OperationLog';
 
 export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
     forwardRef((props, ref) => {
-        const {onChat, onChatFromHistory} = props
-        const {chatIPCData} = useChatIPCStore()
-        const {runTimeIDs: initRunTimeIDs, yakExecResult, taskChat, grpcFolders, execute} = chatIPCData
-        const {activeChat} = useAIAgentStore()
-        const [isExpand, setIsExpand] = useState<boolean>(true)
-        const [activeKey, setActiveKey] = useState<AITabsEnumType | undefined>(AITabsEnum.Task_Content)
+        const { onChat, onChatFromHistory } = props;
+        const { chatIPCData } = useChatIPCStore();
+        const {
+            runTimeIDs: initRunTimeIDs,
+            yakExecResult,
+            taskChat,
+            grpcFolders,
+            execute,
+        } = chatIPCData;
+        const { activeChat } = useAIAgentStore();
+        const [isExpand, setIsExpand] = useState<boolean>(true);
+        const [activeKey, setActiveKey] = useState<AITabsEnumType | undefined>(
+            AITabsEnum.Task_Content,
+        );
 
-        const [tempRiskTotal, setTempRiskTotal] = useState<number>(0) // 在risk表没有展示之前得临时显示在tab上得小红点计数,现在不显示具体数量了
-        const [tempHTTPTotal, setTempHTTPTotal] = useState<number>(0) // HTTP流量表tab是否显示，大于0就显示
-        const [intervalRisk, setIntervalRisk] = useState<number | undefined>(undefined)
-        const [intervalHTTP, setIntervalHTTP] = useState<number | undefined>(undefined)
+        const [tempRiskTotal, setTempRiskTotal] = useState<number>(0); // 在risk表没有展示之前得临时显示在tab上得小红点计数,现在不显示具体数量了
+        const [tempHTTPTotal, setTempHTTPTotal] = useState<number>(0); // HTTP流量表tab是否显示，大于0就显示
+        const [intervalRisk, setIntervalRisk] = useState<number | undefined>(
+            undefined,
+        );
+        const [intervalHTTP, setIntervalHTTP] = useState<number | undefined>(
+            undefined,
+        );
 
-        const [showFreeChat, setShowFreeChat] = useState<boolean>(true) //自由对话展开收起
-        const [timeLine, setTimeLine] = useState<boolean>(true)
-        const [runTimeIDs, setRunTimeIDs] = useState<string[]>(initRunTimeIDs)
+        const [showFreeChat, setShowFreeChat] = useState<boolean>(true); //自由对话展开收起
+        const [timeLine, setTimeLine] = useState<boolean>(true);
+        const [runTimeIDs, setRunTimeIDs] = useState<string[]>(initRunTimeIDs);
 
-        const [exportModalVisible, setExportModalVisible] = useState(false)
-        const [exportLoading, setExportLoading] = useState(false)
+        const [exportModalVisible, setExportModalVisible] = useState(false);
+        const [exportLoading, setExportLoading] = useState(false);
 
         const aiReActChatRef = useRef<AIReActChatRefProps>({
             handleStart: () => {},
             setMention: () => {},
             setValue: () => {},
-            getValue: () => {}
-        })
+            getValue: () => {},
+        });
 
-        useImperativeHandle(
-            ref,
-            () => {
-                return {
-                    ...aiReActChatRef.current
-                }
-            },
-            []
-        )
+        useImperativeHandle(ref, () => {
+            return {
+                ...aiReActChatRef.current,
+            };
+        }, []);
 
         // #region 问题相关逻辑
 
         const onOpenExportModal = useMemoizedFn((e) => {
-            e.stopPropagation()
-            setExportModalVisible(true)
-        })
+            e.stopPropagation();
+            setExportModalVisible(true);
+        });
 
         const onExportCancel = useMemoizedFn(() => {
-            setExportModalVisible(false)
-        })
+            setExportModalVisible(false);
+        });
 
-        const onExportOk = useMemoizedFn(async (data: {types: string[]; outputPath: string}) => {
-            if (!activeChat?.id) {
-                failed("当前没有活跃的会话")
-                return
-            }
-            setExportLoading(true)
-            //
-            try {
-                const ids = aiChatDataStore.get(activeChat.request.TimelineSessionID || "default")?.coordinatorIDs || []
-                await grpcExportAILogs(
-                    {
-                        // CoordinatorIDs: ids,
-                        SessionID: activeChat.session,
-                        ExportDataTypes: data.types,
-                        OutputPath: data.outputPath
-                    },
-                    true
-                )
-                yakitNotify("success", "导出成功")
-                setExportModalVisible(false)
-            } catch (error) {
-                failed(`导出失败: ${error}`)
-            } finally {
-                setExportLoading(false)
-            }
-        })
+        const onExportOk = useMemoizedFn(
+            async (data: { types: string[]; outputPath: string }) => {
+                if (!activeChat?.id) {
+                    failed('当前没有活跃的会话');
+                    return;
+                }
+                setExportLoading(true);
+                //
+                try {
+                    const ids =
+                        aiChatDataStore.get(
+                            activeChat.request.TimelineSessionID || 'default',
+                        )?.coordinatorIDs || [];
+                    await grpcExportAILogs(
+                        {
+                            // CoordinatorIDs: ids,
+                            SessionID: activeChat.session,
+                            ExportDataTypes: data.types,
+                            OutputPath: data.outputPath,
+                        },
+                        true,
+                    );
+                    yakitNotify('success', '导出成功');
+                    setExportModalVisible(false);
+                } catch (error) {
+                    failed(`导出失败: ${error}`);
+                } finally {
+                    setExportLoading(false);
+                }
+            },
+        );
 
-        const handleTabStateChange = useMemoizedFn((key: AITabsEnumType, value: AIAgentTabPayload["value"]) => {
-            setActiveKey(key)
-            if (!value) {
-                setRunTimeIDs(initRunTimeIDs)
-                return
-            }
-            setRunTimeIDs([value])
-        })
+        const handleTabStateChange = useMemoizedFn(
+            (key: AITabsEnumType, value: AIAgentTabPayload['value']) => {
+                setActiveKey(key);
+                if (!value) {
+                    setRunTimeIDs(initRunTimeIDs);
+                    return;
+                }
+                setRunTimeIDs([value]);
+            },
+        );
 
         const onSwitchAIAgentTab = useMemoizedFn((data) => {
-            if (data === undefined) return setActiveKey(data)
-            let payload: AIAgentTabPayload
+            if (data === undefined) return setActiveKey(data);
+            let payload: AIAgentTabPayload;
             try {
-                payload = JSON.parse(data)
+                payload = JSON.parse(data);
             } catch (error) {
-                setActiveKey(undefined)
-                return
+                setActiveKey(undefined);
+                return;
             }
-            const {key, value} = payload
+            const { key, value } = payload;
 
-            if (key === AITabsEnum.HTTP && !tempHTTPTotal) return
-            if (key === AITabsEnum.Risk && !tempRiskTotal) return
-            handleTabStateChange(key, value)
-        })
+            if (key === AITabsEnum.HTTP && !tempHTTPTotal) return;
+            if (key === AITabsEnum.Risk && !tempRiskTotal) return;
+            handleTabStateChange(key, value);
+        });
 
         useEffect(() => {
-            emiter.on("switchAIActTab", onSwitchAIAgentTab)
+            emiter.on('switchAIActTab', onSwitchAIAgentTab);
             return () => {
-                emiter.off("switchAIActTab", onSwitchAIAgentTab)
-            }
-        }, [onSwitchAIAgentTab])
+                emiter.off('switchAIActTab', onSwitchAIAgentTab);
+            };
+        }, [onSwitchAIAgentTab]);
 
         const filterTagDom = useMemo(() => {
-            if (initRunTimeIDs === runTimeIDs) return null
+            if (initRunTimeIDs === runTimeIDs) return null;
             // 超过20字符截取，显示...
-            const showId = runTimeIDs.at(0)?.slice(0, 30) + "…"
+            const showId = runTimeIDs.at(0)?.slice(0, 30) + '…';
             return (
-                <YakitTag color='info' closable onClose={() => setRunTimeIDs(initRunTimeIDs)}>
+                <YakitTag
+                    color="info"
+                    closable
+                    onClose={() => setRunTimeIDs(initRunTimeIDs)}
+                >
                     {showId}
                 </YakitTag>
-            )
-        }, [initRunTimeIDs, runTimeIDs])
+            );
+        }, [initRunTimeIDs, runTimeIDs]);
 
         useEffect(() => {
             if (initRunTimeIDs.length > 0) {
-                if (!tempRiskTotal) setIntervalRisk(1000)
-                if (!tempHTTPTotal) setIntervalHTTP(1000)
+                if (!tempRiskTotal) setIntervalRisk(1000);
+                if (!tempHTTPTotal) setIntervalHTTP(1000);
             } else {
-                setTempRiskTotal(0)
-                setTempHTTPTotal(0)
+                setTempRiskTotal(0);
+                setTempHTTPTotal(0);
             }
-        }, [initRunTimeIDs])
+        }, [initRunTimeIDs]);
         useInterval(() => {
-            getRiskTotal()
-        }, intervalRisk)
+            getRiskTotal();
+        }, intervalRisk);
         useInterval(() => {
-            getHTTPTotal()
-        }, intervalHTTP)
+            getHTTPTotal();
+        }, intervalHTTP);
         const getRiskTotal = useMemoizedFn(() => {
-            if (!initRunTimeIDs.length) return
+            if (!initRunTimeIDs.length) return;
             apiQueryRisksTotalByRuntimeIds(initRunTimeIDs).then((allRes) => {
                 if (+allRes.Total > 0) {
-                    setTempRiskTotal(+allRes.Total)
-                    if (intervalRisk) setIntervalRisk(undefined)
+                    setTempRiskTotal(+allRes.Total);
+                    if (intervalRisk) setIntervalRisk(undefined);
                 }
                 if (!chatIPCData.execute) {
-                    if (intervalRisk) setIntervalRisk(undefined)
+                    if (intervalRisk) setIntervalRisk(undefined);
                 }
-            })
-        })
+            });
+        });
         const getHTTPTotal = useMemoizedFn(() => {
-            if (!initRunTimeIDs.length) return
-            grpcQueryHTTPFlows({RuntimeIDs: initRunTimeIDs}).then((allRes) => {
-                if (+allRes.Total > 0) {
-                    setTempHTTPTotal(+allRes.Total)
-                    if (intervalHTTP) setIntervalHTTP(undefined)
-                }
-                if (!chatIPCData.execute) {
-                    if (intervalHTTP) setIntervalHTTP(undefined)
-                }
-            })
-        })
+            if (!initRunTimeIDs.length) return;
+            grpcQueryHTTPFlows({ RuntimeIDs: initRunTimeIDs }).then(
+                (allRes) => {
+                    if (+allRes.Total > 0) {
+                        setTempHTTPTotal(+allRes.Total);
+                        if (intervalHTTP) setIntervalHTTP(undefined);
+                    }
+                    if (!chatIPCData.execute) {
+                        if (intervalHTTP) setIntervalHTTP(undefined);
+                    }
+                },
+            );
+        });
 
         const onExpand = useMemoizedFn((e) => {
-            e.stopPropagation()
-            setIsExpand(!isExpand)
-        })
+            e.stopPropagation();
+            setIsExpand(!isExpand);
+        });
         const yakitTabs = useCreation(() => {
-            let tab: YakitSideTabProps["yakitTabs"] = [AITabs[AITabsEnum.Task_Content], AITabs[AITabsEnum.File_System]]
+            let tab: YakitSideTabProps['yakitTabs'] = [
+                AITabs[AITabsEnum.Task_Content],
+                AITabs[AITabsEnum.File_System],
+            ];
             if (!!tempHTTPTotal) {
-                tab.push(AITabs[AITabsEnum.HTTP])
+                tab.push(AITabs[AITabsEnum.HTTP]);
             }
             if (!!tempRiskTotal) {
-                tab.push(AITabs[AITabsEnum.Risk])
+                tab.push(AITabs[AITabsEnum.Risk]);
             }
             if (yakExecResult.execFileRecord.size > 0) {
-                tab.push(AITabs[AITabsEnum.Operation_Log])
+                tab.push(AITabs[AITabsEnum.Operation_Log]);
             }
-            return tab
-        }, [tempRiskTotal, tempHTTPTotal, yakExecResult.execFileRecord, taskChat?.elements?.length])
+            return tab;
+        }, [
+            tempRiskTotal,
+            tempHTTPTotal,
+            yakExecResult.execFileRecord,
+            taskChat?.elements?.length,
+        ]);
 
-        const [showHot, setShowHot] = useState(false)
+        const [showHot, setShowHot] = useState(false);
         const prevRef = useRef<{
-            chatId?: string
-            foldersLen: number
+            chatId?: string;
+            foldersLen: number;
         }>({
             chatId: activeChat?.id,
-            foldersLen: grpcFolders.length
-        })
+            foldersLen: grpcFolders.length,
+        });
 
         useEffect(() => {
-            const prev = prevRef.current
-            const currentChatId = activeChat?.id
-            const currentLen = grpcFolders.length
-            let nextShowHot = false
+            const prev = prevRef.current;
+            const currentChatId = activeChat?.id;
+            const currentLen = grpcFolders.length;
+            let nextShowHot = false;
 
             if (activeKey === AITabsEnum.File_System) {
-                nextShowHot = false
-            } else if (prev.chatId === currentChatId && currentLen > prev.foldersLen) {
-                nextShowHot = true
+                nextShowHot = false;
+            } else if (
+                prev.chatId === currentChatId &&
+                currentLen > prev.foldersLen
+            ) {
+                nextShowHot = true;
             }
-            setShowHot(nextShowHot)
+            setShowHot(nextShowHot);
             prevRef.current = {
                 chatId: currentChatId,
-                foldersLen: currentLen
-            }
-        }, [grpcFolders.length, activeChat?.id, activeKey])
+                foldersLen: currentLen,
+            };
+        }, [grpcFolders.length, activeChat?.id, activeKey]);
 
-        const tabBarRender = useMemoizedFn((tab: YakitTabsProps, node: ReactNode[]) => {
-            const [label] = node
-            const finalLabel = label ?? (typeof tab.label === "function" ? tab.label() : tab.label)
-            if (tab.value === AITabsEnum.Risk) {
-                return <>{finalLabel}</>
-            }
-            if (tab.value === AITabsEnum.File_System) {
-                const isShow = activeKey !== AITabsEnum.File_System && showHot
-                return (
-                    <div className={styles["file-system-label"]}>
-                        文件系统
-                        <span hidden={!isShow} />
-                    </div>
-                )
-            }
+        const tabBarRender = useMemoizedFn(
+            (tab: YakitTabsProps, node: ReactNode[]) => {
+                const [label] = node;
+                const finalLabel =
+                    label ??
+                    (typeof tab.label === 'function' ? tab.label() : tab.label);
+                if (tab.value === AITabsEnum.Risk) {
+                    return <>{finalLabel}</>;
+                }
+                if (tab.value === AITabsEnum.File_System) {
+                    const isShow =
+                        activeKey !== AITabsEnum.File_System && showHot;
+                    return (
+                        <div className={styles['file-system-label']}>
+                            文件系统
+                            <span hidden={!isShow} />
+                        </div>
+                    );
+                }
 
-            return finalLabel
-        })
+                return finalLabel;
+            },
+        );
 
         const OperationLogList = useCreation(() => {
             return Array.from(yakExecResult.execFileRecord.values())
                 .flat()
-                .sort((a, b) => b.order - a.order)
-        }, [yakExecResult.execFileRecord])
+                .sort((a, b) => b.order - a.order);
+        }, [yakExecResult.execFileRecord]);
 
         const renderTabContent = useMemoizedFn((key: AITabsEnumType) => {
             switch (key) {
                 case AITabsEnum.Task_Content:
-                    return <AIReActTaskChat setTimeLine={setTimeLine} setShowFreeChat={setShowFreeChat} />
+                    return (
+                        <AIReActTaskChat
+                            setTimeLine={setTimeLine}
+                            setShowFreeChat={setShowFreeChat}
+                        />
+                    );
                 case AITabsEnum.File_System:
-                    return <AIFileSystemList />
+                    return <AIFileSystemList />;
                 case AITabsEnum.Risk:
                     return !!runTimeIDs.length ? (
-                        <VulnerabilitiesRisksTable filterTagDom={filterTagDom} runTimeIDs={runTimeIDs} />
+                        <VulnerabilitiesRisksTable
+                            filterTagDom={filterTagDom}
+                            runTimeIDs={runTimeIDs}
+                        />
                     ) : (
                         <>
-                            <YakitEmpty style={{paddingTop: 48}} />
+                            <YakitEmpty style={{ paddingTop: 48 }} />
                         </>
-                    )
+                    );
                 case AITabsEnum.HTTP:
                     return !!runTimeIDs.length ? (
                         <PluginExecuteHttpFlow
                             filterTagDom={filterTagDom}
-                            runtimeId={runTimeIDs.join(",")}
+                            runtimeId={runTimeIDs.join(',')}
                             website={true}
                         />
                     ) : (
                         <>
-                            <YakitEmpty style={{paddingTop: 48}} />
+                            <YakitEmpty style={{ paddingTop: 48 }} />
                         </>
-                    )
+                    );
                 case AITabsEnum.Operation_Log:
-                    return <OperationLog loading={false} list={OperationLogList} />
+                    return (
+                        <OperationLog loading={false} list={OperationLogList} />
+                    );
                 default:
-                    return <></>
+                    return <></>;
             }
-        })
+        });
 
-        const {onOpenLogWindow} = useAiChatLog()
+        const { onOpenLogWindow } = useAiChatLog();
 
         const onActiveKey = useMemoizedFn((key: AITabsEnumType) => {
             if (activeKey === key) {
-                setShowFreeChat(true)
-                setActiveKey(undefined)
+                setShowFreeChat(true);
+                setActiveKey(undefined);
             } else {
-                setActiveKey(key)
+                setActiveKey(key);
             }
-            setRunTimeIDs(initRunTimeIDs)
-        })
+            setRunTimeIDs(initRunTimeIDs);
+        });
         const onOpenLog = useMemoizedFn((e) => {
-            e.stopPropagation()
-            onOpenLogWindow()
-        })
+            e.stopPropagation();
+            onOpenLogWindow();
+        });
 
-        const {resizeBoxProps, emitResizeBox} = useAIChatResizeBox({
+        const { resizeBoxProps, emitResizeBox } = useAIChatResizeBox({
             activeKey,
             showFreeChat,
             timeLine,
-            taskChat
-        })
+            taskChat,
+        });
 
         // useMount(() => {
         //     const onFilePreviewReady = () => {
@@ -345,43 +407,63 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                 resolve({
                     params: data.params,
                     onChat,
-                    onChatFromHistory
-                })
-            })
-        })
+                    onChatFromHistory,
+                });
+            });
+        });
 
         return (
-            <div className={styles["ai-chat-content-wrapper"]}>
+            <div className={styles['ai-chat-content-wrapper']}>
                 <ExpandAndRetract
                     isExpand={isExpand}
                     onExpand={onExpand}
-                    className={classNames(styles["expand-retract-wrapper"], {
-                        [styles["expand-retract-wrapper-collapsed"]]: !yakExecResult.card.length
+                    className={classNames(styles['expand-retract-wrapper'], {
+                        [styles['expand-retract-wrapper-collapsed']]:
+                            !yakExecResult.card.length,
                     })}
-                    animationWrapperClassName={classNames(styles["expand-retract-animation-wrapper"], {
-                        [styles["expand-retract-animation-wrapper-hidden"]]: !yakExecResult.card.length
-                    })}
-                    expandText='展开'
-                    retractText='收起'
+                    animationWrapperClassName={classNames(
+                        styles['expand-retract-animation-wrapper'],
+                        {
+                            [styles['expand-retract-animation-wrapper-hidden']]:
+                                !yakExecResult.card.length,
+                        },
+                    )}
+                    expandText="展开"
+                    retractText="收起"
                 >
-                    <div className={styles["expand-retract-content"]}>
-                        <div className={styles["header"]}>
-                            <div className={styles["title"]}>
-                                <SolidChatalt2Icon className={styles["chat-alt-icon"]} />
-                                <div className={styles["chat-title"]}>{activeChat?.name || "新会话"}</div>
-                                <Divider type='vertical' />
-                                <YakitButton type='secondary2' icon={<OutlinePlussmIcon />} onClick={() => onNewChat()}>
+                    <div className={styles['expand-retract-content']}>
+                        <div className={styles['header']}>
+                            <div className={styles['title']}>
+                                <SolidChatalt2Icon
+                                    className={styles['chat-alt-icon']}
+                                />
+                                <div className={styles['chat-title']}>
+                                    {activeChat?.name || '新会话'}
+                                </div>
+                                <Divider type="vertical" />
+                                <YakitButton
+                                    type="secondary2"
+                                    icon={<OutlinePlussmIcon />}
+                                    onClick={() => onNewChat()}
+                                >
                                     新建会话
                                 </YakitButton>
                                 <SideSettingButton />
                             </div>
-                            <div className={styles["extra"]}>
-                                <AIContextToken execute={execute} session={activeChat?.session} />
-                                <YakitButton type='secondary2' icon={<OutlineNewspaperIcon />} onClick={onOpenLog}>
+                            <div className={styles['extra']}>
+                                <AIContextToken
+                                    execute={execute}
+                                    session={activeChat?.session}
+                                />
+                                <YakitButton
+                                    type="secondary2"
+                                    icon={<OutlineNewspaperIcon />}
+                                    onClick={onOpenLog}
+                                >
                                     日志
                                 </YakitButton>
                                 <YakitButton
-                                    type='secondary2'
+                                    type="secondary2"
                                     icon={<OutlineClouddownloadIcon />}
                                     onClick={onOpenExportModal}
                                 >
@@ -393,31 +475,42 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                             <HorizontalScrollCard
                                 hiddenHeard={true}
                                 data={yakExecResult.card}
-                                className={classNames(styles["card-list-wrapper"], {
-                                    [styles["card-list-wrapper-hidden"]]: !isExpand
-                                })}
-                                itemProps={{size: "small"}}
+                                className={classNames(
+                                    styles['card-list-wrapper'],
+                                    {
+                                        [styles['card-list-wrapper-hidden']]:
+                                            !isExpand,
+                                    },
+                                )}
+                                itemProps={{ size: 'small' }}
                             />
                         ) : null}
                     </div>
                 </ExpandAndRetract>
-                <div className={styles["ai-chat-tab-wrapper"]}>
+                <div className={styles['ai-chat-tab-wrapper']}>
                     <YakitSideTab
-                        type='horizontal'
+                        type="horizontal"
                         yakitTabs={yakitTabs}
                         activeKey={activeKey}
-                        onActiveKey={(key) => onActiveKey(key as AITabsEnumType)}
+                        onActiveKey={(key) =>
+                            onActiveKey(key as AITabsEnumType)
+                        }
                         onTabPaneRender={(ele, node) => tabBarRender(ele, node)}
-                        className={styles["tab-wrap"]}
+                        className={styles['tab-wrap']}
                     >
-                        <div className={styles["ai-chat-content"]}>
+                        <div className={styles['ai-chat-content']}>
                             <YakitResizeBox
                                 firstNode={
                                     activeKey && (
                                         <div
-                                            className={classNames(styles["tab-content"], {
-                                                [styles["tab-content-right"]]: !showFreeChat
-                                            })}
+                                            className={classNames(
+                                                styles['tab-content'],
+                                                {
+                                                    [styles[
+                                                        'tab-content-right'
+                                                    ]]: !showFreeChat,
+                                                },
+                                            )}
                                         >
                                             {renderTabContent(activeKey)}
                                         </div>
@@ -425,10 +518,14 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                                 }
                                 secondNode={
                                     <AIReActChat
-                                        chatContainerHeaderClassName={classNames({
-                                            [styles["re-act-chat-container-header"]]: !activeKey
-                                        })}
-                                        mode={!!activeKey ? "task" : "welcome"}
+                                        chatContainerHeaderClassName={classNames(
+                                            {
+                                                [styles[
+                                                    're-act-chat-container-header'
+                                                ]]: !activeKey,
+                                            },
+                                        )}
+                                        mode={!!activeKey ? 'task' : 'welcome'}
                                         showFreeChat={showFreeChat}
                                         setShowFreeChat={setShowFreeChat}
                                         startRequest={startRequest}
@@ -447,6 +544,6 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                     loading={exportLoading}
                 />
             </div>
-        )
-    })
-)
+        );
+    }),
+);

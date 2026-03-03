@@ -1,36 +1,36 @@
-import {Dispatch, SetStateAction, createContext} from "react"
-import {AIAgentSetting} from "../aiAgentType"
-import {AIChatData, AIChatInfo} from "../type/aiChat"
+import { createContext, type Dispatch, type SetStateAction } from 'react';
+import type { AIAgentSetting } from '../aiAgentType';
+import type { AIChatInfo } from '../type/aiChat';
 
 export interface AIAgentContextStore {
     /** 全局配置 */
-    setting: AIAgentSetting
+    setting: AIAgentSetting;
     /** 历史对话 */
-    chats: AIChatInfo[]
+    chats: AIChatInfo[];
     /** 当前展示对话 */
-    activeChat?: AIChatInfo
+    activeChat?: AIChatInfo;
 }
 
 export interface AIAgentContextDispatcher {
-    setSetting?: Dispatch<SetStateAction<AIAgentSetting>>
-    getSetting?: () => AIAgentSetting
-    setChats?: Dispatch<SetStateAction<AIChatInfo[]>>
-    getChats?: () => AIChatInfo[]
-    setActiveChat?: Dispatch<SetStateAction<AIChatInfo | undefined>>
+    setSetting?: Dispatch<SetStateAction<AIAgentSetting>>;
+    getSetting?: () => AIAgentSetting;
+    setChats?: Dispatch<SetStateAction<AIChatInfo[]>>;
+    getChats?: () => AIChatInfo[];
+    setActiveChat?: Dispatch<SetStateAction<AIChatInfo | undefined>>;
 
     // getChatData?: (session: string) => AIChatData | undefined
 }
 
 export interface AIAgentContextValue {
-    store: AIAgentContextStore
-    dispatcher: AIAgentContextDispatcher
+    store: AIAgentContextStore;
+    dispatcher: AIAgentContextDispatcher;
 }
 
 export default createContext<AIAgentContextValue>({
     store: {
         setting: {},
         chats: [],
-        activeChat: undefined
+        activeChat: undefined,
     },
     dispatcher: {
         setSetting: undefined,
@@ -38,6 +38,6 @@ export default createContext<AIAgentContextValue>({
 
         setChats: undefined,
         getChats: undefined,
-        setActiveChat: undefined
-    }
-})
+        setActiveChat: undefined,
+    },
+});

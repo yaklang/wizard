@@ -1,37 +1,17 @@
-import {
-    CSSProperties,
-    Dispatch,
-    ReactNode,
-    SetStateAction,
-    MutableRefObject,
-} from 'react';
-import { AIChatInfo } from './type/aiChat';
-import { AITreeNodeProps } from './aiTree/type';
-import {
-    HoldGRPCStreamProps,
-    StreamResult,
-} from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
-import { AITabsEnum } from './defaultConstant';
-import { AIAgentGrpcApi, AIStartParams } from '../ai-re-act/hooks/grpcApi';
-import {
-    AIChatQSData,
-    AIStreamOutput,
-    AITaskInfoProps,
-} from '../ai-re-act/hooks/aiRender';
-import {
-    UseYakExecResultState,
-    PlanLoadingStatus,
-} from '../ai-re-act/hooks/type';
-import { ReActChatRenderItem } from '@/pages/ai-re-act/hooks/aiRender';
-import { UseChatIPCEvents } from '@/pages/ai-re-act/hooks/type';
+import type { Dispatch, SetStateAction } from 'react';
+import type { AIChatInfo } from './type/aiChat';
+import type { AITabsEnum } from './defaultConstant';
+import type { AIStartParams } from '../ai-re-act/hooks/grpcApi';
+import type { AITaskInfoProps } from '../ai-re-act/hooks/aiRender';
+import type { PlanLoadingStatus } from '../ai-re-act/hooks/type';
+import type { ReActChatRenderItem } from '@/pages/ai-re-act/hooks/aiRender';
 
 // #region 页面全局变量
 // 全局配置信息
-export interface AIAgentSetting
-    extends Omit<
-        AIStartParams,
-        'CoordinatorId' | 'Sequence' | 'McpServers' | 'UserQuery'
-    > {}
+export type AIAgentSetting = Omit<
+    AIStartParams,
+    'CoordinatorId' | 'Sequence' | 'McpServers' | 'UserQuery'
+>;
 
 // 触发事件通信
 export interface AIAgentTriggerEventInfo {
@@ -77,7 +57,7 @@ export interface AIAgentChatStreamProps {
 
 // #endregion
 
-//#region AI工具查看详情
+// #region AI工具查看详情
 export interface AIChatToolDrawerContentProps {
     callToolId: string;
     aiFilePath?: string;

@@ -1,76 +1,81 @@
-import React, {ReactNode, useEffect, useState} from "react"
-import {useControllableValue, useMemoizedFn} from "ahooks"
-import {AiAgentTabList, AIAgentTabListEnum, SwitchAIAgentTabEventEnum} from "./defaultConstant"
-import {AIAgentSideListProps, AIAgentTriggerEventInfo} from "./aiAgentType"
-import emiter from "@/utils/eventBus/eventBus"
+import type { FC } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { useControllableValue, useMemoizedFn } from 'ahooks';
+import {
+    AiAgentTabList,
+    AIAgentTabListEnum,
+    SwitchAIAgentTabEventEnum,
+} from './defaultConstant';
+import type {
+    AIAgentSideListProps,
+    AIAgentTriggerEventInfo,
+} from './aiAgentType';
+import emiter from '@/utils/eventBus/eventBus';
 
-import classNames from "classnames"
-import styles from "./AIAgentSideList.module.scss"
-import {YakitSideTab} from "@/components/yakitSideTab/YakitSideTab"
+import classNames from 'classnames';
+import styles from './AIAgentSideList.module.scss';
+import { YakitSideTab } from '@/compoments/yakitSideTab/YakitSideTab';
 
-const AIChatSetting = React.lazy(() => import("./AIChatSetting/AIChatSetting"))
-const ForgeName = React.lazy(() => import("./forgeName/ForgeName"))
-const AIToolList = React.lazy(() => import("./aiToolList/AIToolList"))
-const AIModelList = React.lazy(() => import("./aiModelList/AIModelList"))
-const HistoryChat = React.lazy(() => import("./historyChat/HistoryChat"))
-const AIMCP = React.lazy(() => import("./aiMCP/AIMCP"))
+const AIChatSetting = lazy(() => import('./AIChatSetting/AIChatSetting'));
+const AIModelList = lazy(() => import('./aiModelList/AIModelList'));
+const HistoryChat = lazy(() => import('./historyChat/HistoryChat'));
+// const AIMCP = lazy(() => import('./aiMCP/AIMCP'));
 
-export const AIAgentSideList: React.FC<AIAgentSideListProps> = (props) => {
-    // const {} = props
-    const [active, setActive] = useState<AIAgentTabListEnum>(AIAgentTabListEnum.History)
+export const AIAgentSideList: FC<AIAgentSideListProps> = (props) => {
+    const [active, setActive] = useState<AIAgentTabListEnum>(
+        AIAgentTabListEnum.History,
+    );
     const [show, setShow] = useControllableValue<boolean>(props, {
         defaultValue: false,
-        valuePropName: "show",
-        trigger: "setShow"
-    })
+        valuePropName: 'show',
+        trigger: 'setShow',
+    });
     const handleSetActive = useMemoizedFn((value: AIAgentTabListEnum) => {
-        setActive(value)
-    })
+        setActive(value);
+    });
 
     useEffect(() => {
-        emiter.on("switchAIAgentTab", onSwitchAIAgentTab)
+        emiter.on('switchAIAgentTab', onSwitchAIAgentTab);
         return () => {
-            emiter.off("switchAIAgentTab", onSwitchAIAgentTab)
-        }
-    }, [])
+            emiter.off('switchAIAgentTab', onSwitchAIAgentTab);
+        };
+    }, []);
 
     const onSwitchAIAgentTab = useMemoizedFn((data: string) => {
         try {
-            const info: Omit<AIAgentTriggerEventInfo, "type"> & {type: `${SwitchAIAgentTabEventEnum}`} =
-                JSON.parse(data)
-            const {type, params} = info
-            if (!params) return
+            const info: Omit<AIAgentTriggerEventInfo, 'type'> & {
+                type: `${SwitchAIAgentTabEventEnum}`;
+            } = JSON.parse(data);
+            const { type, params } = info;
+            if (!params) return;
             switch (type) {
                 case SwitchAIAgentTabEventEnum.SET_TAB_ACTIVE:
-                    setActive(params.active as AIAgentTabListEnum)
-                    setShow(params.show !== false)
-                    break
+                    setActive(params.active as AIAgentTabListEnum);
+                    setShow(params.show !== false);
+                    break;
                 case SwitchAIAgentTabEventEnum.SET_TAB_SHOW:
-                    setShow(params.show !== false)
-                    break
+                    setShow(params.show !== false);
+                    break;
                 default:
-                    break
+                    break;
             }
         } catch (error) {}
-    })
+    });
 
     const renderTabContent = useMemoizedFn((key: AIAgentTabListEnum) => {
-        let content: ReactNode = <></>
         switch (key) {
             case AIAgentTabListEnum.History:
-                content = (
-                    <React.Suspense>
+                return (
+                    <Suspense>
                         <HistoryChat />
-                    </React.Suspense>
-                )
-                break
+                    </Suspense>
+                );
             case AIAgentTabListEnum.Setting:
-                content = (
-                    <React.Suspense>
+                return (
+                    <Suspense>
                         <AIChatSetting />
-                    </React.Suspense>
-                )
-                break
+                    </Suspense>
+                );
             // case AIAgentTabListEnum.Forge_Name:
             //     content = (
             //         <React.Suspense>
@@ -86,43 +91,41 @@ export const AIAgentSideList: React.FC<AIAgentSideListProps> = (props) => {
             //     )
             //     break
             case AIAgentTabListEnum.AI_Model:
-                content = (
-                    <React.Suspense>
+                return (
+                    <Suspense>
                         <AIModelList />
-                    </React.Suspense>
-                )
-                break
-            case AIAgentTabListEnum.MCP:
-                content = (
-                    <React.Suspense>
-                        <AIMCP />
-                    </React.Suspense>
-                )
-                break
+                    </Suspense>
+                );
+            // case AIAgentTabListEnum.MCP:
+            //     content = (
+            //         <Suspense>
+            //             <AIMCP />
+            //         </Suspense>
+            //     );
+            //     break;
             default:
-                break
+                break;
         }
-        return content
-    })
+    });
     return (
-        <div className={styles["ai-agent-side-list"]}>
+        <div className={styles['ai-agent-side-list']}>
             <YakitSideTab
-                type='vertical'
+                type="vertical"
                 yakitTabs={AiAgentTabList}
                 activeKey={active}
                 onActiveKey={(v) => handleSetActive(v as AIAgentTabListEnum)}
-                className={styles["tab-wrap"]}
+                className={styles['tab-wrap']}
                 show={show}
                 setShow={setShow}
             >
                 <div
-                    className={classNames(styles["tab-content"], {
-                        [styles["tab-content-hidden"]]: !show
+                    className={classNames(styles['tab-content'], {
+                        [styles['tab-content-hidden']]: !show,
                     })}
                 >
                     {renderTabContent(active)}
                 </div>
             </YakitSideTab>
         </div>
-    )
-}
+    );
+};

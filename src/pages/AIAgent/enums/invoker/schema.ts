@@ -1,4 +1,4 @@
-import { YakParamProps, YakRiskInfoProps } from '../plugins/pluginsType';
+import type { YakParamProps, YakRiskInfoProps } from '../plugins/pluginsType';
 
 export interface ExecHistoryRecord {
     Script: string;

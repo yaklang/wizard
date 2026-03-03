@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useState, useRef } from 'react';
 import { useMemoizedFn } from 'ahooks';
 
 type GetStateAction<S> = () => S;

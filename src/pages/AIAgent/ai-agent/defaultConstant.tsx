@@ -17,7 +17,7 @@ import {
 import type {
     YakitSideTabProps,
     YakitTabsProps,
-} from '@/components/yakitSideTab/YakitSideTabType';
+} from '@/compoments/yakitSideTab/YakitSideTabType';
 import type { PaginationSchema } from '../enums/invoker/schema';
 import { genDefaultPagination } from '../enums/invoker/schema';
 import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType';

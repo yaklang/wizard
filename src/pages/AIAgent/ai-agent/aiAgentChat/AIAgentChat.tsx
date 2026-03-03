@@ -1,7 +1,7 @@
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type {
     AIAgentChatMode,
-    AIAgentChatProps,
+    // AIAgentChatProps,
     AIReActTaskChatReviewProps,
     HandleStartParams,
 } from './type';
@@ -11,14 +11,14 @@ import {
     useInViewport,
     useMap,
     useMemoizedFn,
-    useSafeState,
+    // useSafeState,
     useUpdateEffect,
 } from 'ahooks';
 import emiter from '@/utils/eventBus/eventBus';
 import type { AIAgentTriggerEventInfo } from '../aiAgentType';
 import useAIAgentStore from '../useContext/useStore';
 import { getRemoteValue, setRemoteValue } from '@/utils/kv';
-import useChatIPC from '@/pages/ai-re-act/hooks/useChatIPC';
+import useChatIPC from '@/pages/AIAgent/ai-re-act/hooks/useChatIPC';
 import useAIAgentDispatcher from '../useContext/useDispatcher';
 import cloneDeep from 'lodash/cloneDeep';
 import { randomString } from '@/utils/randomUtil';
@@ -30,8 +30,8 @@ import type {
     ChatIPCContextStore,
 } from '../useContext/ChatIPCContent/ChatIPCContent';
 import ChatIPCContent from '../useContext/ChatIPCContent/ChatIPCContent';
-import { AIReActChatReview } from '@/pages/ai-agent/components/aiReActChatReview/AIReActChatReview';
-import { YakitButton } from '@/components/yakitUI/YakitButton/YakitButton';
+import { AIReActChatReview } from '@/pages/AIAgent/ai-agent/components/aiReActChatReview/AIReActChatReview';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import {
     OutlineChevrondoubledownIcon,
     OutlineChevrondoubleupIcon,
@@ -42,44 +42,44 @@ import type {
     AIChatIPCStartParams,
     ChatIPCSendType,
     UseTaskChatState,
-} from '@/pages/ai-re-act/hooks/type';
+} from '@/pages/AIAgent/ai-re-act/hooks/type';
 import useChatIPCDispatcher from '../useContext/ChatIPCContent/useDispatcher';
 import useChatIPCStore from '../useContext/ChatIPCContent/useStore';
 import type {
     AIAgentGrpcApi,
     AIInputEvent,
     AIStartParams,
-} from '@/pages/ai-re-act/hooks/grpcApi';
+} from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 import type {
     AIChatQSData,
     AIReviewType,
-} from '@/pages/ai-re-act/hooks/aiRender';
-import { failed, yakitNotify } from '@/utils/notification';
+} from '@/pages/AIAgent/ai-re-act/hooks/aiRender';
+import { yakitNotify } from '@/utils/notification';
 import {
     AIForgeForm,
     AIToolForm,
 } from '../aiTriageChatTemplate/AITriageChatTemplate';
 import { grpcGetAIForge } from '../grpc';
-import { YakitHint } from '@/components/yakitUI/YakitHint/YakitHint';
-import { YakitCheckbox } from '@/components/yakitUI/YakitCheckbox/YakitCheckbox';
-import { YakitModalConfirm } from '@/components/yakitUI/YakitModal/YakitModalConfirm';
+import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
+import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
+import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm';
 import type { AIForge } from '../type/forge';
 import type { AITool } from '../type/aiTool';
 import { AIChatContent } from '../aiChatContent/AIChatContent';
 import { AITabsEnum, ReActChatEventEnum } from '../defaultConstant';
 import { grpcGetAIToolById } from '../aiToolList/utils';
 import { isEqual } from 'lodash';
-import { YakitPopconfirm } from '@/components/yakitUI/YakitPopconfirm/YakitPopconfirm';
-import useMultipleHoldGRPCStream from '@/pages/KnowledgeBase/hooks/useMultipleHoldGRPCStream';
-import { useKnowledgeBase } from '@/pages/KnowledgeBase/hooks/useKnowledgeBase';
-import { YakitRoute } from '@/enums/yakitRoute';
-import { apiCancelDebugPlugin } from '@/pages/plugins/utils';
+import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm';
+// import useMultipleHoldGRPCStream from '@/pages/KnowledgeBase/hooks/useMultipleHoldGRPCStream';
+// import { useKnowledgeBase } from '@/pages/KnowledgeBase/hooks/useKnowledgeBase';
+// import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute';
+// import { apiCancelDebugPlugin } from '@/pages/AIAgent/utils/plugins';
 import { Tooltip } from 'antd';
-import { aiChatDataStore } from '@/pages/ai-agent/store/ChatDataStore';
+import { aiChatDataStore } from '@/pages/AIAgent/ai-agent/store/ChatDataStore';
 import classNames from 'classnames';
 import styles from './AIAgentChat.module.scss';
 import type { AIChatContentRefProps } from '../aiChatContent/type';
-import type { PageNodeItemProps } from '@/store/pageInfo';
+import type { PageNodeItemProps } from '@/pages/AIAgent/types/interface/pageInfo';
 import { isForcedSetAIModal } from '../aiModelList/utils';
 import { RemoteAIAgentGV } from '../../enums/aiAgent';
 
@@ -95,16 +95,15 @@ const taskChatIsEmpty = (taskChat?: UseTaskChatState) => {
     return isHavePlan || isHaveStreams;
 };
 
-export const AIAgentChat: React.FC<AIAgentChatProps> = memo((props) => {
-    const {} = props;
-    const { activeChat, setting } = useAIAgentStore();
+export const AIAgentChat = memo(() => {
+    const { activeChat } = useAIAgentStore();
     const { setChats, setActiveChat, getSetting } = useAIAgentDispatcher();
 
     const aiReActChatRef = useRef<AIChatContentRefProps>(null);
     const aiChatWelcomeRef = useRef<AIChatContentRefProps>(null);
 
     // 插件并发构建流 hooks
-    const [streams, api] = useMultipleHoldGRPCStream();
+    // const [streams, api] = useMultipleHoldGRPCStream();
 
     const [mode, setMode] = useState<AIAgentChatMode>('welcome');
 
@@ -172,7 +171,7 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = memo((props) => {
         },
     );
     const handleReleaseReview = useMemoizedFn(
-        (type: ChatIPCSendType, id: string) => {
+        (_: ChatIPCSendType, id: string) => {
             if (!reviewInfo) return;
             if ((reviewInfo.data as AIReviewType).id === id) {
                 // if (!delayLoading) yakitNotify("warning", "审阅自动执行，弹框将自动关闭")
@@ -324,18 +323,19 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = memo((props) => {
                         }, 100);
                         break;
                     // 替换当前使用的 forge 模板
-                    case ReActChatEventEnum.OPEN_FORGE_FORM:
+                    case ReActChatEventEnum.OPEN_FORGE_FORM: {
                         const { value: forgeValue } = data.params || {};
                         handleClearActiveTool();
                         handleTriggerExecForge(forgeValue, data.useForge);
                         break;
+                    }
                     // 替换当前使用的 ai tool
-                    case ReActChatEventEnum.USE_AI_TOOL:
+                    case ReActChatEventEnum.USE_AI_TOOL: {
                         const { value: toolValue } = data.params || {};
                         handleClearActiveForge();
                         handleAITool(toolValue);
                         break;
-
+                    }
                     default:
                         break;
                 }
@@ -619,53 +619,53 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = memo((props) => {
         };
     }, [events]);
 
-    const [visible, setVisible] = useSafeState(false);
-    const { clearAll } = useKnowledgeBase();
+    // const [visible, setVisible] = useSafeState(false);
+    // const { clearAll } = useKnowledgeBase();
 
-    const onClosePageRepository = useMemoizedFn(() => {
-        if (api.tokens.length > 0) {
-            setVisible(true);
-            return;
-        } else {
-            clearAll();
-            emiter.emit(
-                'closePage',
-                JSON.stringify({ route: YakitRoute.AI_Agent }),
-            );
-        }
-    });
+    // const onClosePageRepository = useMemoizedFn(() => {
+    //     if (api.tokens.length > 0) {
+    //         setVisible(true);
+    //         return;
+    //     } else {
+    //         clearAll();
+    //         emiter.emit(
+    //             'closePage',
+    //             JSON.stringify({ route: YakitRoute.AI_Agent }),
+    //         );
+    //     }
+    // });
 
-    useEffect(() => {
-        emiter.on('onClosePageRepository', onClosePageRepository);
-        return () => {
-            emiter.off('onClosePageRepository', onClosePageRepository);
-        };
-    }, []);
+    // useEffect(() => {
+    //     emiter.on('onClosePageRepository', onClosePageRepository);
+    //     return () => {
+    //         emiter.off('onClosePageRepository', onClosePageRepository);
+    //     };
+    // }, []);
 
-    const onOK = async () => {
-        try {
-            await Promise.all(
-                api.tokens.map((token) => apiCancelDebugPlugin(token)),
-            );
-            api.clearAllStreams();
-            clearAll();
-            emiter.emit(
-                'closePage',
-                JSON.stringify({ route: YakitRoute.AI_Agent }),
-            );
-        } catch (e) {
-            failed(`取消构建知识插件失败: ${String(e)}`);
-        }
-    };
+    // const onOK = async () => {
+    //     try {
+    //         await Promise.all(
+    //             api.tokens.map((token) => apiCancelDebugPlugin(token)),
+    //         );
+    //         api.clearAllStreams();
+    //         clearAll();
+    //         emiter.emit(
+    //             'closePage',
+    //             JSON.stringify({ route: YakitRoute.AI_Agent }),
+    //         );
+    //     } catch (e) {
+    //         failed(`取消构建知识插件失败: ${String(e)}`);
+    //     }
+    // };
 
-    const onCancel = () => {
-        setVisible(false);
-    };
+    // const onCancel = () => {
+    //     setVisible(false);
+    // };
 
     const onChat = useMemoizedFn(() => {
         onSetReAct();
     });
-    const onChatFromHistory = useMemoizedFn((session: string) => {});
+    const onChatFromHistory = useMemoizedFn(() => {});
 
     useEffect(() => {
         emiter.on('defualtAIMentionCommandParams', konwledgeInputStringFn);
@@ -718,17 +718,24 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = memo((props) => {
         { leading: true },
     ).run;
 
+    const contextValue = useMemo(() => {
+        return {
+            store,
+            dispatcher,
+        };
+    }, [store, dispatcher]);
+
     return (
         <div ref={wrapperRef} className={styles['ai-agent-chat']}>
-            <ChatIPCContent.Provider value={{ store, dispatcher }}>
+            <ChatIPCContent.Provider value={contextValue}>
                 <div className={styles['chat-wrapper']}>
                     {mode === 'welcome' ? (
                         <React.Suspense fallback={<div>loading...</div>}>
                             <AIChatWelcome
                                 onTriageSubmit={handleStartTriageChat}
                                 onSetReAct={onSetReAct}
-                                api={api}
-                                streams={streams}
+                                // api={api}
+                                // streams={streams}
                                 ref={aiChatWelcomeRef}
                             />
                         </React.Suspense>
@@ -799,7 +806,7 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = memo((props) => {
                 cancelButtonText="取消"
                 onCancel={handleReplaceToolCancel}
             />
-            <YakitHint
+            {/* <YakitHint
                 visible={visible}
                 // heardIcon={<OutlineLoadingIcon className={styles["icon-rotate-animation"]} />}
                 title="知识库未构建完成"
@@ -808,7 +815,7 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = memo((props) => {
                 onOk={() => onOK?.()}
                 cancelButtonText="稍后再说"
                 onCancel={onCancel}
-            />
+            /> */}
         </div>
     );
 });
@@ -870,7 +877,7 @@ export const AIReActTaskChatReview: React.FC<AIReActTaskChatReviewProps> =
                             <Tooltip overlay="终止任务" placement="top">
                                 <YakitButton
                                     className={styles['task-button']}
-                                    radius="28px"
+                                    // radius="28px"
                                     colors="danger"
                                     type="primary"
                                     icon={<OutlineExitIcon />}
