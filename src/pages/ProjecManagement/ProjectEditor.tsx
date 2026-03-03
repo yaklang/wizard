@@ -16,6 +16,7 @@ import { ArrowLeftOutlined, UploadOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { fetchSSAProject, postSSAProject } from '@/apis/SSAProjectApi';
 import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
+import { ROUTES } from '@/utils/routeMap';
 
 interface LocationState {
     id?: number;
@@ -52,7 +53,7 @@ const ProjectEditor = () => {
             manual: true,
             onSuccess: () => {
                 message.success(isEdit ? '保存成功' : '创建成功');
-                navigate(-1);
+                navigate(ROUTES.GO_BACK);
             },
             onError: (err) => {
                 message.error(`保存失败: ${err.message || '未知错误'}`);
@@ -128,7 +129,7 @@ const ProjectEditor = () => {
     };
 
     const handleBack = () => {
-        navigate(-1);
+        navigate(ROUTES.GO_BACK);
     };
 
     return (
