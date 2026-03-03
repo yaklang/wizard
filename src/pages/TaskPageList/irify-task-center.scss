@@ -1,0 +1,245 @@
+.irify-task-center-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    height: 100%;
+    min-height: 100vh;
+    padding: 24px;
+    background: var(--irify-bg-base);
+}
+
+.irify-task-type-tabs {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 24px;
+    background: var(--irify-bg-container);
+    border: 1px solid var(--irify-border);
+    border-radius: 4px 4px 0 0;
+    border-bottom: none;
+
+    .irify-task-type-tab {
+        border: none;
+        background: transparent;
+        color: #667085;
+        font-size: 14px;
+        line-height: 22px;
+        padding: 12px 0;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .irify-task-type-tab:hover {
+        color: #2f3a4b;
+    }
+
+    .irify-task-type-tab.active {
+        color: var(--irify-accent);
+        border-bottom-color: var(--irify-accent);
+        font-weight: 600;
+    }
+}
+
+.irify-task-filter-bar {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(140px, 0.8fr)) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 20px 24px;
+    border: 1px solid var(--irify-border);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background: var(--irify-bg-container);
+    margin-bottom: 16px;
+}
+
+.irify-task-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.irify-task-card-list {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.irify-task-empty {
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--irify-border);
+    border-radius: 4px;
+    background: var(--irify-bg-container);
+}
+
+.irify-task-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--irify-border);
+    border-radius: 4px;
+    background: var(--irify-bg-container);
+    padding: 20px 24px;
+    box-shadow: 0 1px 2px var(--irify-glass-shadow);
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.irify-task-card:hover {
+    border-color: var(--irify-accent);
+    box-shadow: 0 4px 12px var(--irify-glass-shadow);
+}
+
+.irify-task-card .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex: 0 0 auto;
+}
+
+.irify-task-card .task-main-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.irify-task-card .task-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.irify-task-card .task-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.irify-task-card .task-title {
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--irify-accent);
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.irify-task-card .task-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 8px 28px;
+}
+
+.irify-task-card .meta-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.irify-task-card .meta-label {
+    color: var(--irify-text-secondary);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.irify-task-card .meta-value {
+    color: var(--irify-text);
+    font-size: 13px;
+    line-height: 20px;
+    word-break: break-all;
+    font-weight: 500;
+}
+
+.irify-task-card .status-value {
+    font-weight: 600;
+}
+
+.irify-task-card .task-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-left: 18px;
+    flex: 0 0 auto;
+}
+
+.irify-task-card .switch-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.irify-task-card .switch-label {
+    color: var(--irify-text-secondary);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.irify-task-card .action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.irify-task-card .action-buttons .ant-btn {
+    border-radius: 6px;
+    min-width: 76px;
+}
+
+.irify-task-pagination {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 4px 0;
+}
+
+.irify-task-group-manage {
+    :global(.tools-list-wrapper) {
+        max-height: 420px;
+        overflow: auto;
+    }
+}
+
+@media (max-width: 1280px) {
+    .irify-task-filter-bar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .irify-task-filter-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+
+    .irify-task-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+
+    .irify-task-card .task-meta-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .irify-task-card .task-actions {
+        margin-left: 0;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .irify-task-card .action-buttons {
+        justify-content: flex-start;
+    }
+}
