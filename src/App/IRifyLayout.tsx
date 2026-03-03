@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Tooltip, Avatar, Dropdown, Spin } from 'antd';
+import { Layout, Tooltip, Avatar, Dropdown, Spin, Breadcrumb } from 'antd';
 import type { MenuProps } from 'antd';
 import { useRequest, useSafeState } from 'ahooks';
 import {
@@ -172,6 +172,57 @@ const IRifyLayout: React.FC = () => {
             }
         }
         return '/';
+    }, [location.pathname]);
+
+    const pageBreadcrumb = useMemo(() => {
+        const path = location.pathname;
+
+        if (path === '/') return ['工作台'];
+
+        if (path.startsWith('/projects')) {
+            if (path === '/projects/create') return ['项目管理', '新建项目'];
+            if (/^\/projects\/\d+\/edit$/.test(path))
+                return ['项目管理', '编辑项目'];
+            return ['项目管理'];
+        }
+
+        if (path.startsWith('/vulnerabilities')) {
+            if (path.startsWith('/vulnerabilities/audit'))
+                return ['漏洞管理', '缺陷审计'];
+            return ['漏洞管理'];
+        }
+
+        if (path.startsWith('/scans')) return ['扫描历史'];
+
+        if (path.startsWith('/rules')) {
+            if (path.startsWith('/rules/create')) return ['规则管理', '规则编辑'];
+            return ['规则管理'];
+        }
+
+        if (path.startsWith('/task/task-list')) {
+            if (path.includes('/detail')) return ['自动化策略', '任务详情'];
+            return ['自动化策略'];
+        }
+
+        if (path.startsWith('/reports')) return ['报告管理'];
+
+        if (path.startsWith('/node-config/install'))
+            return ['节点配置', '节点安装'];
+        if (path.startsWith('/node-config/manage'))
+            return ['节点配置', '节点管理'];
+
+        if (path.startsWith('/system-management/userinfo'))
+            return ['系统管理', '用户管理'];
+        if (path.startsWith('/system-management/task-script/modify-task-script'))
+            return ['系统管理', '脚本管理', '编辑脚本'];
+        if (path.startsWith('/system-management/task-script'))
+            return ['系统管理', '脚本管理'];
+        if (path.startsWith('/system-management/cve-loophole'))
+            return ['系统管理', '漏洞库管理'];
+        if (path.startsWith('/system-management/global-reverse-link'))
+            return ['系统管理', '全局反连'];
+
+        return ['工作台'];
     }, [location.pathname]);
 
     // Handle navigation
@@ -412,7 +463,29 @@ const IRifyLayout: React.FC = () => {
             </Sider>
 
             <Content className="irify-layout-content">
-                <Outlet />
+                <div className="irify-page-nav">
+                    <Breadcrumb
+                        separator=">"
+                        items={[
+                            {
+                                title: (
+                                    <span
+                                        className="breadcrumb-home"
+                                        onClick={() => navigate('/')}
+                                    >
+                                        首页
+                                    </span>
+                                ),
+                            },
+                            ...pageBreadcrumb.map((name) => ({
+                                title: <span>{name}</span>,
+                            })),
+                        ]}
+                    />
+                </div>
+                <div className="irify-page-body">
+                    <Outlet />
+                </div>
             </Content>
         </Layout>
     );

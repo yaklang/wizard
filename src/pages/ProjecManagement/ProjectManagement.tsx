@@ -38,10 +38,12 @@ import { DiJava } from 'react-icons/di';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
+import { scanSSAProject } from '@/apis/SSAScanTaskApi';
+import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
-import ScanConfigurationModal from './components/ScanConfigurationModal';
+import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -83,10 +85,6 @@ const ProjectManagement: React.FC = () => {
     const [editingProjectId, setEditingProjectId] = useState<
         number | undefined
     >();
-    const [scanModalOpen, setScanModalOpen] = useState(false);
-    const [currentProject, setCurrentProject] = useState<TSSAProject | null>(
-        null,
-    );
 
     // 筛选条件
     const [searchName, setSearchName] = useState<string>('');
@@ -278,10 +276,69 @@ const ProjectManagement: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
-    const handleScan = (record: TSSAProject) => {
+    const handleScan = async (record: TSSAProject) => {
         if (!record.id) return;
-        setCurrentProject(record);
-        setScanModalOpen(true);
+        try {
+            const scanRequest: TSSAScanRequest = {};
+            const scanNode = record.config?.ScanNode;
+            if (scanNode?.mode === 'manual' && scanNode.node_id) {
+                scanRequest.node_id = scanNode.node_id;
+            }
+
+            const schedule = record.config?.ScanSchedule;
+            if (schedule?.enabled) {
+                const now = dayjs();
+                const timeStr = schedule.time || '02:00';
+                const [hourStr, minuteStr] = timeStr.split(':');
+                const hour = Number(hourStr);
+                const minute = Number(minuteStr);
+                let start = now
+                    .hour(Number.isFinite(hour) ? hour : 2)
+                    .minute(Number.isFinite(minute) ? minute : 0)
+                    .second(0)
+                    .millisecond(0);
+                if (start.isBefore(now)) {
+                    start = start.add(1, 'day');
+                }
+
+                scanRequest.enable_sched = true;
+                scanRequest.interval_type = schedule.interval_type || 1;
+                scanRequest.interval_time = schedule.interval_time || 1;
+                scanRequest.sched_type = schedule.sched_type || 3;
+                scanRequest.start_timestamp = Math.floor(start.valueOf() / 1000);
+                scanRequest.end_timestamp = Math.floor(
+                    start.add(365, 'day').valueOf() / 1000,
+                );
+            }
+
+            const res = await scanSSAProject(record.id, scanRequest);
+            const taskId = res.data?.task_id;
+            message.success({
+                content: (
+                    <span>
+                        扫描任务已创建{taskId ? ` (#${taskId})` : ''}，
+                        <Button
+                            type="link"
+                            size="small"
+                            onClick={() => {
+                                message.destroy();
+                                navigate(
+                                    `${getRoutePath(
+                                        RouteKey.TASK_LIST,
+                                    )}?project_id=${record.id}`,
+                                );
+                            }}
+                            style={{ padding: 0, height: 'auto' }}
+                        >
+                            查看任务列表 →
+                        </Button>
+                    </span>
+                ),
+                duration: 6,
+            });
+        } catch (err: any) {
+            message.error(`创建扫描失败: ${err.msg || err.message}`);
+        }
     };
 
     // 语言图标映射（官方品牌 SVG 图标）
@@ -630,7 +687,7 @@ const ProjectManagement: React.FC = () => {
             <Card>
                 <div className="flex justify-between items-center mb-4">
                     <div className="text-lg font-bold">
-                        静态代码分析 · 项目管理
+                        项目管理
                     </div>
                     <Button
                         type="primary"
@@ -731,19 +788,6 @@ const ProjectManagement: React.FC = () => {
                 projectId={editingProjectId}
                 onClose={handleDrawerClose}
                 onSuccess={handleDrawerSuccess}
-            />
-            <ScanConfigurationModal
-                open={scanModalOpen}
-                onCancel={() => {
-                    setScanModalOpen(false);
-                    setCurrentProject(null);
-                }}
-                onSuccess={() => {
-                    setScanModalOpen(false);
-                    setCurrentProject(null);
-                }}
-                projectId={currentProject?.id}
-                projectName={currentProject?.project_name}
             />
         </div>
     );

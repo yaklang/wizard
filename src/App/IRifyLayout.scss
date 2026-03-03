@@ -264,6 +264,37 @@
         margin-left 0.2s ease,
         background 0.3s ease;
     overflow: auto;
+    padding: 12px;
+}
+
+.irify-page-nav {
+    background: var(--irify-bg-container);
+    border: 1px solid var(--irify-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+
+    .ant-breadcrumb {
+        color: var(--irify-text-secondary);
+        font-size: 13px;
+    }
+
+    .ant-breadcrumb-link {
+        color: var(--irify-text-secondary);
+    }
+
+    .breadcrumb-home {
+        color: var(--irify-accent-secondary);
+        cursor: pointer;
+
+        &:hover {
+            color: var(--irify-accent);
+        }
+    }
+}
+
+.irify-page-body {
+    min-height: calc(100vh - 68px);
 }
 
 // When sidebar is expanded
