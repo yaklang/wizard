@@ -26,7 +26,6 @@ import { useEventSource } from '@/hooks';
 import { useRequest, useSafeState } from 'ahooks';
 import {
     deleteTask,
-    getAnalysisScript,
     getBatchInvokingScriptTaskNode,
     getScriptTaskGroup,
     getTaskList,
@@ -40,7 +39,6 @@ import type {
     TaskListRequest,
 } from '@/apis/task/types';
 import { options, siderTaskGrounpAllList, taskListStatus } from './utils/data';
-import { CreateTaskScriptModal } from './compoment/CreateTaskScriptModal';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 import type { UsePageRef } from '@/hooks/usePage';
@@ -85,7 +83,6 @@ const taskStatusColor: Record<string, string> = {
 const TaskPageList = () => {
     const navigate = useNavigate();
 
-    const openCreateTaskModalRef = useRef<UseModalRefType>(null);
     const editTaskModalRef = useRef<UseModalRefType>(null);
 
     const [taskType, setTaskType] = useSafeState<2 | 3>(2);
@@ -115,12 +112,6 @@ const TaskPageList = () => {
         page: 1,
         limit: 20,
         total: 0,
-    });
-
-    const [createTaskModalVisible, setCreateTaskModalVisible] = useSafeState<{
-        header: boolean;
-    }>({
-        header: false,
     });
 
     const [editLoadingTaskID, setEditLoadingTaskID] = useSafeState<number>();
@@ -234,24 +225,6 @@ const TaskPageList = () => {
             ? list.map((it) => ({ label: it, value: it }))
             : [];
     });
-
-    const { run: scriptRun } = useRequest(
-        async () => {
-            const result = await getAnalysisScript();
-            return result?.data?.list ?? [];
-        },
-        {
-            manual: true,
-            onError: () => {
-                setCreateTaskModalVisible({ header: false });
-                message.error('获取脚本失败');
-            },
-            onSuccess: (list) => {
-                setCreateTaskModalVisible({ header: false });
-                openCreateTaskModalRef.current?.open(list);
-            },
-        },
-    );
 
     useEventSource<{ msg: any }>('events?stream_type=status_updates', {
         maxRetries: 1,
@@ -463,14 +436,10 @@ const TaskPageList = () => {
                     </Button>
                     <Button
                         type="primary"
-                        loading={createTaskModalVisible.header}
-                        onClick={() => {
-                            setCreateTaskModalVisible({ header: true });
-                            scriptRun();
-                        }}
+                        onClick={() => navigate('/projects/create')}
                     >
                         <PlusOutlined />
-                        创建任务
+                        新建项目
                     </Button>
                 </div>
             </div>
@@ -674,11 +643,6 @@ const TaskPageList = () => {
                 </div>
             </Modal>
 
-            <CreateTaskScriptModal
-                ref={openCreateTaskModalRef}
-                pageLoad={() => runTaskList()}
-                refreshAsync={refreshTaskGroups}
-            />
             <StartUpScriptModal
                 ref={editTaskModalRef}
                 title="编辑任务"

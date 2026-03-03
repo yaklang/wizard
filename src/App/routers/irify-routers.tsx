@@ -21,9 +21,7 @@ import ReportManage from '@/pages/ReportManage';
 
 import IRifyDashboard from '@/pages/IRifyDashboard';
 import VulnerabilityList from '@/pages/VulnerabilityList';
-import { CreateTask } from '@/pages/CreateTask/CreateTask';
-import { SpecialTask } from '@/pages/SpecialTask/SpecialTask';
-import { TaskPageList } from '@/pages/TaskPageList/TaskPageList';
+import { TaskPageList as IRifyTaskPageList } from '@/pages/TaskPageList/IRifyTaskPageList';
 import TaskDetail from '@/pages/TaskDetail';
 import { NodeConfig } from '@/pages/NodeConfig/NodeConfig';
 import { TaskScript } from '@/pages/TaskScript/TaskScript';
@@ -95,19 +93,11 @@ const irifyRouters: RouteObject[] = [
                 path: 'task',
                 children: [
                     {
-                        path: 'new-create-task',
-                        element: <CreateTask />,
-                    },
-                    {
-                        path: 'special-task',
-                        element: <SpecialTask />,
-                    },
-                    {
                         path: 'task-list',
                         children: [
                             {
                                 index: true,
-                                element: <TaskPageList />,
+                                element: <IRifyTaskPageList />,
                             },
                             {
                                 path: 'detail',
