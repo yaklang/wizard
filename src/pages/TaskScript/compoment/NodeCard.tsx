@@ -40,7 +40,7 @@ const NodeCard: FC<Partial<TNodeCard>> = ({ value, onChange, list }) => {
                             </div>
 
                             <div className="text-base text-[#31343F] font-semibold">
-                                {it.name}
+                                {it.display_name ?? it.name}
                             </div>
                             <div className="text-sm text-[#85899E] text-xs">
                                 当前任务量

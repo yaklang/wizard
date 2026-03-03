@@ -38,10 +38,10 @@ import { DiJava } from 'react-icons/di';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
-import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
+import ScanConfigurationModal from './components/ScanConfigurationModal';
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -76,7 +76,6 @@ const ProjectManagement: React.FC = () => {
     const [data, setData] = useState<TSSAProject[]>([]);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
-    const [scanningProjects, setScanningProjects] = useState<Set<number>>(new Set());
     const [hasMore, setHasMore] = useState(true);
 
     // 抽屉状态
@@ -84,6 +83,10 @@ const ProjectManagement: React.FC = () => {
     const [editingProjectId, setEditingProjectId] = useState<
         number | undefined
     >();
+    const [scanModalOpen, setScanModalOpen] = useState(false);
+    const [currentProject, setCurrentProject] = useState<TSSAProject | null>(
+        null,
+    );
 
     // 筛选条件
     const [searchName, setSearchName] = useState<string>('');
@@ -275,54 +278,10 @@ const ProjectManagement: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
-    const handleScan = async (record: TSSAProject) => {
+    const handleScan = (record: TSSAProject) => {
         if (!record.id) return;
-        
-        setScanningProjects(prev => new Set(prev).add(record.id!));
-        
-        try {
-            // 从项目的tags或description中提取规则组信息（如果有的话）
-            // 目前使用默认规则集，后续可以扩展为从项目配置中读取
-            const ruleGroups: string[] = [];
-            
-            const res = await scanSSAProject(record.id, {
-                rule_groups: ruleGroups.length > 0 ? ruleGroups : undefined,
-                // node_id 可选，不传则由后端自动分配
-            });
-            
-            // 显示带跳转链接的成功提示
-            const taskId = res.data?.task_id;
-            const btn = (
-                <Button
-                    type="link"
-                    size="small"
-                    onClick={() => {
-                        message.destroy();
-                        navigate(getRoutePath(RouteKey.TASK_LIST));
-                    }}
-                    style={{ padding: 0, height: 'auto' }}
-                >
-                    查看实时进度 →
-                </Button>
-            );
-            
-            message.success({
-                content: (
-                    <span>
-                        任务 #{taskId || '...'} 已启动。{btn}
-                    </span>
-                ),
-                duration: 6,
-            });
-        } catch (err: any) {
-            message.error(`创建扫描失败: ${err.msg || err.message}`);
-        } finally {
-            setScanningProjects(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(record.id!);
-                return newSet;
-            });
-        }
+        setCurrentProject(record);
+        setScanModalOpen(true);
     };
 
     // 语言图标映射（官方品牌 SVG 图标）
@@ -592,7 +551,6 @@ const ProjectManagement: React.FC = () => {
                     },
                 ];
 
-                const isScanning = scanningProjects.has(record.id!);
                 const branch = record.config?.CodeSource?.branch || 'master';
                 const url = record.config?.CodeSource?.url || '';
                 const repoName = url.split('/').pop()?.replace(/\.git$/, '') || '代码仓库';
@@ -633,9 +591,8 @@ const ProjectManagement: React.FC = () => {
                                 type="primary"
                                 size="small"
                                 icon={<PlayCircleOutlined />}
-                                loading={isScanning}
                             >
-                                {isScanning ? '初始化中' : '发起扫描'}
+                                发起扫描
                             </Button>
                         </Popconfirm>
                         <Dropdown
@@ -774,6 +731,19 @@ const ProjectManagement: React.FC = () => {
                 projectId={editingProjectId}
                 onClose={handleDrawerClose}
                 onSuccess={handleDrawerSuccess}
+            />
+            <ScanConfigurationModal
+                open={scanModalOpen}
+                onCancel={() => {
+                    setScanModalOpen(false);
+                    setCurrentProject(null);
+                }}
+                onSuccess={() => {
+                    setScanModalOpen(false);
+                    setCurrentProject(null);
+                }}
+                projectId={currentProject?.id}
+                projectName={currentProject?.project_name}
             />
         </div>
     );
