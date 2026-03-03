@@ -41,24 +41,34 @@
     }
 }
 
-.irify-task-filter-bar {
-    display: grid;
-    grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(140px, 0.8fr)) auto;
-    gap: 12px;
+.irify-task-list-actions {
+    display: flex;
     align-items: center;
     padding: 20px 24px;
+    gap: 8px;
     border: 1px solid var(--irify-border);
     border-top: none;
     border-radius: 0 0 4px 4px;
     background: var(--irify-bg-container);
     margin-bottom: 16px;
-}
 
-.irify-task-filter-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
+    .task-selected-hint {
+        color: var(--irify-text-secondary);
+        font-size: 13px;
+
+        span {
+            color: var(--irify-accent);
+            font-weight: 700;
+            margin: 0 2px;
+        }
+    }
+
+    .actions-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 }
 
 .irify-task-card-list {
@@ -93,6 +103,7 @@
         box-shadow 0.2s ease,
         border-color 0.2s ease,
         background-color 0.2s ease;
+    cursor: pointer;
 }
 
 .irify-task-card:hover {
@@ -101,11 +112,10 @@
     background: color-mix(in srgb, var(--irify-bg-container) 94%, #eff6ff 6%);
 }
 
-.irify-task-card .task-card-check {
-    flex: 0 0 auto;
-    margin-right: 8px;
-    display: flex;
-    align-items: center;
+.irify-task-card.selected {
+    background: rgba(24, 144, 255, 0.08);
+    border-color: rgba(24, 144, 255, 0.45);
+    box-shadow: 0 0 0 1px rgba(24, 144, 255, 0.2);
 }
 
 .irify-task-card .status-dot {
@@ -262,12 +272,8 @@
 }
 
 @media (max-width: 1280px) {
-    .irify-task-filter-bar {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .irify-task-filter-actions {
-        grid-column: 1 / -1;
+    .irify-task-list-actions {
+        flex-wrap: wrap;
         justify-content: flex-start;
     }
 

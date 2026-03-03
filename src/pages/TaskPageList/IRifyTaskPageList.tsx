@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
+import type { MouseEvent } from 'react';
 import {
     Button,
-    Checkbox,
     Dropdown,
     Empty,
-    Input,
     message,
     Modal,
-    Select,
     Spin,
     Switch,
     Tag,
@@ -16,7 +14,6 @@ import type { MenuProps } from 'antd';
 import {
     DeleteOutlined,
     DownOutlined,
-    FilterOutlined,
     PlayCircleOutlined,
     PlusOutlined,
     SettingOutlined,
@@ -26,7 +23,6 @@ import { useEventSource } from '@/hooks';
 import { useRequest, useSafeState } from 'ahooks';
 import {
     deleteTask,
-    getBatchInvokingScriptTaskNode,
     getScriptTaskGroup,
     getTaskList,
     getTaskRun,
@@ -38,7 +34,7 @@ import type {
     TaskGrounpResponse,
     TaskListRequest,
 } from '@/apis/task/types';
-import { options, siderTaskGrounpAllList, taskListStatus } from './utils/data';
+import { options, siderTaskGrounpAllList } from './utils/data';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 import type { UsePageRef } from '@/hooks/usePage';
@@ -114,14 +110,6 @@ const TaskPageList = () => {
         siderTaskGrounpAllList as TaskGroupItem[],
     );
 
-    const [filters, setFilters] = useSafeState<{
-        keyword: string;
-        scanner?: string;
-        status?: string;
-    }>({
-        keyword: '',
-    });
-
     const [listState, setListState] = useSafeState<{
         loading: boolean;
         list: TaskListRequest[];
@@ -141,7 +129,8 @@ const TaskPageList = () => {
     );
 
     const [editLoadingTaskID, setEditLoadingTaskID] = useSafeState<number>();
-    const [actionLoadingTaskID, setActionLoadingTaskID] = useSafeState<number>();
+    const [actionLoadingTaskID, setActionLoadingTaskID] =
+        useSafeState<number>();
 
     const { run: runTaskList } = useRequest(
         async (opts?: { page?: number; append?: boolean }) => {
@@ -150,18 +139,6 @@ const TaskPageList = () => {
             const dto: Record<string, any> = {
                 task_type: taskType,
             };
-            if (taskGroupKey !== '全部') {
-                dto.task_groups = [taskGroupKey];
-            }
-            if (filters.keyword) {
-                dto.task_name = filters.keyword;
-            }
-            if (filters.scanner) {
-                dto.node_ids = [filters.scanner];
-            }
-            if (filters.status) {
-                dto.task_status = [filters.status];
-            }
 
             const { data } = await getTaskList({
                 dto,
@@ -275,14 +252,6 @@ const TaskPageList = () => {
         },
     });
 
-    const { data: nodeOptions = [] } = useRequest(async () => {
-        const { data } = await getBatchInvokingScriptTaskNode();
-        const list = data?.list ?? [];
-        return Array.isArray(list)
-            ? list.map((it) => ({ label: it, value: it }))
-            : [];
-    });
-
     useEventSource<{ msg: any }>('events?stream_type=status_updates', {
         maxRetries: 1,
         onsuccess: (data: any) => {
@@ -299,14 +268,7 @@ const TaskPageList = () => {
         setSelectedTaskIds(new Set());
         setHasMore(true);
         runTaskList({ page: 1, append: false });
-    }, [
-        runTaskList,
-        taskType,
-        taskGroupKey,
-        filters.keyword,
-        filters.scanner,
-        filters.status,
-    ]);
+    }, [runTaskList, taskType]);
 
     useEffect(() => {
         const onScroll = () => {
@@ -328,16 +290,10 @@ const TaskPageList = () => {
         return () => window.removeEventListener('scroll', onScroll);
     }, [listState.loading, hasMore, listState.page, runTaskList]);
 
-    const groupFilterOptions = useMemo(
-        () =>
-            taskGroups.map((it) => ({
-                label: it.name,
-                value: it.name,
-            })),
-        [taskGroups],
-    );
-
-    const toggleTaskStatus = async (record: TaskListRequest, checked: boolean) => {
+    const toggleTaskStatus = async (
+        record: TaskListRequest,
+        checked: boolean,
+    ) => {
         if (!record.id) return;
         setActionLoadingTaskID(record.id);
         try {
@@ -453,7 +409,10 @@ const TaskPageList = () => {
             (item as any).params?.project_name;
         const firstTarget =
             typeof target === 'string'
-                ? target.split(',').map((it) => it.trim()).filter(Boolean)[0]
+                ? target
+                      .split(',')
+                      .map((it) => it.trim())
+                      .filter(Boolean)[0]
                 : '';
         if (firstTarget) return `${firstTarget} 自动化扫描`;
         return `${item.task_group || '默认分组'} 自动化策略`;
@@ -500,7 +459,8 @@ const TaskPageList = () => {
     };
 
     const selectedRecords = useMemo(
-        () => listState.list.filter((it) => it.id && selectedTaskIds.has(it.id)),
+        () =>
+            listState.list.filter((it) => it.id && selectedTaskIds.has(it.id)),
         [listState.list, selectedTaskIds],
     );
 
@@ -508,8 +468,8 @@ const TaskPageList = () => {
         listState.list.length > 0 &&
         listState.list.every((it) => it.id && selectedTaskIds.has(it.id));
 
-    const handleToggleSelectAll = (checked: boolean) => {
-        if (!checked) {
+    const handleToggleSelectAll = () => {
+        if (allChecked) {
             setSelectedTaskIds(new Set());
             return;
         }
@@ -520,13 +480,32 @@ const TaskPageList = () => {
         setSelectedTaskIds(next);
     };
 
-    const handleToggleSingle = (id: number, checked: boolean) => {
+    const handleToggleSingle = (id: number) => {
         setSelectedTaskIds((prev) => {
             const next = new Set(prev);
-            if (checked) next.add(id);
-            else next.delete(id);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
             return next;
         });
+    };
+
+    const handleTaskCardClick = (
+        event: MouseEvent<HTMLDivElement>,
+        id: number,
+    ) => {
+        const target = event.target as HTMLElement;
+        if (
+            target.closest('.task-actions') ||
+            target.closest('.ant-btn') ||
+            target.closest('.ant-switch') ||
+            target.closest('.ant-dropdown')
+        ) {
+            return;
+        }
+        handleToggleSingle(id);
     };
 
     const reloadFirstPage = () => {
@@ -609,61 +588,16 @@ const TaskPageList = () => {
                 ))}
             </div>
 
-            <div className="irify-task-filter-bar">
-                <Input
-                    allowClear
-                    prefix={<FilterOutlined />}
-                    placeholder="搜索任务名称"
-                    value={filters.keyword}
-                    onChange={(e) => {
-                        const keyword = e.target.value;
-                        setFilters((prev) => ({ ...prev, keyword }));
-                        setListState((prev) => ({ ...prev, page: 1 }));
-                    }}
-                />
-                <Select
-                    allowClear
-                    placeholder="任务组"
-                    value={taskGroupKey === '全部' ? undefined : taskGroupKey}
-                    options={groupFilterOptions.filter((it) => it.value !== '全部')}
-                    onChange={(v) => {
-                        setTaskGroupKey(v || '全部');
-                        setListState((prev) => ({ ...prev, page: 1 }));
-                    }}
-                />
-                <Select
-                    allowClear
-                    placeholder="执行节点"
-                    options={nodeOptions}
-                    value={filters.scanner}
-                    onChange={(v) => {
-                        setFilters((prev) => ({ ...prev, scanner: v }));
-                        setListState((prev) => ({ ...prev, page: 1 }));
-                    }}
-                />
-                <Select
-                    allowClear
-                    placeholder="状态"
-                    options={taskListStatus.map((it) => ({
-                        label: it.label,
-                        value: it.value,
-                    }))}
-                    value={filters.status}
-                    onChange={(v) => {
-                        setFilters((prev) => ({ ...prev, status: v }));
-                        setListState((prev) => ({ ...prev, page: 1 }));
-                    }}
-                />
-                <div className="irify-task-filter-actions">
-                    <Checkbox
-                        checked={allChecked}
-                        indeterminate={
-                            selectedTaskIds.size > 0 && !allChecked
-                        }
-                        onChange={(e) => handleToggleSelectAll(e.target.checked)}
-                    >
-                        全选当前列表
-                    </Checkbox>
+            <div className="irify-task-list-actions">
+                <Button onClick={handleToggleSelectAll}>
+                    {allChecked ? '取消全选' : '全选当前列表'}
+                </Button>
+                {selectedTaskIds.size > 0 && (
+                    <div className="task-selected-hint">
+                        已选中 <span>{selectedTaskIds.size}</span> 个策略
+                    </div>
+                )}
+                <div className="actions-right">
                     <Button onClick={() => setGroupManageVisible(true)}>
                         <SettingOutlined />
                         任务组管理
@@ -673,7 +607,7 @@ const TaskPageList = () => {
                         onClick={() => navigate('/projects/create')}
                     >
                         <PlusOutlined />
-                        新建项目
+                        新建策略
                     </Button>
                 </div>
             </div>
@@ -726,18 +660,13 @@ const TaskPageList = () => {
                             ];
 
                             return (
-                                <div key={item.id} className="irify-task-card">
-                                    <div className="task-card-check">
-                                        <Checkbox
-                                            checked={selectedTaskIds.has(item.id)}
-                                            onChange={(e) =>
-                                                handleToggleSingle(
-                                                    item.id,
-                                                    e.target.checked,
-                                                )
-                                            }
-                                        />
-                                    </div>
+                                <div
+                                    key={item.id}
+                                    className={`irify-task-card ${selectedTaskIds.has(item.id) ? 'selected' : ''}`}
+                                    onClick={(e) =>
+                                        handleTaskCardClick(e, item.id)
+                                    }
+                                >
                                     <div className="task-main-info">
                                         <div
                                             className="status-dot"
@@ -753,12 +682,16 @@ const TaskPageList = () => {
                                                     {getStrategyName(item)}
                                                 </span>
                                                 <Tag>
-                                                    {item.task_group || '未分组'}
+                                                    {item.task_group ||
+                                                        '未分组'}
                                                 </Tag>
                                             </div>
                                             <div className="task-subline">
-                                                {(item as any).account || 'root'} | 运行节点:{' '}
-                                                {item.scanner?.join('、') || '-'}
+                                                {(item as any).account ||
+                                                    'root'}{' '}
+                                                | 运行节点{' '}
+                                                {item.scanner?.join('、') ||
+                                                    '-'}
                                             </div>
                                             <div className="task-meta-grid">
                                                 <div className="meta-item">
@@ -798,13 +731,17 @@ const TaskPageList = () => {
                                                         ] || '#9ba3b2',
                                                 }}
                                             >
-                                                {taskStatusLabel[status] || status}
+                                                {taskStatusLabel[status] ||
+                                                    status}
                                             </span>
                                             <Switch
                                                 checked={checked}
                                                 loading={
                                                     actionLoadingTaskID ===
                                                     item.id
+                                                }
+                                                onClick={(_, e) =>
+                                                    e?.stopPropagation()
                                                 }
                                                 onChange={(v) =>
                                                     toggleTaskStatus(item, v)
@@ -817,16 +754,33 @@ const TaskPageList = () => {
                                                     editLoadingTaskID ===
                                                     item.id
                                                 }
-                                                onClick={() => openEditModal(item)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openEditModal(item);
+                                                }}
                                             >
                                                 <SettingOutlined />
                                                 配置
+                                            </Button>
+                                            <Button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate('detail', {
+                                                        state: { record: item },
+                                                    });
+                                                }}
+                                            >
+                                                详情
                                             </Button>
                                             <Dropdown
                                                 menu={{ items: menuItems }}
                                                 trigger={['click']}
                                             >
-                                                <Button>
+                                                <Button
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                >
                                                     更多 <DownOutlined />
                                                 </Button>
                                             </Dropdown>
@@ -842,7 +796,7 @@ const TaskPageList = () => {
             {selectedTaskIds.size > 0 && (
                 <div className="irify-task-batch-bar">
                     <div className="batch-info">
-                        已选择 <span>{selectedTaskIds.size}</span> 项
+                        已选中 <span>{selectedTaskIds.size}</span> 个策略
                     </div>
                     <div className="batch-actions">
                         <Button onClick={() => batchChangeStatus(true)}>
@@ -879,7 +833,9 @@ const TaskPageList = () => {
             <StartUpScriptModal
                 ref={editTaskModalRef}
                 title="编辑任务"
-                localRefrech={(operate: Parameters<UsePageRef['localRefrech']>[0]) => {
+                localRefrech={(
+                    operate: Parameters<UsePageRef['localRefrech']>[0],
+                ) => {
                     if (operate?.operate === 'edit' && operate?.newObj?.id) {
                         setListState((prev) => ({
                             ...prev,
