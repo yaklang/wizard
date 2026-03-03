@@ -6,6 +6,10 @@
     min-height: 100vh;
     padding: 24px;
     background: var(--irify-bg-base);
+
+    &.has-selection-bar {
+        padding-bottom: 104px;
+    }
 }
 
 .irify-task-type-tabs {
@@ -44,24 +48,8 @@
 .irify-task-list-actions {
     display: flex;
     align-items: center;
-    padding: 20px 24px;
     gap: 8px;
-    border: 1px solid var(--irify-border);
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-    background: var(--irify-bg-container);
     margin-bottom: 16px;
-
-    .task-selected-hint {
-        color: var(--irify-text-secondary);
-        font-size: 13px;
-
-        span {
-            color: var(--irify-accent);
-            font-weight: 700;
-            margin: 0 2px;
-        }
-    }
 
     .actions-right {
         margin-left: auto;
@@ -225,6 +213,12 @@
     min-width: 76px;
 }
 
+.irify-task-scroll-hint {
+    text-align: center;
+    padding: 20px 0;
+    color: #999;
+}
+
 .irify-task-group-manage {
     :global(.tools-list-wrapper) {
         max-height: 420px;
@@ -232,43 +226,69 @@
     }
 }
 
-.irify-task-batch-bar {
+.task-selection-bar {
     position: fixed;
     left: 50%;
-    bottom: 18px;
+    bottom: 16px;
     transform: translateX(-50%);
-    z-index: 200;
-    min-width: 560px;
-    max-width: calc(100vw - 220px);
-    background: #101828;
-    border: 1px solid rgba(71, 84, 103, 0.7);
-    border-radius: 12px;
-    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.35);
-    padding: 12px 14px;
+    width: min(960px, calc(100vw - 148px));
+    z-index: 1002;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.35),
+        0 6px 16px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(8px);
+    animation: selectionBarRise 0.22s ease-out;
+
+    @keyframes selectionBarRise {
+        from {
+            opacity: 0;
+            transform: translate(-50%, 10px);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
 }
 
-.irify-task-batch-bar .batch-info {
-    color: #d0d5dd;
-    font-size: 13px;
+.task-selection-bar .selection-info {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.88);
 }
 
-.irify-task-batch-bar .batch-info span {
-    color: #ffffff;
+.task-selection-bar .selected-count {
+    color: #7dd3fc;
     font-weight: 700;
-    margin: 0 4px;
+    font-size: 16px;
 }
 
-.irify-task-batch-bar .batch-actions {
+.task-selection-bar .batch-actions {
     display: flex;
     gap: 8px;
 }
 
-.irify-task-batch-bar .batch-actions .ant-btn {
+.task-selection-bar .batch-actions .ant-btn {
     border-radius: 6px;
+}
+
+.task-selection-bar .ant-btn:not(.ant-btn-dangerous) {
+    border-color: rgba(255, 255, 255, 0.32);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+    }
 }
 
 @media (max-width: 1280px) {
@@ -298,12 +318,13 @@
         justify-content: flex-start;
     }
 
-    .irify-task-batch-bar {
-        min-width: auto;
+    .task-selection-bar {
         width: calc(100vw - 24px);
-        left: 12px;
-        transform: none;
-        flex-direction: column;
-        align-items: flex-start;
+        padding: 12px 14px;
+        gap: 10px;
+
+        .selection-info {
+            font-size: 13px;
+        }
     }
 }

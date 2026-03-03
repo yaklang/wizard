@@ -497,12 +497,14 @@ const TaskPageList = () => {
         id: number,
     ) => {
         const target = event.target as HTMLElement;
-        if (
-            target.closest('.task-actions') ||
-            target.closest('.ant-btn') ||
-            target.closest('.ant-switch') ||
-            target.closest('.ant-dropdown')
-        ) {
+        const ignoreSelect =
+            target.closest('button') ||
+            target.closest('a') ||
+            target.closest('input') ||
+            target.closest('.task-detail-panel') ||
+            target.closest('.ant-dropdown') ||
+            target.closest('.ant-dropdown-menu');
+        if (ignoreSelect) {
             return;
         }
         handleToggleSingle(id);
@@ -572,7 +574,9 @@ const TaskPageList = () => {
     };
 
     return (
-        <div className="irify-task-center-page">
+        <div
+            className={`irify-task-center-page ${selectedTaskIds.size > 0 ? 'has-selection-bar' : ''}`}
+        >
             <div className="irify-task-type-tabs">
                 {options.map((tab) => (
                     <button
@@ -589,14 +593,12 @@ const TaskPageList = () => {
             </div>
 
             <div className="irify-task-list-actions">
-                <Button onClick={handleToggleSelectAll}>
+                <Button
+                    onClick={handleToggleSelectAll}
+                    disabled={listState.list.length === 0}
+                >
                     {allChecked ? '取消全选' : '全选当前列表'}
                 </Button>
-                {selectedTaskIds.size > 0 && (
-                    <div className="task-selected-hint">
-                        已选中 <span>{selectedTaskIds.size}</span> 个策略
-                    </div>
-                )}
                 <div className="actions-right">
                     <Button onClick={() => setGroupManageVisible(true)}>
                         <SettingOutlined />
@@ -793,12 +795,33 @@ const TaskPageList = () => {
                 </Spin>
             </div>
 
+            <div className="irify-task-scroll-hint">
+                {listState.loading && listState.page > 1 && (
+                    <span>加载中...</span>
+                )}
+                {!listState.loading && hasMore && listState.list.length > 0 && (
+                    <span>向下滚动加载更多</span>
+                )}
+                {!listState.loading &&
+                    !hasMore &&
+                    listState.list.length > 0 && (
+                        <span>已加载全部 {listState.list.length} 条任务</span>
+                    )}
+            </div>
+
             {selectedTaskIds.size > 0 && (
-                <div className="irify-task-batch-bar">
-                    <div className="batch-info">
-                        已选中 <span>{selectedTaskIds.size}</span> 个策略
+                <div className="task-selection-bar">
+                    <div className="selection-info">
+                        已选中{' '}
+                        <span className="selected-count">
+                            {selectedTaskIds.size}
+                        </span>{' '}
+                        个策略
                     </div>
                     <div className="batch-actions">
+                        <Button onClick={() => setSelectedTaskIds(new Set())}>
+                            取消选择
+                        </Button>
                         <Button onClick={() => batchChangeStatus(true)}>
                             批量启用
                         </Button>
@@ -806,7 +829,7 @@ const TaskPageList = () => {
                             批量暂停
                         </Button>
                         <Button danger onClick={batchDelete}>
-                            批量删除
+                            删除所选
                         </Button>
                     </div>
                 </div>
