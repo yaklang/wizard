@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
     Button,
+    Checkbox,
     Dropdown,
     Empty,
     Input,
     message,
     Modal,
-    Pagination,
     Select,
     Spin,
     Switch,
@@ -80,6 +80,28 @@ const taskStatusColor: Record<string, string> = {
     finished: '#9ba3b2',
 };
 
+const isUUIDLike = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value,
+    );
+
+const pickLatestTimestamp = (item: TaskListRequest) => {
+    const candidate = [
+        Number((item as any).end_at || 0),
+        Number((item as any).updated_at || 0),
+        Number((item as any).uodated_at || 0),
+        Number((item as any).start_at || 0),
+        Number((item as any).created_at || 0),
+    ];
+    return Math.max(...candidate, 0);
+};
+
+const intervalUnitLabel: Record<number, string> = {
+    1: '天',
+    2: '小时',
+    3: '分钟',
+};
+
 const TaskPageList = () => {
     const navigate = useNavigate();
 
@@ -113,12 +135,18 @@ const TaskPageList = () => {
         limit: 20,
         total: 0,
     });
+    const [hasMore, setHasMore] = useSafeState(true);
+    const [selectedTaskIds, setSelectedTaskIds] = useSafeState<Set<number>>(
+        new Set(),
+    );
 
     const [editLoadingTaskID, setEditLoadingTaskID] = useSafeState<number>();
     const [actionLoadingTaskID, setActionLoadingTaskID] = useSafeState<number>();
 
     const { run: runTaskList } = useRequest(
-        async () => {
+        async (opts?: { page?: number; append?: boolean }) => {
+            const targetPage = opts?.page ?? 1;
+            const append = Boolean(opts?.append);
             const dto: Record<string, any> = {
                 task_type: taskType,
             };
@@ -138,7 +166,7 @@ const TaskPageList = () => {
             const { data } = await getTaskList({
                 dto,
                 pagemeta: {
-                    page: listState.page,
+                    page: targetPage,
                     limit: listState.limit,
                     total: listState.total,
                     total_page: Math.max(
@@ -154,6 +182,8 @@ const TaskPageList = () => {
             return {
                 list: data?.list ?? [],
                 total: data?.pagemeta?.total ?? 0,
+                page: targetPage,
+                append,
             };
         },
         {
@@ -162,12 +192,39 @@ const TaskPageList = () => {
                 setListState((prev) => ({ ...prev, loading: true }));
             },
             onSuccess: (res) => {
+                const nextListLen = (() => {
+                    if (!res.append) {
+                        return res.list.length;
+                    }
+                    const map = new Map<number, TaskListRequest>();
+                    listState.list.forEach((it) => {
+                        if (it?.id) map.set(it.id, it);
+                    });
+                    res.list.forEach((it) => {
+                        if (it?.id) map.set(it.id, it);
+                    });
+                    return map.size;
+                })();
                 setListState((prev) => ({
                     ...prev,
                     loading: false,
-                    list: res.list,
+                    list: (() => {
+                        if (!res.append) {
+                            return res.list;
+                        }
+                        const map = new Map<number, TaskListRequest>();
+                        prev.list.forEach((it) => {
+                            if (it?.id) map.set(it.id, it);
+                        });
+                        res.list.forEach((it) => {
+                            if (it?.id) map.set(it.id, it);
+                        });
+                        return Array.from(map.values());
+                    })(),
+                    page: res.page,
                     total: res.total,
                 }));
+                setHasMore(nextListLen < res.total);
             },
             onError: (err) => {
                 setListState((prev) => ({ ...prev, loading: false }));
@@ -239,7 +296,9 @@ const TaskPageList = () => {
     });
 
     useEffect(() => {
-        runTaskList();
+        setSelectedTaskIds(new Set());
+        setHasMore(true);
+        runTaskList({ page: 1, append: false });
     }, [
         runTaskList,
         taskType,
@@ -247,9 +306,27 @@ const TaskPageList = () => {
         filters.keyword,
         filters.scanner,
         filters.status,
-        listState.page,
-        listState.limit,
     ]);
+
+    useEffect(() => {
+        const onScroll = () => {
+            if (listState.loading || !hasMore) return;
+            const scrollTop =
+                window.pageYOffset || document.documentElement.scrollTop;
+            const viewHeight =
+                window.innerHeight || document.documentElement.clientHeight;
+            const fullHeight = document.documentElement.scrollHeight;
+            if (scrollTop + viewHeight >= fullHeight - 220) {
+                runTaskList({
+                    page: listState.page + 1,
+                    append: true,
+                });
+            }
+        };
+
+        window.addEventListener('scroll', onScroll);
+        return () => window.removeEventListener('scroll', onScroll);
+    }, [listState.loading, hasMore, listState.page, runTaskList]);
 
     const groupFilterOptions = useMemo(
         () =>
@@ -336,18 +413,166 @@ const TaskPageList = () => {
     };
 
     const renderScheduleText = (item: TaskListRequest) => {
-        if (taskType === 2) {
-            return item.start_timestamp
-                ? `定时：${dayjs.unix(item.start_timestamp).format('YYYY-MM-DD HH:mm')}`
-                : '定时任务';
+        const schedType = Number((item as any).sched_type || 0);
+        const start = Number((item as any).start_timestamp || 0);
+        const end = Number((item as any).end_timestamp || 0);
+        const executionDate = Number((item as any).execution_date || 0);
+        const intervalTime = Number((item as any).interval_time || 0);
+        const intervalType = Number((item as any).interval_type || 0);
+
+        if (schedType === 2 || taskType === 2) {
+            const ts = executionDate || start;
+            return ts
+                ? `计划执行：${dayjs.unix(ts).format('YYYY-MM-DD HH:mm')}`
+                : '按计划定时执行';
         }
-        const start = item.start_timestamp
-            ? dayjs.unix(item.start_timestamp).format('YYYY-MM-DD HH:mm')
-            : '-';
-        const end = item.end_timestamp
-            ? dayjs.unix(item.end_timestamp).format('YYYY-MM-DD HH:mm')
-            : '-';
-        return `周期：${start} ~ ${end}`;
+        if (intervalTime > 0 && intervalType > 0) {
+            return `每 ${intervalTime} ${intervalUnitLabel[intervalType] || '分钟'} 执行`;
+        }
+        if (start && end) {
+            return `周期：${dayjs.unix(start).format('YYYY-MM-DD HH:mm')} ~ ${dayjs.unix(end).format('YYYY-MM-DD HH:mm')}`;
+        }
+        return '周期任务';
+    };
+
+    const getStrategyName = (item: TaskListRequest) => {
+        const fromField =
+            (item as any).name ||
+            (item as any).alias ||
+            (item as any).script_name ||
+            (item as any).params?.report_name ||
+            (item as any).params?.project_name;
+        if (fromField) return fromField;
+
+        const rawTaskID = item.task_id || '';
+        if (rawTaskID && !isUUIDLike(rawTaskID)) return rawTaskID;
+
+        const target =
+            (item as any).params?.target ||
+            (item as any).params?.keyword ||
+            (item as any).params?.project_name;
+        const firstTarget =
+            typeof target === 'string'
+                ? target.split(',').map((it) => it.trim()).filter(Boolean)[0]
+                : '';
+        if (firstTarget) return `${firstTarget} 自动化扫描`;
+        return `${item.task_group || '默认分组'} 自动化策略`;
+    };
+
+    const getLastRunText = (item: TaskListRequest) => {
+        const status = item.status || 'waiting';
+        const statusLabel = taskStatusLabel[status] || status;
+        const ts = pickLatestTimestamp(item);
+        const timeLabel = ts ? dayjs.unix(ts).format('MM-DD HH:mm') : '-';
+        return `${statusLabel} · ${timeLabel}`;
+    };
+
+    const getNextRunText = (item: TaskListRequest) => {
+        const now = dayjs().unix();
+        const isDisabled = (item as any).is_disabled === 'true';
+        if (isDisabled || item.status === 'disabled') return '已暂停';
+
+        const schedType = Number((item as any).sched_type || 0);
+        const executionDate = Number((item as any).execution_date || 0);
+        const start = Number((item as any).start_timestamp || 0);
+        const end = Number((item as any).end_timestamp || 0);
+        const intervalTime = Number((item as any).interval_time || 0);
+        const intervalType = Number((item as any).interval_type || 0);
+        const intervalSeconds =
+            intervalType === 1
+                ? intervalTime * 24 * 3600
+                : intervalType === 2
+                  ? intervalTime * 3600
+                  : intervalTime * 60;
+
+        if ((schedType === 2 || taskType === 2) && (executionDate || start)) {
+            const next = executionDate || start;
+            return dayjs.unix(next).format('YYYY-MM-DD HH:mm');
+        }
+
+        if (intervalSeconds > 0 && start > 0) {
+            const n = Math.max(0, Math.ceil((now - start) / intervalSeconds));
+            const next = start + n * intervalSeconds;
+            if (end > 0 && next > end) return '已过期';
+            return dayjs.unix(next).format('YYYY-MM-DD HH:mm');
+        }
+        return '-';
+    };
+
+    const selectedRecords = useMemo(
+        () => listState.list.filter((it) => it.id && selectedTaskIds.has(it.id)),
+        [listState.list, selectedTaskIds],
+    );
+
+    const allChecked =
+        listState.list.length > 0 &&
+        listState.list.every((it) => it.id && selectedTaskIds.has(it.id));
+
+    const handleToggleSelectAll = (checked: boolean) => {
+        if (!checked) {
+            setSelectedTaskIds(new Set());
+            return;
+        }
+        const next = new Set<number>();
+        listState.list.forEach((it) => {
+            if (it.id) next.add(it.id);
+        });
+        setSelectedTaskIds(next);
+    };
+
+    const handleToggleSingle = (id: number, checked: boolean) => {
+        setSelectedTaskIds((prev) => {
+            const next = new Set(prev);
+            if (checked) next.add(id);
+            else next.delete(id);
+            return next;
+        });
+    };
+
+    const reloadFirstPage = () => {
+        setSelectedTaskIds(new Set());
+        setHasMore(true);
+        runTaskList({ page: 1, append: false });
+    };
+
+    const batchChangeStatus = async (checked: boolean) => {
+        if (selectedRecords.length === 0) return;
+        try {
+            await Promise.all(
+                selectedRecords.map((it) =>
+                    (checked ? getTaskRun : getTaskStop)({
+                        task_id: it.id,
+                        task_type: taskType,
+                    }),
+                ),
+            );
+            message.success(checked ? '批量启用成功' : '批量暂停成功');
+            reloadFirstPage();
+        } catch (e: any) {
+            message.error(e?.message || '批量状态操作失败');
+        }
+    };
+
+    const batchDelete = () => {
+        if (selectedRecords.length === 0) return;
+        Modal.confirm({
+            title: `确认删除已选中的 ${selectedRecords.length} 个策略？`,
+            okText: '删除',
+            okButtonProps: { danger: true },
+            cancelText: '取消',
+            onOk: async () => {
+                try {
+                    await Promise.all(
+                        selectedRecords.map((it) => deleteTask(it.id)),
+                    );
+                    message.success('批量删除成功');
+                    reloadFirstPage();
+                    refreshTaskGroups();
+                } catch (e: any) {
+                    message.error(e?.message || '批量删除失败');
+                }
+            },
+        });
     };
 
     const manualRun = async (record: TaskListRequest) => {
@@ -430,6 +655,15 @@ const TaskPageList = () => {
                     }}
                 />
                 <div className="irify-task-filter-actions">
+                    <Checkbox
+                        checked={allChecked}
+                        indeterminate={
+                            selectedTaskIds.size > 0 && !allChecked
+                        }
+                        onChange={(e) => handleToggleSelectAll(e.target.checked)}
+                    >
+                        全选当前列表
+                    </Checkbox>
                     <Button onClick={() => setGroupManageVisible(true)}>
                         <SettingOutlined />
                         任务组管理
@@ -493,6 +727,17 @@ const TaskPageList = () => {
 
                             return (
                                 <div key={item.id} className="irify-task-card">
+                                    <div className="task-card-check">
+                                        <Checkbox
+                                            checked={selectedTaskIds.has(item.id)}
+                                            onChange={(e) =>
+                                                handleToggleSingle(
+                                                    item.id,
+                                                    e.target.checked,
+                                                )
+                                            }
+                                        />
+                                    </div>
                                     <div className="task-main-info">
                                         <div
                                             className="status-dot"
@@ -505,18 +750,18 @@ const TaskPageList = () => {
                                         <div className="task-details">
                                             <div className="task-header">
                                                 <span className="task-title">
-                                                    {item.task_id ||
-                                                        `任务-${item.id}`}
+                                                    {getStrategyName(item)}
                                                 </span>
                                                 <Tag>
                                                     {item.task_group || '未分组'}
                                                 </Tag>
                                             </div>
+                                            <div className="task-subline">
+                                                {(item as any).account || 'root'} | 运行节点:{' '}
+                                                {item.scanner?.join('、') || '-'}
+                                            </div>
                                             <div className="task-meta-grid">
                                                 <div className="meta-item">
-                                                    <span className="meta-label">
-                                                        调度规则
-                                                    </span>
                                                     <span className="meta-value">
                                                         {renderScheduleText(
                                                             item,
@@ -524,40 +769,15 @@ const TaskPageList = () => {
                                                     </span>
                                                 </div>
                                                 <div className="meta-item">
-                                                    <span className="meta-label">
-                                                        执行节点
-                                                    </span>
                                                     <span className="meta-value">
-                                                        {item.scanner?.join(
-                                                            '、',
-                                                        ) || '-'}
+                                                        上次执行:{' '}
+                                                        {getLastRunText(item)}
                                                     </span>
                                                 </div>
                                                 <div className="meta-item">
-                                                    <span className="meta-label">
-                                                        创建者
-                                                    </span>
                                                     <span className="meta-value">
-                                                        {(item as any).account ||
-                                                            '-'}
-                                                    </span>
-                                                </div>
-                                                <div className="meta-item">
-                                                    <span className="meta-label">
-                                                        当前状态
-                                                    </span>
-                                                    <span
-                                                        className="meta-value status-value"
-                                                        style={{
-                                                            color:
-                                                                taskStatusColor[
-                                                                    status
-                                                                ] || '#9ba3b2',
-                                                        }}
-                                                    >
-                                                        {taskStatusLabel[
-                                                            status
-                                                        ] || status}
+                                                        下次执行:{' '}
+                                                        {getNextRunText(item)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -567,7 +787,18 @@ const TaskPageList = () => {
                                     <div className="task-actions">
                                         <div className="switch-line">
                                             <span className="switch-label">
-                                                启用状态
+                                                状态：
+                                            </span>
+                                            <span
+                                                className="switch-status-text"
+                                                style={{
+                                                    color:
+                                                        taskStatusColor[
+                                                            status
+                                                        ] || '#9ba3b2',
+                                                }}
+                                            >
+                                                {taskStatusLabel[status] || status}
                                             </span>
                                             <Switch
                                                 checked={checked}
@@ -608,22 +839,24 @@ const TaskPageList = () => {
                 </Spin>
             </div>
 
-            <div className="irify-task-pagination">
-                <Pagination
-                    current={listState.page}
-                    pageSize={listState.limit}
-                    total={listState.total}
-                    showSizeChanger
-                    pageSizeOptions={[10, 20, 50, 100]}
-                    onChange={(page, pageSize) => {
-                        setListState((prev) => ({
-                            ...prev,
-                            page,
-                            limit: pageSize,
-                        }));
-                    }}
-                />
-            </div>
+            {selectedTaskIds.size > 0 && (
+                <div className="irify-task-batch-bar">
+                    <div className="batch-info">
+                        已选择 <span>{selectedTaskIds.size}</span> 项
+                    </div>
+                    <div className="batch-actions">
+                        <Button onClick={() => batchChangeStatus(true)}>
+                            批量启用
+                        </Button>
+                        <Button onClick={() => batchChangeStatus(false)}>
+                            批量暂停
+                        </Button>
+                        <Button danger onClick={batchDelete}>
+                            批量删除
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <Modal
                 title="任务组管理"

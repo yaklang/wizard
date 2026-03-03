@@ -56,6 +56,7 @@
 
 .irify-task-filter-actions {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 8px;
 }
@@ -97,6 +98,14 @@
 .irify-task-card:hover {
     border-color: var(--irify-accent);
     box-shadow: 0 4px 12px var(--irify-glass-shadow);
+    background: color-mix(in srgb, var(--irify-bg-container) 94%, #eff6ff 6%);
+}
+
+.irify-task-card .task-card-check {
+    flex: 0 0 auto;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
 }
 
 .irify-task-card .status-dot {
@@ -123,8 +132,9 @@
 .irify-task-card .task-header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
 .irify-task-card .task-title {
@@ -135,24 +145,24 @@
     word-break: break-all;
 }
 
+.irify-task-card .task-subline {
+    color: var(--irify-text-secondary);
+    font-size: 12px;
+    line-height: 18px;
+    margin-bottom: 8px;
+}
+
 .irify-task-card .task-meta-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-    gap: 8px 28px;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 6px 18px;
 }
 
 .irify-task-card .meta-item {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 8px;
     min-width: 0;
-}
-
-.irify-task-card .meta-label {
-    color: var(--irify-text-secondary);
-    font-size: 12px;
-    line-height: 18px;
-    white-space: nowrap;
 }
 
 .irify-task-card .meta-value {
@@ -170,7 +180,7 @@
 .irify-task-card .task-actions {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     gap: 12px;
     margin-left: 18px;
@@ -189,6 +199,12 @@
     line-height: 18px;
 }
 
+.irify-task-card .switch-status-text {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 600;
+}
+
 .irify-task-card .action-buttons {
     display: flex;
     gap: 8px;
@@ -199,17 +215,50 @@
     min-width: 76px;
 }
 
-.irify-task-pagination {
-    display: flex;
-    justify-content: flex-end;
-    padding: 16px 4px 0;
-}
-
 .irify-task-group-manage {
     :global(.tools-list-wrapper) {
         max-height: 420px;
         overflow: auto;
     }
+}
+
+.irify-task-batch-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    z-index: 200;
+    min-width: 560px;
+    max-width: calc(100vw - 220px);
+    background: #101828;
+    border: 1px solid rgba(71, 84, 103, 0.7);
+    border-radius: 12px;
+    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.35);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.irify-task-batch-bar .batch-info {
+    color: #d0d5dd;
+    font-size: 13px;
+}
+
+.irify-task-batch-bar .batch-info span {
+    color: #ffffff;
+    font-weight: 700;
+    margin: 0 4px;
+}
+
+.irify-task-batch-bar .batch-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.irify-task-batch-bar .batch-actions .ant-btn {
+    border-radius: 6px;
 }
 
 @media (max-width: 1280px) {
@@ -241,5 +290,14 @@
 
     .irify-task-card .action-buttons {
         justify-content: flex-start;
+    }
+
+    .irify-task-batch-bar {
+        min-width: auto;
+        width: calc(100vw - 24px);
+        left: 12px;
+        transform: none;
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
