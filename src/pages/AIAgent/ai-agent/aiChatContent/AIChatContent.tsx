@@ -26,23 +26,23 @@ import {
     PluginExecuteHttpFlow,
     VulnerabilitiesRisksTable,
 } from '@/pages/AIAgent/plugins/operator/pluginExecuteResult/PluginExecuteResult';
-import { YakitEmpty } from '@/components/yakitUI/YakitEmpty/YakitEmpty';
-import { apiQueryRisksTotalByRuntimeIds } from '@/pages/risks/YakitRiskTable/utils';
-import AIReActTaskChat from '@/pages/ai-re-act/aiReActTaskChat/AIReActTaskChat';
+import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
+// ipc 获取风险与漏洞的总数
+// import { apiQueryRisksTotalByRuntimeIds } from '@/pages/risks/YakitRiskTable/utils';
+import AIReActTaskChat from '@/pages/AIAgent/ai-re-act/aiReActTaskChat/AIReActTaskChat';
 import emiter from '@/utils/eventBus/eventBus';
-import { YakitButton } from '@/components/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import {
     OutlineClouddownloadIcon,
     OutlineNewspaperIcon,
     OutlinePlussmIcon,
 } from '@/assets/icon/outline';
 import { SolidChatalt2Icon } from '@/assets/icon/solid';
-import useAiChatLog from '@/hook/useAiChatLog/useAiChatLog.ts';
-import { YakitResizeBox } from '@/components/yakitUI/YakitResizeBox/YakitResizeBox';
+// import useAiChatLog from '@/hook/useAiChatLog/useAiChatLog.ts';
+import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
 import { grpcExportAILogs, grpcQueryHTTPFlows } from '../grpc';
 import useChatIPCStore from '../useContext/ChatIPCContent/useStore';
-import { YakitTag } from '@/components/yakitUI/YakitTag/YakitTag';
-import { TabKey } from '../components/aiFileSystemList/type';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import { onNewChat } from '../historyChat/HistoryChat';
 import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome';
 import { Divider } from 'antd';
@@ -50,14 +50,14 @@ import useAIAgentStore from '../useContext/useStore';
 import { useAIChatResizeBox } from './hooks/useAIChatResizeBox';
 import { ExportAILogsModal } from '../components/ExportAILogsModal/ExportAILogsModal';
 import { failed, yakitNotify } from '@/utils/notification';
-import {
+import type {
     AIHandleStartParams,
     AIHandleStartResProps,
     AIReActChatRefProps,
-} from '@/pages/ai-re-act/aiReActChat/AIReActChatType';
-import { aiChatDataStore } from '../store/ChatDataStore';
+} from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChatType';
 import AIContextToken from './AIContextToken/AIContextToken';
 import OperationLog from '../components/aiFileSystemList/OperationLog/OperationLog';
+import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 
 export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
     forwardRef((props, ref) => {
@@ -85,7 +85,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
             undefined,
         );
 
-        const [showFreeChat, setShowFreeChat] = useState<boolean>(true); //自由对话展开收起
+        const [showFreeChat, setShowFreeChat] = useState<boolean>(true); // 自由对话展开收起
         const [timeLine, setTimeLine] = useState<boolean>(true);
         const [runTimeIDs, setRunTimeIDs] = useState<string[]>(initRunTimeIDs);
 
@@ -125,10 +125,10 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                 setExportLoading(true);
                 //
                 try {
-                    const ids =
-                        aiChatDataStore.get(
-                            activeChat.request.TimelineSessionID || 'default',
-                        )?.coordinatorIDs || [];
+                    // const ids =
+                    //     aiChatDataStore.get(
+                    //         activeChat.request.TimelineSessionID || 'default',
+                    //     )?.coordinatorIDs || [];
                     await grpcExportAILogs(
                         {
                             // CoordinatorIDs: ids,
@@ -214,22 +214,22 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
         }, intervalHTTP);
         const getRiskTotal = useMemoizedFn(() => {
             if (!initRunTimeIDs.length) return;
-            apiQueryRisksTotalByRuntimeIds(initRunTimeIDs).then((allRes) => {
-                if (+allRes.Total > 0) {
-                    setTempRiskTotal(+allRes.Total);
-                    if (intervalRisk) setIntervalRisk(undefined);
-                }
-                if (!chatIPCData.execute) {
-                    if (intervalRisk) setIntervalRisk(undefined);
-                }
-            });
+            // apiQueryRisksTotalByRuntimeIds(initRunTimeIDs).then((allRes) => {
+            //     if (+allRes.Total > 0) {
+            //         setTempRiskTotal(+allRes.Total);
+            //         if (intervalRisk) setIntervalRisk(undefined);
+            //     }
+            //     if (!chatIPCData.execute) {
+            //         if (intervalRisk) setIntervalRisk(undefined);
+            //     }
+            // });
         });
         const getHTTPTotal = useMemoizedFn(() => {
             if (!initRunTimeIDs.length) return;
             grpcQueryHTTPFlows({ RuntimeIDs: initRunTimeIDs }).then(
                 (allRes) => {
-                    if (+allRes.Total > 0) {
-                        setTempHTTPTotal(+allRes.Total);
+                    if (Number(allRes.Total) > 0) {
+                        setTempHTTPTotal(Number(allRes.Total));
                         if (intervalHTTP) setIntervalHTTP(undefined);
                     }
                     if (!chatIPCData.execute) {
@@ -248,10 +248,10 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                 AITabs[AITabsEnum.Task_Content],
                 AITabs[AITabsEnum.File_System],
             ];
-            if (!!tempHTTPTotal) {
+            if (tempHTTPTotal) {
                 tab.push(AITabs[AITabsEnum.HTTP]);
             }
-            if (!!tempRiskTotal) {
+            if (tempRiskTotal) {
                 tab.push(AITabs[AITabsEnum.Risk]);
             }
             if (yakExecResult.execFileRecord.size > 0) {
@@ -302,7 +302,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                     label ??
                     (typeof tab.label === 'function' ? tab.label() : tab.label);
                 if (tab.value === AITabsEnum.Risk) {
-                    return <>{finalLabel}</>;
+                    return finalLabel;
                 }
                 if (tab.value === AITabsEnum.File_System) {
                     const isShow =
@@ -322,7 +322,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
         const OperationLogList = useCreation(() => {
             return Array.from(yakExecResult.execFileRecord.values())
                 .flat()
-                .sort((a, b) => b.order - a.order);
+                .sort((a: any, b: any) => b.order - a.order);
         }, [yakExecResult.execFileRecord]);
 
         const renderTabContent = useMemoizedFn((key: AITabsEnumType) => {
@@ -337,38 +337,37 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                 case AITabsEnum.File_System:
                     return <AIFileSystemList />;
                 case AITabsEnum.Risk:
-                    return !!runTimeIDs.length ? (
+                    return runTimeIDs.length ? (
                         <VulnerabilitiesRisksTable
                             filterTagDom={filterTagDom}
                             runTimeIDs={runTimeIDs}
                         />
                     ) : (
-                        <>
-                            <YakitEmpty style={{ paddingTop: 48 }} />
-                        </>
+                        <YakitEmpty style={{ paddingTop: 48 }} />
                     );
                 case AITabsEnum.HTTP:
-                    return !!runTimeIDs.length ? (
+                    return runTimeIDs.length ? (
                         <PluginExecuteHttpFlow
                             filterTagDom={filterTagDom}
                             runtimeId={runTimeIDs.join(',')}
                             website={true}
                         />
                     ) : (
-                        <>
-                            <YakitEmpty style={{ paddingTop: 48 }} />
-                        </>
+                        <YakitEmpty style={{ paddingTop: 48 }} />
                     );
                 case AITabsEnum.Operation_Log:
                     return (
-                        <OperationLog loading={false} list={OperationLogList} />
+                        <OperationLog
+                            loading={false}
+                            list={OperationLogList as StreamResult.Log[]}
+                        />
                     );
                 default:
-                    return <></>;
+                    return null;
             }
         });
 
-        const { onOpenLogWindow } = useAiChatLog();
+        // const { onOpenLogWindow } = useAiChatLog();
 
         const onActiveKey = useMemoizedFn((key: AITabsEnumType) => {
             if (activeKey === key) {
@@ -381,10 +380,10 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
         });
         const onOpenLog = useMemoizedFn((e) => {
             e.stopPropagation();
-            onOpenLogWindow();
+            // onOpenLogWindow();
         });
 
-        const { resizeBoxProps, emitResizeBox } = useAIChatResizeBox({
+        const { resizeBoxProps } = useAIChatResizeBox({
             activeKey,
             showFreeChat,
             timeLine,
@@ -525,7 +524,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                                                 ]]: !activeKey,
                                             },
                                         )}
-                                        mode={!!activeKey ? 'task' : 'welcome'}
+                                        mode={activeKey ? 'task' : 'welcome'}
                                         showFreeChat={showFreeChat}
                                         setShowFreeChat={setShowFreeChat}
                                         startRequest={startRequest}

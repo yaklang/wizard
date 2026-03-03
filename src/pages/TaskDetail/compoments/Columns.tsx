@@ -8,8 +8,6 @@ import type {
 } from '@/apis/taskDetail/types';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
 
-import { YakitTag } from '@/compoments/YakitTag/YakitTag';
-import type { YakitTagColor } from '@/compoments/YakitTag/YakitTagType';
 import { AssetsVulnsDetailOperate } from './AssetsVulnsDetailOperate';
 import { SeverityMapTag, survivalStatusList } from './utils';
 import CopyOutlined from './utils/CopyOutlined';
@@ -18,6 +16,8 @@ import type {
     TGetCompanyInfoResponse,
     TGetDomainInfoResponse,
 } from '@/apis/MessageCollectApi/type';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
+import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType';
 
 // 端口资产 columns
 const ProtColumns = (filterData?: {

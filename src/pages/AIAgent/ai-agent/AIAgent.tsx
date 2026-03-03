@@ -30,7 +30,7 @@ import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
 import emiter from '@/utils/eventBus/eventBus';
 import classNames from 'classnames';
 import styles from './AIAgent.module.scss';
-import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
+// import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
 
 export const AIAgentCacheClearValue = '20260113';
@@ -72,8 +72,8 @@ export const AIAgent = () => {
         try {
             if (isDelCache) {
                 // 删除数据库历史记录
-                await grpcDeleteAIEvent({ ClearAll: true }, true);
-                await grpcDeleteAITask({});
+                // await grpcDeleteAIEvent({ ClearAll: true }, true);
+                // await grpcDeleteAITask({});
             }
             setDelCacheVisible(false);
         } catch {
