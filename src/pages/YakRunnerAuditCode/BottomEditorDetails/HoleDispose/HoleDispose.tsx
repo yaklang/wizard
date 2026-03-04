@@ -11,18 +11,18 @@ import {
 import styles from './HoleDispose.module.scss';
 import emiter from '@/utils/eventBus/eventBus';
 import { RightBugAuditResultHeader } from '../BottomEditorDetails';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import { Input } from 'antd';
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect';
 import type { SSARisk } from '../../YakRunnerAuditCodeType';
 import { yakitNotify } from '@/utils/notification';
 import { PopoverArrowIcon } from '../../icon';
 import classNames from 'classnames';
 import type { TextAreaRef } from 'antd/lib/input/TextArea';
 import { formatTimestamp } from '@/utils/timeUtil';
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
-import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm';
-import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitPopconfirm } from '@/compoments/yakitUI/YakitPopconfirm/YakitPopconfirm';
+import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty';
 import { SolidPaperairplaneIcon } from '@/assets/icon/solid';
 import { LogNodeStatusModifyIcon } from '@/assets/icon/colors';
 

@@ -13,7 +13,7 @@ import type {
     PluginExecuteWebsiteTreeProps,
     VulnerabilitiesRisksTableProps,
 } from './PluginExecuteResultType';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import {
     useControllableValue,
     useCreation,

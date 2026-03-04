@@ -1,7 +1,7 @@
-import { $command, $nodeSchema, $nodeAttr } from '@milkdown/utils';
 import type { Attrs } from '@milkdown/kit/prose/model';
 import { TextSelection } from '@milkdown/kit/prose/state';
 import type { iconMapType } from '../../aiChatMention/type';
+import { $nodeAttr, $nodeSchema, $command } from '@milkdown/kit/utils';
 
 export const aiMentionCustomId = 'ai-mention-custom';
 
@@ -111,17 +111,15 @@ export const aiMentionCommand = $command<AIMentionCommandParams, string>(
             tr
                 .setMeta(aiMentionCustomId, true)
                 .replaceSelectionWith(
-                    aiMentionCustomSchema
-                        .type(ctx)
-                        .create(
-                            {
-                                mentionId,
-                                mentionType,
-                                mentionName,
-                                lock: lock ?? false,
-                            },
-                            fragment,
-                        ),
+                    aiMentionCustomSchema.type(ctx).create(
+                        {
+                            mentionId,
+                            mentionType,
+                            mentionName,
+                            lock: lock ?? false,
+                        },
+                        fragment,
+                    ),
                 )
                 .scrollIntoView(),
         );

@@ -1,11 +1,10 @@
-import type {AIInputEvent} from "@/pages/ai-re-act/hooks/grpcApi"
-import {AIChatIPCStartParams} from "@/pages/ai-re-act/hooks/type"
-import {ReactNode} from "react"
+import type { AIChatIPCStartParams } from '@/pages/AIAgent/ai-re-act/hooks/type';
+import type { ReactNode } from 'react';
 
 export interface AITriageChatContentProps {
-    isAnswer?: boolean
-    content: ReactNode
-    contentClassName?: string
-    chatClassName?: string
-    extraValue?: AIChatIPCStartParams["extraValue"]
+    isAnswer?: boolean;
+    content: ReactNode;
+    contentClassName?: string;
+    chatClassName?: string;
+    extraValue?: AIChatIPCStartParams['extraValue'];
 }

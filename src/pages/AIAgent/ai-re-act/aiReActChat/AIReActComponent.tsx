@@ -9,7 +9,7 @@ import {
 import {
     YakitButton,
     type YakitButtonProp,
-} from '@/compoments/YakitUI/YakitButton/YakitButton';
+} from '@/compoments/yakitUI/YakitButton/YakitButton';
 
 export const RoundedStopButton: React.FC<YakitButtonProp> = React.memo(
     (props) => {

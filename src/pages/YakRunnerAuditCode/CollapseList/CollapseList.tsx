@@ -24,11 +24,11 @@ import {
     type YaklangLanguageSuggestionRequest,
     getWordWithPointAtPosition,
 } from '@/utils/monacoSpec/yakCompletionSchema';
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
-import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
+import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox';
+import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor';
 import { getModelContext } from '@/utils/monacoSpec/yakEditor';
 import { monaco } from 'react-monaco-editor';
-import type { YakitIMonacoEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditorType';
+import type { YakitIMonacoEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditorType';
 const { ipcRenderer } = window.require('electron');
 const { Panel } = Collapse;
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
-import type { TreeKey } from '../YakitUI/YakitTree/YakitTree';
-import YakitTree from '../YakitUI/YakitTree/YakitTree';
+import type { TreeKey } from '../yakitUI/YakitTree/YakitTree';
+import YakitTree from '../yakitUI/YakitTree/YakitTree';
 import type { DataNode } from 'antd/es/tree';
 import {
     useDebounceEffect,

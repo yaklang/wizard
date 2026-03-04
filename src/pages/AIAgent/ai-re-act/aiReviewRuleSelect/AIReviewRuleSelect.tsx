@@ -22,13 +22,13 @@ import {
     AIReviewRuleIconMap,
     AIReviewRuleOptions,
 } from '../../ai-agent/defaultConstant';
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
-import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover';
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect';
+import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover';
 import { FormItemSlider } from '../../ai-agent/AIChatSetting/AIChatSetting';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import useChatIPCDispatcher from '../../ai-agent/useContext/ChatIPCContent/useDispatcher';
 import useChatIPCStore from '../../ai-agent/useContext/ChatIPCContent/useStore';
-import { YakitSegmented } from '@/compoments/YakitUI/YakitSegmented/YakitSegmented';
+import { YakitSegmented } from '@/compoments/yakitUI/YakitSegmented/YakitSegmented';
 import type { AIAgentSetting } from '../../ai-agent/aiAgentType';
 
 const AIReviewRuleSelect: React.FC<ReviewRuleSelectProps> = React.memo(

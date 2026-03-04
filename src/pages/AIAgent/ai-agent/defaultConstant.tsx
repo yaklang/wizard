@@ -20,7 +20,7 @@ import type {
 } from '@/compoments/yakitSideTab/YakitSideTabType';
 import type { PaginationSchema } from '../enums/invoker/schema';
 import { genDefaultPagination } from '../enums/invoker/schema';
-import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType';
+import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType';
 import {
     ChatGLMIcon,
     ComateIcon,

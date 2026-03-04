@@ -24,7 +24,7 @@ import Loading from '@/compoments/Loading/Loading';
 import useAISystemStream from '../hooks/useAISystemStream';
 import { ScrollText } from '@/pages/AIAgent/ai-agent/chatTemplate/TaskLoading/TaskLoading';
 import { Code } from '@/pages/AIAgent/ai-agent/components/aiGroupStreamCard/AIGroupStreamCard';
-import { YakitModal } from '@/compoments/YakitUI/YakitModal/YakitModal';
+import { YakitModal } from '@/compoments/yakitUI/YakitModal/YakitModal';
 
 const getAIReferenceNodeByType = (contentType?: string) => {
     switch (contentType) {

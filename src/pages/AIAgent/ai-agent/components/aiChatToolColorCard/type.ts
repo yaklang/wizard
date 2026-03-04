@@ -1,7 +1,7 @@
-import {AIStreamOutput} from "@/pages/ai-re-act/hooks/aiRender"
-import {ReactNode} from "react"
+import type { AIStreamOutput } from '@/pages/AIAgent/ai-re-act/hooks/aiRender';
+import type { ReactNode } from 'react';
 
 export interface AIChatToolColorCardProps {
-    toolCall: AIStreamOutput
-    referenceNode?: ReactNode
+    toolCall: AIStreamOutput;
+    referenceNode?: ReactNode;
 }

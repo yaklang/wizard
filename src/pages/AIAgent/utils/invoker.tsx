@@ -3,8 +3,8 @@ import {
     FileActionEnum,
     type PluginExecuteLogFile,
 } from '../plugins/operator/pluginExecuteResult/PluginExecuteResultType';
-import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType';
-import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
+import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType';
+import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor';
 
 /**
  *

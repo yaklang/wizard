@@ -8441,3 +8441,51 @@ const OutlineAI = () => (
 export const OutlineAIIcon = (props: Partial<IconProps>) => {
     return <Icon component={OutlineAI} {...props} />;
 };
+
+const OutlineChevronsUpDown = () => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path
+            d="M7 15L12 20L17 15M7 9L12 4L17 9"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+/*
+ * @description Outline/ChevronsUpDown
+ */
+export const OutlineChevronsUpDownIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineChevronsUpDown} {...props} />;
+};
+
+const OutlineChevronsDownUp = () => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path
+            d="M7 20L12 15L17 20M7 4L12 9L17 4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+/*
+ * @description Outline/ChevronsDownUp
+ */
+export const OutlineChevronsDownUpIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineChevronsDownUp} {...props} />;
+};

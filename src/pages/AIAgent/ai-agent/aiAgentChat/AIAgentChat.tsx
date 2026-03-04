@@ -31,7 +31,7 @@ import type {
 } from '../useContext/ChatIPCContent/ChatIPCContent';
 import ChatIPCContent from '../useContext/ChatIPCContent/ChatIPCContent';
 import { AIReActChatReview } from '@/pages/AIAgent/ai-agent/components/aiReActChatReview/AIReActChatReview';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import {
     OutlineChevrondoubledownIcon,
     OutlineChevrondoubleupIcon,
@@ -60,16 +60,16 @@ import {
     AIToolForm,
 } from '../aiTriageChatTemplate/AITriageChatTemplate';
 import { grpcGetAIForge } from '../grpc';
-import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
-import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
-import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm';
+import { YakitHint } from '@/compoments/yakitUI/YakitHint/YakitHint';
+import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox';
+import { YakitModalConfirm } from '@/compoments/yakitUI/YakitModal/YakitModalConfirm';
 import type { AIForge } from '../type/forge';
 import type { AITool } from '../type/aiTool';
 import { AIChatContent } from '../aiChatContent/AIChatContent';
 import { AITabsEnum, ReActChatEventEnum } from '../defaultConstant';
 import { grpcGetAIToolById } from '../aiToolList/utils';
 import { isEqual } from 'lodash';
-import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm';
+import { YakitPopconfirm } from '@/compoments/yakitUI/YakitPopconfirm/YakitPopconfirm';
 // import useMultipleHoldGRPCStream from '@/pages/KnowledgeBase/hooks/useMultipleHoldGRPCStream';
 // import { useKnowledgeBase } from '@/pages/KnowledgeBase/hooks/useKnowledgeBase';
 // import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute';

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { FilterPanelProps } from './FilterPanelType';
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
-import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
-import YakitCollapse from '@/compoments/YakitUI/YakitCollapse/YakitCollapse';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin';
+import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty';
+import YakitCollapse from '@/compoments/yakitUI/YakitCollapse/YakitCollapse';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import { useMemoizedFn } from 'ahooks';
-import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
+import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox';
 import { Tooltip } from 'antd';
 import { OutlineCloseIcon } from '@/assets/icon/outline';
 

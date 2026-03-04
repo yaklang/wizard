@@ -6,7 +6,7 @@ import type {
     YakitDraggerProps,
     YakitFormDraggerContentProps,
     YakitFormDraggerProps,
-} from './YakitFormType.d';
+} from './YakitFormType';
 import styles from './YakitForm.module.scss';
 import classNames from 'classnames';
 import { YakitInput } from '../YakitInput/YakitInput';
