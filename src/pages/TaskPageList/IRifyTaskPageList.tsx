@@ -592,25 +592,27 @@ const TaskPageList = () => {
                 ))}
             </div>
 
-            <div className="irify-task-list-actions">
-                <Button
-                    onClick={handleToggleSelectAll}
-                    disabled={listState.list.length === 0}
-                >
-                    {allChecked ? '取消全选' : '全选当前列表'}
-                </Button>
-                <div className="actions-right">
-                    <Button onClick={() => setGroupManageVisible(true)}>
-                        <SettingOutlined />
-                        任务组管理
-                    </Button>
+            <div className="irify-task-toolbar">
+                <div className="irify-task-list-actions">
                     <Button
-                        type="primary"
-                        onClick={() => navigate('/projects/create')}
+                        onClick={handleToggleSelectAll}
+                        disabled={listState.list.length === 0}
                     >
-                        <PlusOutlined />
-                        新建策略
+                        {allChecked ? '取消全选' : '全选当前列表'}
                     </Button>
+                    <div className="actions-right">
+                        <Button onClick={() => setGroupManageVisible(true)}>
+                            <SettingOutlined />
+                            任务组管理
+                        </Button>
+                        <Button
+                            type="primary"
+                            onClick={() => navigate('/projects/create')}
+                        >
+                            <PlusOutlined />
+                            新建策略
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -792,6 +794,7 @@ const TaskPageList = () => {
                                                         e.stopPropagation()
                                                     }
                                                     icon={<MoreOutlined />}
+                                                    aria-label="更多操作"
                                                 />
                                             </Dropdown>
                                         </div>

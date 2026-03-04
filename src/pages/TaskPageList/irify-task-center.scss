@@ -45,12 +45,19 @@
     }
 }
 
+.irify-task-toolbar {
+    padding: 24px;
+    border: 1px solid var(--irify-border);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background: var(--irify-bg-container);
+    margin-bottom: 16px;
+}
+
 .irify-task-list-actions {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 16px;
-    margin-bottom: 16px;
 
     .actions-right {
         margin-left: auto;
@@ -279,6 +286,10 @@
 }
 
 @media (max-width: 1280px) {
+    .irify-task-toolbar {
+        padding: 20px;
+    }
+
     .irify-task-list-actions {
         flex-wrap: wrap;
         justify-content: flex-start;
