@@ -51,6 +51,7 @@
     border-top: none;
     border-radius: 0 0 4px 4px;
     background: var(--irify-bg-container);
+    margin-top: 16px;
     margin-bottom: 16px;
 }
 
@@ -73,7 +74,7 @@
     overflow: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .irify-task-empty {
