@@ -2,10 +2,15 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import {
     Button,
+    Col,
     Dropdown,
     Empty,
+    Form,
+    Input,
     message,
     Modal,
+    Row,
+    Select,
     Spin,
     Switch,
     Tag,
@@ -16,6 +21,7 @@ import {
     MoreOutlined,
     PlayCircleOutlined,
     PlusOutlined,
+    SearchOutlined,
     SettingOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +29,7 @@ import { useEventSource } from '@/hooks';
 import { useRequest, useSafeState } from 'ahooks';
 import {
     deleteTask,
+    getBatchInvokingScriptTaskNode,
     getScriptTaskGroup,
     getTaskList,
     getTaskRun,
@@ -34,7 +41,7 @@ import type {
     TaskGrounpResponse,
     TaskListRequest,
 } from '@/apis/task/types';
-import { options, siderTaskGrounpAllList } from './utils/data';
+import { options, siderTaskGrounpAllList, taskListStatus } from './utils/data';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
 import type { UsePageRef } from '@/hooks/usePage';
@@ -102,6 +109,7 @@ const TaskPageList = () => {
     const navigate = useNavigate();
 
     const editTaskModalRef = useRef<UseModalRefType>(null);
+    const [form] = Form.useForm();
 
     const [taskType, setTaskType] = useSafeState<2 | 3>(2);
     const [taskGroupKey, setTaskGroupKey] = useSafeState<string>('全部');
@@ -109,6 +117,14 @@ const TaskPageList = () => {
     const [taskGroups, setTaskGroups] = useSafeState<TaskGroupItem[]>(
         siderTaskGrounpAllList as TaskGroupItem[],
     );
+
+    const [filters, setFilters] = useSafeState<{
+        keyword: string;
+        scanner?: string;
+        status?: string;
+    }>({
+        keyword: '',
+    });
 
     const [listState, setListState] = useSafeState<{
         loading: boolean;
@@ -133,12 +149,35 @@ const TaskPageList = () => {
         useSafeState<number>();
 
     const { run: runTaskList } = useRequest(
-        async (opts?: { page?: number; append?: boolean }) => {
+        async (opts?: {
+            page?: number;
+            append?: boolean;
+            filters?: {
+                keyword?: string;
+                scanner?: string;
+                status?: string;
+                taskGroupKey?: string;
+            };
+        }) => {
             const targetPage = opts?.page ?? 1;
             const append = Boolean(opts?.append);
+            const activeFilters = opts?.filters ?? filters;
+            const activeGroupKey = opts?.filters?.taskGroupKey ?? taskGroupKey;
             const dto: Record<string, any> = {
                 task_type: taskType,
             };
+            if (activeGroupKey && activeGroupKey !== '全部') {
+                dto.task_groups = [activeGroupKey];
+            }
+            if (activeFilters.keyword) {
+                dto.task_name = activeFilters.keyword;
+            }
+            if (activeFilters.scanner) {
+                dto.node_ids = [activeFilters.scanner];
+            }
+            if (activeFilters.status) {
+                dto.task_status = [activeFilters.status];
+            }
 
             const { data } = await getTaskList({
                 dto,
@@ -252,6 +291,14 @@ const TaskPageList = () => {
         },
     });
 
+    const { data: nodeOptions = [] } = useRequest(async () => {
+        const { data } = await getBatchInvokingScriptTaskNode();
+        const list = data?.list ?? [];
+        return Array.isArray(list)
+            ? list.map((it) => ({ label: it, value: it }))
+            : [];
+    });
+
     useEventSource<{ msg: any }>('events?stream_type=status_updates', {
         maxRetries: 1,
         onsuccess: (data: any) => {
@@ -289,6 +336,15 @@ const TaskPageList = () => {
         window.addEventListener('scroll', onScroll);
         return () => window.removeEventListener('scroll', onScroll);
     }, [listState.loading, hasMore, listState.page, runTaskList]);
+
+    const groupFilterOptions = useMemo<{ label: string; value: string }[]>(
+        () =>
+            taskGroups.map((it) => ({
+                label: it.name,
+                value: it.name,
+            })),
+        [taskGroups],
+    );
 
     const toggleTaskStatus = async (
         record: TaskListRequest,
@@ -516,6 +572,43 @@ const TaskPageList = () => {
         runTaskList({ page: 1, append: false });
     };
 
+    const handleSearch = () => {
+        const values = form.getFieldsValue();
+        const nextFilters = {
+            keyword: (values.keyword || '').trim(),
+            scanner: values.scanner || undefined,
+            status: values.status || undefined,
+        };
+        const nextGroupKey = values.task_group || '全部';
+        setFilters(nextFilters);
+        setTaskGroupKey(nextGroupKey);
+        setSelectedTaskIds(new Set());
+        setHasMore(true);
+        runTaskList({
+            page: 1,
+            append: false,
+            filters: { ...nextFilters, taskGroupKey: nextGroupKey },
+        });
+    };
+
+    const handleReset = () => {
+        form.resetFields();
+        const nextFilters = {
+            keyword: '',
+            scanner: undefined,
+            status: undefined,
+        };
+        setFilters(nextFilters);
+        setTaskGroupKey('全部');
+        setSelectedTaskIds(new Set());
+        setHasMore(true);
+        runTaskList({
+            page: 1,
+            append: false,
+            filters: { ...nextFilters, taskGroupKey: '全部' },
+        });
+    };
+
     const batchChangeStatus = async (checked: boolean) => {
         if (selectedRecords.length === 0) return;
         try {
@@ -592,27 +685,87 @@ const TaskPageList = () => {
                 ))}
             </div>
 
-            <div className="irify-task-toolbar">
-                <div className="irify-task-list-actions">
-                    <Button
-                        onClick={handleToggleSelectAll}
-                        disabled={listState.list.length === 0}
-                    >
-                        {allChecked ? '取消全选' : '全选当前列表'}
+            <div className="irify-task-filter-bar">
+                <Form form={form} layout="vertical">
+                    <Row gutter={[16, 16]}>
+                        <Col span={6}>
+                            <Form.Item name="keyword" label="搜索任务名称">
+                                <Input
+                                    allowClear
+                                    placeholder="请输入任务名称"
+                                    prefix={<SearchOutlined />}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={5}>
+                            <Form.Item name="task_group" label="任务组">
+                                <Select
+                                    allowClear
+                                    placeholder="请选择任务组"
+                                    options={groupFilterOptions.filter(
+                                        (it: { value: string }) =>
+                                            it.value !== '全部',
+                                    )}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={5}>
+                            <Form.Item name="scanner" label="执行节点">
+                                <Select
+                                    allowClear
+                                    placeholder="请选择执行节点"
+                                    options={nodeOptions}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={5}>
+                            <Form.Item name="status" label="状态">
+                                <Select
+                                    allowClear
+                                    placeholder="请选择状态"
+                                    options={taskListStatus.map((it) => ({
+                                        label: it.label,
+                                        value: it.value,
+                                    }))}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={3}>
+                            <Form.Item label=" ">
+                                <div className="filter-actions">
+                                    <Button
+                                        type="primary"
+                                        onClick={handleSearch}
+                                    >
+                                        查询
+                                    </Button>
+                                    <Button onClick={handleReset}>重置</Button>
+                                </div>
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                </Form>
+            </div>
+
+            <div className="irify-task-list-actions">
+                <Button
+                    onClick={handleToggleSelectAll}
+                    disabled={listState.list.length === 0}
+                >
+                    {allChecked ? '取消全选' : '全选当前列表'}
+                </Button>
+                <div className="actions-right">
+                    <Button onClick={() => setGroupManageVisible(true)}>
+                        <SettingOutlined />
+                        任务组管理
                     </Button>
-                    <div className="actions-right">
-                        <Button onClick={() => setGroupManageVisible(true)}>
-                            <SettingOutlined />
-                            任务组管理
-                        </Button>
-                        <Button
-                            type="primary"
-                            onClick={() => navigate('/projects/create')}
-                        >
-                            <PlusOutlined />
-                            新建策略
-                        </Button>
-                    </div>
+                    <Button
+                        type="primary"
+                        onClick={() => navigate('/projects/create')}
+                    >
+                        <PlusOutlined />
+                        新建策略
+                    </Button>
                 </div>
             </div>
 
