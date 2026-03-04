@@ -11,8 +11,10 @@ import {
     Modal,
     Row,
     Select,
+    Space,
     Spin,
     Switch,
+    Tabs,
     Tag,
 } from 'antd';
 import type { MenuProps } from 'antd';
@@ -21,6 +23,7 @@ import {
     MoreOutlined,
     PlayCircleOutlined,
     PlusOutlined,
+    ReloadOutlined,
     SearchOutlined,
     SettingOutlined,
 } from '@ant-design/icons';
@@ -103,6 +106,36 @@ const intervalUnitLabel: Record<number, string> = {
     1: '天',
     2: '小时',
     3: '分钟',
+};
+
+const getRelatedProjectName = (item: TaskListRequest) => {
+    const params = (item as any).params || {};
+    const projectName =
+        params.project_name ||
+        params.report_name ||
+        params.program_name ||
+        (item as any).project_name;
+    if (projectName) return String(projectName);
+    const target = params.target;
+    if (typeof target === 'string') {
+        const first = target
+            .split(',')
+            .map((it: string) => it.trim())
+            .filter(Boolean)[0];
+        if (first) return first;
+    }
+    return '-';
+};
+
+const getCronExpression = (item: TaskListRequest) => {
+    const params = ((item as any).params || {}) as Record<string, any>;
+    return (
+        params.cron ||
+        params.cron_expr ||
+        params.cron_expression ||
+        params.schedule_cron ||
+        ''
+    );
 };
 
 const TaskPageList = () => {
@@ -431,11 +464,16 @@ const TaskPageList = () => {
         const executionDate = Number((item as any).execution_date || 0);
         const intervalTime = Number((item as any).interval_time || 0);
         const intervalType = Number((item as any).interval_type || 0);
+        const cron = getCronExpression(item);
+
+        if (cron) {
+            return `Cron: ${cron}`;
+        }
 
         if (schedType === 2 || taskType === 2) {
             const ts = executionDate || start;
             return ts
-                ? `计划执行：${dayjs.unix(ts).format('YYYY-MM-DD HH:mm')}`
+                ? `按计划定时执行（${dayjs.unix(ts).format('YYYY-MM-DD HH:mm')}）`
                 : '按计划定时执行';
         }
         if (intervalTime > 0 && intervalType > 0) {
@@ -447,17 +485,37 @@ const TaskPageList = () => {
         return '周期任务';
     };
 
-    const getStrategyName = (item: TaskListRequest) => {
+    const getNodeDisplay = (item: TaskListRequest) => {
+        if (Array.isArray(item.scanner) && item.scanner.length > 0) {
+            return item.scanner.join('、');
+        }
+        const maybeNode = (item as any).node || (item as any).node_id;
+        return maybeNode ? String(maybeNode) : '-';
+    };
+
+    const getStrategyDisplay = (
+        item: TaskListRequest,
+    ): { title: string; tag?: string } => {
+        const taskGroup = item.task_group || '默认分组';
+
         const fromField =
             (item as any).name ||
             (item as any).alias ||
             (item as any).script_name ||
             (item as any).params?.report_name ||
             (item as any).params?.project_name;
-        if (fromField) return fromField;
+        if (fromField)
+            return {
+                title: fromField,
+                tag: taskGroup !== '默认分组' ? taskGroup : undefined,
+            };
 
         const rawTaskID = item.task_id || '';
-        if (rawTaskID && !isUUIDLike(rawTaskID)) return rawTaskID;
+        if (rawTaskID && !isUUIDLike(rawTaskID))
+            return {
+                title: rawTaskID,
+                tag: taskGroup !== '默认分组' ? taskGroup : undefined,
+            };
 
         const target =
             (item as any).params?.target ||
@@ -470,8 +528,16 @@ const TaskPageList = () => {
                       .map((it) => it.trim())
                       .filter(Boolean)[0]
                 : '';
-        if (firstTarget) return `${firstTarget} 自动化扫描`;
-        return `${item.task_group || '默认分组'} 自动化策略`;
+        if (firstTarget)
+            return {
+                title: `${firstTarget} 自动化扫描`,
+                tag: taskGroup !== '默认分组' ? taskGroup : undefined,
+            };
+
+        return {
+            title: '自动化策略',
+            tag: taskGroup,
+        };
     };
 
     const getLastRunText = (item: TaskListRequest) => {
@@ -479,7 +545,7 @@ const TaskPageList = () => {
         const statusLabel = taskStatusLabel[status] || status;
         const ts = pickLatestTimestamp(item);
         const timeLabel = ts ? dayjs.unix(ts).format('MM-DD HH:mm') : '-';
-        return `${statusLabel} · ${timeLabel}`;
+        return `${timeLabel} (${statusLabel})`;
     };
 
     const getNextRunText = (item: TaskListRequest) => {
@@ -536,13 +602,21 @@ const TaskPageList = () => {
         setSelectedTaskIds(next);
     };
 
-    const handleToggleSingle = (id: number) => {
+    const handleToggleSingle = (id: number, checked?: boolean) => {
         setSelectedTaskIds((prev) => {
             const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
+            if (typeof checked === 'boolean') {
+                if (checked) {
+                    next.add(id);
+                } else {
+                    next.delete(id);
+                }
             } else {
-                next.add(id);
+                if (next.has(id)) {
+                    next.delete(id);
+                } else {
+                    next.add(id);
+                }
             }
             return next;
         });
@@ -670,26 +744,23 @@ const TaskPageList = () => {
         <div
             className={`irify-task-center-page ${selectedTaskIds.size > 0 ? 'has-selection-bar' : ''}`}
         >
-            <div className="irify-task-type-tabs">
-                {options.map((tab) => (
-                    <button
-                        key={tab.value}
-                        className={`irify-task-type-tab ${taskType === tab.value ? 'active' : ''}`}
-                        onClick={() => {
-                            setTaskType(tab.value as 2 | 3);
-                            setListState((prev) => ({ ...prev, page: 1 }));
-                        }}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
+            <Tabs
+                activeKey={String(taskType)}
+                onChange={(key) => {
+                    setTaskType(Number(key) as 2 | 3);
+                    setListState((prev) => ({ ...prev, page: 1 }));
+                }}
+                items={options.map((tab) => ({
+                    key: String(tab.value),
+                    label: tab.label,
+                }))}
+            />
 
             <div className="irify-task-filter-bar">
-                <Form form={form} layout="vertical">
-                    <Row gutter={[16, 16]}>
+                <Form form={form} layout="inline">
+                    <Row gutter={[16, 16]} style={{ width: '100%' }}>
                         <Col span={6}>
-                            <Form.Item name="keyword" label="搜索任务名称">
+                            <Form.Item name="keyword">
                                 <Input
                                     allowClear
                                     placeholder="请输入任务名称"
@@ -698,7 +769,7 @@ const TaskPageList = () => {
                             </Form.Item>
                         </Col>
                         <Col span={5}>
-                            <Form.Item name="task_group" label="任务组">
+                            <Form.Item name="task_group">
                                 <Select
                                     allowClear
                                     placeholder="请选择任务组"
@@ -710,7 +781,7 @@ const TaskPageList = () => {
                             </Form.Item>
                         </Col>
                         <Col span={5}>
-                            <Form.Item name="scanner" label="执行节点">
+                            <Form.Item name="scanner">
                                 <Select
                                     allowClear
                                     placeholder="请选择执行节点"
@@ -719,7 +790,7 @@ const TaskPageList = () => {
                             </Form.Item>
                         </Col>
                         <Col span={5}>
-                            <Form.Item name="status" label="状态">
+                            <Form.Item name="status">
                                 <Select
                                     allowClear
                                     placeholder="请选择状态"
@@ -731,16 +802,22 @@ const TaskPageList = () => {
                             </Form.Item>
                         </Col>
                         <Col span={3}>
-                            <Form.Item label=" ">
-                                <div className="filter-actions">
+                            <Form.Item>
+                                <Space size={8}>
                                     <Button
                                         type="primary"
+                                        icon={<SearchOutlined />}
                                         onClick={handleSearch}
                                     >
                                         查询
                                     </Button>
-                                    <Button onClick={handleReset}>重置</Button>
-                                </div>
+                                    <Button
+                                        icon={<ReloadOutlined />}
+                                        onClick={handleReset}
+                                    >
+                                        重置
+                                    </Button>
+                                </Space>
                             </Form.Item>
                         </Col>
                     </Row>
@@ -778,6 +855,7 @@ const TaskPageList = () => {
                     ) : (
                         listState.list.map((item) => {
                             const status = item.status || 'waiting';
+                            const strategyDisplay = getStrategyDisplay(item);
                             const checked = ['running', 'enabled'].includes(
                                 item.status || '',
                             );
@@ -824,82 +902,80 @@ const TaskPageList = () => {
                                         handleTaskCardClick(e, item.id)
                                     }
                                 >
-                                    <div className="task-main-info">
-                                        <div
-                                            className="status-dot"
-                                            style={{
-                                                background:
-                                                    taskStatusColor[status] ||
-                                                    '#9ba3b2',
-                                            }}
-                                        />
-                                        <div className="task-details">
-                                            <div className="task-header">
-                                                <span className="task-title">
-                                                    {getStrategyName(item)}
-                                                </span>
-                                                <Tag>
-                                                    {item.task_group ||
-                                                        '未分组'}
-                                                </Tag>
+                                    <div className="task-grid">
+                                        <div className="task-col task-col-primary">
+                                            <div className="task-dot-cell">
+                                                <span
+                                                    className="status-dot"
+                                                    style={{
+                                                        background:
+                                                            taskStatusColor[
+                                                                status
+                                                            ] || '#9ba3b2',
+                                                    }}
+                                                />
                                             </div>
-                                            <div className="task-meta-grid">
-                                                <div className="meta-item">
+                                            <div className="task-primary-content">
+                                                <div className="task-title-row">
+                                                    <span className="task-title">
+                                                        {strategyDisplay.title}
+                                                    </span>
+                                                    {strategyDisplay.tag && (
+                                                        <Tag
+                                                            className="task-group-tag"
+                                                            bordered={false}
+                                                        >
+                                                            {
+                                                                strategyDisplay.tag
+                                                            }
+                                                        </Tag>
+                                                    )}
+                                                </div>
+                                                <div className="task-sub-meta">
                                                     创建者:{' '}
-                                                    <span>
-                                                        {(item as any)
-                                                            .account || 'root'}
-                                                    </span>
+                                                    {(item as any).account ||
+                                                        'root'}
                                                 </div>
-                                                <div className="meta-item">
-                                                    运行节点:{' '}
-                                                    <span>
-                                                        {item.scanner?.join(
-                                                            '、',
-                                                        ) || '-'}
-                                                    </span>
-                                                </div>
-                                                <div className="meta-item">
-                                                    调度规则:{' '}
-                                                    <span>
-                                                        {renderScheduleText(
-                                                            item,
-                                                        )}
-                                                    </span>
-                                                </div>
-                                                <div className="meta-item">
-                                                    上次执行:{' '}
-                                                    <span>
-                                                        {getLastRunText(item)}
-                                                    </span>
-                                                </div>
-                                                <div className="meta-item">
-                                                    下次执行:{' '}
-                                                    <span>
-                                                        {getNextRunText(item)}
-                                                    </span>
+                                                <div className="task-sub-meta">
+                                                    关联项目:{' '}
+                                                    {getRelatedProjectName(
+                                                        item,
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="task-stats-actions">
-                                        <div className="switch-line">
-                                            <span className="switch-label">
-                                                状态：
-                                            </span>
-                                            <span
-                                                className="switch-status-text"
-                                                style={{
-                                                    color:
-                                                        taskStatusColor[
-                                                            status
-                                                        ] || '#9ba3b2',
-                                                }}
-                                            >
-                                                {taskStatusLabel[status] ||
-                                                    status}
-                                            </span>
+                                        <div className="task-col task-col-schedule">
+                                            <div className="meta-line">
+                                                调度规则:{' '}
+                                                <span>
+                                                    {renderScheduleText(item)}
+                                                </span>
+                                            </div>
+                                            <div className="meta-line">
+                                                运行节点:{' '}
+                                                <span>
+                                                    {getNodeDisplay(item)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="task-col task-col-trace">
+                                            <div className="meta-line">
+                                                上次执行:{' '}
+                                                <span>
+                                                    {getLastRunText(item)}
+                                                </span>
+                                            </div>
+                                            <div className="meta-line">
+                                                下次执行:{' '}
+                                                <span>
+                                                    {getNextRunText(item)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="task-col task-col-actions">
                                             <Switch
                                                 checked={checked}
                                                 loading={
@@ -913,43 +989,48 @@ const TaskPageList = () => {
                                                     toggleTaskStatus(item, v)
                                                 }
                                             />
-                                        </div>
-                                        <div className="action-buttons">
-                                            <Button
-                                                loading={
-                                                    editLoadingTaskID ===
-                                                    item.id
-                                                }
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openEditModal(item);
-                                                }}
-                                            >
-                                                <SettingOutlined />
-                                                配置
-                                            </Button>
-                                            <Button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate('detail', {
-                                                        state: { record: item },
-                                                    });
-                                                }}
-                                            >
-                                                详情
-                                            </Button>
-                                            <Dropdown
-                                                menu={{ items: menuItems }}
-                                                trigger={['click']}
-                                            >
+                                            <div className="action-buttons">
                                                 <Button
-                                                    onClick={(e) =>
-                                                        e.stopPropagation()
+                                                    type="primary"
+                                                    className="primary-action-btn"
+                                                    loading={
+                                                        editLoadingTaskID ===
+                                                        item.id
                                                     }
-                                                    icon={<MoreOutlined />}
-                                                    aria-label="更多操作"
-                                                />
-                                            </Dropdown>
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openEditModal(item);
+                                                    }}
+                                                >
+                                                    配置策略
+                                                </Button>
+                                                <Button
+                                                    className="secondary-action-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate('detail', {
+                                                            state: {
+                                                                record: item,
+                                                            },
+                                                        });
+                                                    }}
+                                                >
+                                                    详情
+                                                </Button>
+                                                <Dropdown
+                                                    menu={{ items: menuItems }}
+                                                    trigger={['click']}
+                                                >
+                                                    <Button
+                                                        className="action-more-btn"
+                                                        onClick={(e) =>
+                                                            e.stopPropagation()
+                                                        }
+                                                        icon={<MoreOutlined />}
+                                                        aria-label="更多操作"
+                                                    />
+                                                </Dropdown>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
