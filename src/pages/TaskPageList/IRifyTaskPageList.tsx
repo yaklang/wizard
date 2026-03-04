@@ -13,7 +13,7 @@ import {
 import type { MenuProps } from 'antd';
 import {
     DeleteOutlined,
-    DownOutlined,
+    MoreOutlined,
     PlayCircleOutlined,
     PlusOutlined,
     SettingOutlined,
@@ -791,9 +791,8 @@ const TaskPageList = () => {
                                                     onClick={(e) =>
                                                         e.stopPropagation()
                                                     }
-                                                >
-                                                    更多 <DownOutlined />
-                                                </Button>
+                                                    icon={<MoreOutlined />}
+                                                />
                                             </Dropdown>
                                         </div>
                                     </div>
