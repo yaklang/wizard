@@ -14,6 +14,7 @@ import {
 import { useRequest, useSafeState } from 'ahooks';
 import {
     Button,
+    Card,
     Checkbox,
     Dropdown,
     Input,
@@ -22,8 +23,11 @@ import {
     Select,
     Space,
     Spin,
+    Table,
     Tag,
 } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import {
     deleteUser,
     getUserList,
@@ -69,19 +73,17 @@ const IRifySystemManagementPage: FC = () => {
     const [keyword, setKeyword] = useSafeState('');
     const [statusFilter, setStatusFilter] = useSafeState<StatusFilter>('all');
 
-    const [selectedUsernames, setSelectedUsernames] = useSafeState<Set<string>>(
-        new Set(),
-    );
+    const [selectedRowKeys, setSelectedRowKeys] = useSafeState<React.Key[]>([]);
 
     const selectedRows = useMemo(
-        () => list.filter((item) => selectedUsernames.has(item.username)),
-        [list, selectedUsernames],
+        () => list.filter((item) => selectedRowKeys.includes(item.username)),
+        [list, selectedRowKeys],
     );
 
     const isAllCurrentListSelected = useMemo(() => {
         if (!list.length) return false;
-        return list.every((item) => selectedUsernames.has(item.username));
-    }, [list, selectedUsernames]);
+        return list.every((item) => selectedRowKeys.includes(item.username));
+    }, [list, selectedRowKeys]);
 
     const applyStatusFilter = useCallback(
         (records: User[]) => {
@@ -126,9 +128,9 @@ const IRifySystemManagementPage: FC = () => {
     );
 
     const refreshList = useCallback(async () => {
-        setSelectedUsernames(new Set());
+        setSelectedRowKeys([]);
         await fetchPage(1, false);
-    }, [fetchPage, setSelectedUsernames]);
+    }, [fetchPage, setSelectedRowKeys]);
 
     const pageProxy = useMemo<UsePageRef>(
         () => ({
@@ -191,44 +193,11 @@ const IRifySystemManagementPage: FC = () => {
 
     const toggleSelectAllCurrentList = (checked?: boolean) => {
         if (!list.length) return;
-        const allSelected = list.every((item) =>
-            selectedUsernames.has(item.username),
-        );
         const nextChecked =
-            typeof checked === 'boolean' ? checked : !allSelected;
-        if (!nextChecked) {
-            setSelectedUsernames(new Set());
-            return;
-        }
-        setSelectedUsernames(new Set(list.map((item) => item.username)));
-    };
-
-    const toggleSelectOne = (username: string, checked?: boolean) => {
-        const next = new Set(selectedUsernames);
-        if (typeof checked === 'boolean') {
-            if (checked) next.add(username);
-            else next.delete(username);
-        } else if (next.has(username)) {
-            next.delete(username);
-        } else {
-            next.add(username);
-        }
-        setSelectedUsernames(next);
-    };
-
-    const handleCardClick = (
-        event: React.MouseEvent<HTMLDivElement>,
-        username: string,
-    ) => {
-        const target = event.target as HTMLElement;
-        const ignoreSelect =
-            target.closest('button') ||
-            target.closest('a') ||
-            target.closest('input') ||
-            target.closest('.ant-dropdown') ||
-            target.closest('.ant-dropdown-menu');
-        if (ignoreSelect) return;
-        toggleSelectOne(username);
+            typeof checked === 'boolean' ? checked : !isAllCurrentListSelected;
+        setSelectedRowKeys(
+            nextChecked ? list.map((item) => item.username) : [],
+        );
     };
 
     const handleCreateUser = () => {
@@ -392,13 +361,144 @@ const IRifySystemManagementPage: FC = () => {
         });
     };
 
+    const columns: ColumnsType<User> = [
+        {
+            title: '用户名',
+            dataIndex: 'username',
+            key: 'username',
+            width: 160,
+            render: (value) => <span className="user-name-value">{value}</span>,
+        },
+        {
+            title: '邮箱',
+            key: 'email',
+            width: 220,
+            render: (_, record) => (
+                <span className="user-cell-value">{record.email || '-'}</span>
+            ),
+        },
+        {
+            title: '用户组',
+            key: 'user_group',
+            width: 130,
+            render: (_, record) => (
+                <span className="user-cell-value">
+                    {record.user_group || '-'}
+                </span>
+            ),
+        },
+        {
+            title: '角色',
+            key: 'role',
+            width: 180,
+            render: (_, record) => {
+                const roleText =
+                    record.role && record.role.length
+                        ? record.role.join(', ')
+                        : '-';
+                return <span className="user-cell-value">{roleText}</span>;
+            },
+        },
+        {
+            title: '有效期',
+            key: 'expire',
+            width: 120,
+            render: (_, record) => (
+                <span className="user-cell-value">
+                    {getExpireText(record.expire, record.username)}
+                </span>
+            ),
+        },
+        {
+            title: '状态',
+            key: 'status',
+            width: 100,
+            render: (_, record) =>
+                record.status === 0 ? (
+                    <Tag color="default">已禁用</Tag>
+                ) : (
+                    <Tag color="green">启用中</Tag>
+                ),
+        },
+        {
+            title: '操作',
+            key: 'action',
+            width: 180,
+            fixed: 'right',
+            render: (_, record) => {
+                const isRoot = record.username === 'root';
+                const menuItems: MenuProps['items'] = [
+                    {
+                        key: 'reset',
+                        icon: <LockOutlined />,
+                        label: '重置密码',
+                        disabled: isRoot,
+                        onClick: () => handleResetPassword(record),
+                    },
+                    {
+                        key: 'toggle',
+                        icon:
+                            record.status === 0 ? (
+                                <CheckCircleOutlined />
+                            ) : (
+                                <StopOutlined />
+                            ),
+                        label: record.status === 0 ? '启用用户' : '禁用用户',
+                        disabled: isRoot,
+                        onClick: async () => {
+                            await runBatchOperate(
+                                record.status === 0 ? 'enable' : 'disable',
+                                [record.username],
+                            );
+                        },
+                    },
+                    { type: 'divider' },
+                    {
+                        key: 'delete',
+                        icon: <DeleteOutlined />,
+                        label: '删除用户',
+                        danger: true,
+                        disabled: isRoot,
+                        onClick: () => handleDeleteUser(record),
+                    },
+                ];
+
+                return (
+                    <Space size="small" className="user-action-cell">
+                        <Button
+                            type="primary"
+                            size="small"
+                            className="user-edit-btn"
+                            icon={<EditOutlined />}
+                            disabled={isRoot}
+                            onClick={() => handleEditUser(record)}
+                        >
+                            编辑
+                        </Button>
+                        <Dropdown
+                            trigger={['click']}
+                            menu={{ items: menuItems }}
+                            overlayClassName="user-action-dropdown"
+                        >
+                            <Button
+                                size="small"
+                                className="user-more-btn"
+                                icon={<MoreOutlined />}
+                            />
+                        </Dropdown>
+                    </Space>
+                );
+            },
+        },
+    ];
+
     return (
         <div
-            className={`irify-system-management-page ${selectedRows.length > 0 ? 'has-selection-bar' : ''}`}
+            className={`p-4 irify-system-management-page ${selectedRows.length > 0 ? 'has-selection-bar' : ''}`}
         >
-            <div className="page-card">
-                <div className="header-row">
-                    <div className="page-title">用户管理</div>
+            <Card>
+                <div className="mb-4 flex justify-between items-center">
+                    <div className="text-lg font-bold">用户管理</div>
                     <Space>
                         <Button
                             icon={<PlusOutlined />}
@@ -416,41 +516,36 @@ const IRifySystemManagementPage: FC = () => {
                     </Space>
                 </div>
 
-                <div className="filter-row">
-                    <div className="left">
-                        <Input
-                            allowClear
-                            value={keywordInput}
-                            onChange={(e) => setKeywordInput(e.target.value)}
-                            onPressEnter={handleSearch}
-                            placeholder="请输入用户名或邮箱"
-                            prefix={
-                                <SearchOutlined className="text-gray-400" />
-                            }
-                            className="keyword-input"
-                        />
-                        <Select<StatusFilter>
-                            value={statusFilterInput}
-                            onChange={setStatusFilterInput}
-                            className="status-select"
-                            options={[
-                                { label: '用户状态', value: 'all' },
-                                { label: '启用中', value: 'enabled' },
-                                { label: '已禁用', value: 'disabled' },
-                            ]}
-                        />
-                        <Button type="primary" onClick={handleSearch}>
-                            查询
-                        </Button>
-                        <Button icon={<ReloadOutlined />} onClick={handleReset}>
-                            重置
-                        </Button>
-                    </div>
+                <div className="mb-4 flex gap-3 flex-wrap">
+                    <Input
+                        allowClear
+                        value={keywordInput}
+                        onChange={(e) => setKeywordInput(e.target.value)}
+                        onPressEnter={handleSearch}
+                        placeholder="请输入用户名或邮箱"
+                        prefix={<SearchOutlined className="text-gray-400" />}
+                        style={{ width: 300 }}
+                    />
+                    <Select<StatusFilter>
+                        value={statusFilterInput}
+                        onChange={setStatusFilterInput}
+                        style={{ width: 140 }}
+                        options={[
+                            { label: '用户状态', value: 'all' },
+                            { label: '启用中', value: 'enabled' },
+                            { label: '已禁用', value: 'disabled' },
+                        ]}
+                    />
+                    <Button type="primary" onClick={handleSearch}>
+                        查询
+                    </Button>
+                    <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                        重置
+                    </Button>
                 </div>
 
-                <div className="list-actions">
+                <div className="mb-4">
                     <Checkbox
-                        className="select-all-checkbox"
                         checked={isAllCurrentListSelected}
                         indeterminate={
                             selectedRows.length > 0 && !isAllCurrentListSelected
@@ -464,159 +559,20 @@ const IRifySystemManagementPage: FC = () => {
                     </Checkbox>
                 </div>
 
-                <div className="card-list">
-                    {list.map((item) => {
-                        const isSelected = selectedUsernames.has(item.username);
-                        const isRoot = item.username === 'root';
-                        const statusTag =
-                            item.status === 0 ? (
-                                <Tag className="status-tag disabled">
-                                    已禁用
-                                </Tag>
-                            ) : (
-                                <Tag className="status-tag enabled">启用中</Tag>
-                            );
-                        const roleText =
-                            item.role && item.role.length
-                                ? item.role.join(', ')
-                                : '-';
-
-                        return (
-                            <div
-                                key={item.username}
-                                className={`user-card ${isSelected ? 'selected' : ''}`}
-                                onClick={(e) =>
-                                    handleCardClick(e, item.username)
-                                }
-                            >
-                                <div className="main-info">
-                                    <div className="leading-cells">
-                                        <Checkbox
-                                            className="user-select-checkbox"
-                                            checked={isSelected}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onChange={(e) =>
-                                                toggleSelectOne(
-                                                    item.username,
-                                                    e.target.checked,
-                                                )
-                                            }
-                                        />
-                                        <span
-                                            className={`status-dot ${item.status === 0 ? 'disabled' : 'enabled'}`}
-                                        />
-                                    </div>
-                                    <div className="details">
-                                        <div className="title-row">
-                                            <span className="title">
-                                                {item.username}
-                                            </span>
-                                            {statusTag}
-                                        </div>
-                                        <div className="meta-grid">
-                                            <div>
-                                                邮箱:
-                                                <span>{item.email || '-'}</span>
-                                            </div>
-                                            <div>
-                                                有效期:
-                                                <span>
-                                                    {getExpireText(
-                                                        item.expire,
-                                                        item.username,
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                用户组:
-                                                <span>
-                                                    {item.user_group || '-'}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                角色:
-                                                <span>{roleText}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="actions">
-                                    <Button
-                                        type="primary"
-                                        size="small"
-                                        className="action-btn"
-                                        icon={<EditOutlined />}
-                                        disabled={isRoot}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEditUser(item);
-                                        }}
-                                    >
-                                        编辑
-                                    </Button>
-                                    <Button
-                                        size="small"
-                                        className="action-btn"
-                                        icon={<LockOutlined />}
-                                        disabled={isRoot}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleResetPassword(item);
-                                        }}
-                                    >
-                                        重置密码
-                                    </Button>
-                                    <Dropdown
-                                        trigger={['click']}
-                                        menu={{
-                                            items: [
-                                                {
-                                                    key: 'toggle',
-                                                    icon:
-                                                        item.status === 0 ? (
-                                                            <CheckCircleOutlined />
-                                                        ) : (
-                                                            <StopOutlined />
-                                                        ),
-                                                    label:
-                                                        item.status === 0
-                                                            ? '启用用户'
-                                                            : '禁用用户',
-                                                    disabled: isRoot,
-                                                    onClick: async () => {
-                                                        await runBatchOperate(
-                                                            item.status === 0
-                                                                ? 'enable'
-                                                                : 'disable',
-                                                            [item.username],
-                                                        );
-                                                    },
-                                                },
-                                                { type: 'divider' },
-                                                {
-                                                    key: 'delete',
-                                                    icon: <DeleteOutlined />,
-                                                    label: '删除用户',
-                                                    danger: true,
-                                                    disabled: isRoot,
-                                                    onClick: () =>
-                                                        handleDeleteUser(item),
-                                                },
-                                            ],
-                                        }}
-                                    >
-                                        <Button
-                                            size="small"
-                                            className="more-btn"
-                                            icon={<MoreOutlined />}
-                                            onClick={(e) => e.stopPropagation()}
-                                        />
-                                    </Dropdown>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                <Table<User>
+                    rowKey="username"
+                    rowSelection={{
+                        selectedRowKeys,
+                        onChange: setSelectedRowKeys,
+                        columnWidth: 52,
+                    }}
+                    columns={columns}
+                    dataSource={list}
+                    loading={loading}
+                    pagination={false}
+                    scroll={{ x: 1280 }}
+                    locale={{ emptyText: '暂无用户数据' }}
+                />
 
                 <div className="load-state">
                     {loading ? <Spin size="small" /> : null}
@@ -627,42 +583,45 @@ const IRifySystemManagementPage: FC = () => {
                         <span>暂无用户数据</span>
                     ) : null}
                 </div>
-            </div>
 
-            {selectedRows.length > 0 && (
-                <div className="task-selection-bar">
-                    <div className="selection-info">
-                        已选中{' '}
-                        <span className="selected-count">
-                            {selectedRows.length}
-                        </span>{' '}
-                        个用户
+                {selectedRows.length > 0 && (
+                    <div className="task-selection-bar">
+                        <div className="selection-info">
+                            已选中{' '}
+                            <span className="selected-count">
+                                {selectedRows.length}
+                            </span>{' '}
+                            个用户
+                        </div>
+                        <Space>
+                            <Button onClick={() => setSelectedRowKeys([])}>
+                                取消选择
+                            </Button>
+                            <Button
+                                onClick={handleBatchEnable}
+                                loading={operating}
+                            >
+                                批量启用
+                            </Button>
+                            <Button
+                                danger
+                                onClick={handleBatchDisable}
+                                loading={operating}
+                            >
+                                批量禁用
+                            </Button>
+                            <Button
+                                icon={<DeleteOutlined />}
+                                danger
+                                onClick={handleBatchDelete}
+                                loading={deleting}
+                            >
+                                删除所选
+                            </Button>
+                        </Space>
                     </div>
-                    <Space>
-                        <Button onClick={() => setSelectedUsernames(new Set())}>
-                            取消选择
-                        </Button>
-                        <Button onClick={handleBatchEnable} loading={operating}>
-                            批量启用
-                        </Button>
-                        <Button
-                            danger
-                            onClick={handleBatchDisable}
-                            loading={operating}
-                        >
-                            批量禁用
-                        </Button>
-                        <Button
-                            icon={<DeleteOutlined />}
-                            danger
-                            onClick={handleBatchDelete}
-                            loading={deleting}
-                        >
-                            删除所选
-                        </Button>
-                    </Space>
-                </div>
-            )}
+                )}
+            </Card>
 
             <CreateUserModal
                 ref={createUserModalRef}

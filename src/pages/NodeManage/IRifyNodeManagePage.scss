@@ -1,228 +1,74 @@
 .irify-node-manage-page {
-    background-color: var(--irify-bg-base);
-    min-height: 100vh;
-    padding: 24px;
-
-    &.has-selection-bar {
-        padding-bottom: 104px;
-    }
-
-    .page-card {
-        background: var(--irify-bg-container);
-        border: 1px solid var(--irify-border);
-        border-radius: 4px;
-        box-shadow: 0 1px 2px var(--irify-glass-shadow);
-        padding: 20px;
-    }
-
-    .header-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-    }
-
-    .page-title {
-        font-size: 18px;
+    .ant-table-wrapper .ant-table-thead > tr > th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        font-size: 13px;
         font-weight: 600;
-        color: var(--irify-text);
+        color: #475569;
+        background: #fafbfc;
     }
 
-    .filter-row {
-        margin-bottom: 14px;
-
-        .left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .keyword-input {
-            width: 360px;
-            max-width: 100%;
-        }
-
-        .status-select {
-            width: 140px;
-        }
+    .ant-table-wrapper .ant-table-tbody > tr > td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        font-size: 13px;
+        color: #334155;
     }
 
-    .list-actions {
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+    .ant-table-wrapper .ant-table-tbody > tr:hover > td {
+        background: #fafcff;
     }
 
-    .select-all-checkbox .ant-checkbox-inner,
-    .node-select-checkbox .ant-checkbox-inner {
-        border-color: #aeb7c4;
+    .node-value {
+        color: #334155;
+        font-weight: 500;
+        font-size: 13px;
     }
 
-    .select-all-checkbox:hover .ant-checkbox-inner,
-    .node-select-checkbox:hover .ant-checkbox-inner {
-        border-color: #8894a6;
-    }
-
-    .card-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .node-card {
-        background: var(--irify-bg-container);
-        border: 1px solid var(--irify-border);
-        border-radius: 4px;
-        padding: 16px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: all 0.2s ease;
-
-        &:hover {
-            border-color: var(--irify-accent);
-            box-shadow: 0 4px 12px var(--irify-glass-shadow);
-        }
-
-        &.selected {
-            background: rgba(24, 144, 255, 0.08);
-            border-color: rgba(24, 144, 255, 0.45);
-            box-shadow: 0 0 0 1px rgba(24, 144, 255, 0.2);
-        }
-    }
-
-    .main-info {
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        flex: 1 1 auto;
-        min-width: 0;
-    }
-
-    .leading-cells {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding-top: 2px;
-    }
-
-    .status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        flex-shrink: 0;
-
-        &.online {
-            background: #52c41a;
-        }
-        &.offline {
-            background: #bfbfbf;
-        }
-    }
-
-    .details {
-        min-width: 0;
-    }
-
-    .title-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 8px;
-    }
-
-    .title {
-        font-size: 16px;
+    .node-name-value {
+        color: #1890ff;
+        font-size: 14px;
         font-weight: 600;
-        color: var(--irify-accent);
+        line-height: 22px;
     }
 
-    .ip {
-        color: var(--irify-text-secondary);
-        font-size: 12px;
-    }
-
-    .meta-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(180px, 1fr));
-        gap: 6px 20px;
-        color: var(--irify-text-secondary);
-        font-size: 12px;
-
-        > div > span {
-            color: var(--irify-text);
-            margin-left: 6px;
-        }
-    }
-
-    .status-badge .badge {
+    .node-action-cell {
         display: inline-flex;
         align-items: center;
-        border-radius: 999px;
+        gap: 6px;
+    }
+
+    .node-edit-btn.ant-btn-sm {
+        height: 24px;
+        padding: 0 10px;
         font-size: 12px;
-        padding: 2px 10px;
-
-        .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-
-        &.online {
-            background: #f0fdf4;
-            color: #16a34a;
-
-            .dot {
-                background: #22c55e;
-            }
-        }
-
-        &.offline {
-            background: #f5f5f5;
-            color: #8c8c8c;
-
-            .dot {
-                background: #bfbfbf;
-            }
-        }
-    }
-
-    .actions {
-        display: flex;
+        font-weight: 400;
+        display: inline-flex;
         align-items: center;
-        gap: 10px;
-        margin-left: 18px;
-        flex-shrink: 0;
     }
 
-    .action-btn {
-        min-width: 78px;
-    }
+    .node-more-btn.ant-btn-sm {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
 
-    .more-btn {
-        color: #6b7280 !important;
-
-        &:hover {
-            color: #2563eb !important;
-            border-color: #dbeafe !important;
+        .anticon {
+            font-size: 12px;
         }
     }
 
     .load-state {
-        margin-top: 18px;
-        min-height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
+        margin-top: 14px;
+        text-align: center;
+        color: #9ca3af;
         font-size: 12px;
-        color: var(--irify-text-secondary);
+        min-height: 20px;
     }
 
-    .task-selection-bar {
+    .node-selection-bar {
         position: fixed;
         left: 50%;
         bottom: 16px;
@@ -241,9 +87,9 @@
             0 18px 40px rgba(0, 0, 0, 0.35),
             0 6px 16px rgba(0, 0, 0, 0.28);
         backdrop-filter: blur(8px);
-        animation: selectionBarRise 0.22s ease-out;
+        animation: nodeSelectionBarRise 0.22s ease-out;
 
-        @keyframes selectionBarRise {
+        @keyframes nodeSelectionBarRise {
             from {
                 opacity: 0;
                 transform: translate(-50%, 10px);
@@ -279,7 +125,7 @@
     }
 
     @media (max-width: 992px) {
-        .task-selection-bar {
+        .node-selection-bar {
             width: calc(100vw - 24px);
             padding: 12px 14px;
             gap: 10px;
@@ -288,5 +134,25 @@
                 font-size: 13px;
             }
         }
+    }
+}
+
+.node-action-dropdown {
+    .ant-dropdown-menu-item {
+        min-height: 34px;
+        padding: 6px 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .anticon {
+            font-size: 14px;
+            color: #64748b;
+        }
+    }
+
+    .ant-dropdown-menu-item-danger .anticon {
+        color: #ef4444;
     }
 }
