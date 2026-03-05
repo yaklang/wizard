@@ -15,14 +15,14 @@ import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
-import NodeManagePage from '@/pages/NodeManage';
+import IRifyNodeManagePage from '@/pages/NodeManage/IRifyNodeManagePage';
 import SystemManagement from '@/pages/SystemManagement';
 import ReportManage from '@/pages/ReportManage';
 
 import IRifyDashboard from '@/pages/IRifyDashboard';
 import VulnerabilityList from '@/pages/VulnerabilityList';
 import { TaskPageList as IRifyTaskPageList } from '@/pages/TaskPageList/IRifyTaskPageList';
-import TaskDetail from '@/pages/TaskDetail';
+import CreateStrategy from '@/pages/TaskPageList/CreateStrategy';
 import { NodeConfig } from '@/pages/NodeConfig/NodeConfig';
 import { TaskScript } from '@/pages/TaskScript/TaskScript';
 import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
@@ -100,8 +100,8 @@ const irifyRouters: RouteObject[] = [
                                 element: <IRifyTaskPageList />,
                             },
                             {
-                                path: 'detail',
-                                element: <TaskDetail />,
+                                path: 'create',
+                                element: <CreateStrategy />,
                             },
                         ],
                     },
@@ -120,7 +120,7 @@ const irifyRouters: RouteObject[] = [
                     },
                     {
                         path: 'manage',
-                        element: <NodeManagePage />,
+                        element: <IRifyNodeManagePage />,
                     },
                 ],
             },

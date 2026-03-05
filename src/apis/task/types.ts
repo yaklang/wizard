@@ -25,6 +25,8 @@ type TaskListRequest = Partial<{
     scanner: string[];
     task_group: string;
     task_id: string;
+    script_name?: string;
+    project_name?: string;
     status: TTaskListStatus;
     uodated_at: number;
     start_at: number;

@@ -49,6 +49,40 @@
 // Workflow Stepper
 .workflow-section {
     margin-bottom: 32px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.compact {
+        margin-bottom: 24px;
+        
+        .workflow-stepper {
+            padding: 12px 24px;
+            background: var(--irify-bg-container);
+            
+            .step {
+                gap: 12px;
+                
+                .step-icon {
+                    width: 32px;
+                    height: 32px;
+                    font-size: 14px;
+                }
+                
+                .step-content {
+                    .step-title {
+                        font-size: 14px;
+                    }
+                    .step-desc {
+                        display: none;
+                    }
+                }
+            }
+            
+            .step-connector {
+                width: 40px;
+                margin: 0 12px;
+            }
+        }
+    }
 }
 
 .workflow-stepper {
@@ -178,26 +212,78 @@
     &.scans-card::before { background: linear-gradient(90deg, var(--irify-accent), #3FB950); }
     &.vulns-card::before { background: linear-gradient(90deg, #FF7A45, #FF4D4F); }
 
-    .stats-icon {
-        position: absolute;
-        right: 16px;
-        top: 16px;
-        font-size: 48px;
-        color: rgba(255, 255, 255, 0.05); // Keep subtle
+    .ant-card-body {
+        height: 100%;
     }
 
-    .ant-statistic-title {
+    .stats-card-content {
+        min-height: 156px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .stats-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .stats-title {
         font-size: 14px;
         color: var(--irify-text-secondary);
     }
 
+    .stats-icon {
+        font-size: 28px;
+        color: rgba(255, 255, 255, 0.08);
+    }
+
+    .stats-main {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+    }
+
+    .stats-value {
+        font-size: 36px;
+        line-height: 1;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .trend-indicator {
+        font-size: 12px;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+
+        .trend-arrow {
+            font-weight: 700;
+        }
+
+        &.good {
+            color: #52c41a;
+        }
+
+        &.bad {
+            color: #ff4d4f;
+        }
+
+        &.neutral {
+            color: var(--irify-text-secondary);
+        }
+    }
+
     .stats-action {
-        margin-top: 16px;
+        margin-top: auto;
         color: var(--irify-accent);
         font-size: 13px;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 8px;
+        align-self: flex-end;
     }
 }
 
@@ -230,10 +316,21 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px 0;
+        padding: 12px 16px;
+        margin: 0 -16px;
         border-bottom: 1px solid var(--irify-bg-elevated);
+        transition: background 0.2s ease;
 
         &:last-child { border-bottom: none; }
+
+        &:hover {
+            background: var(--irify-bg-elevated);
+            
+            .activity-actions {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
 
         .activity-icon {
             width: 36px;
@@ -267,19 +364,30 @@
                 }
             }
         }
+
+        .activity-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transform: translateX(10px);
+            transition: all 0.3s ease;
+        }
     }
 }
 
 // Severity Summary
 .severity-summary {
+    margin-bottom: 24px;
+
     .severity-row {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 8px 0;
+        padding: 10px 0;
 
         .severity-label {
-            width: 80px;
+            width: 64px;
+            flex: 0 0 64px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -293,27 +401,82 @@
             }
         }
 
-        .severity-bar-container {
+        .severity-track {
             flex: 1;
-            height: 8px;
-            border-radius: 4px;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
             overflow: hidden;
             background: var(--irify-bg-elevated);
         }
 
-        .severity-bar {
+        .severity-fill {
             height: 100%;
-            border-radius: 4px;
+            border-radius: 5px;
             transition: width 0.3s ease;
         }
 
         .severity-count {
-            width: 40px;
+            min-width: 72px;
+            width: 72px;
             text-align: right;
             font-size: 14px;
             font-weight: 600;
             font-family: 'JetBrains Mono', monospace;
             color: var(--irify-text);
+        }
+    }
+}
+
+.top-projects-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--irify-border);
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--irify-text);
+        margin-bottom: 12px;
+    }
+
+    .top-projects-list {
+        .top-project-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+
+            &:hover {
+                background: var(--irify-bg-elevated);
+            }
+
+            .rank {
+                font-weight: 700;
+                color: var(--irify-accent);
+                width: 20px;
+            }
+
+            .name {
+                flex: 1;
+                font-size: 13px;
+                color: var(--irify-text);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .count {
+                font-size: 12px;
+                font-weight: 600;
+                color: #FF4D4F;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
         }
     }
 }

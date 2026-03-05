@@ -38,6 +38,7 @@ import {
     postSSAProject as createSSAProject,
     getScanPolicyConfig 
 } from '@/apis/SSAProjectApi';
+import { getNodeList } from '@/apis/task';
 import type { 
     TSSAProjectRequest,
     TScanPolicyConfig
@@ -192,14 +193,17 @@ const CreateProject: React.FC = () => {
     >('git');
     const [selectedStrategy, setSelectedStrategy] = useState<string>('owasp-web');
     const [customRulesExpanded, setCustomRulesExpanded] = useState(false);
-    const [enableSchedule, setEnableSchedule] = useState(false);
     const [selectedComplianceRules, setSelectedComplianceRules] = useState<React.Key[]>([]);
     const [selectedTechStackRules, setSelectedTechStackRules] = useState<React.Key[]>([]);
     const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>([]);
+    const [nodeOptions, setNodeOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [loadingNodes, setLoadingNodes] = useState(false);
     
     // 策略配置动态数据
     const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(null);
     const [loadingPolicyConfig, setLoadingPolicyConfig] = useState(false);
+    const scanNodeMode = Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+    const scheduleEnabled = Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
 
     // 加载策略配置
     useEffect(() => {
@@ -221,6 +225,31 @@ const CreateProject: React.FC = () => {
         };
         
         loadPolicyConfig();
+    }, []);
+
+    useEffect(() => {
+        const loadNodes = async () => {
+            setLoadingNodes(true);
+            try {
+                const res = await getNodeList();
+                const list = res?.data?.list || [];
+                const options = list
+                    .filter((item) => item?.node_id)
+                    .map((item) => ({
+                        value: item.node_id as string,
+                        label:
+                            item.hostname ||
+                            item.node_id ||
+                            '未知节点',
+                    }));
+                setNodeOptions(options);
+            } catch (error) {
+                // 静默失败，不阻塞页面使用
+            } finally {
+                setLoadingNodes(false);
+            }
+        };
+        loadNodes();
     }, []);
 
     // 智能联动：根据选择的语言自动勾选对应的技术栈规则
@@ -800,6 +829,38 @@ const CreateProject: React.FC = () => {
                                             placeholder="默认"
                                         />
                                     </Form.Item>
+                                    <Form.Item
+                                        label="扫描节点"
+                                        name={['config', 'ScanNode', 'mode']}
+                                    >
+                                        <Radio.Group optionType="button" buttonStyle="solid">
+                                            <Radio.Button value="auto">
+                                                自动检测
+                                            </Radio.Button>
+                                            <Radio.Button value="manual">
+                                                指定节点
+                                            </Radio.Button>
+                                        </Radio.Group>
+                                    </Form.Item>
+                                    {scanNodeMode === 'manual' && (
+                                        <Form.Item
+                                            label="执行节点"
+                                            name={['config', 'ScanNode', 'node_id']}
+                                            rules={[{ required: true, message: '请选择扫描节点' }]}
+                                        >
+                                            <Select
+                                                placeholder="请选择扫描节点"
+                                                options={nodeOptions}
+                                                loading={loadingNodes}
+                                                showSearch
+                                                filterOption={(input, option) =>
+                                                    (option?.label ?? '')
+                                                        .toLowerCase()
+                                                        .includes(input.toLowerCase())
+                                                }
+                                            />
+                                        </Form.Item>
+                                    )}
                                 </div>
                             ),
                         },
@@ -811,22 +872,30 @@ const CreateProject: React.FC = () => {
                     <h3 className="section-subtitle">定时扫描</h3>
                     <Form.Item>
                         <div className="schedule-toggle">
-                            <Switch
-                                checked={enableSchedule}
-                                onChange={setEnableSchedule}
-                            />
+                            <Form.Item
+                                name={['config', 'ScanSchedule', 'enabled']}
+                                valuePropName="checked"
+                                noStyle
+                            >
+                                <Switch />
+                            </Form.Item>
                             <span className="schedule-label">
                                 启用定时扫描
                             </span>
                         </div>
                     </Form.Item>
 
-                    {enableSchedule && (
+                    {scheduleEnabled && (
                         <>
                             <Form.Item
                                 label="扫描时间"
-                                name="schedule_time"
-                                initialValue={dayjs('02:00', 'HH:mm')}
+                                name={['config', 'ScanSchedule', 'time']}
+                                getValueProps={(value) => ({
+                                    value: value ? dayjs(value, 'HH:mm') : undefined,
+                                })}
+                                normalize={(val) =>
+                                    val ? dayjs(val).format('HH:mm') : undefined
+                                }
                             >
                                 <TimePicker
                                     format="HH:mm"
@@ -939,6 +1008,37 @@ const CreateProject: React.FC = () => {
             }
 
             const finalData: TSSAProjectRequest = { ...tempFormData };
+            if (!finalData.config) finalData.config = {};
+            finalData.config.ScanPolicy = {
+                policy_type: selectedStrategy,
+                custom_rules:
+                    selectedStrategy === 'custom'
+                        ? {
+                              compliance_rules:
+                                  selectedComplianceRules as string[],
+                              tech_stack_rules:
+                                  selectedTechStackRules as string[],
+                              special_rules: selectedSpecialRules as string[],
+                          }
+                        : undefined,
+            };
+            if (finalData.config?.ScanNode) {
+                if (finalData.config.ScanNode.mode !== 'manual') {
+                    finalData.config.ScanNode.mode = 'auto';
+                    delete finalData.config.ScanNode.node_id;
+                }
+            }
+            if (finalData.config?.ScanSchedule) {
+                if (!finalData.config.ScanSchedule.enabled) {
+                    delete finalData.config.ScanSchedule.time;
+                }
+                finalData.config.ScanSchedule.interval_type =
+                    finalData.config.ScanSchedule.interval_type || 1;
+                finalData.config.ScanSchedule.interval_time =
+                    finalData.config.ScanSchedule.interval_time || 1;
+                finalData.config.ScanSchedule.sched_type =
+                    finalData.config.ScanSchedule.sched_type || 3;
+            }
 
             setLoading(true);
             await createSSAProject(finalData);
@@ -982,6 +1082,16 @@ const CreateProject: React.FC = () => {
                                 CodeSource: {
                                     kind: 'git',
                                     auth: { kind: 'none' },
+                                },
+                                ScanNode: {
+                                    mode: 'auto',
+                                },
+                                ScanSchedule: {
+                                    enabled: false,
+                                    time: '02:00',
+                                    interval_type: 1,
+                                    interval_time: 1,
+                                    sched_type: 3,
                                 },
                             },
                         }}

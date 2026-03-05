@@ -50,6 +50,17 @@ export interface TSSAProjectConfig {
             special_rules?: string[];
         };
     };
+    ScanNode?: {
+        mode?: 'auto' | 'manual';
+        node_id?: string;
+    };
+    ScanSchedule?: {
+        enabled?: boolean;
+        time?: string; // HH:mm
+        interval_type?: number; // 1=day,2=hour,3=minute
+        interval_time?: number;
+        sched_type?: number;
+    };
     // SyntaxFlow scan manager options (optional).
     SyntaxFlowScan?: {
         // Scan concurrency (0/undefined means default on backend).

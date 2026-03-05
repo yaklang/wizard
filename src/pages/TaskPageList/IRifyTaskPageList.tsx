@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { MouseEvent } from 'react';
 import {
     Button,
@@ -42,6 +42,7 @@ import {
     getTaskRun,
     getTaskStartEditDispaly,
     getTaskStop,
+    postEditScriptTask,
 } from '@/apis/task';
 import type {
     StopOnRunTaskRequest,
@@ -49,9 +50,6 @@ import type {
     TaskListRequest,
 } from '@/apis/task/types';
 import { options, siderTaskGrounpAllList, taskListStatus } from './utils/data';
-import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
-import { StartUpScriptModal } from '@/pages/TaskScript/compoment/StartUpScriptModal';
-import type { UsePageRef } from '@/hooks/usePage';
 import { ListSiderContext } from './compoment/ListSiderContext';
 import TaskSiderDefault from '@/assets/task/taskSiderDefault.png';
 import TaskSiderProject from '@/assets/task/taskSiderProject.png';
@@ -61,6 +59,10 @@ import dayjs from 'dayjs';
 import { getBatchInvokingScript } from '@/apis/taskDetail';
 import { getSSARisks } from '@/apis/SSARiskApi';
 import type { TReportTableResponse } from '@/apis/taskDetail/types';
+import StrategyFormPanel, {
+    type StrategyFormInitial,
+    type StrategyFormValues,
+} from './components/StrategyFormPanel';
 import './irify-task-center.scss';
 
 interface TaskGroupItem {
@@ -132,6 +134,29 @@ const normalizeDisplayText = (value: any): string => {
     return text;
 };
 
+const parseRuleGroups = (raw: unknown): string[] => {
+    if (Array.isArray(raw)) {
+        return raw.map((v) => String(v).trim()).filter(Boolean);
+    }
+    if (typeof raw !== 'string') return [];
+    const text = raw.trim();
+    if (!text) return [];
+    if (text.startsWith('[')) {
+        try {
+            const arr = JSON.parse(text);
+            if (Array.isArray(arr)) {
+                return arr.map((v) => String(v).trim()).filter(Boolean);
+            }
+        } catch {
+            // fallback split by comma
+        }
+    }
+    return text
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+};
+
 const pickLatestTimestamp = (item: TaskListRequest) => {
     const candidate = [
         Number((item as any).end_at || 0),
@@ -181,8 +206,6 @@ const getCronExpression = (item: TaskListRequest) => {
 
 const TaskPageList = () => {
     const navigate = useNavigate();
-
-    const editTaskModalRef = useRef<UseModalRefType>(null);
     const [form] = Form.useForm();
 
     const [taskType, setTaskType] = useSafeState<2 | 3>(2);
@@ -220,6 +243,16 @@ const TaskPageList = () => {
     const [detailDrawerOpen, setDetailDrawerOpen] = useSafeState(false);
     const [detailRecord, setDetailRecord] =
         useSafeState<TaskListRequest | null>(null);
+    const [editDrawerOpen, setEditDrawerOpen] = useSafeState(false);
+    const [editDrawerLoading, setEditDrawerLoading] = useSafeState(false);
+    const [editDrawerSubmitting, setEditDrawerSubmitting] =
+        useSafeState(false);
+    const [editTaskRaw, setEditTaskRaw] = useSafeState<Record<string, any> | null>(
+        null,
+    );
+    const [editFormInitial, setEditFormInitial] =
+        useSafeState<StrategyFormInitial>();
+    const [editProjectName, setEditProjectName] = useSafeState('-');
 
     const [editLoadingTaskID, setEditLoadingTaskID] = useSafeState<number>();
     const [actionLoadingTaskID, setActionLoadingTaskID] =
@@ -552,45 +585,74 @@ const TaskPageList = () => {
         }
     };
 
-    const openEditModal = async (record: TaskListRequest) => {
+    const openEditModal = (record: TaskListRequest) => {
         if (!record.id) return;
         setEditLoadingTaskID(record.id);
-        try {
-            const { data: editData } = await getTaskStartEditDispaly(record.id);
-            let groupOptions:
-                | Array<{
-                      value: string;
-                      label: string;
-                  }>
-                | undefined;
+        setEditDrawerLoading(true);
+        (async () => {
             try {
-                const groupRes = await getScriptTaskGroup();
-                groupOptions =
-                    groupRes?.data?.list?.map((it: TaskGrounpResponse) => ({
-                        value: it.name,
-                        label: it.name,
-                    })) ?? [];
-            } catch {
-                groupOptions = [];
+                const res = await getTaskStartEditDispaly(record.id);
+                const raw = (res?.data || {}) as Record<string, any>;
+                const params = (raw.params || {}) as Record<string, any>;
+                const strategyName = normalizeDisplayText(
+                    raw.script_name ||
+                        params.SCRIPT_NAME ||
+                        params.script_name ||
+                        getStrategyDisplay(record).title,
+                );
+                const projectName =
+                    normalizeDisplayText(
+                        params.programName ||
+                            params.program_name ||
+                            params.project_name ||
+                            params.report_name,
+                    ) || getRelatedProjectName(record);
+                const startTimestamp = Number(raw.start_timestamp || 0);
+                const endTimestamp = Number(raw.end_timestamp || 0);
+                const schedType = Number(
+                    raw.sched_type ||
+                        (Number(raw.interval_time || 0) === 0 ? 2 : 3) ||
+                        3,
+                );
+
+                setEditTaskRaw(raw);
+                setEditProjectName(projectName || '-');
+                setEditFormInitial({
+                    strategy_name: strategyName || '自动化策略',
+                    node_id: Array.isArray(raw.scanner)
+                        ? raw.scanner[0]
+                        : undefined,
+                    rule_groups: parseRuleGroups(
+                        params.rule_groups || params.ruleGroups,
+                    ),
+                    sched_type: schedType,
+                    interval_type: Math.max(
+                        1,
+                        Number(raw.interval_type || 1) || 1,
+                    ),
+                    interval_time: Math.max(
+                        1,
+                        Number(raw.interval_time || 1) || 1,
+                    ),
+                    time_of_day: startTimestamp
+                        ? dayjs.unix(startTimestamp)
+                        : dayjs('02:00', 'HH:mm'),
+                    start_time: startTimestamp
+                        ? dayjs.unix(startTimestamp)
+                        : undefined,
+                    end_time: endTimestamp
+                        ? dayjs.unix(endTimestamp)
+                        : undefined,
+                });
+                setDetailDrawerOpen(false);
+                setEditDrawerOpen(true);
+            } catch (e: any) {
+                message.error(e?.message || '加载策略配置失败');
+            } finally {
+                setEditDrawerLoading(false);
+                setEditLoadingTaskID(undefined);
             }
-            const transformModalFormdata = {
-                ...editData,
-                id: record.id,
-                headerGroupValue: taskType,
-                start_timestamp: editData?.start_timestamp,
-                params: {
-                    ...editData?.params,
-                },
-            };
-            await editTaskModalRef.current?.open(
-                transformModalFormdata,
-                groupOptions,
-            );
-        } catch (e: any) {
-            message.error(e?.message || '加载任务配置失败');
-        } finally {
-            setEditLoadingTaskID(undefined);
-        }
+        })();
     };
 
     const renderScheduleText = (item: TaskListRequest) => {
@@ -768,6 +830,89 @@ const TaskPageList = () => {
             '_blank',
             'noopener,noreferrer',
         );
+    };
+
+    const closeEditDrawer = () => {
+        setEditDrawerOpen(false);
+        setEditTaskRaw(null);
+        setEditFormInitial(undefined);
+        setEditProjectName('-');
+    };
+
+    const submitEditStrategy = async (values: StrategyFormValues) => {
+        if (!editTaskRaw || !editTaskRaw.task_id) {
+            message.error('编辑上下文已失效，请重新打开');
+            return;
+        }
+        setEditDrawerSubmitting(true);
+        try {
+            const now = dayjs();
+            const schedType = values.sched_type || 3;
+            let startTimestamp = 0;
+            let endTimestamp = 0;
+            let intervalType = 1;
+            let intervalTime = 1;
+
+            if (schedType === 2) {
+                const selected = values.time_of_day || dayjs('02:00', 'HH:mm');
+                let start = now
+                    .hour(selected.hour())
+                    .minute(selected.minute())
+                    .second(0)
+                    .millisecond(0);
+                if (start.isBefore(now)) {
+                    start = start.add(1, 'day');
+                }
+                startTimestamp = Math.floor(start.valueOf() / 1000);
+                endTimestamp = Math.floor(
+                    start.add(365, 'day').valueOf() / 1000,
+                );
+                intervalType = 1;
+                intervalTime = 1;
+            } else {
+                intervalType = values.interval_type || 1;
+                intervalTime = Math.max(1, values.interval_time || 1);
+                let start = values.start_time || now.add(1, 'minute');
+                if (start.isBefore(now)) {
+                    start = now.add(1, 'minute');
+                }
+                const end = values.end_time || start.add(365, 'day');
+                startTimestamp = Math.floor(start.valueOf() / 1000);
+                endTimestamp = Math.floor(end.valueOf() / 1000);
+            }
+
+            const params: Record<string, unknown> = {
+                ...(editTaskRaw.params || {}),
+            };
+            params.rule_groups = JSON.stringify(values.rule_groups || []);
+
+            const updatePayload: Record<string, unknown> = {
+                ...editTaskRaw,
+                task_id: editTaskRaw.task_id,
+                task_group: editTaskRaw.task_group || '默认分组',
+                script_type: editTaskRaw.script_type || 'ssa_scan',
+                script_name: editTaskRaw.script_name || values.strategy_name,
+                enable_sched: true,
+                first: true,
+                sched_type: schedType,
+                interval_type: intervalType,
+                interval_time: intervalTime,
+                start_timestamp: startTimestamp,
+                end_timestamp: endTimestamp,
+                scanner: values.node_id ? [values.node_id] : [],
+                params: Object.fromEntries(
+                    Object.entries(params).map(([k, v]) => [k, String(v ?? '')]),
+                ),
+            };
+            await postEditScriptTask(updatePayload as any);
+            message.success('策略已更新');
+            closeEditDrawer();
+            runTaskList();
+        } catch (e: any) {
+            message.error(e?.message || '策略更新失败');
+        } finally {
+            setEditDrawerSubmitting(false);
+        }
     };
 
     const selectedRecords = useMemo(
@@ -1265,6 +1410,25 @@ const TaskPageList = () => {
             </div>
 
             <Drawer
+                width={620}
+                open={editDrawerOpen}
+                onClose={closeEditDrawer}
+                destroyOnClose
+                title="编辑自动化策略"
+            >
+                <StrategyFormPanel
+                    mode="edit"
+                    loading={editDrawerLoading}
+                    submitting={editDrawerSubmitting}
+                    submitText="保存修改"
+                    initialValues={editFormInitial}
+                    projectNameForEdit={editProjectName}
+                    onCancel={closeEditDrawer}
+                    onSubmit={submitEditStrategy}
+                />
+            </Drawer>
+
+            <Drawer
                 className="strategy-detail-drawer"
                 width={560}
                 open={detailDrawerOpen}
@@ -1527,30 +1691,6 @@ const TaskPageList = () => {
                 </div>
             </Modal>
 
-            <StartUpScriptModal
-                ref={editTaskModalRef}
-                title="编辑任务"
-                localRefrech={(
-                    operate: Parameters<UsePageRef['localRefrech']>[0],
-                ) => {
-                    if (operate?.operate === 'edit' && operate?.newObj?.id) {
-                        setListState((prev) => ({
-                            ...prev,
-                            list: prev.list.map((it) => {
-                                if (it.id !== operate.newObj.id) {
-                                    return it;
-                                }
-                                return {
-                                    ...it,
-                                    ...operate.newObj,
-                                };
-                            }),
-                        }));
-                    } else {
-                        runTaskList();
-                    }
-                }}
-            />
         </div>
     );
 };

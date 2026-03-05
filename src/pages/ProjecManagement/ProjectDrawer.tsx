@@ -18,6 +18,7 @@ import {
     Tabs,
     Checkbox,
     Tag,
+    Radio,
 } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import {
@@ -33,6 +34,7 @@ import {
     testGitConnection,
     getScanPolicyConfig,
 } from '@/apis/SSAProjectApi';
+import { getNodeList } from '@/apis/task';
 import type { 
     TSSAProjectRequest, 
     TScanPolicyConfig,
@@ -118,13 +120,16 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     const [selectedComplianceRules, setSelectedComplianceRules] = useState<React.Key[]>([]);
     const [selectedTechStackRules, setSelectedTechStackRules] = useState<React.Key[]>([]);
     const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>([]);
-    const [enableSchedule, setEnableSchedule] = useState(false);
+    const [nodeOptions, setNodeOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [loadingNodes, setLoadingNodes] = useState(false);
     
     // 策略配置动态数据
     const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(null);
     const [loadingPolicyConfig, setLoadingPolicyConfig] = useState(false);
 
     const isEdit = !!projectId;
+    const scanNodeMode = Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+    const scheduleEnabled = Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
 
     // 加载策略配置
     useEffect(() => {
@@ -149,6 +154,29 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
         };
         
         loadPolicyConfig();
+
+        const loadNodes = async () => {
+            setLoadingNodes(true);
+            try {
+                const res = await getNodeList();
+                const list = res?.data?.list || [];
+                const options = list
+                    .filter((item) => item?.node_id)
+                    .map((item) => ({
+                        value: item.node_id as string,
+                        label:
+                            item.hostname ||
+                            item.node_id ||
+                            '未知节点',
+                    }));
+                setNodeOptions(options);
+            } catch (error) {
+                // 静默失败，不阻塞页面使用
+            } finally {
+                setLoadingNodes(false);
+            }
+        };
+        loadNodes();
     }, [visible, projectId]);
 
     useEffect(() => {
@@ -216,6 +244,21 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                     setSelectedComplianceRules([]);
                     setSelectedTechStackRules([]);
                     setSelectedSpecialRules([]);
+                }
+
+                if (res.data.config?.ScanNode) {
+                    form.setFieldsValue({
+                        config: {
+                            ScanNode: res.data.config.ScanNode,
+                        },
+                    });
+                }
+                if (res.data.config?.ScanSchedule) {
+                    form.setFieldsValue({
+                        config: {
+                            ScanSchedule: res.data.config.ScanSchedule,
+                        },
+                    });
                 }
             }
         } catch (error) {
@@ -328,6 +371,27 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 } : undefined,
             };
 
+            // 规范化扫描节点配置
+            if (values.config.ScanNode) {
+                if (values.config.ScanNode.mode !== 'manual') {
+                    values.config.ScanNode.mode = 'auto';
+                    delete values.config.ScanNode.node_id;
+                }
+            }
+
+            // 规范化定时扫描配置
+            if (values.config.ScanSchedule) {
+                if (dayjs.isDayjs(values.config.ScanSchedule.time)) {
+                    values.config.ScanSchedule.time = values.config.ScanSchedule.time.format('HH:mm');
+                }
+                if (!values.config.ScanSchedule.enabled) {
+                    delete values.config.ScanSchedule.time;
+                }
+                values.config.ScanSchedule.interval_type = values.config.ScanSchedule.interval_type || 1;
+                values.config.ScanSchedule.interval_time = values.config.ScanSchedule.interval_time || 1;
+                values.config.ScanSchedule.sched_type = values.config.ScanSchedule.sched_type || 3;
+            }
+
             setSaving(true);
             await postSSAProject(values);
             message.success(isEdit ? '保存成功' : '创建成功');
@@ -382,6 +446,16 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 auth: {
                                     kind: 'none',
                                 },
+                            },
+                            ScanNode: {
+                                mode: 'auto',
+                            },
+                            ScanSchedule: {
+                                enabled: false,
+                                time: '02:00',
+                                interval_type: 1,
+                                interval_time: 1,
+                                sched_type: 3,
                             },
                         },
                     }}
@@ -676,6 +750,39 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             />
                         </Form.Item>
 
+                        <div style={{ 
+                            borderTop: '1px dashed #d9d9d9', 
+                            margin: '16px 0',
+                            paddingTop: 16,
+                        }}>
+                            <Form.Item label="扫描节点" name={['config', 'ScanNode', 'mode']}>
+                                <Radio.Group optionType="button" buttonStyle="solid">
+                                    <Radio.Button value="auto">自动检测</Radio.Button>
+                                    <Radio.Button value="manual">指定节点</Radio.Button>
+                                </Radio.Group>
+                            </Form.Item>
+
+                            {scanNodeMode === 'manual' && (
+                                <Form.Item
+                                    label="执行节点"
+                                    name={['config', 'ScanNode', 'node_id']}
+                                    rules={[{ required: true, message: '请选择扫描节点' }]}
+                                >
+                                    <Select
+                                        placeholder="请选择扫描节点"
+                                        options={nodeOptions}
+                                        loading={loadingNodes}
+                                        showSearch
+                                        filterOption={(input, option) =>
+                                            (option?.label ?? '')
+                                                .toLowerCase()
+                                                .includes(input.toLowerCase())
+                                        }
+                                    />
+                                </Form.Item>
+                            )}
+                        </div>
+
                         <Form.Item label="策略方案">
                             <Select
                                 value={scanPolicy}
@@ -716,19 +823,27 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                         }}>
                             <Form.Item label="定时扫描">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <Switch
-                                        checked={enableSchedule}
-                                        onChange={setEnableSchedule}
-                                    />
+                                    <Form.Item
+                                        name={['config', 'ScanSchedule', 'enabled']}
+                                        valuePropName="checked"
+                                        noStyle
+                                    >
+                                        <Switch />
+                                    </Form.Item>
                                     <span>启用定时扫描</span>
                                 </div>
                             </Form.Item>
 
-                            {enableSchedule && (
+                            {scheduleEnabled && (
                                 <Form.Item
                                     label="扫描时间"
-                                    name="schedule_time"
-                                    initialValue={dayjs('02:00', 'HH:mm')}
+                                    name={['config', 'ScanSchedule', 'time']}
+                                    getValueProps={(value) => ({
+                                        value: value ? dayjs(value, 'HH:mm') : undefined,
+                                    })}
+                                    normalize={(val) =>
+                                        val ? dayjs(val).format('HH:mm') : undefined
+                                    }
                                 >
                                     <TimePicker
                                         format="HH:mm"

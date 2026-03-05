@@ -200,7 +200,7 @@ const IRifyLayout: React.FC = () => {
         }
 
         if (path.startsWith('/task/task-list')) {
-            if (path.includes('/detail')) return ['自动化策略', '任务详情'];
+            if (path.includes('/create')) return ['自动化策略', '新建策略'];
             return ['自动化策略'];
         }
 
