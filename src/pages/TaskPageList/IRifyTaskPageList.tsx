@@ -750,7 +750,7 @@ const TaskPageList = () => {
         const taskId = detailRecord?.task_id || run?.task_id || '';
         const qs = new URLSearchParams();
         if (taskId) {
-            qs.set('keyword', taskId);
+            qs.set('task_id', taskId);
         }
         const hashUrl = qs.toString()
             ? `#/scans?${qs.toString()}`

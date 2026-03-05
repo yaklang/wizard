@@ -70,6 +70,7 @@ const TaskList: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const projectId = searchParams.get('project_id');
+    const taskId = searchParams.get('task_id');
 
     const [activeTab, setActiveTab] = useState('defect');
     const [data, setData] = useState<TSSATask[]>([]);
@@ -191,6 +192,9 @@ const TaskList: React.FC = () => {
                 if (projectId) {
                     params.project_id = parseInt(projectId, 10);
                 }
+                if (taskId) {
+                    params.task_id = taskId;
+                }
 
                 const res = await querySSATasks(params);
                 const list = res.data?.list ?? [];
@@ -213,7 +217,7 @@ const TaskList: React.FC = () => {
                 setLoading(false);
             }
         },
-        [projectId],
+        [projectId, taskId],
     );
 
     const handleSearch = (values: any) => {

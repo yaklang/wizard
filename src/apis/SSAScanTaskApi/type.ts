@@ -2,6 +2,13 @@
 export interface TSSAScanRequest {
     rule_groups?: string[];
     node_id?: string;
+    strategy_name?: string;
+    enable_sched?: boolean;
+    start_timestamp?: number;
+    end_timestamp?: number;
+    interval_time?: number;
+    interval_type?: number;
+    sched_type?: number;
 }
 
 // SSA 任务响应
@@ -42,6 +49,7 @@ export interface TSSATask {
 // 任务列表查询参数
 export interface TSSATaskQueryParams {
     project_id?: number;
+    task_id?: string;
     status?: string;
     page?: number;
     limit?: number;
