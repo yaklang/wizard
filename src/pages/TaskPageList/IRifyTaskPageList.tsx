@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import {
     Button,
+    Checkbox,
     Col,
+    Descriptions,
+    Drawer,
     Dropdown,
     Empty,
     Form,
@@ -16,6 +19,7 @@ import {
     Switch,
     Tabs,
     Tag,
+    Timeline,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -54,6 +58,9 @@ import TaskSiderProject from '@/assets/task/taskSiderProject.png';
 import TaskSelectdDefualt from '@/assets/task/taskSelectdDefualt.png';
 import TaskSelectdProject from '@/assets/task/taskSelectdProject.png';
 import dayjs from 'dayjs';
+import { getBatchInvokingScript } from '@/apis/taskDetail';
+import { getSSARisks } from '@/apis/SSARiskApi';
+import type { TReportTableResponse } from '@/apis/taskDetail/types';
 import './irify-task-center.scss';
 
 interface TaskGroupItem {
@@ -64,19 +71,21 @@ interface TaskGroupItem {
     isEdit: boolean;
 }
 
-const taskStatusLabel: Record<string, string> = {
-    running: '执行中',
-    success: '成功',
-    cancel: '取消',
-    waiting: '未开始',
-    disabled: '停用',
-    failed: '失败',
-    enabled: '启用',
-    finished: '结束',
-};
+interface RuntimeRiskStats {
+    critical: number;
+    high: number;
+    warning: number;
+    low: number;
+    info: number;
+    total: number;
+}
+
+interface RuntimeRecordWithStats extends TReportTableResponse {
+    riskStats: RuntimeRiskStats;
+}
 
 const taskStatusColor: Record<string, string> = {
-    running: '#1f8eff',
+    running: '#18b566',
     success: '#18b566',
     cancel: '#9ba3b2',
     waiting: '#b4bbca',
@@ -86,10 +95,42 @@ const taskStatusColor: Record<string, string> = {
     finished: '#9ba3b2',
 };
 
+const strategyStatusMeta: Record<
+    string,
+    { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+> = {
+    running: { label: '运行中', color: 'success' },
+    enabled: { label: '已启用', color: 'success' },
+    success: { label: '最近成功', color: 'success' },
+    waiting: { label: '待执行', color: 'warning' },
+    disabled: { label: '已停用', color: 'default' },
+    cancel: { label: '已取消', color: 'default' },
+    finished: { label: '已结束', color: 'default' },
+    failed: { label: '执行失败', color: 'error' },
+};
+
 const isUUIDLike = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         value,
     );
+
+const invalidDisplayTokens = new Set([
+    'err',
+    'error',
+    'null',
+    'undefined',
+    '-',
+    'n/a',
+    'na',
+]);
+
+const normalizeDisplayText = (value: any): string => {
+    if (value === undefined || value === null) return '';
+    const text = String(value).trim();
+    if (!text) return '';
+    if (invalidDisplayTokens.has(text.toLowerCase())) return '';
+    return text;
+};
 
 const pickLatestTimestamp = (item: TaskListRequest) => {
     const candidate = [
@@ -176,10 +217,97 @@ const TaskPageList = () => {
     const [selectedTaskIds, setSelectedTaskIds] = useSafeState<Set<number>>(
         new Set(),
     );
+    const [detailDrawerOpen, setDetailDrawerOpen] = useSafeState(false);
+    const [detailRecord, setDetailRecord] =
+        useSafeState<TaskListRequest | null>(null);
 
     const [editLoadingTaskID, setEditLoadingTaskID] = useSafeState<number>();
     const [actionLoadingTaskID, setActionLoadingTaskID] =
         useSafeState<number>();
+
+    const {
+        data: recentRuns = [],
+        run: loadRecentRuns,
+        loading: recentRunsLoading,
+    } = useRequest(
+        async (taskId: string) => {
+            const { data } = await getBatchInvokingScript({
+                task_id: taskId,
+                page: 1,
+            });
+            const runs = ((data?.list as TReportTableResponse[]) || []).slice(
+                0,
+                10,
+            );
+
+            const fetchSeverityCount = async (
+                runtimeID: string,
+                severity: string,
+            ) => {
+                try {
+                    const { data: severityData } = await getSSARisks({
+                        task_id: taskId,
+                        runtime_id: runtimeID,
+                        severity,
+                        page: 1,
+                        limit: 1,
+                    });
+                    return Number(severityData?.pagemeta?.total || 0);
+                } catch {
+                    return 0;
+                }
+            };
+
+            const withStats = await Promise.all(
+                runs.map(async (run) => {
+                    const runtimeID = String(run.runtime_id || '');
+                    if (!runtimeID) {
+                        const record: RuntimeRecordWithStats = {
+                            ...run,
+                            riskStats: {
+                                critical: 0,
+                                high: 0,
+                                warning: 0,
+                                low: 0,
+                                info: 0,
+                                total: 0,
+                            },
+                        };
+                        return record;
+                    }
+
+                    const [critical, high, warning, low, info] =
+                        await Promise.all([
+                            fetchSeverityCount(runtimeID, 'critical'),
+                            fetchSeverityCount(runtimeID, 'high'),
+                            fetchSeverityCount(runtimeID, 'warning'),
+                            fetchSeverityCount(runtimeID, 'low'),
+                            fetchSeverityCount(runtimeID, 'info'),
+                        ]);
+                    const record: RuntimeRecordWithStats = {
+                        ...run,
+                        riskStats: {
+                            critical,
+                            high,
+                            warning,
+                            low,
+                            info,
+                            total: critical + high + warning + low + info,
+                        },
+                    };
+                    return record;
+                }),
+            );
+
+            return withStats;
+        },
+        {
+            manual: true,
+            onError: (err: any) => {
+                message.error(err?.message || '加载近期执行记录失败');
+            },
+        },
+    );
 
     const { run: runTaskList } = useRequest(
         async (opts?: {
@@ -496,21 +624,26 @@ const TaskPageList = () => {
     const getStrategyDisplay = (
         item: TaskListRequest,
     ): { title: string; tag?: string } => {
-        const taskGroup = item.task_group || '默认分组';
+        const taskGroupRaw = normalizeDisplayText(item.task_group);
+        const taskGroup = taskGroupRaw || '默认分组';
 
-        const fromField =
-            (item as any).name ||
-            (item as any).alias ||
-            (item as any).script_name ||
-            (item as any).params?.report_name ||
-            (item as any).params?.project_name;
+        const fromField = [
+            (item as any).name,
+            (item as any).alias,
+            (item as any).script_name,
+            (item as any).project_name,
+            (item as any).params?.report_name,
+            (item as any).params?.project_name,
+        ]
+            .map((v) => normalizeDisplayText(v))
+            .find(Boolean);
         if (fromField)
             return {
                 title: fromField,
                 tag: taskGroup !== '默认分组' ? taskGroup : undefined,
             };
 
-        const rawTaskID = item.task_id || '';
+        const rawTaskID = normalizeDisplayText(item.task_id || '');
         if (rawTaskID && !isUUIDLike(rawTaskID))
             return {
                 title: rawTaskID,
@@ -523,10 +656,12 @@ const TaskPageList = () => {
             (item as any).params?.project_name;
         const firstTarget =
             typeof target === 'string'
-                ? target
+                ? normalizeDisplayText(
+                      target
                       .split(',')
                       .map((it) => it.trim())
-                      .filter(Boolean)[0]
+                      .filter(Boolean)[0],
+                  )
                 : '';
         if (firstTarget)
             return {
@@ -536,16 +671,13 @@ const TaskPageList = () => {
 
         return {
             title: '自动化策略',
-            tag: taskGroup,
+            tag: taskGroup !== '默认分组' ? taskGroup : undefined,
         };
     };
 
     const getLastRunText = (item: TaskListRequest) => {
-        const status = item.status || 'waiting';
-        const statusLabel = taskStatusLabel[status] || status;
         const ts = pickLatestTimestamp(item);
-        const timeLabel = ts ? dayjs.unix(ts).format('MM-DD HH:mm') : '-';
-        return `${timeLabel} (${statusLabel})`;
+        return ts ? dayjs.unix(ts).format('MM-DD HH:mm') : '-';
     };
 
     const getNextRunText = (item: TaskListRequest) => {
@@ -578,6 +710,56 @@ const TaskPageList = () => {
             return dayjs.unix(next).format('YYYY-MM-DD HH:mm');
         }
         return '-';
+    };
+
+    const getStrategyStatusTag = (item?: TaskListRequest | null) => {
+        const key = item?.status || 'waiting';
+        return strategyStatusMeta[key] || strategyStatusMeta.waiting;
+    };
+
+    const openDetailDrawer = (record: TaskListRequest) => {
+        setDetailRecord(record);
+        setDetailDrawerOpen(true);
+        if (record.task_id) {
+            loadRecentRuns(record.task_id);
+        }
+    };
+
+    const closeDetailDrawer = () => {
+        setDetailDrawerOpen(false);
+    };
+
+    const getRuntimeStatus = (run: RuntimeRecordWithStats) => {
+        const failed = Number(run?.subtask_failed_count || 0);
+        const success = Number(run?.subtask_succeeded_count || 0);
+        const total = Number(run?.subtask_total || 0);
+        const done = failed + success;
+        if (total > 0 && done < total) {
+            return { label: '运行中', color: 'processing' as const };
+        }
+        if (failed > 0) {
+            return { label: '失败', color: 'error' as const };
+        }
+        if (success > 0) {
+            return { label: '成功', color: 'success' as const };
+        }
+        return { label: '未开始', color: 'default' as const };
+    };
+
+    const openRuntimeDetailInNewTab = (run: RuntimeRecordWithStats) => {
+        const taskId = detailRecord?.task_id || run?.task_id || '';
+        const qs = new URLSearchParams();
+        if (taskId) {
+            qs.set('keyword', taskId);
+        }
+        const hashUrl = qs.toString()
+            ? `#/scans?${qs.toString()}`
+            : '#/scans';
+        window.open(
+            `${window.location.origin}${window.location.pathname}${hashUrl}`,
+            '_blank',
+            'noopener,noreferrer',
+        );
     };
 
     const selectedRecords = useMemo(
@@ -624,7 +806,7 @@ const TaskPageList = () => {
 
     const handleTaskCardClick = (
         event: MouseEvent<HTMLDivElement>,
-        id: number,
+        item: TaskListRequest,
     ) => {
         const target = event.target as HTMLElement;
         const ignoreSelect =
@@ -637,7 +819,7 @@ const TaskPageList = () => {
         if (ignoreSelect) {
             return;
         }
-        handleToggleSingle(id);
+        openDetailDrawer(item);
     };
 
     const reloadFirstPage = () => {
@@ -838,7 +1020,7 @@ const TaskPageList = () => {
                     </Button>
                     <Button
                         type="primary"
-                        onClick={() => navigate('/projects/create')}
+                        onClick={() => navigate('/task/task-list/create')}
                     >
                         <PlusOutlined />
                         新建策略
@@ -856,6 +1038,8 @@ const TaskPageList = () => {
                         listState.list.map((item) => {
                             const status = item.status || 'waiting';
                             const strategyDisplay = getStrategyDisplay(item);
+                            const lastRun = getLastRunText(item);
+                            const nextRun = getNextRunText(item);
                             const checked = ['running', 'enabled'].includes(
                                 item.status || '',
                             );
@@ -868,11 +1052,8 @@ const TaskPageList = () => {
                                 },
                                 {
                                     key: 'log',
-                                    label: '查看日志',
-                                    onClick: () =>
-                                        navigate('detail', {
-                                            state: { record: item },
-                                        }),
+                                    label: '查看详情',
+                                    onClick: () => openDetailDrawer(item),
                                 },
                                 {
                                     type: 'divider',
@@ -899,21 +1080,40 @@ const TaskPageList = () => {
                                     key={item.id}
                                     className={`irify-task-card ${selectedTaskIds.has(item.id) ? 'selected' : ''}`}
                                     onClick={(e) =>
-                                        handleTaskCardClick(e, item.id)
+                                        handleTaskCardClick(e, item)
                                     }
                                 >
                                     <div className="task-grid">
                                         <div className="task-col task-col-primary">
-                                            <div className="task-dot-cell">
-                                                <span
-                                                    className="status-dot"
-                                                    style={{
-                                                        background:
-                                                            taskStatusColor[
-                                                                status
-                                                            ] || '#9ba3b2',
-                                                    }}
-                                                />
+                                            <div className="task-leading-cells">
+                                                <div className="task-check-cell">
+                                                    <Checkbox
+                                                        checked={selectedTaskIds.has(
+                                                            item.id,
+                                                        )}
+                                                        onClick={(e) =>
+                                                            e.stopPropagation()
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleToggleSingle(
+                                                                item.id,
+                                                                e.target
+                                                                    .checked,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="task-dot-cell">
+                                                    <span
+                                                        className="status-dot"
+                                                        style={{
+                                                            background:
+                                                                taskStatusColor[
+                                                                    status
+                                                                ] || '#9ba3b2',
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
                                             <div className="task-primary-content">
                                                 <div className="task-title-row">
@@ -932,29 +1132,38 @@ const TaskPageList = () => {
                                                     )}
                                                 </div>
                                                 <div className="task-sub-meta">
-                                                    创建者:{' '}
-                                                    {(item as any).account ||
-                                                        'root'}
-                                                </div>
-                                                <div className="task-sub-meta">
-                                                    关联项目:{' '}
-                                                    {getRelatedProjectName(
-                                                        item,
-                                                    )}
+                                                    <span className="meta-chip">
+                                                        创建者{' '}
+                                                        {(item as any).account ||
+                                                            'root'}
+                                                    </span>
+                                                    <span className="meta-sep">
+                                                        •
+                                                    </span>
+                                                    <span className="meta-chip">
+                                                        项目{' '}
+                                                        {getRelatedProjectName(
+                                                            item,
+                                                        )}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="task-col task-col-schedule">
                                             <div className="meta-line">
-                                                调度规则:{' '}
-                                                <span>
+                                                <span className="meta-label">
+                                                    调度规则
+                                                </span>
+                                                <span className="meta-value">
                                                     {renderScheduleText(item)}
                                                 </span>
                                             </div>
                                             <div className="meta-line">
-                                                运行节点:{' '}
-                                                <span>
+                                                <span className="meta-label">
+                                                    运行节点
+                                                </span>
+                                                <span className="meta-value">
                                                     {getNodeDisplay(item)}
                                                 </span>
                                             </div>
@@ -962,15 +1171,21 @@ const TaskPageList = () => {
 
                                         <div className="task-col task-col-trace">
                                             <div className="meta-line">
-                                                上次执行:{' '}
-                                                <span>
-                                                    {getLastRunText(item)}
+                                                <span className="meta-label">
+                                                    上次执行
+                                                </span>
+                                                <span className="meta-value">
+                                                    {lastRun}
                                                 </span>
                                             </div>
                                             <div className="meta-line">
-                                                下次执行:{' '}
-                                                <span>
-                                                    {getNextRunText(item)}
+                                                <span className="meta-label">
+                                                    下次执行
+                                                </span>
+                                                <span
+                                                    className={`meta-value ${nextRun === '-' ? 'is-muted' : ''}`}
+                                                >
+                                                    {nextRun}
                                                 </span>
                                             </div>
                                         </div>
@@ -1008,11 +1223,7 @@ const TaskPageList = () => {
                                                     className="secondary-action-btn"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        navigate('detail', {
-                                                            state: {
-                                                                record: item,
-                                                            },
-                                                        });
+                                                        openDetailDrawer(item);
                                                     }}
                                                 >
                                                     详情
@@ -1039,6 +1250,211 @@ const TaskPageList = () => {
                     )}
                 </Spin>
             </div>
+
+            <Drawer
+                className="strategy-detail-drawer"
+                width={560}
+                open={detailDrawerOpen}
+                onClose={closeDetailDrawer}
+                destroyOnClose
+                title={
+                    <div className="strategy-drawer-header">
+                        <span className="strategy-drawer-title">
+                            {detailRecord
+                                ? getStrategyDisplay(detailRecord).title
+                                : '策略详情'}
+                        </span>
+                        <Tag color={getStrategyStatusTag(detailRecord).color}>
+                            {getStrategyStatusTag(detailRecord).label}
+                        </Tag>
+                    </div>
+                }
+                extra={
+                    <Space>
+                        <Button
+                            size="small"
+                            onClick={() =>
+                                detailRecord && openEditModal(detailRecord)
+                            }
+                            disabled={!detailRecord}
+                        >
+                            编辑策略
+                        </Button>
+                        <Button
+                            size="small"
+                            onClick={() =>
+                                detailRecord && manualRun(detailRecord)
+                            }
+                            disabled={!detailRecord}
+                        >
+                            手动执行
+                        </Button>
+                    </Space>
+                }
+            >
+                <div className="strategy-drawer-body">
+                    <section className="drawer-section">
+                        <h4 className="drawer-section-title">策略配置</h4>
+                        <div className="drawer-config-card">
+                            <Descriptions
+                                column={1}
+                                size="small"
+                                colon={false}
+                                items={[
+                                    {
+                                        key: 'project',
+                                        label: '关联项目',
+                                        children: detailRecord
+                                            ? getRelatedProjectName(detailRecord)
+                                            : '-',
+                                    },
+                                    {
+                                        key: 'rule',
+                                        label: '调度规则',
+                                        children: detailRecord
+                                            ? renderScheduleText(detailRecord)
+                                            : '-',
+                                    },
+                                    {
+                                        key: 'node',
+                                        label: '执行节点',
+                                        children: detailRecord
+                                            ? getNodeDisplay(detailRecord)
+                                            : '-',
+                                    },
+                                    {
+                                        key: 'creator',
+                                        label: '创建人',
+                                        children: detailRecord
+                                            ? (detailRecord as any).account ||
+                                              'root'
+                                            : '-',
+                                    },
+                                    {
+                                        key: 'created',
+                                        label: '创建时间',
+                                        children:
+                                            detailRecord &&
+                                            Number(
+                                                (detailRecord as any)
+                                                    .created_at || 0,
+                                            ) > 0
+                                                ? dayjs
+                                                      .unix(
+                                                          Number(
+                                                              (detailRecord as any)
+                                                                  .created_at,
+                                                          ),
+                                                      )
+                                                      .format(
+                                                          'YYYY-MM-DD HH:mm:ss',
+                                                      )
+                                                : '-',
+                                    },
+                                ]}
+                            />
+                        </div>
+                    </section>
+
+                    <section className="drawer-section">
+                        <h4 className="drawer-section-title">
+                            近期执行记录（最近 10 次）
+                        </h4>
+                        <Spin spinning={recentRunsLoading}>
+                            {recentRuns.length === 0 ? (
+                                <Empty
+                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                    description="暂无执行记录"
+                                />
+                            ) : (
+                                <Timeline
+                                    className="strategy-run-timeline"
+                                    items={recentRuns.map((run) => {
+                                        const runtimeStatus =
+                                            getRuntimeStatus(run);
+                                        const createdAt = Number(
+                                            run?.created_at || 0,
+                                        );
+                                        const executedAt =
+                                            createdAt > 0
+                                                ? dayjs
+                                                      .unix(createdAt)
+                                                      .format(
+                                                          'YYYY-MM-DD HH:mm:ss',
+                                                      )
+                                                : '-';
+                                        return {
+                                            color:
+                                                runtimeStatus.color === 'error'
+                                                    ? 'red'
+                                                    : runtimeStatus.color ===
+                                                        'success'
+                                                      ? 'green'
+                                                      : 'blue',
+                                            children: (
+                                                <div className="run-item">
+                                                    <div className="run-item-head">
+                                                        <span className="run-time">
+                                                            {executedAt}
+                                                        </span>
+                                                        <Tag
+                                                            color={
+                                                                runtimeStatus.color
+                                                            }
+                                                        >
+                                                            {
+                                                                runtimeStatus.label
+                                                            }
+                                                        </Tag>
+                                                    </div>
+                                                    <div className="run-risk-placeholder">
+                                                        <Tag color="magenta">
+                                                            严重{' '}
+                                                            {run.riskStats
+                                                                ?.critical ?? 0}
+                                                        </Tag>
+                                                        <Tag color="red">
+                                                            高{' '}
+                                                            {run.riskStats
+                                                                ?.high ?? 0}
+                                                        </Tag>
+                                                        <Tag color="orange">
+                                                            中{' '}
+                                                            {run.riskStats
+                                                                ?.warning ?? 0}
+                                                        </Tag>
+                                                        <Tag color="gold">
+                                                            低{' '}
+                                                            {run.riskStats
+                                                                ?.low ?? 0}
+                                                        </Tag>
+                                                        <Tag color="default">
+                                                            信息{' '}
+                                                            {run.riskStats
+                                                                ?.info ?? 0}
+                                                        </Tag>
+                                                    </div>
+                                                    <Button
+                                                        type="link"
+                                                        className="run-detail-link"
+                                                        onClick={() =>
+                                                            openRuntimeDetailInNewTab(
+                                                                run,
+                                                            )
+                                                        }
+                                                    >
+                                                        查看详情
+                                                    </Button>
+                                                </div>
+                                            ),
+                                        };
+                                    })}
+                                />
+                            )}
+                        </Spin>
+                    </section>
+                </div>
+            </Drawer>
 
             <div className="irify-task-scroll-hint">
                 {listState.loading && listState.page > 1 && (
