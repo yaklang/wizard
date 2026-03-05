@@ -556,15 +556,23 @@ const TaskPageList = () => {
         if (!record.id) return;
         setEditLoadingTaskID(record.id);
         try {
-            const [{ data: editData }, groupRes] = await Promise.all([
-                getTaskStartEditDispaly(record.id),
-                getScriptTaskGroup(),
-            ]);
-            const groupOptions =
-                groupRes?.data?.list?.map((it: TaskGrounpResponse) => ({
-                    value: it.name,
-                    label: it.name,
-                })) ?? [];
+            const { data: editData } = await getTaskStartEditDispaly(record.id);
+            let groupOptions:
+                | Array<{
+                      value: string;
+                      label: string;
+                  }>
+                | undefined;
+            try {
+                const groupRes = await getScriptTaskGroup();
+                groupOptions =
+                    groupRes?.data?.list?.map((it: TaskGrounpResponse) => ({
+                        value: it.name,
+                        label: it.name,
+                    })) ?? [];
+            } catch {
+                groupOptions = [];
+            }
             const transformModalFormdata = {
                 ...editData,
                 id: record.id,
