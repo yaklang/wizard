@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Card,
     Button,
+    Checkbox,
     Space,
     Tag,
     Progress,
@@ -401,7 +402,11 @@ const TaskList: React.FC = () => {
     );
 
     const handleTaskCardClick = useCallback(
-        (event: React.MouseEvent<HTMLDivElement>, taskId: string) => {
+        (
+            event: React.MouseEvent<HTMLDivElement>,
+            taskId: string,
+            projectId?: number,
+        ) => {
             const target = event.target as HTMLElement;
             const ignoreSelect =
                 target.closest('button') ||
@@ -413,8 +418,40 @@ const TaskList: React.FC = () => {
             if (ignoreSelect) {
                 return;
             }
+            toggleTaskDetail(taskId, projectId);
+        },
+        [toggleTaskDetail],
+    );
+
+    const toggleSelectAllVisible = useCallback(
+        (checked?: boolean) => {
+            if (data.length === 0) return;
+            const allSelected = data.every((task) =>
+                selectedTaskIds.has(task.task_id),
+            );
+            const nextChecked =
+                typeof checked === 'boolean' ? checked : !allSelected;
+            if (!nextChecked) {
+                setSelectedTaskIds(new Set());
+                return;
+            }
+            setSelectedTaskIds(new Set(data.map((task) => task.task_id)));
+        },
+        [data, selectedTaskIds],
+    );
+
+    const toggleSingleSelect = useCallback(
+        (taskId: string, checked?: boolean) => {
             setSelectedTaskIds((prev) => {
                 const next = new Set(prev);
+                if (typeof checked === 'boolean') {
+                    if (checked) {
+                        next.add(taskId);
+                    } else {
+                        next.delete(taskId);
+                    }
+                    return next;
+                }
                 if (next.has(taskId)) {
                     next.delete(taskId);
                 } else {
@@ -425,18 +462,6 @@ const TaskList: React.FC = () => {
         },
         [],
     );
-
-    const toggleSelectAllVisible = useCallback(() => {
-        if (data.length === 0) {
-            return;
-        }
-        const allSelected = data.every((task) => selectedTaskIds.has(task.task_id));
-        if (allSelected) {
-            setSelectedTaskIds(new Set());
-            return;
-        }
-        setSelectedTaskIds(new Set(data.map((task) => task.task_id)));
-    }, [data, selectedTaskIds]);
 
     const handleBatchDelete = useCallback(() => {
         if (selectedTaskIds.size === 0) {
@@ -484,7 +509,7 @@ const TaskList: React.FC = () => {
         });
     }, [data, deleteTasksByIDs, isTaskRunningStatus, selectedTaskIds]);
 
-    const toggleTaskDetail = async (taskId: string, projectId?: number) => {
+    async function toggleTaskDetail(taskId: string, projectId?: number) {
         const newExpandedId = expandedTaskId === taskId ? null : taskId;
         setExpandedTaskId(newExpandedId);
 
@@ -505,7 +530,7 @@ const TaskList: React.FC = () => {
                 console.error('获取项目详情失败:', err);
             }
         }
-    };
+    }
 
     const fetchArtifactMetrics = useCallback(async (taskId: string) => {
         if (!taskId) return;
@@ -676,12 +701,29 @@ const TaskList: React.FC = () => {
             <div
                 className={`task-card ${isSelected ? 'selected' : ''}`}
                 key={task.task_id}
-                onClick={(e) => handleTaskCardClick(e, task.task_id)}
+                onClick={(e) =>
+                    handleTaskCardClick(e, task.task_id, task.project_id)
+                }
             >
                 <div className="task-main-info">
-                    <div
-                        className={`task-status-dot ${getStatusClass(task.status)}`}
-                    />
+                    <div className="task-leading-cells">
+                        <div className="task-check-cell">
+                            <Checkbox
+                                className="task-select-checkbox"
+                                checked={isSelected}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) =>
+                                    toggleSingleSelect(
+                                        task.task_id,
+                                        e.target.checked,
+                                    )
+                                }
+                            />
+                        </div>
+                        <div
+                            className={`task-status-dot ${getStatusClass(task.status)}`}
+                        />
+                    </div>
                     <div className="task-details">
                         <div className="task-header">
                             <span className="task-title">
@@ -1464,6 +1506,12 @@ const TaskList: React.FC = () => {
         );
     };
 
+    const allVisibleSelected =
+        data.length > 0 &&
+        data.every((task) => selectedTaskIds.has(task.task_id));
+    const partVisibleSelected =
+        selectedTaskIds.size > 0 && !allVisibleSelected;
+
     return (
         <div
             className={`ssa-task-list ${selectedTaskIds.size > 0 ? 'has-selection-bar' : ''}`}
@@ -1563,12 +1611,15 @@ const TaskList: React.FC = () => {
             </div>
 
             <div className="list-actions">
-                <Button onClick={toggleSelectAllVisible} disabled={data.length === 0}>
-                    {data.length > 0 &&
-                    data.every((task) => selectedTaskIds.has(task.task_id))
-                        ? '取消全选'
-                        : '全选当前列表'}
-                </Button>
+                <Checkbox
+                    className="select-all-checkbox"
+                    checked={allVisibleSelected}
+                    indeterminate={partVisibleSelected}
+                    disabled={data.length === 0}
+                    onChange={(e) => toggleSelectAllVisible(e.target.checked)}
+                >
+                    全选当前列表
+                </Checkbox>
             </div>
 
             <Spin spinning={loading && page === 1}>

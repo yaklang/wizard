@@ -771,6 +771,7 @@ const TaskPageList = () => {
     const allChecked =
         listState.list.length > 0 &&
         listState.list.every((it) => it.id && selectedTaskIds.has(it.id));
+    const partChecked = selectedTaskIds.size > 0 && !allChecked;
 
     const handleToggleSelectAll = () => {
         if (allChecked) {
@@ -1007,12 +1008,15 @@ const TaskPageList = () => {
             </div>
 
             <div className="irify-task-list-actions">
-                <Button
-                    onClick={handleToggleSelectAll}
+                <Checkbox
+                    className="select-all-checkbox"
+                    checked={allChecked}
+                    indeterminate={partChecked}
                     disabled={listState.list.length === 0}
+                    onChange={handleToggleSelectAll}
                 >
-                    {allChecked ? '取消全选' : '全选当前列表'}
-                </Button>
+                    全选当前列表
+                </Checkbox>
                 <div className="actions-right">
                     <Button onClick={() => setGroupManageVisible(true)}>
                         <SettingOutlined />
@@ -1088,6 +1092,7 @@ const TaskPageList = () => {
                                             <div className="task-leading-cells">
                                                 <div className="task-check-cell">
                                                     <Checkbox
+                                                        className="task-select-checkbox"
                                                         checked={selectedTaskIds.has(
                                                             item.id,
                                                         )}

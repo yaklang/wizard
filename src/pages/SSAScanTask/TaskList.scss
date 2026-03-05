@@ -32,6 +32,21 @@
         display: flex;
         align-items: center;
         gap: 8px;
+
+        .select-all-checkbox {
+            color: var(--irify-text-secondary);
+            user-select: none;
+        }
+    }
+
+    .select-all-checkbox .ant-checkbox-inner,
+    .task-select-checkbox .ant-checkbox-inner {
+        border-color: #aeb7c4;
+    }
+
+    .select-all-checkbox:hover .ant-checkbox-inner,
+    .task-select-checkbox:hover .ant-checkbox-inner {
+        border-color: #8894a6;
     }
 
     .task-card-list {
@@ -68,6 +83,22 @@
             align-items: center;
             gap: 16px;
             flex: 1 1 auto;
+
+            .task-leading-cells {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                align-self: flex-start;
+                padding-top: 2px;
+            }
+
+            .task-check-cell {
+                width: 18px;
+                min-width: 18px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
 
             .task-status-dot {
                 width: 12px;

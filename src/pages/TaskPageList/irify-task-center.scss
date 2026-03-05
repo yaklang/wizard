@@ -48,12 +48,27 @@
     gap: 8px;
     margin-bottom: 16px;
 
+    .select-all-checkbox {
+        color: var(--irify-text-secondary);
+        user-select: none;
+    }
+
     .actions-right {
         margin-left: auto;
         display: flex;
         align-items: center;
         gap: 8px;
     }
+}
+
+.select-all-checkbox .ant-checkbox-inner,
+.task-select-checkbox .ant-checkbox-inner {
+    border-color: #aeb7c4;
+}
+
+.select-all-checkbox:hover .ant-checkbox-inner,
+.task-select-checkbox:hover .ant-checkbox-inner {
+    border-color: #8894a6;
 }
 
 .irify-task-card-list {
