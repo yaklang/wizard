@@ -16,7 +16,7 @@ import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
 import IRifyNodeManagePage from '@/pages/NodeManage/IRifyNodeManagePage';
-import SystemManagement from '@/pages/SystemManagement';
+import IRifySystemManagementPage from '@/pages/SystemManagement/IRifySystemManagementPage';
 import ReportManage from '@/pages/ReportManage';
 
 import IRifyDashboard from '@/pages/IRifyDashboard';
@@ -129,7 +129,7 @@ const irifyRouters: RouteObject[] = [
                 children: [
                     {
                         path: 'userinfo',
-                        element: <SystemManagement />,
+                        element: <IRifySystemManagementPage />,
                     },
                     {
                         path: 'task-script',
