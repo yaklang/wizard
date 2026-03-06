@@ -22,6 +22,7 @@ import { getNodeManage } from '@/apis/NodeManageApi';
 export type StrategyFormValues = {
     strategy_name: string;
     project_id?: number;
+    task_group?: string;
     node_id?: string;
     rule_groups?: string[];
     sched_type: number;
@@ -38,6 +39,7 @@ interface StrategyFormPanelProps {
     mode: 'create' | 'edit';
     initialValues?: StrategyFormInitial;
     projectNameForEdit?: string;
+    taskGroupOptions?: Array<{ label: string; value: string }>;
     loading?: boolean;
     submitting?: boolean;
     submitText?: string;
@@ -52,6 +54,7 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
         mode,
         initialValues,
         projectNameForEdit,
+        taskGroupOptions = [],
         loading,
         submitting,
         submitText,
@@ -291,6 +294,26 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                                     showSearch
                                     filterOption={(input, option) =>
                                         (option?.label ?? '')
+                                            .toLowerCase()
+                                            .includes(input.toLowerCase())
+                                    }
+                                />
+                            </Form.Item>
+                        )}
+
+                        {isEditMode && (
+                            <Form.Item
+                                label="策略分组"
+                                name="task_group"
+                                rules={[{ required: true, message: '请选择策略分组' }]}
+                            >
+                                <Select
+                                    showSearch
+                                    placeholder="请选择策略分组"
+                                    options={taskGroupOptions}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '')
+                                            .toString()
                                             .toLowerCase()
                                             .includes(input.toLowerCase())
                                     }

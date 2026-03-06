@@ -31,7 +31,7 @@ const DeleteTaskGroupConfig = (
                 <span>
                     {name.length > 10 ? name.slice(0, 10) + '...' : name}
                 </span>
-                】任务组的同时是否删除组内所有任务
+                】策略分组的同时是否删除组内所有任务
             </div>
         ),
         cancelText: '取消',
@@ -71,7 +71,7 @@ const DeleteTaskGroupConfig = (
                             return (
                                 whetherValue === 2 && (
                                     <Item
-                                        label="任务迁移到以下分组"
+                                        label="任务迁移到以下策略分组"
                                         name="group_task"
                                         style={{
                                             marginLeft: '20px',
@@ -81,7 +81,7 @@ const DeleteTaskGroupConfig = (
                                             {
                                                 required: true,
                                                 message:
-                                                    '请选择删除该任务组后需迁移到的任务组',
+                                                    '请选择删除该策略分组后需迁移到的分组',
                                             },
                                         ]}
                                     >

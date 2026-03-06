@@ -23,7 +23,10 @@ import {
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
+    CheckOutlined,
+    CloseOutlined,
     DeleteOutlined,
+    EditOutlined,
     MoreOutlined,
     PlayCircleOutlined,
     PlusOutlined,
@@ -35,6 +38,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEventSource } from '@/hooks';
 import { useRequest, useSafeState } from 'ahooks';
 import {
+    deleteTaskGroup,
     deleteTask,
     getBatchInvokingScriptTaskNode,
     getScriptTaskGroup,
@@ -43,6 +47,7 @@ import {
     getTaskStartEditDispaly,
     getTaskStop,
     postEditScriptTask,
+    postTaskGrounp,
 } from '@/apis/task';
 import type {
     StopOnRunTaskRequest,
@@ -50,7 +55,6 @@ import type {
     TaskListRequest,
 } from '@/apis/task/types';
 import { options, siderTaskGrounpAllList, taskListStatus } from './utils/data';
-import { ListSiderContext } from './compoment/ListSiderContext';
 import TaskSiderDefault from '@/assets/task/taskSiderDefault.png';
 import TaskSiderProject from '@/assets/task/taskSiderProject.png';
 import TaskSelectdDefualt from '@/assets/task/taskSelectdDefualt.png';
@@ -204,6 +208,11 @@ const getCronExpression = (item: TaskListRequest) => {
     );
 };
 
+const getTaskGroupName = (item: TaskListRequest) => {
+    const raw = normalizeDisplayText((item as any).task_group);
+    return raw || '默认分组';
+};
+
 const TaskPageList = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
@@ -214,6 +223,11 @@ const TaskPageList = () => {
     const [taskGroups, setTaskGroups] = useSafeState<TaskGroupItem[]>(
         siderTaskGrounpAllList as TaskGroupItem[],
     );
+    const [newGroupName, setNewGroupName] = useSafeState('');
+    const [groupSaving, setGroupSaving] = useSafeState(false);
+    const [groupActionLoading, setGroupActionLoading] = useSafeState('');
+    const [editingGroupName, setEditingGroupName] = useSafeState('');
+    const [editingGroupValue, setEditingGroupValue] = useSafeState('');
 
     const [filters, setFilters] = useSafeState<{
         keyword: string;
@@ -257,6 +271,12 @@ const TaskPageList = () => {
     const [editLoadingTaskID, setEditLoadingTaskID] = useSafeState<number>();
     const [actionLoadingTaskID, setActionLoadingTaskID] =
         useSafeState<number>();
+
+    const jumpToNodeManage = (nodeId: string, e?: MouseEvent) => {
+        e?.stopPropagation();
+        if (!nodeId || nodeId === '-') return;
+        navigate(`/node-config/manage?node_id=${encodeURIComponent(nodeId)}`);
+    };
 
     const {
         data: recentRuns = [],
@@ -481,7 +501,7 @@ const TaskPageList = () => {
             setTaskGroups(result);
         },
         onError: () => {
-            message.error('获取任务组失败');
+            message.error('获取策略分组失败');
         },
     });
 
@@ -532,13 +552,55 @@ const TaskPageList = () => {
     }, [listState.loading, hasMore, listState.page, runTaskList]);
 
     const groupFilterOptions = useMemo<{ label: string; value: string }[]>(
-        () =>
-            taskGroups.map((it) => ({
-                label: it.name,
-                value: it.name,
-            })),
+        () => {
+            const map = new Map<string, { label: string; value: string }>();
+            taskGroups.forEach((it) => {
+                const name = (it?.name || '').trim();
+                if (!name) return;
+                map.set(name, { label: name, value: name });
+            });
+            return Array.from(map.values());
+        },
         [taskGroups],
     );
+
+    const strategyGroupOptions = useMemo<{ label: string; value: string }[]>(
+        () => {
+            const base = groupFilterOptions.filter((it) => it.value !== '全部');
+            if (base.some((it) => it.value === '默认分组')) {
+                return base;
+            }
+            return [{ label: '默认分组', value: '默认分组' }, ...base];
+        },
+        [groupFilterOptions],
+    );
+
+    const physicalTaskGroups = useMemo<TaskGroupItem[]>(() => {
+        const groupMap = new Map<string, TaskGroupItem>();
+        taskGroups.forEach((it) => {
+            const name = (it?.name || '').trim();
+            if (!name || name === '全部') return;
+            const prev = groupMap.get(name);
+            if (!prev) {
+                groupMap.set(name, it);
+                return;
+            }
+            groupMap.set(name, {
+                ...prev,
+                count: Math.max(Number(prev.count || 0), Number(it.count || 0)),
+            });
+        });
+        if (!groupMap.has('默认分组')) {
+            groupMap.set('默认分组', {
+                name: '默认分组',
+                count: 0,
+                isEdit: false,
+                defualtIcon: TaskSiderDefault,
+                selectdIcon: TaskSelectdDefualt,
+            });
+        }
+        return Array.from(groupMap.values());
+    }, [taskGroups]);
 
     const toggleTaskStatus = async (
         record: TaskListRequest,
@@ -619,6 +681,9 @@ const TaskPageList = () => {
                 setEditProjectName(projectName || '-');
                 setEditFormInitial({
                     strategy_name: strategyName || '自动化策略',
+                    task_group:
+                        normalizeDisplayText(raw.task_group) ||
+                        getTaskGroupName(record),
                     node_id: Array.isArray(raw.scanner)
                         ? raw.scanner[0]
                         : undefined,
@@ -689,6 +754,17 @@ const TaskPageList = () => {
         }
         const maybeNode = (item as any).node || (item as any).node_id;
         return maybeNode ? String(maybeNode) : '-';
+    };
+
+    const getNodeList = (item: TaskListRequest): string[] => {
+        if (Array.isArray(item.scanner) && item.scanner.length > 0) {
+            return item.scanner
+                .map((it) => String(it).trim())
+                .filter(Boolean);
+        }
+        const maybeNode = (item as any).node || (item as any).node_id;
+        if (!maybeNode) return [];
+        return [String(maybeNode).trim()].filter(Boolean);
     };
 
     const getStrategyDisplay = (
@@ -889,7 +965,10 @@ const TaskPageList = () => {
             const updatePayload: Record<string, unknown> = {
                 ...editTaskRaw,
                 task_id: editTaskRaw.task_id,
-                task_group: editTaskRaw.task_group || '默认分组',
+                task_group:
+                    values.task_group ||
+                    normalizeDisplayText(editTaskRaw.task_group) ||
+                    '默认分组',
                 script_type: editTaskRaw.script_type || 'ssa_scan',
                 script_name: editTaskRaw.script_name || values.strategy_name,
                 enable_sched: true,
@@ -1059,6 +1138,126 @@ const TaskPageList = () => {
         });
     };
 
+    const normalizeGroupName = (value: string) =>
+        value
+            .replace(/\s+/g, ' ')
+            .replace(/\u3000/g, ' ')
+            .trim();
+
+    const reloadByCurrentFilter = (nextGroupKey?: string) => {
+        const targetGroup = nextGroupKey || taskGroupKey || '全部';
+        if (targetGroup === '全部') {
+            form.setFieldsValue({ task_group: undefined });
+        } else {
+            form.setFieldsValue({ task_group: targetGroup });
+        }
+        setTaskGroupKey(targetGroup);
+        setSelectedTaskIds(new Set());
+        setHasMore(true);
+        runTaskList({
+            page: 1,
+            append: false,
+            filters: { ...filters, taskGroupKey: targetGroup },
+        });
+    };
+
+    const handleCreateGroup = async () => {
+        const name = normalizeGroupName(newGroupName || '');
+        if (!name) {
+            message.warning('请输入分组名称');
+            return;
+        }
+        if (name === '全部') {
+            message.warning('“全部”是筛选项，不能作为策略分组');
+            return;
+        }
+        setGroupSaving(true);
+        try {
+            await postTaskGrounp({ group_name: name });
+            message.success('策略分组新增成功');
+            setNewGroupName('');
+            await refreshTaskGroups();
+        } catch (e: any) {
+            message.error(e?.message || '新增分组失败');
+        } finally {
+            setGroupSaving(false);
+        }
+    };
+
+    const startEditGroup = (groupName: string) => {
+        setEditingGroupName(groupName);
+        setEditingGroupValue(groupName);
+    };
+
+    const cancelEditGroup = () => {
+        setEditingGroupName('');
+        setEditingGroupValue('');
+    };
+
+    const saveEditGroup = async (groupName: string) => {
+        const nextName = normalizeGroupName(editingGroupValue || '');
+        if (!nextName) {
+            message.warning('分组名称不能为空');
+            return;
+        }
+        if (nextName === '全部') {
+            message.warning('“全部”是筛选项，不能作为策略分组');
+            return;
+        }
+        if (nextName === groupName) {
+            cancelEditGroup();
+            return;
+        }
+        setGroupActionLoading(groupName);
+        try {
+            await postTaskGrounp({
+                group_name: groupName,
+                new_group_name: nextName,
+            });
+            message.success('策略分组重命名成功');
+            cancelEditGroup();
+            await refreshTaskGroups();
+            if (taskGroupKey === groupName) {
+                reloadByCurrentFilter(nextName);
+            }
+        } catch (e: any) {
+            message.error(e?.message || '重命名失败');
+        } finally {
+            setGroupActionLoading('');
+        }
+    };
+
+    const handleDeleteGroup = (groupName: string) => {
+        Modal.confirm({
+            title: '删除策略分组',
+            content:
+                '删除该分组后，其关联的策略将被移入默认分组，确定删除吗？',
+            okText: '删除',
+            okButtonProps: { danger: true },
+            cancelText: '取消',
+            async onOk() {
+                setGroupActionLoading(groupName);
+                try {
+                    // 确保默认分组存在，便于后端迁移关联任务。
+                    await postTaskGrounp({ group_name: '默认分组' });
+                    await deleteTaskGroup({
+                        group_name: groupName,
+                        new_group_name: '默认分组',
+                    });
+                    message.success('策略分组删除成功');
+                    await refreshTaskGroups();
+                    if (taskGroupKey === groupName) {
+                        reloadByCurrentFilter('默认分组');
+                    }
+                } catch (e: any) {
+                    message.error(e?.message || '删除分组失败');
+                } finally {
+                    setGroupActionLoading('');
+                }
+            },
+        });
+    };
+
     const manualRun = async (record: TaskListRequest) => {
         if (!record.id) return;
         setActionLoadingTaskID(record.id);
@@ -1108,11 +1307,8 @@ const TaskPageList = () => {
                             <Form.Item name="task_group">
                                 <Select
                                     allowClear
-                                    placeholder="请选择任务组"
-                                    options={groupFilterOptions.filter(
-                                        (it: { value: string }) =>
-                                            it.value !== '全部',
-                                    )}
+                                    placeholder="请选择策略分组"
+                                    options={strategyGroupOptions}
                                 />
                             </Form.Item>
                         </Col>
@@ -1173,7 +1369,7 @@ const TaskPageList = () => {
                 <div className="actions-right">
                     <Button onClick={() => setGroupManageVisible(true)}>
                         <SettingOutlined />
-                        任务组管理
+                        管理分组
                     </Button>
                     <Button
                         type="primary"
@@ -1195,6 +1391,7 @@ const TaskPageList = () => {
                         listState.list.map((item) => {
                             const status = item.status || 'waiting';
                             const strategyDisplay = getStrategyDisplay(item);
+                            const taskGroupName = getTaskGroupName(item);
                             const lastRun = getLastRunText(item);
                             const nextRun = getNextRunText(item);
                             const checked = ['running', 'enabled'].includes(
@@ -1206,11 +1403,6 @@ const TaskPageList = () => {
                                     icon: <PlayCircleOutlined />,
                                     label: '手动触发一次',
                                     onClick: () => manualRun(item),
-                                },
-                                {
-                                    key: 'log',
-                                    label: '查看详情',
-                                    onClick: () => openDetailDrawer(item),
                                 },
                                 {
                                     type: 'divider',
@@ -1304,6 +1496,12 @@ const TaskPageList = () => {
                                                             item,
                                                         )}
                                                     </span>
+                                                    <span className="meta-sep">
+                                                        •
+                                                    </span>
+                                                    <span className="meta-chip">
+                                                        分组 {taskGroupName}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1322,7 +1520,46 @@ const TaskPageList = () => {
                                                     运行节点
                                                 </span>
                                                 <span className="meta-value">
-                                                    {getNodeDisplay(item)}
+                                                    {(() => {
+                                                        const nodes =
+                                                            getNodeList(item);
+                                                        if (!nodes.length)
+                                                            return '-';
+                                                        return nodes.map(
+                                                            (
+                                                                nodeId,
+                                                                index,
+                                                            ) => (
+                                                                <span
+                                                                    key={`${item.id}-${nodeId}-${index}`}
+                                                                >
+                                                                    <button
+                                                                        type="button"
+                                                                        className="node-link-btn"
+                                                                        onClick={(
+                                                                            e,
+                                                                        ) =>
+                                                                            jumpToNodeManage(
+                                                                                nodeId,
+                                                                                e,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            nodeId
+                                                                        }
+                                                                    </button>
+                                                                    {index <
+                                                                    nodes.length -
+                                                                        1 ? (
+                                                                        <span className="node-link-sep">
+                                                                            、
+                                                                        </span>
+                                                                    ) : null}
+                                                                </span>
+                                                            ),
+                                                        );
+                                                    })()}
                                                 </span>
                                             </div>
                                         </div>
@@ -1422,6 +1659,7 @@ const TaskPageList = () => {
                     submitting={editDrawerSubmitting}
                     submitText="保存修改"
                     initialValues={editFormInitial}
+                    taskGroupOptions={strategyGroupOptions}
                     projectNameForEdit={editProjectName}
                     onCancel={closeEditDrawer}
                     onSubmit={submitEditStrategy}
@@ -1674,20 +1912,125 @@ const TaskPageList = () => {
             )}
 
             <Modal
-                title="任务组管理"
+                title="策略分组管理"
                 open={groupManageVisible}
                 footer={null}
                 width={520}
-                onCancel={() => setGroupManageVisible(false)}
+                onCancel={() => {
+                    setGroupManageVisible(false);
+                    setNewGroupName('');
+                    cancelEditGroup();
+                }}
             >
                 <div className="irify-task-group-manage">
-                    <ListSiderContext
-                        siderContextList={taskGroups}
-                        setSiderContextList={setTaskGroups}
-                        refreshAsync={refreshTaskGroups}
-                        taskGroupKey={taskGroupKey}
-                        setTaskGroupKey={setTaskGroupKey}
-                    />
+                    <div className="group-create-row">
+                        <Input
+                            value={newGroupName}
+                            placeholder="输入新分组名称，如：核心支付链路"
+                            onChange={(e) => setNewGroupName(e.target.value)}
+                            onPressEnter={handleCreateGroup}
+                        />
+                        <Button
+                            type="primary"
+                            loading={groupSaving}
+                            onClick={handleCreateGroup}
+                        >
+                            新增
+                        </Button>
+                    </div>
+
+                    <div className="group-list">
+                        {physicalTaskGroups.length === 0 ? (
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description="暂无策略分组"
+                            />
+                        ) : (
+                            physicalTaskGroups.map((group) => {
+                                const name = group.name || '';
+                                const count = Number(group.count || 0);
+                                const isDefault = name === '默认分组';
+                                const isEditing = editingGroupName === name;
+                                const loading = groupActionLoading === name;
+
+                                return (
+                                    <div key={name} className="group-row">
+                                        <div className="group-main">
+                                            {isEditing ? (
+                                                <Input
+                                                    value={editingGroupValue}
+                                                    onChange={(e) =>
+                                                        setEditingGroupValue(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    onPressEnter={() =>
+                                                        saveEditGroup(name)
+                                                    }
+                                                    maxLength={50}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <span className="group-name">
+                                                        {name}
+                                                    </span>
+                                                    <span className="group-count">
+                                                        (包含 {count} 个策略)
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className="group-actions">
+                                            {isDefault ? (
+                                                <span className="group-system-tag">
+                                                    系统分组
+                                                </span>
+                                            ) : isEditing ? (
+                                                <Space size={4}>
+                                                    <Button
+                                                        type="text"
+                                                        icon={<CheckOutlined />}
+                                                        loading={loading}
+                                                        onClick={() =>
+                                                            saveEditGroup(name)
+                                                        }
+                                                    />
+                                                    <Button
+                                                        type="text"
+                                                        icon={<CloseOutlined />}
+                                                        onClick={cancelEditGroup}
+                                                    />
+                                                </Space>
+                                            ) : (
+                                                <Space size={4}>
+                                                    <Button
+                                                        type="text"
+                                                        icon={<EditOutlined />}
+                                                        onClick={() =>
+                                                            startEditGroup(name)
+                                                        }
+                                                    />
+                                                    <Button
+                                                        type="text"
+                                                        danger
+                                                        icon={
+                                                            <DeleteOutlined />
+                                                        }
+                                                        loading={loading}
+                                                        onClick={() =>
+                                                            handleDeleteGroup(
+                                                                name,
+                                                            )
+                                                        }
+                                                    />
+                                                </Space>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
             </Modal>
 
