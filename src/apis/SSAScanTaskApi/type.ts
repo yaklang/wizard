@@ -30,6 +30,7 @@ export interface TSSATask {
     rule_groups?: string; // 规则组列表(JSON字符串)
     scan_policy?: string; // 扫描策略配置(JSON)，包含 policy_type 和 custom_rules
     program_name?: string;
+    scan_batch?: number;
     risk_count?: number;
     risk_count_critical?: number;
     risk_count_high?: number;

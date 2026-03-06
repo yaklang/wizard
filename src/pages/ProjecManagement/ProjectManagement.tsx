@@ -529,22 +529,6 @@ const ProjectManagement: React.FC = () => {
                                 >
                                     {label}
                                 </Tag>
-                                {record.latest_scan_mode === 'memory' && (
-                                    <Tag
-                                        color="default"
-                                        style={{ marginLeft: 8, fontSize: 12 }}
-                                    >
-                                        内存扫描
-                                    </Tag>
-                                )}
-                                {record.latest_scan_mode === 'ir-db' && (
-                                    <Tag
-                                        color="processing"
-                                        style={{ marginLeft: 8, fontSize: 12 }}
-                                    >
-                                        数据库扫描
-                                    </Tag>
-                                )}
                             </div>
                             <div
                                 style={{

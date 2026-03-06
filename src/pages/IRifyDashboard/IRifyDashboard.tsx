@@ -47,6 +47,18 @@ const statusLabels: Record<string, string> = {
     cancelled: '已取消',
 };
 
+const formatProjectBatchLabel = (
+    projectName?: string,
+    scanBatch?: number,
+) => {
+    const name = (projectName || '').trim();
+    if (!name) return '未知项目';
+    if (scanBatch && scanBatch > 0) {
+        return `${name} · 第${scanBatch}批`;
+    }
+    return name;
+};
+
 const getTotalFromRiskResp = (res: any) => Number(res?.data?.pagemeta?.total) || 0;
 const severityOrder = ['critical', 'high', 'middle', 'low', 'info'] as const;
 type SeverityKey = (typeof severityOrder)[number];
@@ -427,8 +439,10 @@ const IRifyDashboard: React.FC = () => {
                                             </div>
                                             <div className="activity-content">
                                                 <div className="activity-title">
-                                                    {scan.program_name ||
-                                                        '未知项目'}
+                                                    {formatProjectBatchLabel(
+                                                        scan.project_name,
+                                                        scan.scan_batch,
+                                                    )}
                                                 </div>
                                                 <div className="activity-meta">
                                                     <Tag

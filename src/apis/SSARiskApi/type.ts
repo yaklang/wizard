@@ -22,6 +22,8 @@ export interface TSSARisk {
     tags?: string;
     from_rule?: string;
     program_name?: string;
+    project_name?: string;
+    scan_batch?: number;
     code_source_url?: string;
     code_range?: string;
     code_fragment?: string;
@@ -105,7 +107,7 @@ export type TSSARiskListResponse = TableResponseData<TSSARisk>;
 // 筛选选项类型
 export interface TSSARiskFilterOptions {
     risk_types?: string[];
-    program_names?: string[];
+    project_names?: string[];
     severities?: string[];
     languages?: string[];
 }

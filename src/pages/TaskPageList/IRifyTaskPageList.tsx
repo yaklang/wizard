@@ -178,14 +178,21 @@ const intervalUnitLabel: Record<number, string> = {
     3: '分钟',
 };
 
+const sanitizeLegacyProjectName = (value?: string) => {
+    const text = normalizeDisplayText(value);
+    if (!text) return '';
+    return text.replace(/@[\w.-]+$/, '');
+};
+
 const getRelatedProjectName = (item: TaskListRequest) => {
     const params = (item as any).params || {};
     const projectName =
         params.project_name ||
         params.report_name ||
-        params.program_name ||
         (item as any).project_name;
     if (projectName) return String(projectName);
+    const legacyProjectName = sanitizeLegacyProjectName(params.program_name);
+    if (legacyProjectName) return legacyProjectName;
     const target = params.target;
     if (typeof target === 'string') {
         const first = target
@@ -665,10 +672,11 @@ const TaskPageList = () => {
                 const projectName =
                     normalizeDisplayText(
                         params.programName ||
-                            params.program_name ||
                             params.project_name ||
                             params.report_name,
-                    ) || getRelatedProjectName(record);
+                    ) ||
+                    sanitizeLegacyProjectName(params.program_name) ||
+                    getRelatedProjectName(record);
                 const startTimestamp = Number(raw.start_timestamp || 0);
                 const endTimestamp = Number(raw.end_timestamp || 0);
                 const schedType = Number(

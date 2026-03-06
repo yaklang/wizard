@@ -180,17 +180,30 @@ const formatLineAndCol = (risk: TSSARisk) => {
     return `[${l}]`;
 };
 
+const formatProjectBatchLabel = (
+    projectName?: string,
+    scanBatch?: number,
+): string => {
+    const name = (projectName || '').trim();
+    if (!name) return '-';
+    if (scanBatch && scanBatch > 0) {
+        return `${name} · 第${scanBatch}批`;
+    }
+    return name;
+};
+
 const SSARiskAudit: React.FC = () => {
     const [searchParams] = useSearchParams();
     const hash = searchParams.get('hash') || '';
     const taskId = searchParams.get('task_id') || '';
-    const programName = searchParams.get('program_name') || '';
+    const projectNameFromQuery = searchParams.get('project_name') || '';
+    const scanBatchFromQuery = Number(searchParams.get('scan_batch') || 0);
 
     const navigate = useNavigate();
     const [form] = Form.useForm();
 
     // 判断是任务模式还是单个风险模式
-    const isTaskMode = !!taskId && !!programName;
+    const isTaskMode = !!taskId && !hash;
 
     const [loading, setLoading] = useState(false);
     const [auditInfo, setAuditInfo] = useState<TSSARiskAuditInfo | null>(null);
@@ -406,7 +419,6 @@ const SSARiskAudit: React.FC = () => {
             for (let i = 0; i < 1000; i++) {
                 const res = await getSSARisks({
                     task_id: taskId,
-                    program_name: programName,
                     page,
                     limit,
                 });
@@ -433,7 +445,7 @@ const SSARiskAudit: React.FC = () => {
         } finally {
             setLoadingRisks(false);
         }
-    }, [taskId, programName]);
+    }, [taskId]);
 
     // 获取处置历史
     const fetchDisposalHistory = useCallback(
@@ -731,8 +743,7 @@ const SSARiskAudit: React.FC = () => {
     );
 
     // 从完整 URL 中提取相对路径（移除 programName 前缀）
-    const extractRelativePath = useCallback(
-        (url: string, programName?: string): string => {
+    const extractRelativePath = useCallback((url: string): string => {
             if (!url) return '';
 
             // URL 格式可能是：/programName/src/main/java/... 或 programName/src/main/java/...
@@ -743,35 +754,14 @@ const SSARiskAudit: React.FC = () => {
                 path = path.substring(1);
             }
 
-            // 如果有 programName，尝试移除它
-            if (programName) {
-                // 转义 programName 中的正则特殊字符
-                const escapedName = programName.replace(
-                    /[.*+?^${}()|[\]\\]/g,
-                    '\\$&',
-                );
-                const regex = new RegExp(`^${escapedName}/`);
-                if (regex.test(path)) {
-                    path = path.replace(regex, '');
-                } else {
-                    // 尝试匹配第一个斜杠之前的内容（可能是 programName）
-                    const firstSlash = path.indexOf('/');
-                    if (firstSlash > 0) {
-                        path = path.substring(firstSlash + 1);
-                    }
-                }
-            } else {
-                // 如果没有 programName，假设第一段是 programName
-                const firstSlash = path.indexOf('/');
-                if (firstSlash > 0) {
-                    path = path.substring(firstSlash + 1);
-                }
+            // 默认移除路径的第一段前缀（历史上可能是 program_name 或项目名）
+            const firstSlash = path.indexOf('/');
+            if (firstSlash > 0) {
+                path = path.substring(firstSlash + 1);
             }
 
             return path;
-        },
-        [],
-    );
+        }, []);
 
     // 跳转到代码位置并高亮
     const jumpToCodeLocation = useCallback(
@@ -783,7 +773,6 @@ const SSARiskAudit: React.FC = () => {
             // 从完整 URL 提取相对路径
             const filePath = extractRelativePath(
                 codeRange.url,
-                auditInfo?.program_name,
             );
 
             if (!filePath) return;
@@ -816,7 +805,7 @@ const SSARiskAudit: React.FC = () => {
                 setCodeHighlight(highlightRange);
             });
         },
-        [fetchFileContent, extractRelativePath, auditInfo?.program_name],
+        [fetchFileContent, extractRelativePath],
     );
 
     // 每次渲染同步更新 ref，保证 effect 中始终调用最新版本
@@ -1480,8 +1469,10 @@ const SSARiskAudit: React.FC = () => {
                                                             )}
                                                             {' - '}
                                                             <span className="user-name">
-                                                                {risk.program_name ||
-                                                                    'admin'}
+                                                                {formatProjectBatchLabel(
+                                                                    risk.project_name,
+                                                                    risk.scan_batch,
+                                                                )}
                                                             </span>
                                                         </div>
                                                         {risk.latest_disposal_status &&
@@ -1578,7 +1569,10 @@ const SSARiskAudit: React.FC = () => {
                                                 {formatLineAndCol(risk) ||
                                                     `[${risk.line || '?'}]`}{' '}
                                                 -{' '}
-                                                {risk.program_name || 'admin'}
+                                                {formatProjectBatchLabel(
+                                                    risk.project_name,
+                                                    risk.scan_batch,
+                                                )}
                                             </div>
                                             <div className="risk-type-info">
                                                 {risk.risk_type_verbose ||
@@ -1724,6 +1718,16 @@ const SSARiskAudit: React.FC = () => {
     const treeData = buildTreeData(fileTree);
     const currentRiskTitle =
         auditInfo?.risk?.title_verbose || auditInfo?.risk?.title || '-';
+    const taskProjectName =
+        projectNameFromQuery ||
+        riskList[0]?.project_name ||
+        auditInfo?.risk?.project_name ||
+        '-';
+    const taskScanBatch =
+        scanBatchFromQuery ||
+        riskList[0]?.scan_batch ||
+        auditInfo?.risk?.scan_batch ||
+        0;
 
     return (
         <div className="ssa-risk-audit">
@@ -1731,7 +1735,13 @@ const SSARiskAudit: React.FC = () => {
             <Card className="audit-header" size="small">
                 {isTaskMode ? (
                     <>
-                        <Title level={4}>缺陷审计 - {programName}</Title>
+                        <Title level={4}>
+                            缺陷审计 -{' '}
+                            {formatProjectBatchLabel(
+                                taskProjectName,
+                                taskScanBatch,
+                            )}
+                        </Title>
                         <div className="risk-meta">
                             <Text type="secondary">任务 ID: {taskId}</Text>
                             <Divider type="vertical" />
@@ -1770,7 +1780,11 @@ const SSARiskAudit: React.FC = () => {
                             </Text>
                             <Divider type="vertical" />
                             <Text type="secondary">
-                                项目: {auditInfo?.risk?.program_name || '-'}
+                                项目:{' '}
+                                {formatProjectBatchLabel(
+                                    auditInfo?.risk?.project_name,
+                                    auditInfo?.risk?.scan_batch,
+                                )}
                             </Text>
                         </div>
                     </>

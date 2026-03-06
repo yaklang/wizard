@@ -66,6 +66,51 @@ dayjs.locale('zh-cn');
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
+const getScanBatchText = (scanBatch?: number) => {
+    if (!scanBatch || scanBatch <= 0) return '';
+    return `第${scanBatch}批`;
+};
+
+const PhaseFlipText: React.FC<{ text: string }> = ({ text }) => {
+    const [currentText, setCurrentText] = useState(text);
+    const [previousText, setPreviousText] = useState<string | null>(null);
+    const [incomingText, setIncomingText] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!text || text === currentText) {
+            return;
+        }
+
+        setPreviousText(currentText);
+        setIncomingText(text);
+
+        const timer = window.setTimeout(() => {
+            setCurrentText(text);
+            setPreviousText(null);
+            setIncomingText(null);
+        }, 300);
+
+        return () => window.clearTimeout(timer);
+    }, [text, currentText]);
+
+    return (
+        <span
+            className={`phase-flip-text ${incomingText ? 'is-animating' : ''}`}
+        >
+            {previousText ? (
+                <span className="phase-flip-text__item phase-flip-text__item--out">
+                    {previousText}
+                </span>
+            ) : null}
+            <span
+                className={`phase-flip-text__item ${incomingText ? 'phase-flip-text__item--in' : 'phase-flip-text__item--current'}`}
+            >
+                {incomingText || currentText}
+            </span>
+        </span>
+    );
+};
+
 const TaskList: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -164,6 +209,18 @@ const TaskList: React.FC = () => {
                             }
                             if (msg.data?.error) {
                                 updates.error_message = msg.data.error;
+                            }
+                            if (msg.data?.finished_at !== undefined) {
+                                updates.finished_at = msg.data.finished_at;
+                            } else if (
+                                msg.status === 'completed' ||
+                                msg.status === 'failed' ||
+                                msg.status === 'canceled'
+                            ) {
+                                const eventFinishedAt = msg.time
+                                    ? dayjs(msg.time).unix()
+                                    : dayjs().unix();
+                                updates.finished_at = eventFinishedAt;
                             }
 
                             return { ...task, ...updates };
@@ -330,6 +387,14 @@ const TaskList: React.FC = () => {
             finalizing: '结果收尾',
         };
         return map[phase || ''] || (phase ? phase : '-');
+    };
+
+    const shouldShowPhaseText = (task: TSSATask) => {
+        if (task.status === 'completed') {
+            return false;
+        }
+        const phaseText = getPhaseText(task.phase, task.scan_mode);
+        return phaseText !== '-' && !!phaseText;
     };
 
     const isTaskRunningStatus = useCallback((status?: string) => {
@@ -658,6 +723,7 @@ const TaskList: React.FC = () => {
         const isSelected = selectedTaskIds.has(task.task_id);
         const scanModeMeta = getScanModeMeta(task.scan_mode);
         const phaseText = getPhaseText(task.phase, task.scan_mode);
+        const showPhaseText = shouldShowPhaseText(task);
         const projectDetail = task.project_id
             ? projectDetails[task.project_id]
             : null;
@@ -702,6 +768,13 @@ const TaskList: React.FC = () => {
                 ? importPercent
                 : 1
             : scanPercent;
+        const createdAtText = task.created_at
+            ? dayjs.unix(task.created_at).format('YYYY-MM-DD HH:mm:ss')
+            : '-';
+        const finishedAtText = task.finished_at
+            ? dayjs.unix(task.finished_at).format('YYYY-MM-DD HH:mm:ss')
+            : '-';
+        const languageDisplay = getLanguageDisplay(task.language);
         const moreMenuItems: MenuProps['items'] = [
             {
                 key: 'report',
@@ -757,60 +830,41 @@ const TaskList: React.FC = () => {
                     <div className="task-details">
                         <div className="task-header">
                             <span className="task-title">
-                                {task.project_name ||
-                                    task.task_id.substring(0, 8)}
+                                {task.project_name || task.task_id.substring(0, 8)}
                             </span>
-                            <Tag color={scanModeMeta.color}>
+                            {task.scan_batch ? (
+                                <Tag className="task-mini-tag task-mini-tag--batch">
+                                    {getScanBatchText(task.scan_batch)}
+                                </Tag>
+                            ) : null}
+                            <Tag
+                                color={scanModeMeta.color}
+                                className="task-mini-tag task-mini-tag--mode"
+                            >
                                 {scanModeMeta.text}
                             </Tag>
                         </div>
 
                         <div className="task-meta-grid">
                             <div className="meta-item">
-                                创建者: <span>{task.creator || 'tester'}</span>
+                                创建者: <span>{task.creator || 'root'}</span>
                             </div>
                             <div className="meta-item">
-                                创建于:{' '}
-                                <span>
-                                    {task.created_at
-                                        ? dayjs
-                                              .unix(task.created_at)
-                                              .format('YYYY-MM-DD HH:mm:ss')
-                                        : '-'}
-                                </span>
+                                创建于: <span>{createdAtText}</span>
                             </div>
                             <div className="meta-item">
                                 检测语言:{' '}
-                                <span
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                    }}
-                                >
-                                    {getLanguageDisplay(task.language).icon}
-                                    {getLanguageDisplay(task.language).label}
+                                <span className="meta-inline-value">
+                                    {languageDisplay.icon}
+                                    {languageDisplay.label}
                                 </span>
-                            </div>
-                            <div className="meta-item">
-                                扫描模式: <span>{scanModeMeta.text}</span>
                             </div>
                             <div className="meta-item">
                                 源代码来源:{' '}
                                 <span>{task.source_origin || '本地'}</span>
                             </div>
                             <div className="meta-item">
-                                当前阶段: <span>{phaseText}</span>
-                            </div>
-                            <div className="meta-item">
-                                结束于:{' '}
-                                <span>
-                                    {task.finished_at
-                                        ? dayjs
-                                              .unix(task.finished_at)
-                                              .format('YYYY-MM-DD HH:mm:ss')
-                                        : '-'}
-                                </span>
+                                结束于: <span>{finishedAtText}</span>
                             </div>
                             <div className="meta-item">
                                 总行数:{' '}
@@ -823,31 +877,39 @@ const TaskList: React.FC = () => {
                         <div className="task-status-row">
                             <div className="status-label">
                                 检测状态{' '}
-                                <span className="status-text">
+                                <span
+                                    className={`status-text ${getStatusClass(task.status)}`}
+                                >
                                     {getStatusText(task.status)}
                                 </span>
                             </div>
-                            <div className="status-phase">
-                                当前步骤 <span>{phaseText}</span>
-                            </div>
-                            {showProgressBar && (
+                            {showPhaseText ? (
+                                <div className="status-phase">
+                                    当前步骤 <PhaseFlipText text={phaseText} />
+                                </div>
+                            ) : null}
+                            {showProgressBar ? (
                                 <div className="task-progress-wrapper">
                                     <Progress
                                         percent={progressPercent}
                                         size="small"
-                                        style={{ width: 180, marginLeft: 16 }}
+                                        showInfo={false}
                                         status="active"
+                                        style={{ width: 180, marginLeft: 16 }}
                                     />
-                                    {showImportProgress && (
+                                    <span className="task-progress-percent">
+                                        {progressPercent}%
+                                    </span>
+                                    {showImportProgress ? (
                                         <span className="import-progress-meta">
                                             解压入库{' '}
                                             {hasImportSegments
                                                 ? `${importSegments}/${uploadSegments}`
                                                 : '进行中'}
                                         </span>
-                                    )}
+                                    ) : null}
                                 </div>
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 </div>
@@ -894,7 +956,7 @@ const TaskList: React.FC = () => {
                             icon={<AuditOutlined />}
                             onClick={() =>
                                 navigate(
-                                    `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?task_id=${task.task_id}&program_name=${task.project_name}`,
+                                    `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?task_id=${task.task_id}&project_name=${encodeURIComponent(task.project_name || '')}&scan_batch=${task.scan_batch || ''}`,
                                 )
                             }
                         >
@@ -942,6 +1004,11 @@ const TaskList: React.FC = () => {
                                 <Descriptions.Item label="项目名称">
                                     {task.project_name || '-'}
                                 </Descriptions.Item>
+                                <Descriptions.Item label="扫描批次">
+                                    {task.scan_batch
+                                        ? getScanBatchText(task.scan_batch)
+                                        : '-'}
+                                </Descriptions.Item>
                                 <Descriptions.Item label="项目 ID">
                                     {task.project_id || '-'}
                                 </Descriptions.Item>
@@ -968,9 +1035,11 @@ const TaskList: React.FC = () => {
                                         {scanModeMeta.text}
                                     </Tag>
                                 </Descriptions.Item>
-                                <Descriptions.Item label="当前阶段">
-                                    {phaseText}
-                                </Descriptions.Item>
+                                {showPhaseText && (
+                                    <Descriptions.Item label="当前阶段">
+                                        {phaseText}
+                                    </Descriptions.Item>
+                                )}
                                 {projectConfig?.BaseInfo?.tags && (
                                     <Descriptions.Item
                                         label="项目标签"
@@ -1005,9 +1074,6 @@ const TaskList: React.FC = () => {
                                                       ?.kind === 'jar'
                                                 ? 'JAR 包'
                                                 : task.source_origin || '本地'}
-                                </Descriptions.Item>
-                                <Descriptions.Item label="程序名称">
-                                    {task.program_name || '-'}
                                 </Descriptions.Item>
                                 {projectConfig?.CodeSource?.url && (
                                     <Descriptions.Item
