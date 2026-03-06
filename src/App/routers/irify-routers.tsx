@@ -18,6 +18,7 @@ import TaskList from '@/pages/SSAScanTask/TaskList';
 import IRifyNodeManagePage from '@/pages/NodeManage/IRifyNodeManagePage';
 import IRifySystemManagementPage from '@/pages/SystemManagement/IRifySystemManagementPage';
 import ReportManage from '@/pages/ReportManage';
+import CompileArtifactsPage from '@/pages/CompileArtifacts/CompileArtifactsPage';
 
 import IRifyDashboard from '@/pages/IRifyDashboard';
 import VulnerabilityList from '@/pages/VulnerabilityList';
@@ -151,6 +152,10 @@ const irifyRouters: RouteObject[] = [
                     {
                         path: 'global-reverse-link',
                         element: <GlobalReverseLink />,
+                    },
+                    {
+                        path: 'compile-artifacts',
+                        element: <CompileArtifactsPage />,
                     },
                 ],
             },

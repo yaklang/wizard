@@ -39,6 +39,7 @@ export interface TSSATask {
     creator?: string;
     language?: string;
     source_origin?: string;
+    scan_mode?: string;
     error_message?: string;
     started_at?: number; // Unix 时间戳（秒）
     finished_at?: number; // Unix 时间戳（秒）

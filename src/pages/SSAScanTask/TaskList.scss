@@ -156,6 +156,17 @@
                         gap: 8px;
                     }
 
+                    .status-phase {
+                        color: var(--irify-text-secondary);
+                        font-size: 13px;
+
+                        span {
+                            color: var(--irify-text);
+                            font-weight: 500;
+                            margin-left: 4px;
+                        }
+                    }
+
                     .import-progress-meta {
                         color: var(--irify-text-secondary);
                         font-size: 12px;

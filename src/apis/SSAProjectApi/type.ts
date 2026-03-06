@@ -12,6 +12,7 @@ interface TSSAProject {
     url?: string;
     hash?: string;
     risk_count?: number;
+    latest_scan_mode?: string;
     config?: TSSAProjectConfig;
 }
 

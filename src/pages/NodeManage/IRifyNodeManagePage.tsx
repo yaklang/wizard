@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     CopyOutlined,
     DeleteOutlined,
@@ -28,6 +28,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import dayjs from 'dayjs';
+import { useLocation } from 'react-router-dom';
 import type { Palm } from '@/gen/schema';
 import {
     deleteNodeManage,
@@ -113,6 +114,7 @@ const copyNodeId = async (nodeId: string) => {
 };
 
 const IRifyNodeManagePage: FC = () => {
+    const routeLocation = useLocation();
     const locationRef = useRef(window.location);
     const logDrawerRef = useRef<UseDrawerRefType>(null);
     const networkDrawerRef = useRef<UseDrawerRefType>(null);
@@ -130,6 +132,7 @@ const IRifyNodeManagePage: FC = () => {
     const [keywordInput, setKeywordInput] = useSafeState('');
     const [statusFilterInput, setStatusFilterInput] =
         useSafeState<StatusFilter>('all');
+    const [queryVersion, setQueryVersion] = useState(0);
 
     const [keyword, setKeyword] = useSafeState('');
     const [statusFilter, setStatusFilter] = useSafeState<StatusFilter>('all');
@@ -160,6 +163,7 @@ const IRifyNodeManagePage: FC = () => {
                 params.external_ip = q;
             } else {
                 params.node_id = q;
+                params.host_name = q;
             }
         }
 
@@ -221,7 +225,23 @@ const IRifyNodeManagePage: FC = () => {
 
     useEffect(() => {
         refreshList().catch(() => {});
-    }, [refreshList, keyword, statusFilter]);
+    }, [refreshList, keyword, queryVersion, statusFilter]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(routeLocation.search);
+        const queryNodeId = (params.get('node_id') || '').trim();
+        if (!queryNodeId) return;
+        setKeywordInput(queryNodeId);
+        setKeyword(queryNodeId);
+        setStatusFilterInput('all');
+        setStatusFilter('all');
+    }, [
+        routeLocation.search,
+        setKeyword,
+        setKeywordInput,
+        setStatusFilter,
+        setStatusFilterInput,
+    ]);
 
     const handleLoadMore = useCallback(() => {
         if (loading || !hasMore) return;
@@ -246,6 +266,7 @@ const IRifyNodeManagePage: FC = () => {
     const handleSearch = () => {
         setKeyword(keywordInput.trim());
         setStatusFilter(statusFilterInput);
+        setQueryVersion((v) => v + 1);
     };
 
     const handleReset = () => {
@@ -253,6 +274,7 @@ const IRifyNodeManagePage: FC = () => {
         setStatusFilterInput('all');
         setKeyword('');
         setStatusFilter('all');
+        setQueryVersion((v) => v + 1);
     };
 
     const handleBatchDelete = async () => {

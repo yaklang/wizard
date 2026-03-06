@@ -25,6 +25,7 @@ export enum RouteKey {
     IRIFY_SETTINGS_NODES = 'IRIFY_SETTINGS_NODES',
     IRIFY_SETTINGS_USERS = 'IRIFY_SETTINGS_USERS',
     IRIFY_SETTINGS_REPORTS = 'IRIFY_SETTINGS_REPORTS',
+    IRIFY_SETTINGS_COMPILE_ARTIFACTS = 'IRIFY_SETTINGS_COMPILE_ARTIFACTS',
     IRIFY_VULNERABILITIES = 'IRIFY_VULNERABILITIES',
 
     // Common Routes
@@ -81,6 +82,8 @@ const wizardRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
     [RouteKey.IRIFY_SETTINGS_REPORTS]: '/settings/reports',
+    [RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS]:
+        '/system-management/compile-artifacts',
 };
 
 // IRify 模式特有路由
@@ -105,6 +108,8 @@ const irifyRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
     [RouteKey.IRIFY_SETTINGS_REPORTS]: '/settings/reports',
+    [RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS]:
+        '/system-management/compile-artifacts',
 };
 
 // 路由映射表
@@ -161,6 +166,9 @@ export const ROUTES = {
     IRIFY_SETTINGS_NODES: getRoutePath(RouteKey.IRIFY_SETTINGS_NODES),
     IRIFY_SETTINGS_USERS: getRoutePath(RouteKey.IRIFY_SETTINGS_USERS),
     IRIFY_SETTINGS_REPORTS: getRoutePath(RouteKey.IRIFY_SETTINGS_REPORTS),
+    IRIFY_SETTINGS_COMPILE_ARTIFACTS: getRoutePath(
+        RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS,
+    ),
 
     LOGIN: getRoutePath(RouteKey.LOGIN),
     LICENSE: getRoutePath(RouteKey.LICENSE),

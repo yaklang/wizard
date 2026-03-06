@@ -308,6 +308,30 @@ const TaskList: React.FC = () => {
         return textMap[status] || status;
     };
 
+    const getScanModeMeta = (scanMode?: string) => {
+        switch (scanMode) {
+            case 'ir-db':
+                return { text: '数据库扫描', color: 'processing' as const };
+            case 'memory':
+            default:
+                return { text: '内存扫描', color: 'default' as const };
+        }
+    };
+
+    const getPhaseText = (phase?: string, scanMode?: string) => {
+        const modeAwareCompile =
+            scanMode === 'ir-db' ? '编译 IR' : '编译源码';
+        const map: Record<string, string> = {
+            'prepare-ir': '准备 IR',
+            compile: modeAwareCompile,
+            'load-program': '装载 IR',
+            scan: '规则扫描',
+            importing: '结果入库',
+            finalizing: '结果收尾',
+        };
+        return map[phase || ''] || (phase ? phase : '-');
+    };
+
     const isTaskRunningStatus = useCallback((status?: string) => {
         return (
             status === 'running' ||
@@ -632,6 +656,8 @@ const TaskList: React.FC = () => {
     const renderTaskCard = (task: TSSATask) => {
         const isExpanded = expandedTaskId === task.task_id;
         const isSelected = selectedTaskIds.has(task.task_id);
+        const scanModeMeta = getScanModeMeta(task.scan_mode);
+        const phaseText = getPhaseText(task.phase, task.scan_mode);
         const projectDetail = task.project_id
             ? projectDetails[task.project_id]
             : null;
@@ -734,6 +760,9 @@ const TaskList: React.FC = () => {
                                 {task.project_name ||
                                     task.task_id.substring(0, 8)}
                             </span>
+                            <Tag color={scanModeMeta.color}>
+                                {scanModeMeta.text}
+                            </Tag>
                         </div>
 
                         <div className="task-meta-grid">
@@ -764,8 +793,14 @@ const TaskList: React.FC = () => {
                                 </span>
                             </div>
                             <div className="meta-item">
+                                扫描模式: <span>{scanModeMeta.text}</span>
+                            </div>
+                            <div className="meta-item">
                                 源代码来源:{' '}
                                 <span>{task.source_origin || '本地'}</span>
+                            </div>
+                            <div className="meta-item">
+                                当前阶段: <span>{phaseText}</span>
                             </div>
                             <div className="meta-item">
                                 结束于:{' '}
@@ -791,6 +826,9 @@ const TaskList: React.FC = () => {
                                 <span className="status-text">
                                     {getStatusText(task.status)}
                                 </span>
+                            </div>
+                            <div className="status-phase">
+                                当前步骤 <span>{phaseText}</span>
                             </div>
                             {showProgressBar && (
                                 <div className="task-progress-wrapper">
@@ -924,6 +962,14 @@ const TaskList: React.FC = () => {
                                 </Descriptions.Item>
                                 <Descriptions.Item label="总行数">
                                     {task.total_lines?.toLocaleString() || 0} 行
+                                </Descriptions.Item>
+                                <Descriptions.Item label="扫描模式">
+                                    <Tag color={scanModeMeta.color}>
+                                        {scanModeMeta.text}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="当前阶段">
+                                    {phaseText}
                                 </Descriptions.Item>
                                 {projectConfig?.BaseInfo?.tags && (
                                     <Descriptions.Item
