@@ -14,6 +14,7 @@ import {
     FileTextOutlined,
     ControlOutlined,
     AppstoreOutlined,
+    HddOutlined,
     DownOutlined,
     RightOutlined,
     NodeIndexOutlined,
@@ -78,6 +79,12 @@ const collapsibleNavItems = [
         path: '/reports',
     },
     {
+        key: '/compile-artifacts',
+        icon: <HddOutlined />,
+        label: '编译产物',
+        path: '/system-management/compile-artifacts',
+    },
+    {
         key: '/node-config',
         icon: <ControlOutlined />,
         label: '节点配置',
@@ -103,21 +110,6 @@ const collapsibleNavItems = [
                 key: '/system-management/userinfo',
                 label: '用户管理',
                 path: '/system-management/userinfo',
-            },
-            {
-                key: '/system-management/task-script',
-                label: '脚本管理',
-                path: '/system-management/task-script',
-            },
-            {
-                key: '/system-management/cve-loophole',
-                label: '漏洞库管理',
-                path: '/system-management/cve-loophole',
-            },
-            {
-                key: '/system-management/global-reverse-link',
-                label: '全局反连',
-                path: '/system-management/global-reverse-link',
             },
         ],
     },
@@ -213,14 +205,9 @@ const IRifyLayout: React.FC = () => {
 
         if (path.startsWith('/system-management/userinfo'))
             return ['系统管理', '用户管理'];
-        if (path.startsWith('/system-management/task-script/modify-task-script'))
-            return ['系统管理', '脚本管理', '编辑脚本'];
-        if (path.startsWith('/system-management/task-script'))
-            return ['系统管理', '脚本管理'];
-        if (path.startsWith('/system-management/cve-loophole'))
-            return ['系统管理', '漏洞库管理'];
-        if (path.startsWith('/system-management/global-reverse-link'))
-            return ['系统管理', '全局反连'];
+        if (path.startsWith('/system-management/compile-artifacts'))
+            return ['编译产物'];
+        if (path.startsWith('/system-management')) return ['系统管理'];
 
         return ['工作台'];
     }, [location.pathname]);
