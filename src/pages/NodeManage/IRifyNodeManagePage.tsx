@@ -1,8 +1,11 @@
 import type { FC } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
+    CopyOutlined,
     DeleteOutlined,
     EditOutlined,
+    EnvironmentOutlined,
+    FileTextOutlined,
     GlobalOutlined,
     MoreOutlined,
     ReloadOutlined,
@@ -10,7 +13,6 @@ import {
 } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import {
-    Badge,
     Button,
     Card,
     Checkbox,
@@ -69,6 +71,45 @@ const nodeIpText = (record: Palm.Node): string => {
     return (
         record.external_ip || record.main_addr || record.ip_address?.[0] || '-'
     );
+};
+
+const safePercent = (value?: number | null): number | null => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return null;
+    return Math.min(100, Math.max(0, n));
+};
+
+const formatLastSeenTime = (ts: number): string => {
+    if (!ts) return '-';
+    return dayjs.unix(ts).format('YYYY-MM-DD HH:mm');
+};
+
+const middleEllipsis = (value: string, keep = 8): string => {
+    if (!value) return '-';
+    if (value.length <= keep * 2 + 3) return value;
+    return `${value.slice(0, keep)}...${value.slice(-keep)}`;
+};
+
+const copyNodeId = async (nodeId: string) => {
+    if (!nodeId) return;
+    try {
+        if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(nodeId);
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = nodeId;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+        message.success('节点名称已复制');
+    } catch {
+        message.error('复制失败');
+    }
 };
 
 const IRifyNodeManagePage: FC = () => {
@@ -288,74 +329,142 @@ const IRifyNodeManagePage: FC = () => {
 
     const columns: ColumnsType<Palm.Node> = [
         {
-            title: '节点名称',
-            dataIndex: 'node_id',
-            key: 'node_name',
-            width: 280,
-            render: (value: string) => (
-                <span className="node-name-value">{value || '-'}</span>
-            ),
-        },
-        {
-            title: '节点IP',
-            key: 'node_ip',
-            width: 170,
-            render: (_, record) => (
-                <span className="node-value">{nodeIpText(record)}</span>
-            ),
-        },
-        {
-            title: '主机名',
-            key: 'hostname',
-            width: 150,
-            render: (_, record) => (
-                <span className="node-value">{record.hostname || '-'}</span>
-            ),
-        },
-        {
-            title: '所在区域',
-            key: 'location',
-            width: 150,
-            render: (_, record) => (
-                <span className="node-value">{record.location || '-'}</span>
-            ),
-        },
-        {
-            title: '当前任务量',
-            key: 'task_running',
-            width: 120,
-            align: 'center',
-            render: (_, record) => (
-                <span className="node-value">{record.task_running ?? 0}</span>
-            ),
-        },
-        {
-            title: '活跃状态',
-            key: 'active_status',
-            width: 180,
+            title: '节点身份',
+            key: 'identity',
+            width: '30%',
+            className: 'col-identity',
             render: (_, record) => {
                 const online = isOnlineNode(record);
-                const activeText = online
-                    ? `${intervalText(Math.max(0, dayjs().unix() - getNodeLastSeen(record)))}前活跃`
-                    : '离线';
+                const ip = nodeIpText(record);
+                const host = record.hostname || '-';
+                const location = (record.location || '').trim();
                 return (
-                    <Badge
-                        status={online ? 'success' : 'default'}
-                        text={activeText}
-                    />
+                    <div className="node-identity-cell">
+                        <div className="identity-title">
+                            <span
+                                className={
+                                    online
+                                        ? 'identity-status-dot is-online'
+                                        : 'identity-status-dot is-offline'
+                                }
+                            />
+                            <span className="node-name-wrap">
+                                <span
+                                    className="node-name-value"
+                                    title={record.node_id || '-'}
+                                >
+                                    {middleEllipsis(record.node_id || '-')}
+                                </span>
+                                <CopyOutlined
+                                    className="node-copy-icon"
+                                    title="复制节点名称"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        copyNodeId(record.node_id || '');
+                                    }}
+                                />
+                            </span>
+                        </div>
+                        <div className="identity-meta">
+                            {ip} ({host})
+                        </div>
+                        {location ? (
+                            <div className="identity-location">
+                                <EnvironmentOutlined />
+                                <span>{location}</span>
+                            </div>
+                        ) : null}
+                    </div>
+                );
+            },
+        },
+        {
+            title: '实时负载',
+            key: 'live_load',
+            width: '30%',
+            className: 'col-load',
+            render: (_, record) => {
+                const online = isOnlineNode(record);
+                const cpu = online ? safePercent(record.cpu_percent) : null;
+                const mem = online ? safePercent(record.memory_percent) : null;
+                const taskRunning = record.task_running ?? 0;
+                const cpuText = cpu === null ? '-' : `${Math.round(cpu)}%`;
+                const memText = mem === null ? '-' : `${Math.round(mem)}%`;
+                return (
+                    <div className="node-load-cell">
+                        <div className="load-row">
+                            <span className="load-label">CPU</span>
+                            <div className="load-track">
+                                <div
+                                    className="load-fill cpu"
+                                    style={{ width: `${cpu ?? 0}%` }}
+                                />
+                            </div>
+                            <span className="load-value">{cpuText}</span>
+                        </div>
+                        <div className="load-row">
+                            <span className="load-label">内存</span>
+                            <div className="load-track">
+                                <div
+                                    className="load-fill mem"
+                                    style={{ width: `${mem ?? 0}%` }}
+                                />
+                            </div>
+                            <span className="load-value">{memText}</span>
+                        </div>
+                        <div className="load-task-line">
+                            {online
+                                ? `任务进行中: ${taskRunning}`
+                                : '离线节点，暂无实时负载'}
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            title: '健康状态',
+            key: 'health_status',
+            width: '25%',
+            className: 'col-health',
+            render: (_, record) => {
+                const online = isOnlineNode(record);
+                const lastSeen = getNodeLastSeen(record);
+                const activeText = online
+                    ? `${intervalText(Math.max(0, dayjs().unix() - lastSeen))}前活跃`
+                    : '离线';
+                const createdAt = Number(record.created_at || 0);
+                const stableText =
+                    online && createdAt > 0
+                        ? `已稳定运行: ${intervalText(Math.max(0, dayjs().unix() - createdAt))}`
+                        : online
+                          ? ''
+                          : `最近在线: ${formatLastSeenTime(lastSeen)}`;
+                return (
+                    <div className="node-health-cell">
+                        <div
+                            className={`health-main-line ${online ? 'is-online' : 'is-offline'}`}
+                        >
+                            <span className="health-status-dot" />
+                            <span>{activeText}</span>
+                        </div>
+                        <div className="health-sub-line">
+                            {stableText || '-'}
+                        </div>
+                    </div>
                 );
             },
         },
         {
             title: '操作',
             key: 'action',
-            width: 180,
-            fixed: 'right',
+            width: '15%',
+            className: 'col-action',
+            align: 'right',
             render: (_, record) => {
                 const menuItems: MenuProps['items'] = [
                     {
                         key: 'log',
-                        icon: <EditOutlined />,
+                        icon: <FileTextOutlined />,
                         label: '节点日志',
                         onClick: () => logDrawerRef.current?.open(),
                     },
@@ -452,7 +561,8 @@ const IRifyNodeManagePage: FC = () => {
                     dataSource={list}
                     loading={loading}
                     pagination={false}
-                    scroll={{ x: 1240 }}
+                    tableLayout="fixed"
+                    scroll={{ x: 980 }}
                     locale={{ emptyText: '暂无节点数据' }}
                 />
 
