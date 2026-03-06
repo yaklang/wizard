@@ -6,6 +6,8 @@ import {
     Space,
     Button,
     Popconfirm,
+    Popover,
+    Modal,
     message,
     Tag,
     Input,
@@ -40,10 +42,12 @@ import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
+import { scanSSAIR } from '@/apis/SSAIRApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
 import dayjs from 'dayjs';
+import './ProjectManagement.scss';
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -92,6 +96,14 @@ const ProjectManagement: React.FC = () => {
     const [filterSourceKind, setFilterSourceKind] = useState<string | undefined>();
     const [filterTags, setFilterTags] = useState<string | undefined>();
     const [filterDateRange, setFilterDateRange] = useState<[number, number] | undefined>();
+
+    // 仅允许一个“发起扫描”弹层同时展开
+    const [scanPopoverProjectId, setScanPopoverProjectId] = useState<number | null>(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+    const selectedProjects = data.filter(
+        (item) => item.id && selectedRowKeys.includes(item.id),
+    );
 
     const fetchList = useCallback(
         async (options: {
@@ -157,11 +169,36 @@ const ProjectManagement: React.FC = () => {
         [],
     );
 
+    const reloadFirstPage = useCallback(() => {
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        setSelectedRowKeys([]);
+        fetchList({
+            p: 1,
+            l: limit,
+            projectName: searchName,
+            language: filterLanguage,
+            sourceKind: filterSourceKind,
+            tags: filterTags,
+            dateRange: filterDateRange,
+        });
+    }, [
+        fetchList,
+        limit,
+        searchName,
+        filterLanguage,
+        filterSourceKind,
+        filterTags,
+        filterDateRange,
+    ]);
+
     useEffect(() => {
         // 筛选条件改变时，重置到第一页
         setPage(1);
         setData([]);
         setHasMore(true);
+        setSelectedRowKeys([]);
         fetchList({
             p: 1,
             l: limit,
@@ -211,19 +248,10 @@ const ProjectManagement: React.FC = () => {
             const res = await deleteSSAProject({ id: record.id });
             if (res) {
                 message.success('删除成功');
-                // 删除后重新加载第一页
-                setPage(1);
-                setData([]);
-                setHasMore(true);
-                fetchList({
-                    p: 1,
-                    l: limit,
-                    projectName: searchName,
-                    language: filterLanguage,
-                    sourceKind: filterSourceKind,
-                    tags: filterTags,
-                    dateRange: filterDateRange,
-                });
+                setSelectedRowKeys((prev) =>
+                    prev.filter((id) => id !== record.id),
+                );
+                reloadFirstPage();
             }
         } catch (err) {
             message.error('删除失败');
@@ -246,18 +274,7 @@ const ProjectManagement: React.FC = () => {
 
     const handleDrawerSuccess = () => {
         // 保存后重新加载第一页
-        setPage(1);
-        setData([]);
-        setHasMore(true);
-        fetchList({
-            p: 1,
-            l: limit,
-            projectName: searchName,
-            language: filterLanguage,
-            sourceKind: filterSourceKind,
-            tags: filterTags,
-            dateRange: filterDateRange,
-        });
+        reloadFirstPage();
     };
 
     const handleSearch = (value: string) => {
@@ -268,6 +285,30 @@ const ProjectManagement: React.FC = () => {
     const handleLanguageFilter = (value: string | undefined) => {
         setFilterLanguage(value || undefined);
         setPage(1);
+    };
+
+    const handleBatchDelete = () => {
+        if (!selectedProjects.length) return;
+        Modal.confirm({
+            title: '批量删除项目',
+            content: `确认删除已选中的 ${selectedProjects.length} 个项目？删除后不可恢复。`,
+            okText: '删除',
+            okButtonProps: { danger: true },
+            cancelText: '取消',
+            async onOk() {
+                const ids = selectedProjects
+                    .map((item) => item.id)
+                    .filter((id): id is number => Boolean(id));
+                try {
+                    await Promise.all(ids.map((id) => deleteSSAProject({ id })));
+                    message.success('批量删除成功');
+                    reloadFirstPage();
+                } catch (err: any) {
+                    message.error(err?.message || '批量删除失败');
+                    throw err;
+                }
+            },
+        });
     };
 
     // 格式化时间戳
@@ -338,6 +379,64 @@ const ProjectManagement: React.FC = () => {
             });
         } catch (err: any) {
             message.error(`创建扫描失败: ${err.msg || err.message}`);
+        }
+    };
+
+    const handleScanWithIRDB = async (record: TSSAProject) => {
+        if (!record.id) return;
+
+        const msgKey = `ssa-ir-scan-${record.id}-${Date.now()}`;
+        try {
+            message.loading({
+                content: '数据库扫描：正在创建任务...',
+                key: msgKey,
+                duration: 0,
+            });
+
+            const scanReq: any = {
+                prepare_ir: true,
+                incremental: true,
+                force_full: false,
+                snapshot_id: String(Date.now()),
+            };
+            const scanNode = record.config?.ScanNode;
+            if (scanNode?.mode === 'manual' && scanNode.node_id) {
+                scanReq.node_id = scanNode.node_id;
+            }
+            const scanRes = await scanSSAIR(record.id, scanReq);
+            const scanData = scanRes?.data || {};
+            const taskId = scanData?.task_id;
+
+            message.success({
+                content: (
+                    <span>
+                        数据库扫描任务已创建{taskId ? ` (#${taskId})` : ''}，编译与扫描进度可在任务历史中查看。
+                        <Button
+                            type="link"
+                            size="small"
+                            onClick={() => {
+                                message.destroy();
+                                navigate(
+                                    `${getRoutePath(
+                                        RouteKey.TASK_LIST,
+                                    )}?project_id=${record.id}`,
+                                );
+                            }}
+                            style={{ padding: 0, height: 'auto' }}
+                        >
+                            查看任务列表 →
+                        </Button>
+                    </span>
+                ),
+                key: msgKey,
+                duration: 6,
+            });
+        } catch (err: any) {
+            message.error({
+                content: `数据库扫描失败: ${err?.msg || err?.message || '未知错误'}`,
+                key: msgKey,
+                duration: 6,
+            });
         }
     };
 
@@ -430,6 +529,22 @@ const ProjectManagement: React.FC = () => {
                                 >
                                     {label}
                                 </Tag>
+                                {record.latest_scan_mode === 'memory' && (
+                                    <Tag
+                                        color="default"
+                                        style={{ marginLeft: 8, fontSize: 12 }}
+                                    >
+                                        内存扫描
+                                    </Tag>
+                                )}
+                                {record.latest_scan_mode === 'ir-db' && (
+                                    <Tag
+                                        color="processing"
+                                        style={{ marginLeft: 8, fontSize: 12 }}
+                                    >
+                                        数据库扫描
+                                    </Tag>
+                                )}
                             </div>
                             <div
                                 style={{
@@ -614,10 +729,16 @@ const ProjectManagement: React.FC = () => {
 
                 return (
                     <Space size="small">
-                        <Popconfirm
+                        <Popover
                             title="确认发起扫描"
-                            description={
-                                <div style={{ maxWidth: 300 }}>
+                            placement="topRight"
+                            trigger="click"
+                            open={scanPopoverProjectId === record.id}
+                            onOpenChange={(open) =>
+                                setScanPopoverProjectId(open ? (record.id ?? null) : null)
+                            }
+                            content={
+                                <div style={{ maxWidth: 320 }}>
                                     <div style={{ marginBottom: 4 }}>
                                         <strong>项目：</strong>{record.project_name}
                                     </div>
@@ -626,23 +747,50 @@ const ProjectManagement: React.FC = () => {
                                     </div>
                                     <div style={{ marginBottom: 4 }}>
                                         <strong>仓库：</strong>
-                                        <span style={{ 
-                                            fontSize: 12, 
-                                            color: '#666',
-                                            wordBreak: 'break-all' 
-                                        }}>
+                                        <span
+                                            style={{
+                                                fontSize: 12,
+                                                color: '#666',
+                                                wordBreak: 'break-all',
+                                            }}
+                                        >
                                             {repoName}
                                         </span>
                                     </div>
-                                    <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
-                                        扫描可能需要几分钟，任务将在后台执行
+                                    <div
+                                        style={{
+                                            fontSize: 12,
+                                            color: '#999',
+                                            marginTop: 8,
+                                        }}
+                                    >
+                                        扫描将在后台执行。数据库扫描会自动复用/更新 IR（黑盒）。
+                                    </div>
+                                    <div style={{ marginTop: 12 }}>
+                                        <Space>
+                                            <Button
+                                                size="small"
+                                                onClick={async () => {
+                                                    setScanPopoverProjectId(null);
+                                                    await handleScan(record);
+                                                }}
+                                            >
+                                                内存扫描
+                                            </Button>
+                                            <Button
+                                                type="primary"
+                                                size="small"
+                                                onClick={async () => {
+                                                    setScanPopoverProjectId(null);
+                                                    await handleScanWithIRDB(record);
+                                                }}
+                                            >
+                                                数据库扫描
+                                            </Button>
+                                        </Space>
                                     </div>
                                 </div>
                             }
-                            onConfirm={() => handleScan(record)}
-                            okText="🚀 确定开始"
-                            cancelText="取消"
-                            placement="topRight"
                         >
                             <Button
                                 type="primary"
@@ -651,7 +799,7 @@ const ProjectManagement: React.FC = () => {
                             >
                                 发起扫描
                             </Button>
-                        </Popconfirm>
+                        </Popover>
                         <Dropdown
                             menu={{ items: menuItems }}
                             trigger={['click']}
@@ -683,7 +831,7 @@ const ProjectManagement: React.FC = () => {
     ];
 
     return (
-        <div className="p-4">
+        <div className="p-4 project-management-page">
             <Card>
                 <div className="flex justify-between items-center mb-4">
                     <div className="text-lg font-bold">
@@ -759,6 +907,11 @@ const ProjectManagement: React.FC = () => {
                     columns={columns}
                     dataSource={data}
                     rowKey={(r) => r.id ?? r.project_name}
+                    rowSelection={{
+                        selectedRowKeys,
+                        onChange: setSelectedRowKeys,
+                        columnWidth: 52,
+                    }}
                     loading={loading && page === 1}
                     scroll={{ x: 1200 }}
                     pagination={false}
@@ -782,6 +935,26 @@ const ProjectManagement: React.FC = () => {
                     )}
                 </div>
             </Card>
+
+            {selectedProjects.length > 0 ? (
+                <div className="project-selection-bar">
+                    <div className="selection-info">
+                        已选中{' '}
+                        <span className="selected-count">
+                            {selectedProjects.length}
+                        </span>{' '}
+                        个项目
+                    </div>
+                    <Space>
+                        <Button onClick={() => setSelectedRowKeys([])}>
+                            取消选择
+                        </Button>
+                        <Button danger onClick={handleBatchDelete}>
+                            删除所选
+                        </Button>
+                    </Space>
+                </div>
+            ) : null}
 
             <ProjectDrawer
                 visible={drawerVisible}
