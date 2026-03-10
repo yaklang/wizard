@@ -6,6 +6,7 @@ import type {
     TSSARiskRequest,
     TSSARiskBatchRequest,
     TSSARiskQueryParams,
+    TSSARiskExportParams,
     TSSARiskExportData,
     TSSARiskImportResult,
     TSSARiskFilterOptions,
@@ -74,14 +75,48 @@ export const batchUpdateSSARisks = (
     axios.post<never, ResponseData<boolean>>('/ssa/risk/batch', data);
 
 // GET /ssa/risk/export - 导出 SSA 风险
-export const exportSSARisks = (params?: {
-    program_name?: string;
-    severity?: string;
-    risk_type?: string;
-    from_rule?: string;
-}): Promise<ResponseData<TSSARiskExportData>> =>
+export const exportSSARisks = (
+    params?: TSSARiskExportParams,
+): Promise<ResponseData<TSSARiskExportData>> =>
     axios.get<never, ResponseData<TSSARiskExportData>>('/ssa/risk/export', {
         params,
+    });
+
+// GET /ssa/risk/export - 获取 HTML 报告源
+export const exportSSARiskReportHTML = (
+    params: TSSARiskExportParams,
+): Promise<ResponseData<string>> =>
+    axios.get<never, ResponseData<string>>('/ssa/risk/export', {
+        params: {
+            ...params,
+            format: 'html',
+        },
+        responseType: 'text',
+        transformResponse: [
+            (data) => ({
+                data,
+                code: 200,
+            }),
+        ],
+    });
+
+// GET /ssa/risk/export - 下载 DOCX 报告
+export const exportSSARiskReportDocx = (
+    params: TSSARiskExportParams,
+): Promise<ResponseData<Blob>> =>
+    axios.get<never, ResponseData<Blob>>('/ssa/risk/export', {
+        params: {
+            ...params,
+            format: 'docx',
+        },
+        responseType: 'blob',
+        transformResponse: [
+            (data) => ({
+                data,
+                code: 200,
+                msg: '',
+            }),
+        ],
     });
 
 // POST /ssa/risk/import - 导入 SSA 风险

@@ -39,22 +39,39 @@ import {
 import { SiPhp, SiJavascript, SiPython, SiGo, SiC } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useRequest } from 'ahooks';
 import {
     querySSATasks,
     querySSAArtifactSummary,
     querySSAArtifactEvents,
     cancelSSATask,
 } from '@/apis/SSAScanTaskApi';
+import {
+    exportSSARiskReportDocx,
+    exportSSARiskReportHTML,
+    getSSARiskFilterOptions,
+} from '@/apis/SSARiskApi';
 import type {
     TSSATask,
     TSSATaskQueryParams,
     TSSAArtifactMetricsSummary,
     TSSAArtifactEvent,
 } from '@/apis/SSAScanTaskApi/type';
+import type {
+    TSSARiskExportParams,
+    TSSARiskFilterOptions,
+} from '@/apis/SSARiskApi/type';
 import { fetchSSAProject } from '@/apis/SSAProjectApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
+import SSAReportExportModal, {
+    type TSSAReportExportFormValues,
+} from '@/compoments/SSAReportExportModal';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { useEventSource } from '@/hooks';
+import {
+    exportSSAReportToPDF,
+    saveSSAReportDocx,
+} from '@/utils/ssaReportExport';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
@@ -126,8 +143,18 @@ const TaskList: React.FC = () => {
     const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(
         new Set(),
     );
+    const [exportModalOpen, setExportModalOpen] = useState(false);
+    const [exportSubmitting, setExportSubmitting] = useState(false);
+    const [exportTaskIDs, setExportTaskIDs] = useState<string[]>([]);
+    const [exportScopeText, setExportScopeText] = useState('');
+    const [exportScopeName, setExportScopeName] = useState('SSA任务');
 
     const [form] = Form.useForm();
+
+    const { data: riskFilterOptions } = useRequest(async () => {
+        const res = await getSSARiskFilterOptions();
+        return res.data as TSSARiskFilterOptions;
+    });
 
     const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
     const [projectDetails, setProjectDetails] = useState<
@@ -376,15 +403,14 @@ const TaskList: React.FC = () => {
     };
 
     const getPhaseText = (phase?: string, scanMode?: string) => {
-        const modeAwareCompile =
-            scanMode === 'ir-db' ? '编译 IR' : '编译源码';
+        const modeAwareCompile = scanMode === 'ir-db' ? '编译 IR' : '编译源码';
         const map: Record<string, string> = {
             'prepare-ir': '准备 IR',
             compile: modeAwareCompile,
-            'load-program': '装载 IR',
+            'load-program': '拉取 IR',
             scan: '规则扫描',
-            importing: '结果入库',
-            finalizing: '结果收尾',
+            importing: '结果导入',
+            finalizing: '收尾处理中',
         };
         return map[phase || ''] || (phase ? phase : '-');
     };
@@ -415,6 +441,44 @@ const TaskList: React.FC = () => {
         return filters;
     }, [form]);
 
+    const fetchAllFilteredTaskIDs = useCallback(async () => {
+        const filters = getCurrentFilters();
+        const pageSize = 200;
+        let currentPage = 1;
+        let total = 0;
+        const ids: string[] = [];
+        const seen = new Set<string>();
+
+        do {
+            const params: TSSATaskQueryParams = {
+                page: currentPage,
+                limit: pageSize,
+                ...filters,
+            };
+            if (projectId) {
+                params.project_id = parseInt(projectId, 10);
+            }
+            if (taskId) {
+                params.task_id = taskId;
+            }
+            const res = await querySSATasks(params);
+            const list = res.data?.list || [];
+            total = res.data?.pagemeta?.total || list.length;
+            list.forEach((item) => {
+                if (item.task_id && !seen.has(item.task_id)) {
+                    seen.add(item.task_id);
+                    ids.push(item.task_id);
+                }
+            });
+            currentPage += 1;
+            if (list.length === 0) {
+                break;
+            }
+        } while (ids.length < total);
+
+        return ids;
+    }, [getCurrentFilters, projectId, taskId]);
+
     const refreshList = useCallback(() => {
         setPage(1);
         setData([]);
@@ -422,6 +486,148 @@ const TaskList: React.FC = () => {
         setSelectedTaskIds(new Set());
         fetchList({ p: 1, l: limit, filters: getCurrentFilters() });
     }, [fetchList, getCurrentFilters, limit]);
+
+    const severityOptions = (riskFilterOptions?.severities || []).map(
+        (value) => ({
+            label:
+                {
+                    critical: '严重',
+                    high: '高危',
+                    middle: '中危',
+                    warning: '警告',
+                    low: '低危',
+                    info: '信息',
+                }[value] || value,
+            value,
+        }),
+    );
+
+    const riskTypeOptions = (riskFilterOptions?.risk_types || []).map(
+        (value) => ({
+            label: value,
+            value,
+        }),
+    );
+
+    const openTaskExportModal = useCallback((task: TSSATask) => {
+        if (!task.task_id) {
+            message.warning('任务信息不完整，无法导出');
+            return;
+        }
+        setExportTaskIDs([task.task_id]);
+        setExportScopeName(task.project_name || task.task_id);
+        const batchText = task.scan_batch
+            ? `，${getScanBatchText(task.scan_batch)}`
+            : '';
+        setExportScopeText(
+            `当前将基于任务 ${task.project_name || task.task_id}${batchText} 导出报告。可按危险等级、风险类型、是否审计过和处置状态进一步筛选。`,
+        );
+        setExportModalOpen(true);
+    }, []);
+
+    const openSelectedTaskExportModal = useCallback(() => {
+        if (selectedTaskIds.size === 0) {
+            message.warning('请先选择任务');
+            return;
+        }
+        const selectedTasks = data.filter((task) =>
+            selectedTaskIds.has(task.task_id),
+        );
+        if (selectedTasks.length === 0) {
+            message.warning('未找到已选任务');
+            return;
+        }
+        if (selectedTasks.length === 1) {
+            openTaskExportModal(selectedTasks[0]);
+            return;
+        }
+        setExportTaskIDs(selectedTasks.map((task) => task.task_id));
+        setExportScopeName(`SSA任务集合_${selectedTasks.length}项`);
+        setExportScopeText(
+            `当前将基于已选中的 ${selectedTasks.length} 个任务导出报告。可按危险等级、风险类型、是否审计过和处置状态进一步筛选。`,
+        );
+        setExportModalOpen(true);
+    }, [data, openTaskExportModal, selectedTaskIds]);
+
+    const openFilteredTaskExportModal = useCallback(async () => {
+        try {
+            const taskIDs = await fetchAllFilteredTaskIDs();
+            if (taskIDs.length === 0) {
+                message.warning('当前筛选结果下没有可导出的任务');
+                return;
+            }
+            setExportTaskIDs(taskIDs);
+            setExportScopeName(`SSA任务筛选导出_${taskIDs.length}项`);
+            setExportScopeText(
+                `当前将基于任务列表筛选结果导出，共命中 ${taskIDs.length} 个任务。可按危险等级、风险类型、是否审计过和处置状态进一步筛选。`,
+            );
+            setExportModalOpen(true);
+        } catch (error: any) {
+            message.error(
+                `获取任务范围失败: ${error?.msg || error?.message || '未知错误'}`,
+            );
+        }
+    }, [fetchAllFilteredTaskIDs]);
+
+    const buildDefaultTaskExportValues = useCallback(
+        (): Partial<TSSAReportExportFormValues> => ({
+            report_name: `${exportScopeName}_${dayjs().format('YYYYMMDD_HHmmss')}`,
+            format: 'pdf',
+            severity: [],
+            risk_type: [],
+            audited_state: 'all',
+            latest_disposal_status: [],
+            template_id: 'default-ssa-v1',
+        }),
+        [exportScopeName],
+    );
+
+    const handleTaskExport = useCallback(
+        async (values: TSSAReportExportFormValues) => {
+            if (exportTaskIDs.length === 0) {
+                message.warning('导出范围为空，无法导出');
+                return;
+            }
+            try {
+                setExportSubmitting(true);
+                const params: TSSARiskExportParams = {
+                    report_name: values.report_name,
+                    template_id: values.template_id,
+                    severity: values.severity?.join(',') || undefined,
+                    risk_type: values.risk_type?.join(',') || undefined,
+                    audited_state: values.audited_state || 'all',
+                    latest_disposal_status:
+                        values.latest_disposal_status?.join(',') || undefined,
+                };
+                if (exportTaskIDs.length === 1) {
+                    params.task_id = exportTaskIDs[0];
+                } else {
+                    params.task_ids = exportTaskIDs.join(',');
+                }
+                if (values.format === 'word') {
+                    const res = await exportSSARiskReportDocx(params);
+                    if (!res.data) {
+                        throw new Error('empty report docx');
+                    }
+                    saveSSAReportDocx(res.data, values.report_name);
+                } else {
+                    const res = await exportSSARiskReportHTML(params);
+                    const html = res.data || '';
+                    if (!html.trim()) {
+                        throw new Error('empty report html');
+                    }
+                    await exportSSAReportToPDF(html, values.report_name);
+                }
+                setExportModalOpen(false);
+                message.success('导出成功');
+            } catch {
+                message.error('导出失败');
+            } finally {
+                setExportSubmitting(false);
+            }
+        },
+        [exportTaskIDs],
+    );
 
     const deleteTasksByIDs = useCallback(
         async (taskIDs: string[]) => {
@@ -443,7 +649,9 @@ const TaskList: React.FC = () => {
             if (failed === 0) {
                 message.success(`任务删除成功，共 ${success} 条`);
             } else if (success > 0) {
-                message.warning(`任务删除部分成功：成功 ${success}，失败 ${failed}`);
+                message.warning(
+                    `任务删除部分成功：成功 ${success}，失败 ${failed}`,
+                );
             } else {
                 message.error('任务删除失败');
             }
@@ -476,7 +684,7 @@ const TaskList: React.FC = () => {
         (task: TSSATask, key: string) => {
             switch (key) {
                 case 'report':
-                    message.info('生成报告功能开发中');
+                    openTaskExportModal(task);
                     return;
                 case 'permission':
                     message.info('修改访问权限功能开发中');
@@ -491,7 +699,7 @@ const TaskList: React.FC = () => {
                     return;
             }
         },
-        [handleTaskDelete],
+        [handleTaskDelete, openTaskExportModal],
     );
 
     const handleTaskCardClick = useCallback(
@@ -584,7 +792,9 @@ const TaskList: React.FC = () => {
                 cancelText: '取消',
                 okButtonProps: { danger: true },
                 onOk: async () => {
-                    await deleteTasksByIDs(deletableTasks.map((task) => task.task_id));
+                    await deleteTasksByIDs(
+                        deletableTasks.map((task) => task.task_id),
+                    );
                 },
             });
             return;
@@ -747,7 +957,9 @@ const TaskList: React.FC = () => {
         const importPercent = hasImportSegments
             ? Math.min(
                   100,
-                  Math.round((importSegments / Math.max(uploadSegments, 1)) * 100),
+                  Math.round(
+                      (importSegments / Math.max(uploadSegments, 1)) * 100,
+                  ),
               )
             : 0;
         const isImportPhase =
@@ -830,7 +1042,8 @@ const TaskList: React.FC = () => {
                     <div className="task-details">
                         <div className="task-header">
                             <span className="task-title">
-                                {task.project_name || task.task_id.substring(0, 8)}
+                                {task.project_name ||
+                                    task.task_id.substring(0, 8)}
                             </span>
                             {task.scan_batch ? (
                                 <Tag className="task-mini-tag task-mini-tag--batch">
@@ -869,7 +1082,8 @@ const TaskList: React.FC = () => {
                             <div className="meta-item">
                                 总行数:{' '}
                                 <span>
-                                    {task.total_lines?.toLocaleString() || '0'} 行
+                                    {task.total_lines?.toLocaleString() || '0'}{' '}
+                                    行
                                 </span>
                             </div>
                         </div>
@@ -1411,13 +1625,16 @@ const TaskList: React.FC = () => {
                                     <Button
                                         size="small"
                                         onClick={() => {
-                                            const nextOpen = !isArtifactPanelOpen;
+                                            const nextOpen =
+                                                !isArtifactPanelOpen;
                                             setArtifactPanelOpenMap((prev) => ({
                                                 ...prev,
                                                 [task.task_id]: nextOpen,
                                             }));
                                             if (nextOpen) {
-                                                fetchArtifactMetrics(task.task_id);
+                                                fetchArtifactMetrics(
+                                                    task.task_id,
+                                                );
                                             }
                                         }}
                                     >
@@ -1439,92 +1656,96 @@ const TaskList: React.FC = () => {
                                                 column={2}
                                                 size="small"
                                             >
-                                        <Descriptions.Item label="产物格式">
-                                            {artifactSummary?.manifest_format ||
-                                                '-'}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="任务阶段">
-                                            {artifactSummary?.phase || '-'}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="Manifest Codec">
-                                            {artifactSummary?.manifest_codec ||
-                                                '-'}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="Manifest 大小">
-                                            {formatBytes(
-                                                artifactSummary?.manifest_compressed_size,
-                                            )}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="上传分段数">
-                                            {artifactSummary?.upload_segments ||
-                                                0}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="导入分段数">
-                                            {artifactSummary?.import_segments ||
-                                                0}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="上传总量(原始)">
-                                            {formatBytes(
-                                                artifactSummary?.upload_raw_bytes,
-                                            )}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="上传总量(压缩)">
-                                            {formatBytes(
-                                                artifactSummary?.upload_compressed_bytes,
-                                            )}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="上传总耗时">
-                                            {formatMS(
-                                                artifactSummary?.upload_duration_ms,
-                                            )}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="导入总耗时">
-                                            {formatMS(
-                                                artifactSummary?.import_duration_ms,
-                                            )}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="导入下载耗时">
-                                            {formatMS(
-                                                artifactSummary?.import_download_ms,
-                                            )}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="导入解码耗时">
-                                            {formatMS(
-                                                artifactSummary?.import_decode_ms,
-                                            )}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="导入新增风险">
-                                            {artifactSummary?.import_risk_delta ||
-                                                0}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item label="错误计数">
-                                            {artifactSummary?.error_count || 0}
-                                        </Descriptions.Item>
-                                        <Descriptions.Item
-                                            label="Manifest 对象"
-                                            span={2}
-                                        >
-                                            <Typography.Text
-                                                copyable={
-                                                    !!artifactSummary?.manifest_object_key
-                                                }
-                                                ellipsis={{
-                                                    tooltip:
-                                                        artifactSummary?.manifest_object_key,
-                                                }}
-                                            >
-                                                {artifactSummary?.manifest_object_key ||
-                                                    '-'}
-                                            </Typography.Text>
-                                        </Descriptions.Item>
-                                        {artifactSummary?.last_error && (
-                                            <Descriptions.Item
-                                                label="最新错误"
-                                                span={2}
-                                            >
-                                                {artifactSummary.last_error}
-                                            </Descriptions.Item>
-                                        )}
+                                                <Descriptions.Item label="产物格式">
+                                                    {artifactSummary?.manifest_format ||
+                                                        '-'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="任务阶段">
+                                                    {artifactSummary?.phase ||
+                                                        '-'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="Manifest Codec">
+                                                    {artifactSummary?.manifest_codec ||
+                                                        '-'}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="Manifest 大小">
+                                                    {formatBytes(
+                                                        artifactSummary?.manifest_compressed_size,
+                                                    )}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="上传分段数">
+                                                    {artifactSummary?.upload_segments ||
+                                                        0}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="导入分段数">
+                                                    {artifactSummary?.import_segments ||
+                                                        0}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="上传总量(原始)">
+                                                    {formatBytes(
+                                                        artifactSummary?.upload_raw_bytes,
+                                                    )}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="上传总量(压缩)">
+                                                    {formatBytes(
+                                                        artifactSummary?.upload_compressed_bytes,
+                                                    )}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="上传总耗时">
+                                                    {formatMS(
+                                                        artifactSummary?.upload_duration_ms,
+                                                    )}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="导入总耗时">
+                                                    {formatMS(
+                                                        artifactSummary?.import_duration_ms,
+                                                    )}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="导入下载耗时">
+                                                    {formatMS(
+                                                        artifactSummary?.import_download_ms,
+                                                    )}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="导入解码耗时">
+                                                    {formatMS(
+                                                        artifactSummary?.import_decode_ms,
+                                                    )}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="导入新增风险">
+                                                    {artifactSummary?.import_risk_delta ||
+                                                        0}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="错误计数">
+                                                    {artifactSummary?.error_count ||
+                                                        0}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item
+                                                    label="Manifest 对象"
+                                                    span={2}
+                                                >
+                                                    <Typography.Text
+                                                        copyable={
+                                                            !!artifactSummary?.manifest_object_key
+                                                        }
+                                                        ellipsis={{
+                                                            tooltip:
+                                                                artifactSummary?.manifest_object_key,
+                                                        }}
+                                                    >
+                                                        {artifactSummary?.manifest_object_key ||
+                                                            '-'}
+                                                    </Typography.Text>
+                                                </Descriptions.Item>
+                                                {artifactSummary?.last_error && (
+                                                    <Descriptions.Item
+                                                        label="最新错误"
+                                                        span={2}
+                                                    >
+                                                        {
+                                                            artifactSummary.last_error
+                                                        }
+                                                    </Descriptions.Item>
+                                                )}
                                             </Descriptions>
 
                                             <div className="artifact-events">
@@ -1625,8 +1846,7 @@ const TaskList: React.FC = () => {
     const allVisibleSelected =
         data.length > 0 &&
         data.every((task) => selectedTaskIds.has(task.task_id));
-    const partVisibleSelected =
-        selectedTaskIds.size > 0 && !allVisibleSelected;
+    const partVisibleSelected = selectedTaskIds.size > 0 && !allVisibleSelected;
 
     return (
         <div
@@ -1720,6 +1940,16 @@ const TaskList: React.FC = () => {
                                 >
                                     重置
                                 </Button>
+                                <Button
+                                    icon={<FileTextOutlined />}
+                                    onClick={() => {
+                                        openFilteredTaskExportModal().catch(
+                                            () => {},
+                                        );
+                                    }}
+                                >
+                                    导出报告
+                                </Button>
                             </Space>
                         </Col>
                     </Row>
@@ -1780,6 +2010,12 @@ const TaskList: React.FC = () => {
                             取消选择
                         </Button>
                         <Button
+                            icon={<FileTextOutlined />}
+                            onClick={openSelectedTaskExportModal}
+                        >
+                            导出报告
+                        </Button>
+                        <Button
                             icon={<DeleteOutlined />}
                             danger
                             onClick={handleBatchDelete}
@@ -1789,6 +2025,19 @@ const TaskList: React.FC = () => {
                     </Space>
                 </div>
             )}
+
+            <SSAReportExportModal
+                open={exportModalOpen}
+                title="导出任务报告"
+                scopeText={exportScopeText}
+                allowFilters
+                severityOptions={severityOptions}
+                riskTypeOptions={riskTypeOptions}
+                initialValues={buildDefaultTaskExportValues()}
+                confirmLoading={exportSubmitting}
+                onCancel={() => setExportModalOpen(false)}
+                onSubmit={handleTaskExport}
+            />
         </div>
     );
 };

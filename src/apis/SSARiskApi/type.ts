@@ -101,6 +101,21 @@ export interface TSSARiskQueryParams {
     result_id?: number;
 }
 
+export interface TSSARiskExportParams {
+    program_name?: string;
+    task_id?: string;
+    task_ids?: string;
+    ids?: string;
+    severity?: string;
+    risk_type?: string;
+    from_rule?: string;
+    latest_disposal_status?: string;
+    audited_state?: 'all' | 'audited' | 'unaudited';
+    format?: 'json' | 'html' | 'docx';
+    report_name?: string;
+    template_id?: string;
+}
+
 // 列表响应类型
 export type TSSARiskListResponse = TableResponseData<TSSARisk>;
 

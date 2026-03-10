@@ -2,6 +2,7 @@
 export interface TSSAScanRequest {
     rule_groups?: string[];
     node_id?: string;
+    audit_carry_enabled?: boolean;
     strategy_name?: string;
     enable_sched?: boolean;
     start_timestamp?: number;
@@ -31,6 +32,7 @@ export interface TSSATask {
     scan_policy?: string; // 扫描策略配置(JSON)，包含 policy_type 和 custom_rules
     program_name?: string;
     scan_batch?: number;
+    audit_carry_enabled?: boolean;
     risk_count?: number;
     risk_count_critical?: number;
     risk_count_high?: number;

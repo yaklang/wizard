@@ -1,5 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Select, Space, Spin, message } from 'antd';
+import {
+    Button,
+    Card,
+    Checkbox,
+    Form,
+    Select,
+    Space,
+    Spin,
+    message,
+} from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
@@ -12,6 +21,7 @@ interface FormValues {
     project_id: number;
     node_id?: string;
     rule_groups?: string[];
+    audit_carry_enabled?: boolean;
 }
 
 const CreateSSAScanTask = () => {
@@ -42,11 +52,13 @@ const CreateSSAScanTask = () => {
 
     const { loading: submitting, runAsync: submitTask } = useRequest(
         async (values: FormValues) => {
-            const { project_id, node_id, rule_groups } = values;
+            const { project_id, node_id, rule_groups, audit_carry_enabled } =
+                values;
             const payload: TSSAScanRequest = {};
             if (node_id) payload.node_id = node_id;
             if (rule_groups && rule_groups.length > 0)
                 payload.rule_groups = rule_groups;
+            payload.audit_carry_enabled = !!audit_carry_enabled;
             return scanSSAProject(project_id, payload);
         },
         {
@@ -104,6 +116,7 @@ const CreateSSAScanTask = () => {
                     <Form
                         layout="vertical"
                         form={form}
+                        initialValues={{ audit_carry_enabled: false }}
                         style={{ maxWidth: 800 }}
                     >
                         <Form.Item
@@ -154,6 +167,14 @@ const CreateSSAScanTask = () => {
                                         .includes(input.toLowerCase())
                                 }
                             />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="audit_carry_enabled"
+                            valuePropName="checked"
+                            extra="开启后，新批次会默认隐藏同项目历史批次中已处置的同特征漏洞。"
+                        >
+                            <Checkbox>启用审计信息携带</Checkbox>
                         </Form.Item>
                     </Form>
                 </Spin>

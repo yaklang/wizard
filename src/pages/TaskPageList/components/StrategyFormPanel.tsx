@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Button,
+    Checkbox,
     DatePicker,
     Empty,
     Form,
@@ -19,19 +20,20 @@ import { getSSAProjects, getScanPolicyConfig } from '@/apis/SSAProjectApi';
 import type { TScanPolicyConfig } from '@/apis/SSAProjectApi/type';
 import { getNodeManage } from '@/apis/NodeManageApi';
 
-export type StrategyFormValues = {
+export interface StrategyFormValues {
     strategy_name: string;
     project_id?: number;
     task_group?: string;
     node_id?: string;
     rule_groups?: string[];
+    audit_carry_enabled?: boolean;
     sched_type: number;
     interval_type?: number;
     interval_time?: number;
     time_of_day?: dayjs.Dayjs;
     start_time?: dayjs.Dayjs;
     end_time?: dayjs.Dayjs;
-};
+}
 
 export type StrategyFormInitial = Partial<StrategyFormValues>;
 
@@ -64,8 +66,9 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
 
     const isEditMode = mode === 'edit';
     const [form] = Form.useForm<StrategyFormValues>();
-    const [policyConfig, setPolicyConfig] =
-        useState<TScanPolicyConfig | null>(null);
+    const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(
+        null,
+    );
     const [scanPolicy, setScanPolicy] = useState<string>('custom');
     const policyInitializedRef = useRef(false);
 
@@ -226,7 +229,11 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            if (values.sched_type === 3 && values.start_time && values.end_time) {
+            if (
+                values.sched_type === 3 &&
+                values.start_time &&
+                values.end_time
+            ) {
                 if (values.end_time.isBefore(values.start_time)) {
                     message.error('结束时间必须晚于开始时间');
                     return;
@@ -259,6 +266,7 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                         layout="vertical"
                         form={form}
                         initialValues={{
+                            audit_carry_enabled: false,
                             sched_type: 3,
                             interval_type: 1,
                             interval_time: 1,
@@ -270,7 +278,9 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                         <Form.Item
                             label="策略名称"
                             name="strategy_name"
-                            rules={[{ required: true, message: '请填写策略名称' }]}
+                            rules={[
+                                { required: true, message: '请填写策略名称' },
+                            ]}
                         >
                             <Input
                                 placeholder="例如：每日凌晨核心库扫描"
@@ -280,13 +290,21 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
 
                         {isEditMode ? (
                             <Form.Item label="关联项目">
-                                <Input value={projectNameForEdit || '-'} disabled />
+                                <Input
+                                    value={projectNameForEdit || '-'}
+                                    disabled
+                                />
                             </Form.Item>
                         ) : (
                             <Form.Item
                                 label="关联项目"
                                 name="project_id"
-                                rules={[{ required: true, message: '请选择关联项目' }]}
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: '请选择关联项目',
+                                    },
+                                ]}
                             >
                                 <Select
                                     placeholder="请选择关联项目"
@@ -305,7 +323,12 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                             <Form.Item
                                 label="策略分组"
                                 name="task_group"
-                                rules={[{ required: true, message: '请选择策略分组' }]}
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: '请选择策略分组',
+                                    },
+                                ]}
                             >
                                 <Select
                                     showSearch
@@ -393,7 +416,10 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                                 label="每日触发时间"
                                 name="time_of_day"
                                 rules={[
-                                    { required: true, message: '请选择触发时间' },
+                                    {
+                                        required: true,
+                                        message: '请选择触发时间',
+                                    },
                                 ]}
                             >
                                 <TimePicker format="HH:mm" minuteStep={5} />
@@ -463,17 +489,30 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                                 }
                             />
                         </Form.Item>
+
+                        {!isEditMode && (
+                            <Form.Item
+                                name="audit_carry_enabled"
+                                valuePropName="checked"
+                                extra="开启后，新批次会默认隐藏同项目历史批次中已处置的同特征漏洞。"
+                            >
+                                <Checkbox>启用审计信息携带</Checkbox>
+                            </Form.Item>
+                        )}
                     </Form>
 
                     <div className="mt-6 flex justify-end">
                         <Space>
-                            {onCancel && <Button onClick={onCancel}>取消</Button>}
+                            {onCancel && (
+                                <Button onClick={onCancel}>取消</Button>
+                            )}
                             <Button
                                 type="primary"
                                 loading={submitting}
                                 onClick={handleSubmit}
                             >
-                                {submitText || (isEditMode ? '保存修改' : '保存策略')}
+                                {submitText ||
+                                    (isEditMode ? '保存修改' : '保存策略')}
                             </Button>
                         </Space>
                     </div>

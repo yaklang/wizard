@@ -40,7 +40,9 @@ const CreateStrategy = () => {
                     start = start.add(1, 'day');
                 }
                 startTimestamp = Math.floor(start.valueOf() / 1000);
-                endTimestamp = Math.floor(start.add(365, 'day').valueOf() / 1000);
+                endTimestamp = Math.floor(
+                    start.add(365, 'day').valueOf() / 1000,
+                );
                 intervalType = 1;
                 intervalTime = 1;
             } else {
@@ -56,6 +58,7 @@ const CreateStrategy = () => {
             }
 
             const payload: TSSAScanRequest = {
+                audit_carry_enabled: !!values.audit_carry_enabled,
                 enable_sched: true,
                 strategy_name: strategyName,
                 sched_type: schedType,
@@ -81,7 +84,9 @@ const CreateStrategy = () => {
             message.success('策略已创建');
             navigate('/task/task-list');
         } catch (err: any) {
-            message.error(`创建失败: ${err?.msg || err?.message || '未知错误'}`);
+            message.error(
+                `创建失败: ${err?.msg || err?.message || '未知错误'}`,
+            );
         }
     };
 
@@ -93,7 +98,9 @@ const CreateStrategy = () => {
                         icon={<ArrowLeftOutlined />}
                         onClick={() => navigate('/task/task-list')}
                     />
-                    <span className="text-lg font-semibold">新建自动化策略</span>
+                    <span className="text-lg font-semibold">
+                        新建自动化策略
+                    </span>
                 </div>
 
                 <StrategyFormPanel
