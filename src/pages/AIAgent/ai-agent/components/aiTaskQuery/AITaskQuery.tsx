@@ -14,8 +14,8 @@ import useChatIPCDispatcher from '../../useContext/ChatIPCContent/useDispatcher'
 import { useCreation, useDebounceFn, useMemoizedFn } from 'ahooks';
 import { AIInputEventSyncTypeEnum } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 import { Tooltip } from 'antd';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 
 export const AITaskQuery: React.FC<AITaskQueryProps> = React.memo(() => {
     const { chatIPCData } = useChatIPCStore();

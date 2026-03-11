@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useMemoizedFn, useUpdateEffect } from 'ahooks';
-import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor';
+import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
 import useStore from '../../hooks/useStore';
 import { apiFetchQuerySyntaxFlowResult } from '../../utils';
 

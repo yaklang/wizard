@@ -15,8 +15,8 @@ import {
 } from '@/assets/icon/colors';
 import ChatCard from '../ChatCard';
 import { Tooltip } from 'antd';
-import type { YakitRadioButtonsProps } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtonsType';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import type { YakitRadioButtonsProps } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtonsType';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import { StreamMarkdown } from '@/compoments/MarkDown/markdownRender';
 import type { ReportItem } from '@/pages/AIAgent/enums/external';
 

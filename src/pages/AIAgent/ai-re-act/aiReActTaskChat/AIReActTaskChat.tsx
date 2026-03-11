@@ -26,9 +26,9 @@ import {
 } from '../../ai-agent/chatTemplate/AIAgentChatTemplate';
 import useChatIPCStore from '../../ai-agent/useContext/ChatIPCContent/useStore';
 import { AIReActTaskChatReview } from '../../ai-agent/aiAgentChat/AIAgentChat';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import useChatIPCDispatcher from '../../ai-agent/useContext/ChatIPCContent/useDispatcher';
-import { YakitPopconfirm } from '@/compoments/yakitUI/YakitPopconfirm/YakitPopconfirm';
+import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm';
 import type { AIReActTaskChatReviewProps } from '../../ai-agent/aiAgentChat/type';
 import useAIAgentStore from '../../ai-agent/useContext/useStore';
 

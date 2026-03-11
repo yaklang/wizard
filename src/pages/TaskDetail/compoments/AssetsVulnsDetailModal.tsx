@@ -7,7 +7,7 @@ import { forwardRef, useImperativeHandle, useMemo } from 'react';
 import styles from './AssetsVulnsDetailModal.module.scss';
 import dayjs from 'dayjs';
 import { SeverityMapTag } from './utils';
-import { YakitRadioButtons } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtons';
+import { YakitRadioButtons } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtons';
 const { Paragraph } = Typography;
 
 const AssetsVulnsDetailModal = forwardRef<

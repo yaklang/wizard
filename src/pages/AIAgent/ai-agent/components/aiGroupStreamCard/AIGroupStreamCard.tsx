@@ -18,9 +18,9 @@ import {
 } from '@/assets/icon/outline';
 import { useTypedStream } from '../aiChatListItem/StreamingChatContent/hooks/useTypedStream';
 import classNames from 'classnames';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
-import { YakitModal } from '@/compoments/yakitUI/YakitModal/YakitModal';
-import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitModal } from '@/compoments/YakitUI/YakitModal/YakitModal';
+import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover';
 
 export const Code: FC<{
     code: ChatReferenceMaterialPayload;

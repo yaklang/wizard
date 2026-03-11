@@ -15,7 +15,7 @@ import type {
 import classNames from 'classnames';
 import styles from './AuditCode.module.scss';
 import { Form, Progress, Tooltip, Tree } from 'antd';
-import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin';
+import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
 import {
     useGetState,
     useInterval,
@@ -23,7 +23,7 @@ import {
     useSize,
     useUpdateEffect,
 } from 'ahooks';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
 import { failed, yakitNotify } from '@/utils/notification';
 
@@ -57,12 +57,12 @@ import type {
     AuditEmiterYakUrlProps,
     OpenFileByPathProps,
 } from '../YakRunnerAuditCodeType';
-import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput';
+import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput';
 import type { CodeRangeProps } from '../RightAuditDetail/RightAuditDetail';
 import type { JumpToAuditEditorProps } from '../BottomEditorDetails/BottomEditorDetailsType';
 import useDispatcher from '../hooks/useDispatcher';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
-import { YakitHint } from '@/compoments/yakitUI/YakitHint/YakitHint';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
+import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
 import type { Selection } from '../RunnerTabs/RunnerTabsType';
 import { FileDefault, FileSuffix, KeyToIcon } from '../FileTree/icon';
 import { RiskTree } from '../RunnerFileTree/RunnerFileTree';

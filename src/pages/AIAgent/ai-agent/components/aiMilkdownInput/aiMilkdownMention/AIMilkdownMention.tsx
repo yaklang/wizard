@@ -26,7 +26,7 @@ import type { AIMentionCommandParams } from './aiMentionPlugin';
 import { aiMentionCommand } from './aiMentionPlugin';
 import classNames from 'classnames';
 import { removeAIOffsetCommand } from '../customPlugin';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType';
 
 export const aiMentionFactory = slashFactory('ai-mention-commands');

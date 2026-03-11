@@ -8,7 +8,7 @@ import type {
 import { formatTimestamp } from '@/utils/timeUtil';
 import cloneDeep from 'lodash/cloneDeep';
 
-const { ipcRenderer } = window.require('electron');
+// const { ipcRenderer } = window.require('electron');
 
 function useAIChatLog(): UseAIChatLogEvents;
 
@@ -23,7 +23,7 @@ function useAIChatLog() {
                 message: logInfo.message,
                 timestamp: formatTimestamp(info.Timestamp),
             };
-            ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
+            // ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
         }
         if (info.type === 'stream') {
             const { EventUUID, content } = info.data;
@@ -47,13 +47,13 @@ function useAIChatLog() {
             isStream: true,
         };
         streamInfo.current.delete(uuid);
-        ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
+        // ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
     });
 
     const clearLogs = useMemoizedFn(() => {
         streamInfo.current.clear();
         // 发送ipc通信通知另一个页面清空展示的所有内容
-        ipcRenderer.invoke('clear-ai-chat-log-data');
+        // ipcRenderer.invoke('clear-ai-chat-log-data');
     });
 
     const cancelLogsWin = useMemoizedFn(() => {

@@ -8,8 +8,8 @@ import type { AIInputEvent } from '../hooks/grpcApi';
 import styles from './AIFocusMode.module.scss';
 import { grpcQueryAIFocus } from '@/pages/AIAgent/ai-agent/grpc';
 import type { AIFocus } from '@/pages/AIAgent/ai-agent/type/forge';
-import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect';
-import type { YakitSelectProps } from '@/compoments/yakitUI/YakitSelect/YakitSelectType';
+import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
+import type { YakitSelectProps } from '@/compoments/YakitUI/YakitSelect/YakitSelectType';
 
 export const AIFocusMode: React.FC<AIFocusModeProps> = React.memo((props) => {
     const { value, onChange, className } = props;

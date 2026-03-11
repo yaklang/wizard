@@ -10,12 +10,12 @@ import {
     IconNotepadFileTypePdf,
     IconNotepadFileTypeUnknown,
 } from './icon/icon';
-import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor';
+import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
 import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType';
 import type { ReactNode } from 'react';
 import type { PluginExecuteLogFile } from '../plugins/operator/pluginExecuteResult/PluginExecuteResultType';
-import { FileActionEnum } from '../plugins/operator/pluginExecuteResult/PluginExecuteResultType';
 import { modeToPermissions } from './invoker';
+import { FileActionEnum } from '../plugins/operator/pluginExecuteResult/PluginExecuteResultType.d';
 
 export const renderFileTypeIcon = (params: {
     type: string;

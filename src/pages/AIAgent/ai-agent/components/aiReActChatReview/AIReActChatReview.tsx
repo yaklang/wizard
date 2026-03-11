@@ -34,9 +34,9 @@ import {
 import useChatIPCStore from '@/pages/AIAgent/ai-agent/useContext/ChatIPCContent/useStore';
 import type { AIReviewType } from '../../../ai-re-act/hooks/aiRender';
 import type { AIForge } from '@/pages/AIAgent/ai-agent/type/forge';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
-import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover';
-import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover';
+import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
 import type { YakParamProps } from '@/pages/invoker/schema';
 import { getValueByType } from '@/pages/TaskScript/taskScript/helpers';
 import type { CustomPluginExecuteFormValue } from '@/pages/AIAgent/enums/external';

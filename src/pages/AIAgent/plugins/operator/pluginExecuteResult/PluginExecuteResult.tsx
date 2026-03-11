@@ -13,7 +13,7 @@ import type {
     PluginExecuteWebsiteTreeProps,
     VulnerabilitiesRisksTableProps,
 } from './PluginExecuteResultType';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import {
     useControllableValue,
     useCreation,
@@ -33,39 +33,105 @@ import { formatJson } from '@/pages/AIAgent/utils/base';
 import { WebTree } from '@/compoments/WebTree/WebTree';
 import classNames from 'classnames';
 import ReactResizeDetector from 'react-resize-detector';
-import { YakitResizeBox } from '@/components/yakitUI/YakitResizeBox/YakitResizeBox';
-import { SolidViewgridIcon } from '@/assets/icon/solid';
-import { ExportExcel } from '@/components/DataExport/DataExport';
-import { QueryPortsRequest } from '@/pages/assetViewer/PortAssetPage';
-import {
+import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
+// import { ExportExcel } from '@/components/DataExport/DataExport';
+import type {
     HoldGRPCStreamProps,
     StreamResult,
 } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
-import { YakitEditor } from '@/components/yakitUI/YakitEditor/YakitEditor';
-import { PortTable } from '@/pages/assetViewer/PortTable/PortTable';
-import { defQueryPortsRequest } from '@/pages/assetViewer/PortTable/utils';
-import cloneDeep from 'lodash/cloneDeep';
+import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
 import { yakitFailed } from '@/utils/notification';
-import { sorterFunction } from '@/pages/fuzzer/components/HTTPFuzzerPageTable/HTTPFuzzerPageTable';
-import { YakitRiskTable } from '@/pages/risks/YakitRiskTable/YakitRiskTable';
-import { YakitSpin } from '@/components/yakitUI/YakitSpin/YakitSpin';
-import { QueryRisksRequest } from '@/pages/risks/YakitRiskTable/YakitRiskTableType';
-import { defQueryRisksRequest } from '@/pages/risks/YakitRiskTable/constants';
-import { TableTotalAndSelectNumber } from '@/components/TableTotalAndSelectNumber/TableTotalAndSelectNumber';
-import { apiQueryRisksTotalByRuntimeId } from '@/pages/risks/YakitRiskTable/utils';
+import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
 import {
     OutlineChartpieIcon,
     OutlineLogIcon,
     OutlineTerminalIcon,
 } from '@/assets/icon/outline';
-import { LocalList, LocalPluginLog, LocalText } from './LocalPluginLog';
-import { CodeScanResult } from '@/pages/yakRunnerCodeScan/CodeScanResultTable/CodeScanResultTable';
-import { YakitAuditHoleTable } from '@/pages/yakRunnerAuditHole/YakitAuditHoleTable/YakitAuditHoleTable';
-import { HTTPFlowRealTimeTableAndEditor } from '@/components/HTTPHistory';
+// import { LocalList, LocalPluginLog, LocalText } from './LocalPluginLog';
 import { ErrorBoundary } from 'react-error-boundary';
-import moment from 'moment';
-import { useI18nNamespaces } from '@/i18n/useI18nNamespaces';
-import { JSONParseLog } from '@/utils/tool';
+import type { QueryGeneralRequest } from '@/pages/AIAgent/enums/invoker/schema';
+
+export interface Paging {
+    Page: number;
+    Limit: number;
+    Order?: 'asc' | 'desc' | string;
+    OrderBy?: 'created_at' | 'updated_at' | string;
+    RawOrder?: string;
+}
+
+export interface QueryRisksRequest {
+    Pagination: Paging;
+    Search: string;
+    Network: string;
+    Ports: string;
+    RiskType: string;
+    Token: string;
+    WaitingVerified: boolean;
+    Severity: string;
+    FromId: number;
+    UntilId: number;
+    Tags: string;
+    BeforeCreatedAt?: number;
+    AfterCreatedAt?: number;
+    /** 全部'' 已读:'true'，未读：'false' */
+    IsRead: string;
+    Title: string;
+    Ids: number[];
+
+    /** 前端展示使用 列表 */
+    RiskTypeList?: string[];
+    /** 前端展示使用 */
+    SeverityList?: string[];
+    /** 前端展示使用 */
+    TagList?: string[];
+    /** IP段 */
+    IPList?: string[];
+    /** 前端展示使用 */
+    CreatedAt?: number[];
+
+    RuntimeId?: string;
+    RuntimeIds?: string[];
+}
+
+export const defQueryRisksRequest: QueryRisksRequest = {
+    Pagination: { Page: 1, Limit: 20, OrderBy: 'id', Order: 'desc' },
+    Search: '',
+    Network: '',
+    Ports: '',
+    RiskType: '',
+    Token: '',
+    WaitingVerified: false,
+    Severity: '',
+    FromId: 0,
+    UntilId: 0,
+    Tags: '',
+    IsRead: '', // 全部'' 已读:'true'，未读：'false'
+    Title: '',
+    RiskTypeList: [],
+    SeverityList: [],
+    TagList: [],
+    IPList: [],
+    Ids: [],
+    RuntimeId: '',
+    RuntimeIds: [],
+};
+
+export interface QueryPortsRequest extends QueryGeneralRequest {
+    Hosts: string;
+    Ports: string;
+    State: 'open' | 'closed' | 'unknown';
+    Service: string;
+    Title: string;
+    TitleEffective: boolean;
+    Keywords: string;
+    ComplexSelect: string;
+    RuntimeId: string;
+    AfterId?: number;
+    BeforeId?: number;
+    All?: boolean;
+    Order?: string;
+    OrderBy?: string;
+}
 
 const { TabPane } = PluginTabs;
 
@@ -80,8 +146,6 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
             PluginTabsRightNode,
             isCrawler = false,
         } = props;
-        const { t, i18n } = useI18nNamespaces(['plugin']);
-
         const [allTotal, setAllTotal] = useState<number>(0);
         const [tempTotal, setTempTotal] = useState<number>(0); // 在risk表没有展示之前得临时显示在tab上得小红点计数
         const [interval, setInterval] = useState<number | undefined>(1000);
@@ -100,11 +164,11 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
         }, interval);
 
         const getTotal = useMemoizedFn(() => {
-            apiQueryRisksTotalByRuntimeId(runtimeId).then((allRes) => {
-                if (+allRes.Total > 0) {
-                    setTempTotal(+allRes.Total);
-                }
-            });
+            // apiQueryRisksTotalByRuntimeId(runtimeId).then((allRes) => {
+            //     if (+allRes.Total > 0) {
+            //         setTempTotal(+allRes.Total);
+            //     }
+            // });
         });
 
         /**
@@ -123,23 +187,19 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
             (ele: HoldGRPCStreamProps.InfoTab) => {
                 switch (ele.type) {
                     case 'risk':
-                        return !!runtimeId ? (
+                        return runtimeId ? (
                             <VulnerabilitiesRisksTable
                                 runtimeId={runtimeId}
                                 allTotal={allTotal}
                                 setAllTotal={onSetRiskTotal}
                             />
-                        ) : (
-                            <></>
-                        );
+                        ) : null;
                     case 'port':
-                        return !!runtimeId ? (
+                        return runtimeId ? (
                             <PluginExecutePortTable runtimeId={runtimeId} />
-                        ) : (
-                            <></>
-                        );
+                        ) : null;
                     case 'http':
-                        return !!runtimeId ? (
+                        return runtimeId ? (
                             <PluginExecuteHttpFlow
                                 runtimeId={runtimeId}
                                 website={
@@ -148,9 +208,7 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
                                 }
                                 isCrawler={isCrawler}
                             />
-                        ) : (
-                            <></>
-                        );
+                        ) : null;
                     case 'log':
                         return (
                             <PluginExecuteLog
@@ -164,6 +222,7 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
                         return null;
                     }
                     case 'table':
+                        // eslint-disable-next-line no-case-declarations
                         let tableInfo: HoldGRPCStreamProps.InfoTable =
                             streamInfo.tabsInfoState[ele.tabName] || {
                                 columns: [],
@@ -173,6 +232,7 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
                         // 过滤掉数据中含有对象与数组的数据
                         tableInfo.data = tableInfo.data.filter((item) =>
                             Object.values(item).every(
+                                // eslint-disable-next-line max-nested-callbacks
                                 (value) => !(typeof value === 'object'),
                             ),
                         );
@@ -180,24 +240,25 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
                             <PluginExecuteCustomTable tableInfo={tableInfo} />
                         );
                     case 'text':
+                        // eslint-disable-next-line no-case-declarations
                         const textInfo: HoldGRPCStreamProps.InfoText =
                             streamInfo.tabsInfoState[ele.tabName] || {
                                 content: '',
                             };
                         return <PluginExecuteCode content={textInfo.content} />;
                     case 'result':
-                        const { customProps } = ele;
-                        return (
-                            <CodeScanResult
-                                {...(customProps || {})}
-                                isExecuting={loading}
-                                runtimeId={runtimeId}
-                            />
-                        );
+                        // eslint-disable-next-line no-case-declarations
+                        // const { customProps } = ele;
+                        // <CodeScanResult
+                        //     {...(customProps || {})}
+                        //     isExecuting={loading}
+                        //     runtimeId={runtimeId}
+                        // />
+                        return null;
                     case 'ssa-risk':
                         return <AuditHoleTableOnTab runtimeId={runtimeId} />;
                     default:
-                        return <></>;
+                        return null;
                 }
             },
         );
@@ -253,7 +314,7 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
                 {cardState.length > 0 && (
                     <div className={styles['plugin-execute-result-wrapper']}>
                         <HorizontalScrollCard
-                            title={'Data Card'}
+                            title="Data Card"
                             data={cardState}
                         />
                     </div>
@@ -279,75 +340,91 @@ export const PluginExecuteResult: React.FC<PluginExecuteResultProps> =
             </div>
         );
     });
+
+export const defQueryPortsRequest: QueryPortsRequest = {
+    Hosts: '',
+    Ports: '',
+    State: 'open',
+    Service: '',
+    Title: '',
+    TitleEffective: false,
+    Keywords: '',
+    ComplexSelect: '',
+    RuntimeId: '',
+    Pagination: {
+        Limit: 20,
+        Page: 1,
+        OrderBy: 'id',
+        Order: 'desc',
+    },
+};
 const PluginExecutePortTable: React.FC<PluginExecutePortTableProps> =
-    React.memo((props) => {
-        const { runtimeId } = props;
-        const [params, setParams] = useState<QueryPortsRequest>({
-            ...cloneDeep(defQueryPortsRequest),
-            RuntimeId: runtimeId,
-        });
-        const onJumpPort = useMemoizedFn(() => {
-            const info: RouteToPageProps = {
-                route: YakitRoute.DB_Ports,
-            };
-            emiter.emit('menuOpenPage', JSON.stringify(info));
-        });
+    React.memo(() => {
+        // const { runtimeId } = props;
+        // const [params, setParams] = useState<QueryPortsRequest>({
+        //     ...cloneDeep(defQueryPortsRequest),
+        //     RuntimeId: runtimeId,
+        // });
+        // const onJumpPort = useMemoizedFn(() => {
+        //     const info: RouteToPageProps = {
+        //         route: YakitRoute.DB_Ports,
+        //     };
+        //     emiter.emit('menuOpenPage', JSON.stringify(info));
+        // });
         return (
-            <PortTable
-                query={params}
-                setQuery={setParams}
-                tableTitleExtraOperate={
-                    <>
-                        <YakitButton
-                            type="primary"
-                            icon={<SolidViewgridIcon />}
-                            size="small"
-                            onClick={onJumpPort}
-                        >
-                            端口资产管理
-                        </YakitButton>
-                    </>
-                }
-                containerClassName={
-                    styles['plugin-execute-port-table-container']
-                }
-                btnSize="small"
-                detailBodyClassName={
-                    styles['plugin-execute-port-table-detail-body']
-                }
-            />
+            // <PortTable
+            //     query={params}
+            //     setQuery={setParams}
+            //     tableTitleExtraOperate={
+            //         <YakitButton
+            //             type="primary"
+            //             icon={<SolidViewgridIcon />}
+            //             size="small"
+            //             onClick={onJumpPort}
+            //         >
+            //             端口资产管理
+            //         </YakitButton>
+            //     }
+            //     containerClassName={
+            //         styles['plugin-execute-port-table-container']
+            //     }
+            //     btnSize="small"
+            //     detailBodyClassName={
+            //         styles['plugin-execute-port-table-detail-body']
+            //     }
+            // />
+            null
         );
     });
-/**HTTP 流量 */
+/** HTTP 流量 */
+
 export const PluginExecuteHttpFlow: React.FC<PluginExecuteWebsiteTreeProps> =
     React.memo((props) => {
         const {
             runtimeId,
-            filterTagDom,
+            // filterTagDom,
             website = false,
-            isCrawler = false,
+            // isCrawler = false,
         } = props;
 
-        const [height, setHeight] = useState<number>(300); //表格所在div高度
+        const [height, setHeight] = useState<number>(300); // 表格所在div高度
 
         const webTreeRef = useRef<any>();
         // 被点击的树节点URL参数
-        const [includeInUrl, setIncludeInUrl] = useState<string[]>([]);
-        const [treeQueryparams, setTreeQueryparams] = useState<string>('');
-        const [refreshTreeFlag, setRefreshTreeFlag] = useState<boolean>(false);
+        // const [includeInUrl, setIncludeInUrl] = useState<string[]>([]);
+        // const [treeQueryparams, setTreeQueryparams] = useState<string>('');
+        // const [refreshTreeFlag, setRefreshTreeFlag] = useState<boolean>(false);
         // 流量表筛选条件 改变 控制webtree刷新
-        const onQueryParams = useMemoizedFn(
-            (queryParams: string, execFlag?: boolean) => {
-                const treeQuery =
-                    JSONParseLog(queryParams, {
-                        page: 'PluginExecuteHttpFlow',
-                        fun: 'onQueryParams-treeQuery',
-                    }) || {};
-                delete treeQuery.IncludeInUrl;
-                setTreeQueryparams(JSON.stringify(treeQuery));
-                setRefreshTreeFlag(!!execFlag);
-            },
-        );
+        // const onQueryParams = useMemoizedFn(
+        //     (queryParams: string, execFlag?: boolean) => {
+        //         try {
+        //             const treeQuery = JSON.parse(queryParams);
+        //             delete treeQuery.IncludeInUrl;
+        //             setTreeQueryparams(JSON.stringify(treeQuery));
+        //             setRefreshTreeFlag(!!execFlag);
+        //         } catch (error) {}
+        //     },
+        // );
 
         return (
             <div className={styles['plugin-execute-http-flow']}>
@@ -370,80 +447,84 @@ export const PluginExecuteHttpFlow: React.FC<PluginExecuteWebsiteTreeProps> =
                                     setHeight(h);
                                 }}
                                 handleHeight={true}
-                                refreshMode={'debounce'}
+                                refreshMode="debounce"
                                 refreshRate={50}
                             />
                             <WebTree
                                 ref={webTreeRef}
                                 height={height}
                                 searchPlaceholder="请输入域名进行搜索,例baidu.com"
-                                treeExtraQueryparams={treeQueryparams}
-                                refreshTreeFlag={refreshTreeFlag}
-                                onSelectNodesKeys={(selectKeys) =>
-                                    setIncludeInUrl(
-                                        selectKeys.map((i) => i + ''),
-                                    )
+                                treeExtraQueryparams=""
+                                refreshTreeFlag={false}
+                                // treeExtraQueryparams={treeQueryparams}
+                                // refreshTreeFlag={refreshTreeFlag}
+                                onSelectNodesKeys={
+                                    // (selectKeys) =>
+                                    // setIncludeInUrl(
+                                    //     selectKeys.map((i) => String(i)),
+                                    // )
+                                    () => {}
                                 }
                                 runTimeId={runtimeId}
                             />
                         </div>
                     }
                     secondNode={
-                        <HTTPFlowRealTimeTableAndEditor
-                            wrapperStyle={{ padding: 0 }}
-                            containerClassName={
-                                styles['current-http-table-container']
-                            }
-                            includeInUrl={includeInUrl}
-                            onQueryParams={onQueryParams}
-                            pageType="Plugin"
-                            runtimeId={runtimeId}
-                            filterTagDom={filterTagDom}
-                            params={{
-                                SourceType: isCrawler
-                                    ? 'basic-crawler'
-                                    : 'scan',
-                            }}
-                            httpHistoryTableTitleStyle={{
-                                paddingTop: 12,
-                                paddingLeft: 8,
-                                paddingRight: 8,
-                            }}
-                            showSourceType={false}
-                            showAdvancedSearch={false}
-                            showProtocolType={false}
-                            showColorSwatch={false}
-                            showDelAll={false}
-                            showSetting={false}
-                            showBatchActions={false}
-                            showFlod={false}
-                            titleHeight={47}
-                        />
+                        // <HTTPFlowRealTimeTableAndEditor
+                        //     wrapperStyle={{ padding: 0 }}
+                        //     containerClassName={
+                        //         styles['current-http-table-container']
+                        //     }
+                        //     includeInUrl={includeInUrl}
+                        //     onQueryParams={onQueryParams}
+                        //     pageType="Plugin"
+                        //     runtimeId={runtimeId}
+                        //     filterTagDom={filterTagDom}
+                        //     params={{
+                        //         SourceType: isCrawler
+                        //             ? 'basic-crawler'
+                        //             : 'scan',
+                        //     }}
+                        //     httpHistoryTableTitleStyle={{
+                        //         paddingTop: 12,
+                        //         paddingLeft: 8,
+                        //         paddingRight: 8,
+                        //     }}
+                        //     showSourceType={false}
+                        //     showAdvancedSearch={false}
+                        //     showProtocolType={false}
+                        //     showColorSwatch={false}
+                        //     showDelAll={false}
+                        //     showSetting={false}
+                        //     showBatchActions={false}
+                        //     showFlod={false}
+                        //     titleHeight={47}
+                        // />
+                        null
                     }
-                ></YakitResizeBox>
+                />
             </div>
         );
     });
 /** 基础插件信息 / 日志 */
 export const PluginExecuteLog: React.FC<PluginExecuteLogProps> = React.memo(
     (props) => {
-        const { loading, messageList, wrapperClassName } = props;
-        const { t, i18n } = useI18nNamespaces(['plugin']);
+        const { messageList, wrapperClassName } = props; // loading
         const [activeKey, setActiveKey] = useState<string>('plugin-log');
 
-        const list: StreamResult.Log[] = useCreation(() => {
-            return (
-                (messageList || [])
-                    .filter((i) => {
-                        return !(
-                            (i?.level || '').startsWith('json-feature') ||
-                            (i?.level || '').startsWith('feature-')
-                        );
-                    })
-                    // .splice(0, 25)
-                    .reverse()
-            );
-        }, [messageList]);
+        // const list: StreamResult.Log[] = useCreation(() => {
+        //     return (
+        //         (messageList || [])
+        //             .filter((i) => {
+        //                 return !(
+        //                     (i?.level || '').startsWith('json-feature') ||
+        //                     (i?.level || '').startsWith('feature-')
+        //                 );
+        //             })
+        //             // .splice(0, 25)
+        //             .reverse()
+        //     );
+        // }, [messageList]);
 
         const echartsLists: StreamResult.Log[] = useCreation(() => {
             return messageList.filter((ele) => ele.level === 'json-graph');
@@ -455,54 +536,52 @@ export const PluginExecuteLog: React.FC<PluginExecuteLogProps> = React.memo(
         const logTabs = useCreation(() => {
             const tab = [
                 {
-                    name: t('PluginExecuteLog.plugin_log'),
+                    name: '插件日志',
                     icon: <OutlineLogIcon />,
                     number: 0,
                     type: 'plugin-log',
                 },
             ];
-            if (!!echartsLists.length) {
+            if (echartsLists.length) {
                 tab.push({
-                    name: t('PluginExecuteLog.statistical_chart'),
+                    name: '统计图表',
                     icon: <OutlineChartpieIcon />,
                     number: echartsLists.length,
                     type: 'echarts-statistics',
                 });
             }
-            if (!!textLists.length) {
+            if (textLists.length) {
                 tab.push({
-                    name: t('PluginExecuteLog.output_text'),
+                    name: '输出文本',
                     icon: <OutlineTerminalIcon />,
                     number: textLists.length,
                     type: 'output-text',
                 });
             }
             return tab;
-        }, [echartsLists, textLists, i18n.language]);
+        }, [echartsLists, textLists]);
 
         const renderTabContent = useMemoizedFn((type) => {
             switch (type) {
                 case 'plugin-log':
-                    const currentTime = moment().format('YYYY-MM-DD');
+                    // eslint-disable-next-line no-case-declarations
+                    // const currentTime = moment().format('YYYY-MM-DD');
                     return (
-                        <LocalPluginLog
-                            loading={loading}
-                            list={list}
-                            heard={
-                                <>
-                                    {' '}
-                                    {currentTime}{' '}
-                                    {t('PluginExecuteLog.log_query_result')}
-                                </>
-                            }
-                        />
+                        // <LocalPluginLog
+                        //     loading={loading}
+                        //     list={list}
+                        //     heard={<>{currentTime} 日志查询结果</>}
+                        // />
+                        null
                     );
                 case 'echarts-statistics':
-                    return <LocalList list={echartsLists} />;
+                    // return <LocalList list={echartsLists} />;
+                    return null;
                 case 'output-text':
-                    return <LocalText list={textLists} />;
+                    // return <LocalText list={textLists} />;
+                    return null;
                 default:
-                    return <></>;
+                    return null;
             }
         });
         const onTabChange = useMemoizedFn((key: string) => {
@@ -510,52 +589,46 @@ export const PluginExecuteLog: React.FC<PluginExecuteLogProps> = React.memo(
         });
 
         return (
-            <>
-                <PluginTabs
-                    activeKey={activeKey}
-                    onChange={onTabChange}
-                    type="line"
-                    wrapperClassName={classNames(
-                        styles['plugin-execute-log'],
-                        wrapperClassName,
-                    )}
-                >
-                    {logTabs.map((ele) => (
-                        <TabPane
-                            tab={
-                                <div
-                                    className={classNames(
-                                        styles['log-tab-name'],
-                                        {
-                                            [styles['log-tab-name-active']]:
-                                                activeKey === ele.type,
-                                        },
-                                    )}
-                                >
-                                    {ele.icon} {ele.name}
-                                    {!!ele.number && (
-                                        <div className={styles['tab-number']}>
-                                            {ele.number}
-                                        </div>
-                                    )}
-                                </div>
-                            }
-                            key={ele.type}
-                        >
-                            {renderTabContent(ele.type)}
-                        </TabPane>
-                    ))}
-                </PluginTabs>
-            </>
+            <PluginTabs
+                activeKey={activeKey}
+                onChange={onTabChange}
+                type="line"
+                wrapperClassName={classNames(
+                    styles['plugin-execute-log'],
+                    wrapperClassName,
+                )}
+            >
+                {logTabs.map((ele) => (
+                    <TabPane
+                        tab={
+                            <div
+                                className={classNames(styles['log-tab-name'], {
+                                    [styles['log-tab-name-active']]:
+                                        activeKey === ele.type,
+                                })}
+                            >
+                                {ele.icon} {ele.name}
+                                {!!ele.number && (
+                                    <div className={styles['tab-number']}>
+                                        {ele.number}
+                                    </div>
+                                )}
+                            </div>
+                        }
+                        key={ele.type}
+                    >
+                        {renderTabContent(ele.type)}
+                    </TabPane>
+                ))}
+            </PluginTabs>
         );
     },
 );
 
-/**风险与漏洞tab表 */
+/** 风险与漏洞tab表 */
 export const VulnerabilitiesRisksTable: React.FC<VulnerabilitiesRisksTableProps> =
     React.memo((props) => {
         const { runtimeId, runTimeIDs, filterTagDom } = props;
-        const { t, i18n } = useI18nNamespaces(['plugin', 'yakitUi']);
         const [riskLoading, setRiskLoading] = useState<boolean>(false);
         const [allTotal, setAllTotal] = useControllableValue<number>(props, {
             defaultValue: 0,
@@ -569,11 +642,11 @@ export const VulnerabilitiesRisksTable: React.FC<VulnerabilitiesRisksTableProps>
         });
 
         useUpdateEffect(() => {
-            setQuery((pre) => ({ ...pre, RuntimeId: runtimeId }));
+            setQuery((pre: any) => ({ ...pre, RuntimeId: runtimeId }));
         }, [runtimeId]);
 
         useUpdateEffect(() => {
-            setQuery((pre) => ({ ...pre, RuntimeIds: runTimeIDs }));
+            setQuery((pre: any) => ({ ...pre, RuntimeIds: runTimeIDs }));
         }, [runTimeIDs]);
 
         const onJumpRisk = useMemoizedFn(() => {
@@ -585,7 +658,7 @@ export const VulnerabilitiesRisksTable: React.FC<VulnerabilitiesRisksTableProps>
         return (
             <div className={styles['risks-table']}>
                 <YakitSpin spinning={riskLoading}>
-                    <YakitRiskTable
+                    {/* <YakitRiskTable
                         query={query}
                         setQuery={setQuery}
                         advancedQuery={true}
@@ -595,11 +668,7 @@ export const VulnerabilitiesRisksTable: React.FC<VulnerabilitiesRisksTableProps>
                                 <div
                                     className={styles['table-renderTitle-left']}
                                 >
-                                    <span>
-                                        {t(
-                                            'VulnerabilitiesRisksTable.risks_and_vulnerabilities',
-                                        )}
-                                    </span>
+                                    <span>风险与漏洞</span>
                                     <TableTotalAndSelectNumber
                                         total={allTotal}
                                     />
@@ -610,7 +679,7 @@ export const VulnerabilitiesRisksTable: React.FC<VulnerabilitiesRisksTableProps>
                                     size="small"
                                     onClick={onJumpRisk}
                                 >
-                                    {t('YakitButton.view_all_button')}
+                                    查看全部
                                 </YakitButton>
                             </div>
                         }
@@ -624,13 +693,13 @@ export const VulnerabilitiesRisksTable: React.FC<VulnerabilitiesRisksTableProps>
                         excludeColumnsKey={['action']}
                         allTotal={allTotal}
                         setAllTotal={setAllTotal}
-                    />
+                    /> */}
                 </YakitSpin>
             </div>
         );
     });
 
-/**审计漏洞tab表 */
+/** 审计漏洞tab表 */
 export const AuditHoleTableOnTab: React.FC<AuditHoleTableOnTabProps> =
     React.memo((props) => {
         const { runtimeId } = props;
@@ -679,7 +748,7 @@ export const AuditHoleTableOnTab: React.FC<AuditHoleTableOnTabProps> =
         );
     });
 
-/**插件执行的tab content 结构 */
+/** 插件执行的tab content 结构 */
 const PluginExecuteResultTabContent: React.FC<PluginExecuteResultTabContentProps> =
     React.memo((props) => {
         const { title, extra, children, className = '' } = props;
@@ -787,9 +856,11 @@ const PluginExecuteCustomTable: React.FC<PluginExecuteCustomTableProps> =
                 const length = data.length;
                 const queryHaveValue = {};
                 // 找出有查询条件
+                // eslint-disable-next-line guard-for-in
                 for (const key in query) {
                     const objItem = query[key];
                     if (objItem) {
+                        // @ts-ignore
                         queryHaveValue[key] = query[key];
                     }
                 }
@@ -801,7 +872,9 @@ const PluginExecuteCustomTable: React.FC<PluginExecuteCustomTableProps> =
                     for (let index = 0; index < length; index++) {
                         const elementArrayItem = data[index];
                         let isAdd: boolean[] = [];
+                        // eslint-disable-next-line guard-for-in
                         for (const key in queryHaveValue) {
+                            // @ts-ignore
                             const objItem = queryHaveValue[key];
                             const isHave = `${elementArrayItem[key]}`.includes(
                                 objItem,
@@ -843,20 +916,15 @@ const PluginExecuteCustomTable: React.FC<PluginExecuteCustomTableProps> =
             });
         });
         const onTableChange = useMemoizedFn(
-            (
-                page: number,
-                limit: number,
-                sorter: SortProps,
-                filters: any,
-                extra?: any,
-            ) => {
+            (_: number, __: number, sorter: SortProps, filters: any) => {
                 setQuery(filters);
                 setSorterTable(sorter);
             },
         );
         return (
             <ErrorBoundary
-                FallbackComponent={({ error, resetErrorBoundary }) => {
+                // eslint-disable-next-line react/no-unstable-nested-components
+                FallbackComponent={({ error }) => {
                     if (!error) {
                         return <div>未知错误</div>;
                     }
@@ -879,15 +947,16 @@ const PluginExecuteCustomTable: React.FC<PluginExecuteCustomTableProps> =
                         </span>
                     }
                     extra={
-                        <ExportExcel
-                            btnProps={{
-                                size: 'small',
-                                type: 'outline2',
-                            }}
-                            getData={getData}
-                            fileName={name || '输出表'}
-                            text="导出全部"
-                        />
+                        null
+                        // <ExportExcel
+                        //     btnProps={{
+                        //         size: 'small',
+                        //         type: 'outline2',
+                        //     }}
+                        //     getData={getData}
+                        //     fileName={name || '输出表'}
+                        //     text="导出全部"
+                        // />
                     }
                     className={styles['plugin-execute-custom-table']}
                 >
@@ -897,7 +966,7 @@ const PluginExecuteCustomTable: React.FC<PluginExecuteCustomTableProps> =
                         isShowTitle={false}
                         enableDrag={true}
                         data={tableData}
-                        renderKey={'uuid'}
+                        renderKey="uuid"
                         pagination={{
                             page: 1,
                             limit: 50,
@@ -916,10 +985,6 @@ const PluginExecuteCustomTable: React.FC<PluginExecuteCustomTableProps> =
 const PluginExecuteCode: React.FC<PluginExecuteCodeProps> = React.memo(
     (props) => {
         const { content } = props;
-        return (
-            <>
-                <YakitEditor readOnly={true} value={content} type="plaintext" />
-            </>
-        );
+        return <YakitEditor readOnly={true} value={content} type="plaintext" />;
     },
 );

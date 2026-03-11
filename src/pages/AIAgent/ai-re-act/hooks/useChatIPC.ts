@@ -39,7 +39,7 @@ import { grpcQueryAIEvent } from '../../ai-agent/grpc';
 import type { AIChatData } from '../../ai-agent/type/aiChat';
 import type { DeepPartial } from '../../ai-agent/store/ChatDataStore';
 
-const { ipcRenderer } = window.require('electron');
+// const { ipcRenderer } = window.require('electron');
 
 function useChatIPC(
     params?: UseChatIPCParams,

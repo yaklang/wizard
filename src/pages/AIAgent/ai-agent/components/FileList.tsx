@@ -7,9 +7,9 @@ import emiter from '@/utils/eventBus/eventBus';
 import { AITabsEnum } from '../defaultConstant';
 import { getFileActionStatus, renderFileTypeIcon } from '../../utils';
 import { IconNotepadFileTypeDir } from '../../utils/icon/icon';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import type { PluginExecuteLogFile } from '../../plugins/operator/pluginExecuteResult/PluginExecuteResultType';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 
 export interface FileListItem {
     name: string;

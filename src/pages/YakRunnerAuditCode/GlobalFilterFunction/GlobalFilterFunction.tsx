@@ -3,14 +3,14 @@ import type {
     GlobalFilterFunctionProps,
     GlobalFilterFunctionTreeProps,
 } from './GlobalFilterFunctionType';
-import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty';
+import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
 import styles from './GlobalFilterFunction.module.scss';
 import { useMemoizedFn, useSize, useUpdateEffect } from 'ahooks';
 import { yakitNotify } from '@/utils/notification';
 import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
 import { randomString } from '@/utils/randomUtil';
 import { Progress, Tree } from 'antd';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 import type {
     AuditNodeDetailProps,
@@ -21,7 +21,7 @@ import { loadAuditFromYakURLRaw, onJumpByCodeRange } from '../utils';
 import { AuditTreeNode, getDetailFun } from '../AuditCode/AuditCode';
 import emiter from '@/utils/eventBus/eventBus';
 import { OutlineSearchIcon } from '@/assets/icon/outline';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import { onSetSelectedSearchVal } from '../AuditSearchModal/AuditSearch';
 import classNames from 'classnames';
 

@@ -14,9 +14,7 @@ import {
     OutlineLink2Icon,
     OutlineVariableIcon,
 } from '@/assets/icon/outline';
-import { requestYakURLList } from '@/pages/yakURLTree/netif';
 import { yakitFailed } from '@/utils/notification';
-import { YakURL, YakURLResource } from '@/pages/yakURLTree/data';
 import {
     SolidFolderIcon,
     SolidFolderaddIcon,
@@ -26,9 +24,10 @@ import { YakitInput } from '../yakitUI/YakitInput/YakitInput';
 import { YakitButton } from '../yakitUI/YakitButton/YakitButton';
 import { RefreshIcon } from '@/assets/newIcon';
 import { YakitSpin } from '../yakitUI/YakitSpin/YakitSpin';
-import { useI18nNamespaces } from '@/i18n/useI18nNamespaces';
-import useGetSetState from '@/pages/pluginHub/hooks/useGetSetState';
 import styles from './WebTree.module.scss';
+import { requestYakURLList, YakURL } from '@/pages/AIAgent/utils/netif';
+import type { YakURLResource } from '@/pages/YakRunnerAuditCode/utils';
+import useGetSetState from '@/hooks/useGetSetState';
 
 type TreeNodeType = 'dir' | 'file' | 'query' | 'path';
 export interface TreeNode extends DataNode {
@@ -60,8 +59,6 @@ export const WebTree: React.FC<WebTreeProp> = React.forwardRef((props, ref) => {
         runTimeId = '',
         multiple = false,
     } = props;
-    const { t, i18n } = useI18nNamespaces(['yakitUi']);
-
     const [treeLoading, setTreeLoading] = useState<boolean>(false);
     // 未搜索情况时的网站树
     const [webTreeData, setWebTreeData] = useState<TreeNode[]>([]);
@@ -90,7 +87,7 @@ export const WebTree: React.FC<WebTreeProp> = React.forwardRef((props, ref) => {
             query: <OutlineVariableIcon className="yakitTreeNode-icon" />,
             path: <OutlineLink2Icon className="yakitTreeNode-icon" />,
         };
-        return iconsEle[treeNodeType] || <></>;
+        return iconsEle[treeNodeType] || null;
     };
 
     const getTreeData = useMemoizedFn((searchKeyword = '') => {

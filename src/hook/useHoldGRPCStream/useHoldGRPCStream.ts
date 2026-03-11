@@ -17,7 +17,7 @@ export const LIMIT_LOG_NUM_NAME = 'limit_log_num';
 // 默认插件日志条数
 export const DEFAULT_LOG_LIMIT = 100;
 
-const { ipcRenderer } = window.require('electron');
+// const { ipcRenderer } = window.require('electron');
 
 /** @name 将缓冲区Map对象(卡片类) 转换成 hook数据数据(卡片集合) */
 export const convertCardInfo = (
@@ -183,272 +183,272 @@ export default function useHoldGRPCStream(params: HoldGRPCStreamParams) {
     });
 
     useEffect(() => {
-        ipcRenderer.on(
-            `${token}-data`,
-            async (_: any, data: StreamResult.BaseProsp) => {
-                // run-time-id
-                if (data?.RuntimeID) {
-                    runTimeId.current.cache = data.RuntimeID;
-                }
-                // 规则数据
-                if (data.RuleData && data.ExtractedContent !== undefined) {
-                    ruleData.current.push({
-                        ...data.RuleData,
-                        ExtractedContent: data.ExtractedContent,
-                    });
-                }
+        // ipcRenderer.on(
+        //     `${token}-data`,
+        //     async (_: any, data: StreamResult.BaseProsp) => {
+        //         // run-time-id
+        //         if (data?.RuntimeID) {
+        //             runTimeId.current.cache = data.RuntimeID;
+        //         }
+        //         // 规则数据
+        //         if (data.RuleData && data.ExtractedContent !== undefined) {
+        //             ruleData.current.push({
+        //                 ...data.RuleData,
+        //                 ExtractedContent: data.ExtractedContent,
+        //             });
+        //         }
 
-                const isMessage = data.IsMessage || data.ExecResult?.IsMessage;
-                if (isMessage) {
-                    try {
-                        const messageArr =
-                            data.Message || data.ExecResult?.Message;
-                        let obj: StreamResult.Message = JSON.parse(
-                            Buffer.from(messageArr).toString(),
-                        );
-                        // progress 进度条
-                        if (obj.type === 'progress') {
-                            const processData =
-                                obj.content as StreamResult.Progress;
-                            if (processData && processData.id) {
-                                progressKVPair.current.set(
-                                    processData.id,
-                                    Math.max(
-                                        progressKVPair.current.get(
-                                            processData.id,
-                                        ) || 0,
-                                        processData.progress,
-                                    ),
-                                );
-                            }
-                            return;
-                        }
+        //         const isMessage = data.IsMessage || data.ExecResult?.IsMessage;
+        //         if (isMessage) {
+        //             try {
+        //                 const messageArr =
+        //                     data.Message || data.ExecResult?.Message;
+        //                 let obj: StreamResult.Message = JSON.parse(
+        //                     Buffer.from(messageArr).toString(),
+        //                 );
+        //                 // progress 进度条
+        //                 if (obj.type === 'progress') {
+        //                     const processData =
+        //                         obj.content as StreamResult.Progress;
+        //                     if (processData && processData.id) {
+        //                         progressKVPair.current.set(
+        //                             processData.id,
+        //                             Math.max(
+        //                                 progressKVPair.current.get(
+        //                                     processData.id,
+        //                                 ) || 0,
+        //                                 processData.progress,
+        //                             ),
+        //                         );
+        //                     }
+        //                     return;
+        //                 }
 
-                        const logData = obj.content as StreamResult.Log;
+        //                 const logData = obj.content as StreamResult.Log;
 
-                        // feature-status-card-data 卡片展示
-                        if (
-                            obj.type === 'log' &&
-                            logData.level === 'feature-status-card-data'
-                        ) {
-                            try {
-                                const checkInfo = checkStreamValidity(logData);
-                                if (!checkInfo) return;
+        //                 // feature-status-card-data 卡片展示
+        //                 if (
+        //                     obj.type === 'log' &&
+        //                     logData.level === 'feature-status-card-data'
+        //                 ) {
+        //                     try {
+        //                         const checkInfo = checkStreamValidity(logData);
+        //                         if (!checkInfo) return;
 
-                                const obj: StreamResult.Card = checkInfo;
-                                const { id, data, tags } = obj;
-                                const { timestamp } = logData;
-                                const originData = cardKVPair.current.get(id);
-                                if (
-                                    originData &&
-                                    originData.Timestamp > timestamp
-                                ) {
-                                    return;
-                                }
-                                cardKVPair.current.set(id, {
-                                    Id: id,
-                                    Data: data,
-                                    Timestamp: timestamp,
-                                    Tags: Array.isArray(tags) ? tags : [],
-                                });
-                            } catch (e) {}
-                            return;
-                        }
+        //                         const obj: StreamResult.Card = checkInfo;
+        //                         const { id, data, tags } = obj;
+        //                         const { timestamp } = logData;
+        //                         const originData = cardKVPair.current.get(id);
+        //                         if (
+        //                             originData &&
+        //                             originData.Timestamp > timestamp
+        //                         ) {
+        //                             return;
+        //                         }
+        //                         cardKVPair.current.set(id, {
+        //                             Id: id,
+        //                             Data: data,
+        //                             Timestamp: timestamp,
+        //                             Tags: Array.isArray(tags) ? tags : [],
+        //                         });
+        //                     } catch (e) {}
+        //                     return;
+        //                 }
 
-                        // new-tab(插件自增tab页)
-                        if (
-                            obj.type === 'log' &&
-                            logData.level === 'json-feature'
-                        ) {
-                            try {
-                                const checkInfo = checkStreamValidity(logData);
-                                if (!checkInfo) return;
-                                const info: {
-                                    feature: string;
-                                    params: any;
-                                    [key: string]: any;
-                                } = checkInfo;
+        //                 // new-tab(插件自增tab页)
+        //                 if (
+        //                     obj.type === 'log' &&
+        //                     logData.level === 'json-feature'
+        //                 ) {
+        //                     try {
+        //                         const checkInfo = checkStreamValidity(logData);
+        //                         if (!checkInfo) return;
+        //                         const info: {
+        //                             feature: string;
+        //                             params: any;
+        //                             [key: string]: any;
+        //                         } = checkInfo;
 
-                                let tabInfo: HoldGRPCStreamProps.InfoTab = {
-                                    tabName: '',
-                                    type: '',
-                                };
-                                switch (info.feature) {
-                                    case 'website-trees':
-                                        // tabInfo = {tabName: "网站树结构", type: "website"}
-                                        // placeTab(!!info.at_head, tabInfo)
-                                        tabWebsite.current = info.params;
-                                        break;
-                                    case 'fixed-table': {
-                                        const table =
-                                            info.params as StreamResult.Table;
-                                        tabInfo = {
-                                            tabName: table.table_name,
-                                            type: 'table',
-                                        };
+        //                         let tabInfo: HoldGRPCStreamProps.InfoTab = {
+        //                             tabName: '',
+        //                             type: '',
+        //                         };
+        //                         switch (info.feature) {
+        //                             case 'website-trees':
+        //                                 // tabInfo = {tabName: "网站树结构", type: "website"}
+        //                                 // placeTab(!!info.at_head, tabInfo)
+        //                                 tabWebsite.current = info.params;
+        //                                 break;
+        //                             case 'fixed-table': {
+        //                                 const table =
+        //                                     info.params as StreamResult.Table;
+        //                                 tabInfo = {
+        //                                     tabName: table.table_name,
+        //                                     type: 'table',
+        //                                 };
 
-                                        placeTab(!!info.at_head, tabInfo);
+        //                                 placeTab(!!info.at_head, tabInfo);
 
-                                        // eslint-disable-next-line max-depth
-                                        if (
-                                            tabTable.current.get(
-                                                table.table_name,
-                                            )
-                                        ) {
-                                            pushLogs(obj);
-                                            break;
-                                        }
-                                        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                                        tabTable.current.set(table.table_name, {
-                                            name: table.table_name,
-                                            columns: table.columns.map(
-                                                (item) => {
-                                                    return {
-                                                        title: item,
-                                                        dataKey: item,
-                                                    };
-                                                },
-                                            ),
-                                            data: new Map<string, any[]>(),
-                                        } as HoldGRPCStreamProps.CacheTable);
-                                        break;
-                                    }
-                                    case 'text': {
-                                        const text =
-                                            info.params as StreamResult.Text;
-                                        tabInfo = {
-                                            tabName: text.tab_name,
-                                            type: 'text',
-                                        };
+        //                                 // eslint-disable-next-line max-depth
+        //                                 if (
+        //                                     tabTable.current.get(
+        //                                         table.table_name,
+        //                                     )
+        //                                 ) {
+        //                                     pushLogs(obj);
+        //                                     break;
+        //                                 }
+        //                                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        //                                 tabTable.current.set(table.table_name, {
+        //                                     name: table.table_name,
+        //                                     columns: table.columns.map(
+        //                                         (item) => {
+        //                                             return {
+        //                                                 title: item,
+        //                                                 dataKey: item,
+        //                                             };
+        //                                         },
+        //                                     ),
+        //                                     data: new Map<string, any[]>(),
+        //                                 } as HoldGRPCStreamProps.CacheTable);
+        //                                 break;
+        //                             }
+        //                             case 'text': {
+        //                                 const text =
+        //                                     info.params as StreamResult.Text;
+        //                                 tabInfo = {
+        //                                     tabName: text.tab_name,
+        //                                     type: 'text',
+        //                                 };
 
-                                        placeTab(!!info.at_head, tabInfo);
-                                        // eslint-disable-next-line max-depth
-                                        if (
-                                            tabsText.current.get(text.tab_name)
-                                        ) {
-                                            pushLogs(obj);
-                                            break;
-                                        }
-                                        tabsText.current.set(text.tab_name, '');
-                                        break;
-                                    }
-                                    default:
-                                        pushLogs(obj);
-                                        break;
-                                }
-                            } catch (e) {}
-                            return;
-                        }
+        //                                 placeTab(!!info.at_head, tabInfo);
+        //                                 // eslint-disable-next-line max-depth
+        //                                 if (
+        //                                     tabsText.current.get(text.tab_name)
+        //                                 ) {
+        //                                     pushLogs(obj);
+        //                                     break;
+        //                                 }
+        //                                 tabsText.current.set(text.tab_name, '');
+        //                                 break;
+        //                             }
+        //                             default:
+        //                                 pushLogs(obj);
+        //                                 break;
+        //                         }
+        //                     } catch (e) {}
+        //                     return;
+        //                 }
 
-                        // 自定义table数据
-                        if (
-                            obj.type === 'log' &&
-                            logData.level === 'feature-table-data'
-                        ) {
-                            try {
-                                const checkInfo = checkStreamValidity(logData);
-                                if (!checkInfo) return;
+        //                 // 自定义table数据
+        //                 if (
+        //                     obj.type === 'log' &&
+        //                     logData.level === 'feature-table-data'
+        //                 ) {
+        //                     try {
+        //                         const checkInfo = checkStreamValidity(logData);
+        //                         if (!checkInfo) return;
 
-                                const tableOpt: StreamResult.TableDataOpt =
-                                    checkInfo;
-                                const originTable = tabTable.current.get(
-                                    tableOpt.table_name,
-                                );
-                                if (!originTable) {
-                                    pushLogs(obj);
-                                    return;
-                                }
+        //                         const tableOpt: StreamResult.TableDataOpt =
+        //                             checkInfo;
+        //                         const originTable = tabTable.current.get(
+        //                             tableOpt.table_name,
+        //                         );
+        //                         if (!originTable) {
+        //                             pushLogs(obj);
+        //                             return;
+        //                         }
 
-                                const datas =
-                                    originTable?.data ||
-                                    (new Map() as HoldGRPCStreamProps.CacheTable['data']);
-                                // uuid一定存在，不存在归为脏数据
-                                if (!tableOpt.data.uuid) {
-                                    pushLogs(obj);
-                                    return;
-                                }
-                                datas.set(tableOpt.data.uuid, tableOpt.data);
-                                tabTable.current.set(tableOpt.table_name, {
-                                    name: originTable.name,
-                                    columns: originTable.columns,
-                                    data: datas,
-                                });
-                            } catch (e) {}
-                            return;
-                        }
+        //                         const datas =
+        //                             originTable?.data ||
+        //                             (new Map() as HoldGRPCStreamProps.CacheTable['data']);
+        //                         // uuid一定存在，不存在归为脏数据
+        //                         if (!tableOpt.data.uuid) {
+        //                             pushLogs(obj);
+        //                             return;
+        //                         }
+        //                         datas.set(tableOpt.data.uuid, tableOpt.data);
+        //                         tabTable.current.set(tableOpt.table_name, {
+        //                             name: originTable.name,
+        //                             columns: originTable.columns,
+        //                             data: datas,
+        //                         });
+        //                     } catch (e) {}
+        //                     return;
+        //                 }
 
-                        // 自定义text数据
-                        if (
-                            obj.type === 'log' &&
-                            logData.level === 'feature-text-data'
-                        ) {
-                            try {
-                                const checkInfo = checkStreamValidity(logData);
-                                if (!checkInfo) return;
+        //                 // 自定义text数据
+        //                 if (
+        //                     obj.type === 'log' &&
+        //                     logData.level === 'feature-text-data'
+        //                 ) {
+        //                     try {
+        //                         const checkInfo = checkStreamValidity(logData);
+        //                         if (!checkInfo) return;
 
-                                const textData: StreamResult.TextData =
-                                    checkInfo;
-                                const content = tabsText.current.get(
-                                    textData.table_name,
-                                );
-                                if (content === undefined) {
-                                    pushLogs(obj);
-                                    return;
-                                }
+        //                         const textData: StreamResult.TextData =
+        //                             checkInfo;
+        //                         const content = tabsText.current.get(
+        //                             textData.table_name,
+        //                         );
+        //                         if (content === undefined) {
+        //                             pushLogs(obj);
+        //                             return;
+        //                         }
 
-                                if (content === textData.data) return;
-                                tabsText.current.set(
-                                    textData.table_name,
-                                    textData.data,
-                                );
-                            } catch (e) {}
-                            return;
-                        }
+        //                         if (content === textData.data) return;
+        //                         tabsText.current.set(
+        //                             textData.table_name,
+        //                             textData.data,
+        //                         );
+        //                     } catch (e) {}
+        //                     return;
+        //                 }
 
-                        // risk 风险信息列表
-                        if (
-                            obj.type === 'log' &&
-                            logData.level === 'json-risk'
-                        ) {
-                            try {
-                                const checkInfo = checkStreamValidity(logData);
-                                if (!checkInfo) return;
-                                const risk: StreamResult.Risk = checkInfo;
-                                riskMessages.current.unshift(risk);
-                            } catch (e) {}
-                            return;
-                        }
+        //                 // risk 风险信息列表
+        //                 if (
+        //                     obj.type === 'log' &&
+        //                     logData.level === 'json-risk'
+        //                 ) {
+        //                     try {
+        //                         const checkInfo = checkStreamValidity(logData);
+        //                         if (!checkInfo) return;
+        //                         const risk: StreamResult.Risk = checkInfo;
+        //                         riskMessages.current.unshift(risk);
+        //                     } catch (e) {}
+        //                     return;
+        //                 }
 
-                        // 外界传入的筛选方法
-                        if (dataFilter && dataFilter(obj, logData)) return;
-                        // 日志信息
-                        pushLogs(obj);
-                    } catch (e) {}
-                }
-            },
-        );
-        // token-error
-        ipcRenderer.on(`${token}-error`, (_: any, error: any) => {
-            isShowError && yakitFailed(`[Mod] ${taskName} error: ${error}`);
-            if (onError) {
-                onError(error);
-            }
-        });
-        // token-end
-        ipcRenderer.on(`${token}-end`, () => {
-            isShowEnd && info(`[Mod] ${taskName} finished`);
-            handleResults();
-            if (onEnd) {
-                onEnd(getStreamInfo());
-            }
-        });
+        //                 // 外界传入的筛选方法
+        //                 if (dataFilter && dataFilter(obj, logData)) return;
+        //                 // 日志信息
+        //                 pushLogs(obj);
+        //             } catch (e) {}
+        //         }
+        //     },
+        // );
+        // // token-error
+        // ipcRenderer.on(`${token}-error`, (_: any, error: any) => {
+        //     isShowError && yakitFailed(`[Mod] ${taskName} error: ${error}`);
+        //     if (onError) {
+        //         onError(error);
+        //     }
+        // });
+        // // token-end
+        // ipcRenderer.on(`${token}-end`, () => {
+        //     isShowEnd && info(`[Mod] ${taskName} finished`);
+        //     handleResults();
+        //     if (onEnd) {
+        //         onEnd(getStreamInfo());
+        //     }
+        // });
 
         return () => {
             stop();
             cancel();
-            ipcRenderer.removeAllListeners(`${token}-data`);
-            ipcRenderer.removeAllListeners(`${token}-error`);
-            ipcRenderer.removeAllListeners(`${token}-end`);
+            // ipcRenderer.removeAllListeners(`${token}-data`);
+            // ipcRenderer.removeAllListeners(`${token}-error`);
+            // ipcRenderer.removeAllListeners(`${token}-end`);
         };
     }, [token]);
 

@@ -21,17 +21,17 @@ import type {
     YakitTabsProps,
 } from '@/compoments/yakitSideTab/YakitSideTabType';
 import { AIReActChat } from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChat';
-import { AIFileSystemList } from '../components/aiFileSystemList/AIFileSystemList';
+// import { AIFileSystemList } from '../components/aiFileSystemList/AIFileSystemList';
 import {
     PluginExecuteHttpFlow,
     VulnerabilitiesRisksTable,
 } from '@/pages/AIAgent/plugins/operator/pluginExecuteResult/PluginExecuteResult';
-import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty';
+import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
 // ipc 获取风险与漏洞的总数
 // import { apiQueryRisksTotalByRuntimeIds } from '@/pages/risks/YakitRiskTable/utils';
 import AIReActTaskChat from '@/pages/AIAgent/ai-re-act/aiReActTaskChat/AIReActTaskChat';
 import emiter from '@/utils/eventBus/eventBus';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import {
     OutlineClouddownloadIcon,
     OutlineNewspaperIcon,
@@ -39,10 +39,10 @@ import {
 } from '@/assets/icon/outline';
 import { SolidChatalt2Icon } from '@/assets/icon/solid';
 // import useAiChatLog from '@/hook/useAiChatLog/useAiChatLog.ts';
-import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox';
+import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
 import { grpcExportAILogs, grpcQueryHTTPFlows } from '../grpc';
 import useChatIPCStore from '../useContext/ChatIPCContent/useStore';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import { onNewChat } from '../historyChat/HistoryChat';
 import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome';
 import { Divider } from 'antd';
@@ -56,8 +56,7 @@ import type {
     AIReActChatRefProps,
 } from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChatType';
 import AIContextToken from './AIContextToken/AIContextToken';
-import OperationLog from '../components/aiFileSystemList/OperationLog/OperationLog';
-import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
+// import OperationLog from '../components/aiFileSystemList/OperationLog/OperationLog';
 
 export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
     forwardRef((props, ref) => {
@@ -319,11 +318,11 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
             },
         );
 
-        const OperationLogList = useCreation(() => {
-            return Array.from(yakExecResult.execFileRecord.values())
-                .flat()
-                .sort((a: any, b: any) => b.order - a.order);
-        }, [yakExecResult.execFileRecord]);
+        // const OperationLogList = useCreation(() => {
+        //     return Array.from(yakExecResult.execFileRecord.values())
+        //         .flat()
+        //         .sort((a: any, b: any) => b.order - a.order);
+        // }, [yakExecResult.execFileRecord]);
 
         const renderTabContent = useMemoizedFn((key: AITabsEnumType) => {
             switch (key) {
@@ -335,7 +334,8 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                         />
                     );
                 case AITabsEnum.File_System:
-                    return <AIFileSystemList />;
+                    // return <AIFileSystemList />;
+                    return null;
                 case AITabsEnum.Risk:
                     return runTimeIDs.length ? (
                         <VulnerabilitiesRisksTable
@@ -357,10 +357,11 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                     );
                 case AITabsEnum.Operation_Log:
                     return (
-                        <OperationLog
-                            loading={false}
-                            list={OperationLogList as StreamResult.Log[]}
-                        />
+                        // <OperationLog
+                        //     loading={false}
+                        //     list={OperationLogList as StreamResult.Log[]}
+                        // />
+                        null
                     );
                 default:
                     return null;

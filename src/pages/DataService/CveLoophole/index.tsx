@@ -7,7 +7,7 @@ import { postCveQuery } from '@/apis/CveLoopholeApi';
 import type { TCveQueryResponse } from '@/apis/CveLoopholeApi/type';
 import { WizardTable } from '@/compoments';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
-import { YakitTag } from '@/compoments/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import styles from './CVETable.module.scss';
 import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
 import { CveLoopholeFilterDrawer } from './compoments/CveLoopholeFilterDrawer';

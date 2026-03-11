@@ -10,13 +10,13 @@ import type {
     ShowItemType,
 } from './BottomEditorDetailsType';
 import { OutlineXIcon } from '@/assets/icon/outline';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import useStore from '../hooks/useStore';
 import emiter from '@/utils/eventBus/eventBus';
 import { PaperAirplaneIcon } from '@/assets/newIcon';
 import { RuleEditorBox } from './RuleEditorBox/RuleEditorBox';
 import useDispatcher from '../hooks/useDispatcher';
-import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty';
+import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
 import { HoleDispose } from './HoleDispose/HoleDispose';
 import type { CodeRangeProps } from '../RightAuditDetail/RightAuditDetail';
 import { getNameByPath } from '../utils';
@@ -35,7 +35,7 @@ import {
     IconSolidSeriousIcon,
 } from '../icon';
 import { Descriptions, Divider } from 'antd';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 import { formatTimestamp } from '@/utils/timeUtil';
 import MDEditor from '@uiw/react-md-editor';
 const { ipcRenderer } = window.require('electron');

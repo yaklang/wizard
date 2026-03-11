@@ -5,7 +5,7 @@ import { useCreation } from 'ahooks';
 import styles from './AIStreamChatContent.module.scss';
 import useAINodeLabel from '@/pages/AIAgent/ai-re-act/hooks/useAINodeLabel';
 import classNames from 'classnames';
-import { CopyComponents } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { CopyComponents } from '@/compoments/YakitUI/YakitTag/YakitTag';
 
 export const AIStreamChatContent: React.FC<AIStreamChatContentProps> =
     React.memo((props) => {

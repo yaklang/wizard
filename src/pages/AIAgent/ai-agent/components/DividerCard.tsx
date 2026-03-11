@@ -8,7 +8,7 @@ import {
 import classNames from 'classnames';
 import { TaskInProgressIcon, TaskSuccessIcon } from '../aiTree/icon';
 import { AITaskStatus } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 
 interface SuccessStatus {
     status: AITaskStatus.success | AITaskStatus.cancel;

@@ -25,7 +25,7 @@ export const reviewListToTrees = (
     items: AIAgentGrpcApi.PlanTask[],
 ): AIAgentGrpcApi.PlanTask[] => {
     // 创建映射表，以id为键存储所有节点
-    const map = {};
+    const map: Record<string, AIAgentGrpcApi.PlanTask> = {};
     const tree: AIAgentGrpcApi.PlanTask[] = [];
 
     // 首先构建所有节点的映射
@@ -44,6 +44,7 @@ export const reviewListToTrees = (
         const parentId = getParentId(item.index);
         // 如果有父节点，则添加到父节点的children中
         if (parentId && map[parentId]) {
+            // @ts-ignore
             map[parentId].subtasks.push(node);
         }
         // 否则作为根节点
@@ -60,7 +61,7 @@ export const reviewListToTrees = (
  * @param {String} id 当前节点ID
  * @returns {String|null} 父节点ID或null(如果是根节点)
  */
-const getParentId = (id) => {
+const getParentId = (id: string) => {
     const parts = id.split('-');
     if (parts.length <= 1) return null;
     return parts.slice(0, -1).join('-');

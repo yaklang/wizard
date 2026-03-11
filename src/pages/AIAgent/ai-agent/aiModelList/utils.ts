@@ -23,10 +23,9 @@ import omit from 'lodash/omit';
 // ipcRenderer 相关接口
 // import { apiGetGlobalNetworkConfig } from '@/pages/spaceEngine/utils';
 import type { ThirdPartyApplicationConfig } from '@/components/configNetwork/ConfigNetworkPage';
-import { AILocalModelTypeEnum } from '../defaultConstant';
 import { onOpenConfigModal } from './aiModelSelect/AIModelSelect';
 
-const { ipcRenderer } = window.require('electron');
+// const { ipcRenderer } = window.require('electron');
 
 export const grpcGetSupportedLocalModels: APINoRequestFunc<
     LocalModelConfig[]

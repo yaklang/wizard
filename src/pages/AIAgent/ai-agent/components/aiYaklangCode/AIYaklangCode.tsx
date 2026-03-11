@@ -6,8 +6,8 @@ import ModalInfo from '../ModelInfo';
 import styles from './AIYaklangCode.module.scss';
 import { useMemoizedFn, useThrottleEffect } from 'ahooks';
 import { AIStreamContentType } from '@/pages/AIAgent/ai-re-act/hooks/defaultConstant';
-import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor';
-import { NewHTTPPacketEditor } from '@/compoments/yakitUI/YakitEditor/editors';
+import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
+import { NewHTTPPacketEditor } from '@/compoments/YakitUI/YakitEditor/editors';
 
 export const AIYaklangCode: React.FC<AIYaklangCodeProps> = React.memo(
     (props) => {

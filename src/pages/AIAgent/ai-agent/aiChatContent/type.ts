@@ -1,5 +1,5 @@
 import type { AIReActChatRefProps } from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChatType';
-import type { TabKey } from '../components/aiFileSystemList/type';
+// import type { TabKey } from '../components/aiFileSystemList/type';
 import type { AITabsEnum } from '../defaultConstant';
 
 export type AIChatContentRefProps = AIReActChatRefProps;
@@ -15,5 +15,5 @@ interface TabHTTPPayload {
 }
 interface TabFileSystemPayload {
     key: AITabsEnum.File_System;
-    value?: TabKey;
+    value?: string;
 }

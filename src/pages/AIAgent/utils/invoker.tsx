@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import {
     FileActionEnum,
     type PluginExecuteLogFile,
-} from '../plugins/operator/pluginExecuteResult/PluginExecuteResultType';
+} from '../plugins/operator/pluginExecuteResult/PluginExecuteResultType.d';
 import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType';
-import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor';
+import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
 
 /**
  *

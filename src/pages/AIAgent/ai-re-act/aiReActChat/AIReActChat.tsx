@@ -35,7 +35,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AIChatInfo } from '@/pages/AIAgent/ai-agent/type/aiChat';
 import useAIAgentDispatcher from '@/pages/AIAgent/ai-agent/useContext/useDispatcher';
 import { randomString } from '@/utils/randomUtil';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
 
 export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
     forwardRef((props, ref) => {

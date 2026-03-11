@@ -1,14 +1,19 @@
-import {AIAgentGrpcApi} from "@/pages/ai-re-act/hooks/grpcApi"
+import type { AIAgentGrpcApi } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 
-export interface AIMemoryListProps {}
-export interface AIMemoryScoreEchartsProps extends AIMemoryEchartsProps {}
-export interface AIMemoryEchartsProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface AIMemoryListProps {
+    [key: string]: never;
+}
+export interface AIMemoryScoreEchartsProps extends AIMemoryEchartsProps {
+    [key: string]: unknown;
+}
+export interface AIMemoryEchartsProps
+    extends React.HTMLAttributes<HTMLDivElement> {
     data: {
-        xData: string[]
-        yData: number[]
-    }
+        xData: string[];
+        yData: number[];
+    };
 }
 
 export interface AIMemoryContentProps {
-    item: AIAgentGrpcApi.MemoryEntry
+    item: AIAgentGrpcApi.MemoryEntry;
 }

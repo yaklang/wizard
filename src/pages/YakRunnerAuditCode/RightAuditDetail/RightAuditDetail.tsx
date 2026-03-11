@@ -16,8 +16,8 @@ import {
     OutlineZoominIcon,
     OutlineZoomoutIcon,
 } from '@/assets/icon/outline';
-import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import { Tooltip } from 'antd';
 import { instance } from '@viz-js/viz';
 import { failed } from '@/utils/notification';
@@ -42,7 +42,7 @@ import {
     setMapResultDetail,
 } from './ResultMap';
 import type { Selection } from '../RunnerTabs/RunnerTabsType';
-import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin';
+import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
 import { getNameByPath } from '../utils';
 
 export interface JumpSourceDataProps {

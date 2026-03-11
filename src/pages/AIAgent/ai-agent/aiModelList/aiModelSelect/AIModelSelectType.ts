@@ -1,11 +1,11 @@
-import {AIStartParams} from "@/pages/ai-re-act/hooks/grpcApi"
+import type { AIStartParams } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 
-export type AISelectType = "online" | "local"
+export type AISelectType = 'online' | 'local';
 export interface AIModelSelectProps {
-    isOpen?: boolean
-    className?: string
+    isOpen?: boolean;
+    className?: string;
 }
 export interface AIModelItemProps {
-    value: string
-    aiService?: AIStartParams["AIService"]
+    value: string;
+    aiService?: AIStartParams['AIService'];
 }

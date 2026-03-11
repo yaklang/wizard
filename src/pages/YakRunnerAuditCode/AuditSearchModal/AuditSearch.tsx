@@ -12,10 +12,10 @@ import type {
     AuditSearchProps,
     ExtraSettingDataProps,
 } from './AuditSearchModalType';
-import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox';
-import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput';
-import { YakitHintWhite } from '@/compoments/yakitUI/YakitHint/YakitHint';
-import YakitTabs from '@/compoments/yakitUI/YakitTabs/YakitTabs';
+import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
+import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput';
+import { YakitHintWhite } from '@/compoments/YakitUI/YakitHint/YakitHint';
+import YakitTabs from '@/compoments/YakitUI/YakitTabs/YakitTabs';
 import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
 import { Progress } from 'antd';
 import type {
@@ -25,8 +25,8 @@ import type {
 import { loadAuditFromYakURLRaw, onJumpByCodeRange } from '../utils';
 import { RollingLoadList } from '@/compoments/RollingLoadList/RollingLoadList';
 import { AuditNodeSearchItem } from '../AuditCode/AuditCode';
-import { showByRightContext } from '@/compoments/yakitUI/YakitMenu/showByRightContext';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { showByRightContext } from '@/compoments/YakitUI/YakitMenu/showByRightContext';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import type { CodeRangeProps } from '../RightAuditDetail/RightAuditDetail';
 import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
 import { randomString } from '@/utils/randomUtil';

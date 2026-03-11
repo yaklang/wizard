@@ -16,7 +16,7 @@ import '@/utils/monacoSpec/yakEditor';
 import '@/utils/monacoSpec/html';
 import HexEditor from 'react-hex-editor';
 import styles from './editors.module.scss';
-import { Buffer } from 'buffer';
+// import { Buffer } from 'buffer';
 import type { OperationRecordRes, YakitEditorProps } from './YakitEditorType';
 import { YakitEditor } from './YakitEditor';
 import { SelectOne } from '@/compoments/ReportTemplate/compoments/utils/InputUtils';

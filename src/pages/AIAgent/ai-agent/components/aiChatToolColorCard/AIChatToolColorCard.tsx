@@ -8,7 +8,7 @@ import styles from './AIChatToolColorCard.module.scss';
 import { OutlineSparklesColorsIcon } from '@/assets/icon/colors';
 import { OutlineArrownarrowrightIcon } from '@/assets/icon/outline';
 import { PreWrapper } from '../ToolInvokerCard';
-import { YakitPopconfirm } from '@/compoments/yakitUI/YakitPopconfirm/YakitPopconfirm';
+import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm';
 import type { AIAgentGrpcApi } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 import { isToolStdoutStream } from '@/pages/AIAgent/ai-re-act/hooks/utils';
 

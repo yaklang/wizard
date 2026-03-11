@@ -24,14 +24,14 @@ import {
 } from './defaultConstant';
 import cloneDeep from 'lodash/cloneDeep';
 import { AIAgentChat } from './aiAgentChat/AIAgentChat';
-import { loadRemoteHistory } from './components/aiFileSystemList/store/useHistoryFolder';
-import { initCustomFolderStore } from './components/aiFileSystemList/store/useCustomFolder';
-import { YakitHint } from '@/compoments/yakitUI/YakitHint/YakitHint';
+// import { loadRemoteHistory } from './components/aiFileSystemList/store/useHistoryFolder';
+// import { initCustomFolderStore } from './components/aiFileSystemList/store/useCustomFolder';
+import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
 import emiter from '@/utils/eventBus/eventBus';
 import classNames from 'classnames';
 import styles from './AIAgent.module.scss';
 // import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
-import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox';
+import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
 
 export const AIAgentCacheClearValue = '20260113';
 
@@ -163,11 +163,11 @@ export const AIAgent = () => {
         initToCacheData().catch(() => {});
 
         // 加载历史文件数据
-        const bootstrap = async () => {
-            await loadRemoteHistory();
-            await initCustomFolderStore();
-        };
-        bootstrap().catch(() => {});
+        // const bootstrap = async () => {
+        //     await loadRemoteHistory();
+        //     await initCustomFolderStore();
+        // };
+        // bootstrap().catch(() => {});
 
         return () => {};
     }, []);

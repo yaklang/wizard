@@ -1,7 +1,9 @@
-import {useContext} from "react"
-import AIAgentContext, {AIAgentContextDispatcher} from "./AIAgentContext"
+import { useContext } from 'react';
+import AIAgentContext, {
+    type AIAgentContextDispatcher,
+} from './AIAgentContext';
 
 export default function useAIAgentDispatcher(): AIAgentContextDispatcher {
-    const {dispatcher} = useContext(AIAgentContext)
-    return dispatcher
+    const { dispatcher } = useContext(AIAgentContext);
+    return dispatcher;
 }

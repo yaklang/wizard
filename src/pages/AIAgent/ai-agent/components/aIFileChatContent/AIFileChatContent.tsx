@@ -21,7 +21,7 @@ import type { FileToChatQuestionList } from '../../template/type';
 import type { AIInputEvent } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 import { IconNotepadFileTypeDir } from '@/pages/AIAgent/utils/icon/icon';
 import { renderFileTypeIcon } from '@/pages/AIAgent/utils';
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute';
 
 interface AIFileChatContentProps {

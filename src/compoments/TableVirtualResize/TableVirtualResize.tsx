@@ -67,7 +67,7 @@ import {
 import { YakitInput } from '../yakitUI/YakitInput/YakitInput';
 import { YakitTag } from '../yakitUI/YakitTag/YakitTag';
 import moment, { type Moment } from 'moment';
-import { YakitDatePicker } from '@/compoments/yakitUI/YakitDatePicker/YakitDatePicker';
+import { YakitDatePicker } from '@/compoments/YakitUI/YakitDatePicker/YakitDatePicker';
 import { parseColorTag } from './utils';
 
 const { RangePicker } = YakitDatePicker;

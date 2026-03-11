@@ -16,8 +16,8 @@ import type {
     TGetCompanyInfoResponse,
     TGetDomainInfoResponse,
 } from '@/apis/MessageCollectApi/type';
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
-import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType';
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
+import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType';
 
 // 端口资产 columns
 const ProtColumns = (filterData?: {
