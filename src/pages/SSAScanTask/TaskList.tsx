@@ -64,8 +64,12 @@ import type {
 import { fetchSSAProject } from '@/apis/SSAProjectApi';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import SSAReportExportModal, {
+    type TSSAReportExportFormat,
     type TSSAReportExportFormValues,
 } from '@/compoments/SSAReportExportModal';
+import SSAReportExportProgressModal, {
+    type TSSAReportExportProgressModalState,
+} from '@/compoments/SSAReportExportProgressModal';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { useEventSource } from '@/hooks';
 import {
@@ -82,6 +86,13 @@ dayjs.locale('zh-cn');
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+
+const defaultExportProgressState: TSSAReportExportProgressModalState = {
+    open: false,
+    format: 'pdf',
+    percent: 0,
+    message: '',
+};
 
 const getScanBatchText = (scanBatch?: number) => {
     if (!scanBatch || scanBatch <= 0) return '';
@@ -148,6 +159,10 @@ const TaskList: React.FC = () => {
     const [exportTaskIDs, setExportTaskIDs] = useState<string[]>([]);
     const [exportScopeText, setExportScopeText] = useState('');
     const [exportScopeName, setExportScopeName] = useState('SSA任务');
+    const [exportProgress, setExportProgress] =
+        useState<TSSAReportExportProgressModalState>(
+            defaultExportProgressState,
+        );
 
     const [form] = Form.useForm();
 
@@ -582,6 +597,30 @@ const TaskList: React.FC = () => {
         [exportScopeName],
     );
 
+    const openExportProgress = useCallback(
+        (format: TSSAReportExportFormat, message: string, percent = 8) => {
+            setExportProgress({
+                open: true,
+                format,
+                percent,
+                message,
+            });
+        },
+        [],
+    );
+
+    const updateExportProgress = useCallback(
+        (percent: number, message: string) => {
+            setExportProgress((prev) => ({
+                ...prev,
+                open: true,
+                percent: Math.max(prev.percent, percent),
+                message,
+            }));
+        },
+        [],
+    );
+
     const handleTaskExport = useCallback(
         async (values: TSSAReportExportFormValues) => {
             if (exportTaskIDs.length === 0) {
@@ -590,6 +629,12 @@ const TaskList: React.FC = () => {
             }
             try {
                 setExportSubmitting(true);
+                openExportProgress(
+                    values.format,
+                    values.format === 'word'
+                        ? '正在请求 Word 报告数据...'
+                        : '正在请求 PDF 报告数据...',
+                );
                 const params: TSSARiskExportParams = {
                     report_name: values.report_name,
                     template_id: values.template_id,
@@ -609,24 +654,52 @@ const TaskList: React.FC = () => {
                     if (!res.data) {
                         throw new Error('empty report docx');
                     }
-                    saveSSAReportDocx(res.data, values.report_name);
+                    updateExportProgress(
+                        78,
+                        '报告数据已返回，正在写入 Word 文件...',
+                    );
+                    saveSSAReportDocx(
+                        res.data,
+                        values.report_name,
+                        (progress) => {
+                            updateExportProgress(
+                                progress.percent,
+                                progress.message,
+                            );
+                        },
+                    );
                 } else {
                     const res = await exportSSARiskReportHTML(params);
                     const html = res.data || '';
                     if (!html.trim()) {
                         throw new Error('empty report html');
                     }
-                    await exportSSAReportToPDF(html, values.report_name);
+                    updateExportProgress(30, '报告数据已返回，正在渲染 PDF...');
+                    await exportSSAReportToPDF(
+                        html,
+                        values.report_name,
+                        (progress) => {
+                            updateExportProgress(
+                                progress.percent,
+                                progress.message,
+                            );
+                        },
+                    );
                 }
+                updateExportProgress(100, '导出完成');
                 setExportModalOpen(false);
                 message.success('导出成功');
             } catch {
+                setExportProgress(defaultExportProgressState);
                 message.error('导出失败');
             } finally {
+                window.setTimeout(() => {
+                    setExportProgress(defaultExportProgressState);
+                }, 400);
                 setExportSubmitting(false);
             }
         },
-        [exportTaskIDs],
+        [exportTaskIDs, openExportProgress, updateExportProgress],
     );
 
     const deleteTasksByIDs = useCallback(
@@ -2038,6 +2111,7 @@ const TaskList: React.FC = () => {
                 onCancel={() => setExportModalOpen(false)}
                 onSubmit={handleTaskExport}
             />
+            <SSAReportExportProgressModal state={exportProgress} />
         </div>
     );
 };
