@@ -213,7 +213,7 @@ const TaskDefectAudit: React.FC = () => {
         }
     };
 
-    const handleTreeSelect = (_keys: any[], info: any) => {
+    const handleTreeSelect = (_: any[], info: any) => {
         if (info.node.isLeaf && info.node.data?.hash) {
             setSelectedRiskHash(info.node.data.hash);
             fetchAudit(info.node.data.hash);

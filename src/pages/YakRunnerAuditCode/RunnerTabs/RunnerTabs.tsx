@@ -1248,7 +1248,9 @@ const RunnerTabPane: React.FC<RunnerTabPaneProps> = memo((props) => {
             if (activeFile?.syntaxCheck) {
                 const markers = activeFile.syntaxCheck
                     .map(ConvertAuditStaticAnalyzeErrorToMarker)
-                    .filter((item) => item !== null) as IMonacoEditorMarker[];
+                    .filter(
+                        (item: any) => item !== null,
+                    ) as IMonacoEditorMarker[];
                 monaco.editor.setModelMarkers(model, 'audit', markers);
             } else {
                 monaco.editor.setModelMarkers(model, 'audit', []);
