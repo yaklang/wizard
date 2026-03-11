@@ -108,6 +108,7 @@ class ErrorBoundary extends React.Component<
 
 // 左侧视图模式类型
 type LeftViewMode = 'type' | 'file' | 'tree';
+type SeverityFilterKey = 'critical' | 'high' | 'middle' | 'low' | 'info';
 
 // 严重程度颜色映射
 const severityColorMap: Record<string, string> = {
@@ -228,8 +229,10 @@ const SSARiskAudit: React.FC = () => {
         null,
     );
     const [leftViewMode, setLeftViewMode] = useState<LeftViewMode>('type');
-    const [severityFilter, setSeverityFilter] = useState<string | null>(null);
+    const [severityFilter, setSeverityFilter] =
+        useState<SeverityFilterKey | null>(null);
     const [expandedFiles, setExpandedFiles] = useState<string[]>([]);
+    const [showHiddenRisks, setShowHiddenRisks] = useState(false);
 
     // 左侧面板宽度控制
     const [leftPanelWidth, setLeftPanelWidth] = useState(280);
@@ -425,6 +428,7 @@ const SSARiskAudit: React.FC = () => {
                     task_id: taskId,
                     page,
                     limit,
+                    show_hidden: showHiddenRisks || undefined,
                 });
                 const list = res?.data?.list || [];
                 const pagemeta = res?.data?.pagemeta;
@@ -440,16 +444,15 @@ const SSARiskAudit: React.FC = () => {
             // Dedupe in UI to avoid inflated counts and multi-select highlighting.
             const deduped = dedupRisksByHash(all);
             setRiskList(deduped);
-            // 如果有风险，默认选中第一个
-            if (deduped.length > 0 && deduped[0].hash) {
-                setSelectedRiskHash(deduped[0].hash);
+            if (deduped.length === 0) {
+                setSelectedRiskHash(null);
             }
         } catch (err: any) {
             message.error(`加载风险列表失败: ${err.message}`);
         } finally {
             setLoadingRisks(false);
         }
-    }, [taskId]);
+    }, [taskId, showHiddenRisks]);
 
     const fetchTaskMeta = useCallback(async () => {
         if (!taskId) return;
@@ -649,11 +652,16 @@ const SSARiskAudit: React.FC = () => {
         [riskList],
     );
 
+    const displayRiskList = useMemo(
+        () => (showHiddenRisks ? riskList : nonInfoRiskList),
+        [showHiddenRisks, riskList, nonInfoRiskList],
+    );
+
     // 过滤风险列表
     const filteredRisks = useMemo(() => {
-        if (!severityFilter) return nonInfoRiskList;
+        if (!severityFilter) return displayRiskList;
 
-        return nonInfoRiskList.filter((risk) => {
+        return displayRiskList.filter((risk) => {
             const severity = normalizeSeverity(risk.severity);
             if (severityFilter === 'critical') {
                 return severity === 'critical';
@@ -663,10 +671,12 @@ const SSARiskAudit: React.FC = () => {
                 return severity === 'middle' || severity === 'warning';
             } else if (severityFilter === 'low') {
                 return severity === 'low';
+            } else if (severityFilter === 'info') {
+                return severity === 'info';
             }
             return true;
         });
-    }, [nonInfoRiskList, severityFilter]);
+    }, [displayRiskList, severityFilter]);
 
     // 文件折叠切换
     const toggleFileExpand = useCallback((filePath: string) => {
@@ -679,8 +689,8 @@ const SSARiskAudit: React.FC = () => {
 
     // 计算当前统计
     const severityStats = useMemo(
-        () => calculateSeverityStats(nonInfoRiskList),
-        [nonInfoRiskList, calculateSeverityStats],
+        () => calculateSeverityStats(displayRiskList),
+        [displayRiskList, calculateSeverityStats],
     );
 
     // 获取文件内容
@@ -741,6 +751,29 @@ const SSARiskAudit: React.FC = () => {
             fetchFileTree();
         }
     }, [hash, isTaskMode, fetchRiskList, fetchTaskMeta]);
+
+    useEffect(() => {
+        if (!isTaskMode) return;
+        if (!showHiddenRisks && severityFilter === 'info') {
+            setSeverityFilter(null);
+        }
+    }, [isTaskMode, showHiddenRisks, severityFilter]);
+
+    useEffect(() => {
+        if (!isTaskMode) return;
+        if (displayRiskList.length === 0) {
+            setSelectedRiskHash(null);
+            return;
+        }
+
+        const selectedExists = displayRiskList.some(
+            (risk) => risk.hash && risk.hash === selectedRiskHash,
+        );
+        if (selectedExists) return;
+
+        const nextRisk = displayRiskList.find((risk) => !!risk.hash);
+        setSelectedRiskHash(nextRisk?.hash || null);
+    }, [displayRiskList, isTaskMode, selectedRiskHash]);
 
     // 当选中的风险变化时，加载对应的审计信息
     useEffect(() => {
@@ -1707,21 +1740,36 @@ const SSARiskAudit: React.FC = () => {
             <Card style={{ margin: 20 }}>
                 <Alert
                     message={
-                        auditCarryEnabled && hiddenCount > 0
-                            ? '该批次没有待复审风险'
+                        auditCarryEnabled && hiddenCount > 0 && !showHiddenRisks
+                            ? '当前批次没有新增风险'
                             : '该任务暂无风险'
                     }
                     description={
-                        auditCarryEnabled && hiddenCount > 0
-                            ? `任务 ID: ${taskId}。审计信息携带已隐藏 ${hiddenCount} 个历史已处置的同特征风险。`
+                        auditCarryEnabled && hiddenCount > 0 && !showHiddenRisks
+                            ? `任务 ID: ${taskId}。系统已按历史记录为您过滤 ${hiddenCount} 个重复漏洞。`
                             : `任务 ID: ${taskId}`
                     }
                     type={
-                        auditCarryEnabled && hiddenCount > 0
+                        auditCarryEnabled && hiddenCount > 0 && !showHiddenRisks
                             ? 'success'
                             : 'info'
                     }
                     showIcon
+                    action={
+                        auditCarryEnabled && hiddenCount > 0 ? (
+                            <Button
+                                size="small"
+                                type="link"
+                                onClick={() =>
+                                    setShowHiddenRisks((value) => !value)
+                                }
+                            >
+                                {showHiddenRisks
+                                    ? '恢复智能过滤'
+                                    : '查看已隐藏项'}
+                            </Button>
+                        ) : null
+                    }
                 />
             </Card>
         );
@@ -1765,6 +1813,16 @@ const SSARiskAudit: React.FC = () => {
         0;
     const taskAuditCarryEnabled = !!taskMeta?.audit_carry_enabled;
     const taskHiddenCount = Number(taskMeta?.audit_carry_hidden_count || 0);
+    const severityFilterOptions: Array<{
+        key: SeverityFilterKey;
+        label: string;
+    }> = [
+        { key: 'critical', label: '严重' },
+        { key: 'high', label: '高' },
+        { key: 'middle', label: '中' },
+        { key: 'low', label: '低' },
+        ...(showHiddenRisks ? [{ key: 'info', label: '信息' }] : []),
+    ];
 
     return (
         <div className="ssa-risk-audit">
@@ -1784,13 +1842,18 @@ const SSARiskAudit: React.FC = () => {
                             <Divider type="vertical" />
                             <Text type="secondary">
                                 漏洞总数:{' '}
-                                <Text strong>{nonInfoRiskList.length}</Text>
+                                <Text strong>{displayRiskList.length}</Text>
                             </Text>
                             {taskAuditCarryEnabled ? (
                                 <>
                                     <Divider type="vertical" />
                                     <Text type="secondary">
-                                        审计携带: <Text strong>已开启</Text>
+                                        智能过滤:{' '}
+                                        <Text strong>
+                                            {showHiddenRisks
+                                                ? '已展开隐藏项'
+                                                : '已开启'}
+                                        </Text>
                                     </Text>
                                 </>
                             ) : null}
@@ -1808,6 +1871,10 @@ const SSARiskAudit: React.FC = () => {
                                 <SSAAuditCarryInfoPanel
                                     enabled
                                     hiddenCount={taskHiddenCount}
+                                    showHiddenRisks={showHiddenRisks}
+                                    onToggleShowHidden={() =>
+                                        setShowHiddenRisks((value) => !value)
+                                    }
                                 />
                             </div>
                         ) : null}
@@ -1884,7 +1951,7 @@ const SSARiskAudit: React.FC = () => {
                             title={
                                 <div className="panel-header">
                                     <span>
-                                        漏洞列表 ({nonInfoRiskList.length})
+                                        漏洞列表 ({displayRiskList.length})
                                     </span>
                                 </div>
                             }
@@ -1920,44 +1987,36 @@ const SSARiskAudit: React.FC = () => {
                                 <>
                                     {/* 严重程度统计栏 */}
                                     <div className="severity-stats">
-                                        {(
-                                            [
-                                                {
-                                                    key: 'critical',
-                                                    label: '严重',
-                                                },
-                                                { key: 'high', label: '高' },
-                                                { key: 'middle', label: '中' },
-                                                { key: 'low', label: '低' },
-                                            ] as const
-                                        ).map(({ key, label }) => {
-                                            const s = severityStats[key];
-                                            return (
-                                                <Tooltip
-                                                    key={key}
-                                                    title={`已审计 ${s.audited} / 待审计 ${s.pending} / 总计 ${s.total}`}
-                                                >
-                                                    <div
-                                                        className={`stat-item ${severityFilter === key ? 'active' : ''}`}
-                                                        onClick={() =>
-                                                            setSeverityFilter(
-                                                                severityFilter ===
-                                                                    key
-                                                                    ? null
-                                                                    : key,
-                                                            )
-                                                        }
+                                        {severityFilterOptions.map(
+                                            ({ key, label }) => {
+                                                const s = severityStats[key];
+                                                return (
+                                                    <Tooltip
+                                                        key={key}
+                                                        title={`已审计 ${s.audited} / 待审计 ${s.pending} / 总计 ${s.total}`}
                                                     >
-                                                        <span className="label">
-                                                            {label}
-                                                        </span>
-                                                        <span className="count">
-                                                            {s.total}
-                                                        </span>
-                                                    </div>
-                                                </Tooltip>
-                                            );
-                                        })}
+                                                        <div
+                                                            className={`stat-item ${severityFilter === key ? 'active' : ''}`}
+                                                            onClick={() =>
+                                                                setSeverityFilter(
+                                                                    severityFilter ===
+                                                                        key
+                                                                        ? null
+                                                                        : key,
+                                                                )
+                                                            }
+                                                        >
+                                                            <span className="label">
+                                                                {label}
+                                                            </span>
+                                                            <span className="count">
+                                                                {s.total}
+                                                            </span>
+                                                        </div>
+                                                    </Tooltip>
+                                                );
+                                            },
+                                        )}
                                         <Tooltip
                                             title={`已审计 ${severityStats.all.audited} / 待审计 ${severityStats.all.pending} / 总计 ${severityStats.all.total}`}
                                         >

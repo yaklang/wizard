@@ -29,7 +29,7 @@ const CreateSSAScanTask = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm<FormValues>();
     const auditCarryEnabled =
-        Form.useWatch('audit_carry_enabled', form) ?? false;
+        Form.useWatch('audit_carry_enabled', form) ?? true;
 
     const { data: projectsData, loading: loadingProjects } = useRequest(
         async () => {
@@ -119,7 +119,7 @@ const CreateSSAScanTask = () => {
                     <Form
                         layout="vertical"
                         form={form}
-                        initialValues={{ audit_carry_enabled: false }}
+                        initialValues={{ audit_carry_enabled: true }}
                         style={{ maxWidth: 800 }}
                     >
                         <Form.Item
@@ -176,7 +176,7 @@ const CreateSSAScanTask = () => {
                             name="audit_carry_enabled"
                             valuePropName="checked"
                         >
-                            <Checkbox>携带历史已处置结果</Checkbox>
+                            <Checkbox>默认隐藏历史重复漏洞</Checkbox>
                         </Form.Item>
                         <SSAAuditCarryInfoPanel enabled={auditCarryEnabled} />
                     </Form>

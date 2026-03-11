@@ -363,7 +363,7 @@ const ProjectManagement: React.FC = () => {
 
     const handleScan = async (
         record: TSSAProject,
-        auditCarryEnabled = false,
+        auditCarryEnabled = true,
     ) => {
         if (!record.id) return;
         try {
@@ -435,7 +435,7 @@ const ProjectManagement: React.FC = () => {
 
     const handleScanWithIRDB = async (
         record: TSSAProject,
-        auditCarryEnabled = false,
+        auditCarryEnabled = true,
     ) => {
         if (!record.id) return;
 
@@ -777,8 +777,8 @@ const ProjectManagement: React.FC = () => {
                         .pop()
                         ?.replace(/\.git$/, '') || '代码仓库';
                 const quickScanAuditCarryEnabled = record.id
-                    ? !!scanAuditCarryMap[record.id]
-                    : false;
+                    ? (scanAuditCarryMap[record.id] ?? true)
+                    : true;
 
                 return (
                     <Space size="small">
@@ -840,7 +840,7 @@ const ProjectManagement: React.FC = () => {
                                                 );
                                             }}
                                         >
-                                            携带历史已处置结果
+                                            默认隐藏历史重复漏洞
                                         </Checkbox>
                                     </div>
                                     <div style={{ marginTop: 10 }}>

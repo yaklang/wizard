@@ -213,7 +213,7 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
     const scheduleType = Form.useWatch('sched_type', form);
     const selectedRuleGroups = Form.useWatch('rule_groups', form) || [];
     const auditCarryEnabled =
-        Form.useWatch('audit_carry_enabled', form) ?? false;
+        Form.useWatch('audit_carry_enabled', form) ?? true;
 
     const scheduleHint = useMemo(() => {
         if (scheduleType === 2) {
@@ -269,7 +269,7 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                         layout="vertical"
                         form={form}
                         initialValues={{
-                            audit_carry_enabled: false,
+                            audit_carry_enabled: true,
                             sched_type: 3,
                             interval_type: 1,
                             interval_time: 1,
@@ -498,7 +498,7 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                                 name="audit_carry_enabled"
                                 valuePropName="checked"
                             >
-                                <Checkbox>携带历史已处置结果</Checkbox>
+                                <Checkbox>默认隐藏历史重复漏洞</Checkbox>
                             </Form.Item>
                             <SSAAuditCarryInfoPanel
                                 enabled={auditCarryEnabled}

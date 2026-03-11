@@ -1138,15 +1138,15 @@ const TaskList: React.FC = () => {
                                 {scanModeMeta.text}
                             </Tag>
                             {task.audit_carry_enabled ? (
-                                <Tooltip title="当前任务已开启审计信息携带">
+                                <Tooltip title="当前任务已开启智能过滤">
                                     <Tag className="task-mini-tag">
-                                        审计携带
+                                        智能过滤
                                     </Tag>
                                 </Tooltip>
                             ) : null}
                             {hiddenCount > 0 ? (
                                 <Tooltip
-                                    title={`已隐藏 ${hiddenCount} 个历史已处置的同特征风险`}
+                                    title={`已按历史记录隐藏 ${hiddenCount} 个重复漏洞`}
                                 >
                                     <Tag
                                         color="processing"
@@ -1358,7 +1358,7 @@ const TaskList: React.FC = () => {
                                         {scanModeMeta.text}
                                     </Tag>
                                 </Descriptions.Item>
-                                <Descriptions.Item label="审计信息携带">
+                                <Descriptions.Item label="智能过滤">
                                     <Tag
                                         color={
                                             task.audit_carry_enabled
@@ -1371,7 +1371,7 @@ const TaskList: React.FC = () => {
                                             : '未开启'}
                                     </Tag>
                                 </Descriptions.Item>
-                                <Descriptions.Item label="已隐藏风险">
+                                <Descriptions.Item label="已过滤重复项">
                                     {task.audit_carry_enabled
                                         ? `${hiddenCount} 个`
                                         : '-'}

@@ -98,6 +98,7 @@ export interface TSSARiskQueryParams {
     ignore?: boolean;
     runtime_id?: string;
     task_id?: string; // ✅ 新增 task_id 筛选
+    show_hidden?: boolean;
     result_id?: number;
 }
 
