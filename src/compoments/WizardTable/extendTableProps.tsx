@@ -477,12 +477,10 @@ const extendTableProps = (
                                 [selectKeys]: isVisible,
                             }));
                         }}
-                        styles={{
-                            body: {
-                                padding: 0,
-                                overflow: 'hidden',
-                                paddingTop: 12,
-                            },
+                        overlayInnerStyle={{
+                            padding: 0,
+                            overflow: 'hidden',
+                            paddingTop: 12,
                         }} // 移除内边距
                         content={
                             <div>

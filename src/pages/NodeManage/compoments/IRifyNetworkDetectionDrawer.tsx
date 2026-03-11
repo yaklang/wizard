@@ -5,6 +5,7 @@ import { Badge, Button, Empty, Input, Spin, Table } from 'antd';
 import { WizardDrawer } from '@/compoments';
 import type { UseDrawerRefType } from '@/compoments/WizardDrawer/useDrawer';
 import { postHostAliveDetectionRun } from '@/apis/NodeManageApi';
+import type { PostHostAliveDetectionRunRequest } from '@/apis/NodeManageApi/type';
 import showErrorMessage from '@/utils/showErrorMessage';
 
 type ProbeStatus = 'testing' | 'success' | 'error';
@@ -148,7 +149,8 @@ const IRifyNetworkDetectionDrawer = forwardRef<UseDrawerRefType>(
                     hosts: safeHosts,
                     dns_timeout: 0.5,
                 });
-                const list = data?.list ?? [];
+                const list: PostHostAliveDetectionRunRequest[] =
+                    data?.list ?? [];
                 const mapped: ProbeRow[] = list.flatMap((item, nodeIdx) => {
                     const resultList = item.result || [];
                     if (!resultList.length) {
@@ -161,7 +163,7 @@ const IRifyNetworkDetectionDrawer = forwardRef<UseDrawerRefType>(
                             },
                         ];
                     }
-                    return resultList.map((raw, idx) => {
+                    return resultList.map((raw: string, idx: number) => {
                         const parsed = parseProbeResult(
                             raw,
                             targetList[idx] || '-',

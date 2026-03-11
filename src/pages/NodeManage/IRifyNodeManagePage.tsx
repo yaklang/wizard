@@ -1,5 +1,11 @@
 import type { FC } from 'react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import {
     CopyOutlined,
     DeleteOutlined,
@@ -187,7 +193,9 @@ const IRifyNodeManagePage: FC = () => {
                         ? records.filter((item) => !isOnlineNode(item))
                         : records;
 
-                setList((prev) => (append ? [...prev, ...filtered] : filtered));
+                setList((prev: Palm.Node[]) =>
+                    append ? [...prev, ...filtered] : filtered,
+                );
                 setPage(data?.pagemeta?.page ?? p);
                 const totalPage = data?.pagemeta?.total_page ?? p;
                 setHasMore((data?.pagemeta?.page ?? p) < totalPage);

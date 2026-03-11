@@ -10,16 +10,16 @@ import type { Palm } from '@/gen/schema';
 // 获取节点管理 表格数据
 const getNodeManage = (
     params: QueryPalmNodeParams,
-): Promise<ResponseData<TableResponseData<Palm.Node[]>>> =>
-    axios.get<never, ResponseData<TableResponseData<Palm.Node[]>>>(`/node`, {
+): Promise<ResponseData<TableResponseData<Palm.Node>>> =>
+    axios.get<never, ResponseData<TableResponseData<Palm.Node>>>(`/node`, {
         params,
     });
 
 // 删除节点
 const deleteNodeManage = (
     params: QueryPalmNodeParams & { node_ids?: string },
-): Promise<ResponseData<TableResponseData<Palm.Node[]>>> =>
-    axios.delete<never, ResponseData<TableResponseData<Palm.Node[]>>>(`/node`, {
+): Promise<ResponseData<TableResponseData<Palm.Node>>> =>
+    axios.delete<never, ResponseData<TableResponseData<Palm.Node>>>(`/node`, {
         params,
     });
 
@@ -46,11 +46,11 @@ const postHostAliveDetectionRun = (data: {
     hosts: string;
     nodes_id: string[];
 }): Promise<
-    ResponseData<TableResponseData<PostHostAliveDetectionRunRequest[]>>
+    ResponseData<TableResponseData<PostHostAliveDetectionRunRequest>>
 > =>
     axios.post<
         never,
-        ResponseData<TableResponseData<PostHostAliveDetectionRunRequest[]>>
+        ResponseData<TableResponseData<PostHostAliveDetectionRunRequest>>
     >('/task/start/host-alive-detection/run', data);
 
 export {
