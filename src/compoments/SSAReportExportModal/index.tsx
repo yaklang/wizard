@@ -33,7 +33,10 @@ const disposalOptions = [
     { label: '确认漏洞', value: 'is_issue' },
 ];
 
-const templateOptions = [{ label: '默认模板', value: 'default-ssa-v1' }];
+const templateOptions = [
+    { label: '标准模板（推荐）', value: 'default-ssa-v1' },
+    { label: '旧版模板（legacy）', value: 'legacy-ssa-v1' },
+];
 
 const defaultValues: TSSAReportExportFormValues = {
     format: 'pdf',
