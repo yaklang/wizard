@@ -5,6 +5,7 @@ import {
     Table,
     Space,
     Button,
+    Checkbox,
     Popconfirm,
     Popover,
     Modal,
@@ -30,20 +31,18 @@ import {
     CopyOutlined,
 } from '@ant-design/icons';
 // 语言官方图标
-import { 
-    SiPhp, 
-    SiJavascript, 
-    SiPython, 
-    SiGo, 
-} from 'react-icons/si';
+import { SiPhp, SiJavascript, SiPython, SiGo } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
 import { scanSSAIR } from '@/apis/SSAIRApi';
+import type { TSSAIRScanRequest } from '@/apis/SSAIRApi/type';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
+import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
 import dayjs from 'dayjs';
@@ -93,12 +92,21 @@ const ProjectManagement: React.FC = () => {
     // 筛选条件
     const [searchName, setSearchName] = useState<string>('');
     const [filterLanguage, setFilterLanguage] = useState<string | undefined>();
-    const [filterSourceKind, setFilterSourceKind] = useState<string | undefined>();
+    const [filterSourceKind, setFilterSourceKind] = useState<
+        string | undefined
+    >();
     const [filterTags, setFilterTags] = useState<string | undefined>();
-    const [filterDateRange, setFilterDateRange] = useState<[number, number] | undefined>();
+    const [filterDateRange, setFilterDateRange] = useState<
+        [number, number] | undefined
+    >();
 
     // 仅允许一个“发起扫描”弹层同时展开
-    const [scanPopoverProjectId, setScanPopoverProjectId] = useState<number | null>(null);
+    const [scanPopoverProjectId, setScanPopoverProjectId] = useState<
+        number | null
+    >(null);
+    const [scanAuditCarryMap, setScanAuditCarryMap] = useState<
+        Record<number, boolean>
+    >({});
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
     const selectedProjects = data.filter(
@@ -116,7 +124,16 @@ const ProjectManagement: React.FC = () => {
             dateRange?: [number, number];
             append?: boolean;
         }) => {
-            const { p, l, projectName, language, sourceKind, tags, dateRange, append = false } = options;
+            const {
+                p,
+                l,
+                projectName,
+                language,
+                sourceKind,
+                tags,
+                dateRange,
+                append = false,
+            } = options;
             setLoading(true);
             try {
                 const res = await getSSAProjects({
@@ -137,28 +154,35 @@ const ProjectManagement: React.FC = () => {
                     return;
                 }
                 let list = res.data?.list ?? [];
-                
+
                 // 前端过滤（如果后端不支持这些筛选）
                 if (sourceKind) {
-                    list = list.filter(item => item.config?.CodeSource?.kind === sourceKind);
+                    list = list.filter(
+                        (item) => item.config?.CodeSource?.kind === sourceKind,
+                    );
                 }
                 if (dateRange) {
-                    list = list.filter(item => {
+                    list = list.filter((item) => {
                         const createdAt = item.created_at || 0;
-                        return createdAt >= dateRange[0] && createdAt <= dateRange[1];
+                        return (
+                            createdAt >= dateRange[0] &&
+                            createdAt <= dateRange[1]
+                        );
                     });
                 }
-                
+
                 if (append) {
-                    setData(prevData => [...prevData, ...list]);
+                    setData((prevData) => [...prevData, ...list]);
                 } else {
                     setData(list);
                 }
                 setPage(res.data?.pagemeta?.page ?? p);
                 setLimit(res.data?.pagemeta?.limit ?? l);
-                
+
                 // 检查是否还有更多数据
-                const currentTotal = append ? data.length + list.length : list.length;
+                const currentTotal = append
+                    ? data.length + list.length
+                    : list.length;
                 setHasMore(currentTotal < (res.data?.pagemeta?.total ?? 0));
             } catch (err) {
                 message.error('获取项目列表出错');
@@ -208,11 +232,17 @@ const ProjectManagement: React.FC = () => {
             tags: filterTags,
             dateRange: filterDateRange,
         });
-    }, [searchName, filterLanguage, filterSourceKind, filterTags, filterDateRange]);
+    }, [
+        searchName,
+        filterLanguage,
+        filterSourceKind,
+        filterTags,
+        filterDateRange,
+    ]);
 
     const handleLoadMore = useCallback(() => {
         if (loading || !hasMore) return;
-        
+
         fetchList({
             p: page + 1,
             l: limit,
@@ -223,21 +253,33 @@ const ProjectManagement: React.FC = () => {
             dateRange: filterDateRange,
             append: true,
         });
-    }, [loading, hasMore, page, limit, searchName, filterLanguage, filterSourceKind, filterTags, filterDateRange, fetchList]);
-    
+    }, [
+        loading,
+        hasMore,
+        page,
+        limit,
+        searchName,
+        filterLanguage,
+        filterSourceKind,
+        filterTags,
+        filterDateRange,
+        fetchList,
+    ]);
+
     // 监听滚动事件
     useEffect(() => {
         const handleScroll = () => {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollTop =
+                window.pageYOffset || document.documentElement.scrollTop;
             const scrollHeight = document.documentElement.scrollHeight;
             const clientHeight = document.documentElement.clientHeight;
-            
+
             // 距离底部200px时开始加载
             if (scrollTop + clientHeight >= scrollHeight - 200) {
                 handleLoadMore();
             }
         };
-        
+
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, [handleLoadMore]);
@@ -300,7 +342,9 @@ const ProjectManagement: React.FC = () => {
                     .map((item) => item.id)
                     .filter((id): id is number => Boolean(id));
                 try {
-                    await Promise.all(ids.map((id) => deleteSSAProject({ id })));
+                    await Promise.all(
+                        ids.map((id) => deleteSSAProject({ id })),
+                    );
                     message.success('批量删除成功');
                     reloadFirstPage();
                 } catch (err: any) {
@@ -317,10 +361,15 @@ const ProjectManagement: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
-    const handleScan = async (record: TSSAProject) => {
+    const handleScan = async (
+        record: TSSAProject,
+        auditCarryEnabled = false,
+    ) => {
         if (!record.id) return;
         try {
-            const scanRequest: TSSAScanRequest = {};
+            const scanRequest: TSSAScanRequest = {
+                audit_carry_enabled: auditCarryEnabled,
+            };
             const scanNode = record.config?.ScanNode;
             if (scanNode?.mode === 'manual' && scanNode.node_id) {
                 scanRequest.node_id = scanNode.node_id;
@@ -346,7 +395,9 @@ const ProjectManagement: React.FC = () => {
                 scanRequest.interval_type = schedule.interval_type || 1;
                 scanRequest.interval_time = schedule.interval_time || 1;
                 scanRequest.sched_type = schedule.sched_type || 3;
-                scanRequest.start_timestamp = Math.floor(start.valueOf() / 1000);
+                scanRequest.start_timestamp = Math.floor(
+                    start.valueOf() / 1000,
+                );
                 scanRequest.end_timestamp = Math.floor(
                     start.add(365, 'day').valueOf() / 1000,
                 );
@@ -382,7 +433,10 @@ const ProjectManagement: React.FC = () => {
         }
     };
 
-    const handleScanWithIRDB = async (record: TSSAProject) => {
+    const handleScanWithIRDB = async (
+        record: TSSAProject,
+        auditCarryEnabled = false,
+    ) => {
         if (!record.id) return;
 
         const msgKey = `ssa-ir-scan-${record.id}-${Date.now()}`;
@@ -393,11 +447,12 @@ const ProjectManagement: React.FC = () => {
                 duration: 0,
             });
 
-            const scanReq: any = {
+            const scanReq: TSSAIRScanRequest = {
                 prepare_ir: true,
                 incremental: true,
                 force_full: false,
                 snapshot_id: String(Date.now()),
+                audit_carry_enabled: auditCarryEnabled,
             };
             const scanNode = record.config?.ScanNode;
             if (scanNode?.mode === 'manual' && scanNode.node_id) {
@@ -410,7 +465,8 @@ const ProjectManagement: React.FC = () => {
             message.success({
                 content: (
                     <span>
-                        数据库扫描任务已创建{taskId ? ` (#${taskId})` : ''}，编译与扫描进度可在任务历史中查看。
+                        数据库扫描任务已创建{taskId ? ` (#${taskId})` : ''}
+                        ，编译与扫描进度可在任务历史中查看。
                         <Button
                             type="link"
                             size="small"
@@ -441,7 +497,13 @@ const ProjectManagement: React.FC = () => {
     };
 
     // 语言图标映射（官方品牌 SVG 图标）
-    const languageIconMap: Record<string, { icon: React.ComponentType<{ size?: number; color?: string }>; color: string }> = {
+    const languageIconMap: Record<
+        string,
+        {
+            icon: React.ComponentType<{ size?: number; color?: string }>;
+            color: string;
+        }
+    > = {
         php: { icon: SiPhp, color: '#777BB4' },
         java: { icon: DiJava, color: '#007396' },
         javascript: { icon: SiJavascript, color: '#F7DF1E' },
@@ -454,14 +516,14 @@ const ProjectManagement: React.FC = () => {
     const getLanguageIcon = (language: string) => {
         const langKey = language?.toLowerCase();
         const langConfig = langKey ? languageIconMap[langKey] : null;
-        
+
         if (langConfig) {
-            return React.createElement(langConfig.icon, { 
-                size: 16, 
-                color: langConfig.color 
+            return React.createElement(langConfig.icon, {
+                size: 16,
+                color: langConfig.color,
             });
         }
-        
+
         return <FolderOutlined style={{ fontSize: 16, color: '#8c8c8c' }} />;
     };
 
@@ -709,7 +771,14 @@ const ProjectManagement: React.FC = () => {
 
                 const branch = record.config?.CodeSource?.branch || 'master';
                 const url = record.config?.CodeSource?.url || '';
-                const repoName = url.split('/').pop()?.replace(/\.git$/, '') || '代码仓库';
+                const repoName =
+                    url
+                        .split('/')
+                        .pop()
+                        ?.replace(/\.git$/, '') || '代码仓库';
+                const quickScanAuditCarryEnabled = record.id
+                    ? !!scanAuditCarryMap[record.id]
+                    : false;
 
                 return (
                     <Space size="small">
@@ -719,15 +788,19 @@ const ProjectManagement: React.FC = () => {
                             trigger="click"
                             open={scanPopoverProjectId === record.id}
                             onOpenChange={(open) =>
-                                setScanPopoverProjectId(open ? (record.id ?? null) : null)
+                                setScanPopoverProjectId(
+                                    open ? (record.id ?? null) : null,
+                                )
                             }
                             content={
                                 <div style={{ maxWidth: 320 }}>
                                     <div style={{ marginBottom: 4 }}>
-                                        <strong>项目：</strong>{record.project_name}
+                                        <strong>项目：</strong>
+                                        {record.project_name}
                                     </div>
                                     <div style={{ marginBottom: 4 }}>
-                                        <strong>分支：</strong>{branch}
+                                        <strong>分支：</strong>
+                                        {branch}
                                     </div>
                                     <div style={{ marginBottom: 4 }}>
                                         <strong>仓库：</strong>
@@ -748,15 +821,46 @@ const ProjectManagement: React.FC = () => {
                                             marginTop: 8,
                                         }}
                                     >
-                                        扫描将在后台执行。数据库扫描会自动复用/更新 IR（黑盒）。
+                                        扫描将在后台执行。数据库扫描会自动复用/更新
+                                        IR（黑盒）。
+                                    </div>
+                                    <div style={{ marginTop: 12 }}>
+                                        <Checkbox
+                                            checked={quickScanAuditCarryEnabled}
+                                            onChange={(
+                                                e: CheckboxChangeEvent,
+                                            ) => {
+                                                if (!record.id) return;
+                                                setScanAuditCarryMap(
+                                                    (prev) => ({
+                                                        ...prev,
+                                                        [record.id!]:
+                                                            e.target.checked,
+                                                    }),
+                                                );
+                                            }}
+                                        >
+                                            携带历史已处置结果
+                                        </Checkbox>
+                                    </div>
+                                    <div style={{ marginTop: 10 }}>
+                                        <SSAAuditCarryInfoPanel
+                                            enabled={quickScanAuditCarryEnabled}
+                                            compact
+                                        />
                                     </div>
                                     <div style={{ marginTop: 12 }}>
                                         <Space>
                                             <Button
                                                 size="small"
                                                 onClick={async () => {
-                                                    setScanPopoverProjectId(null);
-                                                    await handleScan(record);
+                                                    setScanPopoverProjectId(
+                                                        null,
+                                                    );
+                                                    await handleScan(
+                                                        record,
+                                                        quickScanAuditCarryEnabled,
+                                                    );
                                                 }}
                                             >
                                                 内存扫描
@@ -765,8 +869,13 @@ const ProjectManagement: React.FC = () => {
                                                 type="primary"
                                                 size="small"
                                                 onClick={async () => {
-                                                    setScanPopoverProjectId(null);
-                                                    await handleScanWithIRDB(record);
+                                                    setScanPopoverProjectId(
+                                                        null,
+                                                    );
+                                                    await handleScanWithIRDB(
+                                                        record,
+                                                        quickScanAuditCarryEnabled,
+                                                    );
                                                 }}
                                             >
                                                 数据库扫描
@@ -818,9 +927,7 @@ const ProjectManagement: React.FC = () => {
         <div className="p-4 project-management-page">
             <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <div className="text-lg font-bold">
-                        项目管理
-                    </div>
+                    <div className="text-lg font-bold">项目管理</div>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -900,13 +1007,15 @@ const ProjectManagement: React.FC = () => {
                     scroll={{ x: 1200 }}
                     pagination={false}
                 />
-                
+
                 {/* 加载更多提示 */}
-                <div style={{ 
-                    textAlign: 'center', 
-                    padding: '20px 0',
-                    color: '#999'
-                }}>
+                <div
+                    style={{
+                        textAlign: 'center',
+                        padding: '20px 0',
+                        color: '#999',
+                    }}
+                >
                     {loading && page > 1 && <span>加载中...</span>}
                     {!loading && hasMore && data.length > 0 && (
                         <span>向下滚动加载更多</span>
@@ -914,9 +1023,7 @@ const ProjectManagement: React.FC = () => {
                     {!loading && !hasMore && data.length > 0 && (
                         <span>已加载全部 {data.length} 个项目</span>
                     )}
-                    {!loading && data.length === 0 && (
-                        <span>暂无项目</span>
-                    )}
+                    {!loading && data.length === 0 && <span>暂无项目</span>}
                 </div>
             </Card>
 

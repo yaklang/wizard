@@ -187,9 +187,7 @@ const sanitizeLegacyProjectName = (value?: string) => {
 const getRelatedProjectName = (item: TaskListRequest) => {
     const params = (item as any).params || {};
     const projectName =
-        params.project_name ||
-        params.report_name ||
-        (item as any).project_name;
+        params.project_name || params.report_name || (item as any).project_name;
     if (projectName) return String(projectName);
     const legacyProjectName = sanitizeLegacyProjectName(params.program_name);
     if (legacyProjectName) return legacyProjectName;
@@ -266,11 +264,11 @@ const TaskPageList = () => {
         useSafeState<TaskListRequest | null>(null);
     const [editDrawerOpen, setEditDrawerOpen] = useSafeState(false);
     const [editDrawerLoading, setEditDrawerLoading] = useSafeState(false);
-    const [editDrawerSubmitting, setEditDrawerSubmitting] =
-        useSafeState(false);
-    const [editTaskRaw, setEditTaskRaw] = useSafeState<Record<string, any> | null>(
-        null,
-    );
+    const [editDrawerSubmitting, setEditDrawerSubmitting] = useSafeState(false);
+    const [editTaskRaw, setEditTaskRaw] = useSafeState<Record<
+        string,
+        any
+    > | null>(null);
     const [editFormInitial, setEditFormInitial] =
         useSafeState<StrategyFormInitial>();
     const [editProjectName, setEditProjectName] = useSafeState('-');
@@ -558,29 +556,27 @@ const TaskPageList = () => {
         return () => window.removeEventListener('scroll', onScroll);
     }, [listState.loading, hasMore, listState.page, runTaskList]);
 
-    const groupFilterOptions = useMemo<{ label: string; value: string }[]>(
-        () => {
-            const map = new Map<string, { label: string; value: string }>();
-            taskGroups.forEach((it) => {
-                const name = (it?.name || '').trim();
-                if (!name) return;
-                map.set(name, { label: name, value: name });
-            });
-            return Array.from(map.values());
-        },
-        [taskGroups],
-    );
+    const groupFilterOptions = useMemo<
+        { label: string; value: string }[]
+    >(() => {
+        const map = new Map<string, { label: string; value: string }>();
+        taskGroups.forEach((it) => {
+            const name = (it?.name || '').trim();
+            if (!name) return;
+            map.set(name, { label: name, value: name });
+        });
+        return Array.from(map.values());
+    }, [taskGroups]);
 
-    const strategyGroupOptions = useMemo<{ label: string; value: string }[]>(
-        () => {
-            const base = groupFilterOptions.filter((it) => it.value !== '全部');
-            if (base.some((it) => it.value === '默认分组')) {
-                return base;
-            }
-            return [{ label: '默认分组', value: '默认分组' }, ...base];
-        },
-        [groupFilterOptions],
-    );
+    const strategyGroupOptions = useMemo<
+        { label: string; value: string }[]
+    >(() => {
+        const base = groupFilterOptions.filter((it) => it.value !== '全部');
+        if (base.some((it) => it.value === '默认分组')) {
+            return base;
+        }
+        return [{ label: '默认分组', value: '默认分组' }, ...base];
+    }, [groupFilterOptions]);
 
     const physicalTaskGroups = useMemo<TaskGroupItem[]>(() => {
         const groupMap = new Map<string, TaskGroupItem>();
@@ -698,6 +694,10 @@ const TaskPageList = () => {
                     rule_groups: parseRuleGroups(
                         params.rule_groups || params.ruleGroups,
                     ),
+                    audit_carry_enabled:
+                        params.audit_carry_enabled === true ||
+                        params.audit_carry_enabled === 'true' ||
+                        raw.audit_carry_enabled === true,
                     sched_type: schedType,
                     interval_type: Math.max(
                         1,
@@ -766,9 +766,7 @@ const TaskPageList = () => {
 
     const getNodeList = (item: TaskListRequest): string[] => {
         if (Array.isArray(item.scanner) && item.scanner.length > 0) {
-            return item.scanner
-                .map((it) => String(it).trim())
-                .filter(Boolean);
+            return item.scanner.map((it) => String(it).trim()).filter(Boolean);
         }
         const maybeNode = (item as any).node || (item as any).node_id;
         if (!maybeNode) return [];
@@ -812,9 +810,9 @@ const TaskPageList = () => {
             typeof target === 'string'
                 ? normalizeDisplayText(
                       target
-                      .split(',')
-                      .map((it) => it.trim())
-                      .filter(Boolean)[0],
+                          .split(',')
+                          .map((it) => it.trim())
+                          .filter(Boolean)[0],
                   )
                 : '';
         if (firstTarget)
@@ -906,9 +904,7 @@ const TaskPageList = () => {
         if (taskId) {
             qs.set('task_id', taskId);
         }
-        const hashUrl = qs.toString()
-            ? `#/scans?${qs.toString()}`
-            : '#/scans';
+        const hashUrl = qs.toString() ? `#/scans?${qs.toString()}` : '#/scans';
         window.open(
             `${window.location.origin}${window.location.pathname}${hashUrl}`,
             '_blank',
@@ -969,10 +965,12 @@ const TaskPageList = () => {
                 ...(editTaskRaw.params || {}),
             };
             params.rule_groups = JSON.stringify(values.rule_groups || []);
+            params.audit_carry_enabled = String(!!values.audit_carry_enabled);
 
             const updatePayload: Record<string, unknown> = {
                 ...editTaskRaw,
                 task_id: editTaskRaw.task_id,
+                audit_carry_enabled: !!values.audit_carry_enabled,
                 task_group:
                     values.task_group ||
                     normalizeDisplayText(editTaskRaw.task_group) ||
@@ -988,7 +986,10 @@ const TaskPageList = () => {
                 end_timestamp: endTimestamp,
                 scanner: values.node_id ? [values.node_id] : [],
                 params: Object.fromEntries(
-                    Object.entries(params).map(([k, v]) => [k, String(v ?? '')]),
+                    Object.entries(params).map(([k, v]) => [
+                        k,
+                        String(v ?? ''),
+                    ]),
                 ),
             };
             await postEditScriptTask(updatePayload as any);
@@ -1238,8 +1239,7 @@ const TaskPageList = () => {
     const handleDeleteGroup = (groupName: string) => {
         Modal.confirm({
             title: '删除策略分组',
-            content:
-                '删除该分组后，其关联的策略将被移入默认分组，确定删除吗？',
+            content: '删除该分组后，其关联的策略将被移入默认分组，确定删除吗？',
             okText: '删除',
             okButtonProps: { danger: true },
             cancelText: '取消',
@@ -1492,8 +1492,8 @@ const TaskPageList = () => {
                                                 <div className="task-sub-meta">
                                                     <span className="meta-chip">
                                                         创建者{' '}
-                                                        {(item as any).account ||
-                                                            'root'}
+                                                        {(item as any)
+                                                            .account || 'root'}
                                                     </span>
                                                     <span className="meta-sep">
                                                         •
@@ -1534,10 +1534,7 @@ const TaskPageList = () => {
                                                         if (!nodes.length)
                                                             return '-';
                                                         return nodes.map(
-                                                            (
-                                                                nodeId,
-                                                                index,
-                                                            ) => (
+                                                            (nodeId, index) => (
                                                                 <span
                                                                     key={`${item.id}-${nodeId}-${index}`}
                                                                 >
@@ -1553,9 +1550,7 @@ const TaskPageList = () => {
                                                                             )
                                                                         }
                                                                     >
-                                                                        {
-                                                                            nodeId
-                                                                        }
+                                                                        {nodeId}
                                                                     </button>
                                                                     {index <
                                                                     nodes.length -
@@ -1728,7 +1723,9 @@ const TaskPageList = () => {
                                         key: 'project',
                                         label: '关联项目',
                                         children: detailRecord
-                                            ? getRelatedProjectName(detailRecord)
+                                            ? getRelatedProjectName(
+                                                  detailRecord,
+                                              )
                                             : '-',
                                     },
                                     {
@@ -1765,8 +1762,9 @@ const TaskPageList = () => {
                                                 ? dayjs
                                                       .unix(
                                                           Number(
-                                                              (detailRecord as any)
-                                                                  .created_at,
+                                                              (
+                                                                  detailRecord as any
+                                                              ).created_at,
                                                           ),
                                                       )
                                                       .format(
@@ -2006,7 +2004,9 @@ const TaskPageList = () => {
                                                     <Button
                                                         type="text"
                                                         icon={<CloseOutlined />}
-                                                        onClick={cancelEditGroup}
+                                                        onClick={
+                                                            cancelEditGroup
+                                                        }
                                                     />
                                                 </Space>
                                             ) : (
@@ -2041,7 +2041,6 @@ const TaskPageList = () => {
                     </div>
                 </div>
             </Modal>
-
         </div>
     );
 };

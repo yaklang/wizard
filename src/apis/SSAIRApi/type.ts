@@ -28,6 +28,7 @@ export interface TSSAIRScanRequest {
     force_full?: boolean;
     node_id?: string;
     rule_groups?: string[];
+    audit_carry_enabled?: boolean;
 }
 
 export interface TSSAIRHeadResponse {

@@ -15,6 +15,7 @@ import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
 import { getSSAProjects } from '@/apis/SSAProjectApi';
 import { getNodeManage } from '@/apis/NodeManageApi';
+import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 interface FormValues {
@@ -27,6 +28,8 @@ interface FormValues {
 const CreateSSAScanTask = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm<FormValues>();
+    const auditCarryEnabled =
+        Form.useWatch('audit_carry_enabled', form) ?? false;
 
     const { data: projectsData, loading: loadingProjects } = useRequest(
         async () => {
@@ -172,10 +175,10 @@ const CreateSSAScanTask = () => {
                         <Form.Item
                             name="audit_carry_enabled"
                             valuePropName="checked"
-                            extra="开启后，新批次会默认隐藏同项目历史批次中已处置的同特征漏洞。"
                         >
-                            <Checkbox>启用审计信息携带</Checkbox>
+                            <Checkbox>携带历史已处置结果</Checkbox>
                         </Form.Item>
+                        <SSAAuditCarryInfoPanel enabled={auditCarryEnabled} />
                     </Form>
                 </Spin>
             </Card>
