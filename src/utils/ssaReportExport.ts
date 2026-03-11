@@ -3,6 +3,7 @@ import { saveAs } from 'file-saver';
 import { saveFile } from '@/utils';
 
 const INVALID_FILENAME_PATTERN = /[^a-zA-Z0-9\u4e00-\u9fa5._-]+/g;
+const BODY_SELECTOR_PATTERN = /\bbody\b/g;
 
 export interface TSSAReportExportProgress {
     percent: number;
@@ -13,7 +14,23 @@ type TSSAReportExportProgressHandler = (
     progress: TSSAReportExportProgress,
 ) => void;
 
-const pdfOptions = (filename: string) => ({
+const resolveSSAPDFScale = (htmlLength: number) => {
+    if (htmlLength > 500000) {
+        return 0.4;
+    }
+    if (htmlLength > 200000) {
+        return 0.5;
+    }
+    if (htmlLength > 80000) {
+        return 0.6;
+    }
+    if (htmlLength > 30000) {
+        return 0.8;
+    }
+    return 1;
+};
+
+const pdfOptions = (filename: string, scale: number) => ({
     margin: [10, 5, 10, 5],
     filename,
     image: { type: 'jpeg', quality: 0.95 },
@@ -21,7 +38,7 @@ const pdfOptions = (filename: string) => ({
         format: 'a4',
     },
     html2canvas: {
-        scale: 1.2,
+        scale,
     },
     pagebreak: {
         after: '.hero',
@@ -34,17 +51,6 @@ export const sanitizeSSAReportFileName = (name?: string) => {
         .replace(INVALID_FILENAME_PATTERN, '_')
         .replace(/^[_\-.]+|[_\-.]+$/g, '');
     return baseName || 'ssa-risk-report';
-};
-
-const extractReportBody = (html: string) => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const styleNodes = Array.from(
-        doc.head.querySelectorAll('style, link[rel="stylesheet"]'),
-    );
-    const headMarkup = styleNodes.map((node) => node.outerHTML).join('');
-    const bodyMarkup = doc.body?.innerHTML?.trim() || html;
-    return `${headMarkup}${bodyMarkup}`;
 };
 
 const reportProgress = (
@@ -66,47 +72,84 @@ const waitForExportLayout = async () => {
     });
 };
 
+const normalizeSSAReportHTMLForPDF = (html: string) => {
+    const trimmedHTML = html.trim();
+    if (!trimmedHTML) {
+        return html;
+    }
+
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(trimmedHTML, 'text/html');
+    const bodyMarkup = parsed.body?.innerHTML?.trim();
+    const styleMarkup = Array.from(parsed.head?.querySelectorAll('style') || [])
+        .map((styleNode) => {
+            const clonedNode = styleNode.cloneNode(true) as HTMLStyleElement;
+            clonedNode.textContent = (clonedNode.textContent || '').replace(
+                BODY_SELECTOR_PATTERN,
+                '.ssa-export-root',
+            );
+            return clonedNode.outerHTML;
+        })
+        .join('\n');
+    const linkMarkup = Array.from(
+        parsed.head?.querySelectorAll('link[rel="stylesheet"]') || [],
+    )
+        .map((linkNode) => linkNode.outerHTML)
+        .join('\n');
+
+    if (!bodyMarkup) {
+        return html;
+    }
+
+    return `
+        <style>
+            .ssa-export-root {
+                display: block;
+                width: 100%;
+            }
+        </style>
+        ${styleMarkup}
+        ${linkMarkup}
+        <div class="ssa-export-root">${bodyMarkup}</div>
+    `;
+};
+
 export const exportSSAReportToPDF = async (
     html: string,
     reportName?: string,
     onProgress?: TSSAReportExportProgressHandler,
 ) => {
     const fileName = `${sanitizeSSAReportFileName(reportName)}.pdf`;
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.width = '980px';
-    container.style.maxWidth = '980px';
-    container.style.background = '#ffffff';
-    container.style.pointerEvents = 'none';
-    container.style.zIndex = '-1';
-    container.innerHTML = extractReportBody(html);
-    document.body.appendChild(container);
+    const blob = await buildSSAReportPDFBlob(html, fileName, onProgress);
+    saveAs(blob, fileName);
+    reportProgress(onProgress, 100, 'PDF 导出完成');
+};
 
-    try {
-        reportProgress(onProgress, 15, '正在准备 PDF 布局...');
-        await waitForExportLayout();
+export const buildSSAReportPDFBlob = async (
+    html: string,
+    fileName: string,
+    onProgress?: TSSAReportExportProgressHandler,
+) => {
+    const normalizedHTML = normalizeSSAReportHTMLForPDF(html);
+    const renderScale = resolveSSAPDFScale(normalizedHTML.length);
 
-        const worker = html2pdf().set(pdfOptions(fileName)).from(container);
+    reportProgress(onProgress, 15, '正在准备 PDF 布局...');
+    await waitForExportLayout();
 
-        await worker.toContainer();
-        reportProgress(onProgress, 38, '正在整理报告页面...');
+    const worker = html2pdf()
+        .set(pdfOptions(fileName, renderScale))
+        .from(normalizedHTML, 'string');
 
-        await worker.toCanvas();
-        reportProgress(onProgress, 72, '正在渲染 PDF 页面...');
+    await worker.toContainer();
+    reportProgress(onProgress, 38, '正在整理报告页面...');
 
-        await worker.toPdf();
-        reportProgress(onProgress, 90, '正在写入 PDF 文件...');
+    await worker.toCanvas();
+    reportProgress(onProgress, 72, '正在渲染 PDF 页面...');
 
-        const blob = (await worker.outputPdf('blob')) as Blob;
-        saveAs(blob, fileName);
-        reportProgress(onProgress, 100, 'PDF 导出完成');
-    } finally {
-        if (container.parentNode) {
-            container.parentNode.removeChild(container);
-        }
-    }
+    await worker.toPdf();
+    reportProgress(onProgress, 90, '正在写入 PDF 文件...');
+
+    return (await worker.outputPdf('blob')) as Blob;
 };
 
 export const saveSSAReportDocx = (
