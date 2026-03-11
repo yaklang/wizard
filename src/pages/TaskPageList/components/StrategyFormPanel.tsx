@@ -19,6 +19,7 @@ import { useRequest } from 'ahooks';
 import { getSSAProjects, getScanPolicyConfig } from '@/apis/SSAProjectApi';
 import type { TScanPolicyConfig } from '@/apis/SSAProjectApi/type';
 import { getNodeManage } from '@/apis/NodeManageApi';
+import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 
 export interface StrategyFormValues {
     strategy_name: string;
@@ -211,6 +212,8 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
 
     const scheduleType = Form.useWatch('sched_type', form);
     const selectedRuleGroups = Form.useWatch('rule_groups', form) || [];
+    const auditCarryEnabled =
+        Form.useWatch('audit_carry_enabled', form) ?? false;
 
     const scheduleHint = useMemo(() => {
         if (scheduleType === 2) {
@@ -490,15 +493,17 @@ const StrategyFormPanel = (props: StrategyFormPanelProps) => {
                             />
                         </Form.Item>
 
-                        {!isEditMode && (
+                        <>
                             <Form.Item
                                 name="audit_carry_enabled"
                                 valuePropName="checked"
-                                extra="开启后，新批次会默认隐藏同项目历史批次中已处置的同特征漏洞。"
                             >
-                                <Checkbox>启用审计信息携带</Checkbox>
+                                <Checkbox>携带历史已处置结果</Checkbox>
                             </Form.Item>
-                        )}
+                            <SSAAuditCarryInfoPanel
+                                enabled={auditCarryEnabled}
+                            />
+                        </>
                     </Form>
 
                     <div className="mt-6 flex justify-end">

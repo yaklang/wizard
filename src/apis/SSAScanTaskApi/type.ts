@@ -33,6 +33,7 @@ export interface TSSATask {
     program_name?: string;
     scan_batch?: number;
     audit_carry_enabled?: boolean;
+    audit_carry_hidden_count?: number;
     risk_count?: number;
     risk_count_critical?: number;
     risk_count_high?: number;

@@ -70,6 +70,7 @@ import SSAReportExportModal, {
 import SSAReportExportProgressModal, {
     type TSSAReportExportProgressModalState,
 } from '@/compoments/SSAReportExportProgressModal';
+import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { useEventSource } from '@/hooks';
 import {
@@ -241,6 +242,12 @@ const TaskList: React.FC = () => {
                             if (msg.data?.risk_count_low !== undefined) {
                                 updates.risk_count_low =
                                     msg.data.risk_count_low;
+                            }
+                            if (
+                                msg.data?.audit_carry_hidden_count !== undefined
+                            ) {
+                                updates.audit_carry_hidden_count =
+                                    msg.data.audit_carry_hidden_count;
                             }
 
                             if (msg.data?.total_lines !== undefined) {
@@ -1060,6 +1067,7 @@ const TaskList: React.FC = () => {
             ? dayjs.unix(task.finished_at).format('YYYY-MM-DD HH:mm:ss')
             : '-';
         const languageDisplay = getLanguageDisplay(task.language);
+        const hiddenCount = Number(task.audit_carry_hidden_count || 0);
         const moreMenuItems: MenuProps['items'] = [
             {
                 key: 'report',
@@ -1129,6 +1137,25 @@ const TaskList: React.FC = () => {
                             >
                                 {scanModeMeta.text}
                             </Tag>
+                            {task.audit_carry_enabled ? (
+                                <Tooltip title="当前任务已开启审计信息携带">
+                                    <Tag className="task-mini-tag">
+                                        审计携带
+                                    </Tag>
+                                </Tooltip>
+                            ) : null}
+                            {hiddenCount > 0 ? (
+                                <Tooltip
+                                    title={`已隐藏 ${hiddenCount} 个历史已处置的同特征风险`}
+                                >
+                                    <Tag
+                                        color="processing"
+                                        className="task-mini-tag"
+                                    >
+                                        隐藏 {hiddenCount}
+                                    </Tag>
+                                </Tooltip>
+                            ) : null}
                         </div>
 
                         <div className="task-meta-grid">
@@ -1235,6 +1262,15 @@ const TaskList: React.FC = () => {
                                 </div>
                             </Tooltip>
                         </div>
+                        {task.audit_carry_enabled ? (
+                            <div style={{ marginTop: 10 }}>
+                                <SSAAuditCarryInfoPanel
+                                    enabled
+                                    hiddenCount={hiddenCount}
+                                    compact
+                                />
+                            </div>
+                        ) : null}
                     </div>
 
                     <div className="action-buttons">
@@ -1321,6 +1357,24 @@ const TaskList: React.FC = () => {
                                     <Tag color={scanModeMeta.color}>
                                         {scanModeMeta.text}
                                     </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="审计信息携带">
+                                    <Tag
+                                        color={
+                                            task.audit_carry_enabled
+                                                ? 'processing'
+                                                : 'default'
+                                        }
+                                    >
+                                        {task.audit_carry_enabled
+                                            ? '已开启'
+                                            : '未开启'}
+                                    </Tag>
+                                </Descriptions.Item>
+                                <Descriptions.Item label="已隐藏风险">
+                                    {task.audit_carry_enabled
+                                        ? `${hiddenCount} 个`
+                                        : '-'}
                                 </Descriptions.Item>
                                 {showPhaseText && (
                                     <Descriptions.Item label="当前阶段">
