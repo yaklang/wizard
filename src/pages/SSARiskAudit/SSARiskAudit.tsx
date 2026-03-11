@@ -1821,7 +1821,12 @@ const SSARiskAudit: React.FC = () => {
         { key: 'high', label: '高' },
         { key: 'middle', label: '中' },
         { key: 'low', label: '低' },
-        ...(showHiddenRisks ? [{ key: 'info', label: '信息' }] : []),
+        ...(showHiddenRisks
+            ? ([{ key: 'info', label: '信息' }] as Array<{
+                  key: SeverityFilterKey;
+                  label: string;
+              }>)
+            : []),
     ];
 
     return (
