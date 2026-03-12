@@ -40,7 +40,7 @@ const BatchCreateUserModal = forwardRef<
             >
                 <div className="pt-2 px-6">
                     <ChunkUpload
-                        url="/user/import"
+                        url="/api/user/import"
                         chunkSize={2}
                         accept=".csv,.xlsx,"
                         maxCount={1}

@@ -17,6 +17,7 @@ export interface SSEHookOptions<T> {
     onerror?: (e: SSEHooksError) => void;
     manual?: boolean; // 控制是否手动连接
     maxRetries?: number; // 最大重试次数
+    isAIAgent?: boolean; // 是否为AI Agent请求
 }
 
 const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
@@ -46,11 +47,14 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
             Connection: 'keep-alive',
         };
 
-        const es = new EventSourcePolyfill(`api/${url}`, {
-            heartbeatTimeout: 60 * 1000 * 1.5,
-            withCredentials: true,
-            headers,
-        });
+        const es = new EventSourcePolyfill(
+            `${options?.isAIAgent ? 'agent' : 'api'}/${url}`,
+            {
+                heartbeatTimeout: 60 * 1000 * 1.5,
+                withCredentials: true,
+                headers,
+            },
+        );
 
         es.onopen = () => {
             setLoading(false); // 连接成功后停止加载

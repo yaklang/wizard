@@ -8,9 +8,9 @@ import type {
 const postReverseConfig = (
     data: PostReverseConfigRequest,
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/reverse/config', data);
+    axios.post<never, ResponseData<boolean>>('/api/reverse/config', data);
 
 const getReverseConfig = (): Promise<ResponseData<getReverseConfigResponse>> =>
-    axios.get<never, ResponseData<getReverseConfigResponse>>('/reverse/config');
+    axios.get<never, ResponseData<getReverseConfigResponse>>('/api/reverse/config');
 
 export { postReverseConfig, getReverseConfig };

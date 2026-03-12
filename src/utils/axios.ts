@@ -4,13 +4,14 @@ import Axios from 'axios';
 import showErrorMessage from '@/utils/showErrorMessage';
 import useLoginStore from '@/App/store/loginStore';
 import { getLoginOut } from '@/apis/login';
-
+import { v4 as uuidv4 } from 'uuid';
 // 请求头标识
 // export const REQUEST_SOURCE = 'management';
 
 export const successCode = 200; // 成功
 export const noAuthCode = 401; // 登录过期
 export const roleLoseEfficacy = 20001; // 权限实效  目前可以暂时不用
+const XTOTPCode = uuidv4();
 
 const axios = Axios.create({
     headers: {
@@ -27,7 +28,13 @@ axios.interceptors.request.use((config) => {
     if (!config.headers.Authorization) {
         delete config.headers.Authorization;
     }
-    config.url = `api${config.url}`;
+    // config.url = `api${config.url}`;
+
+    // 如果是 'agent' 请求则为ai服务
+    if (config.url?.startsWith('/agent')) {
+        // 这里可以加入针对 agent 请求的特殊处理（例如：添加额外的 header 等）
+        config.headers['X-TOTP-Code'] = XTOTPCode;
+    }
 
     if (config.headers.RequestSource === false) {
         delete config.headers.RequestSource;
@@ -40,6 +47,11 @@ axios.interceptors.request.use((config) => {
 let roleChanged = false;
 axios.interceptors.response.use(
     (response: AxiosResponse) => {
+        // 如果是 agent 接口，直接返回原始数据
+        if (response.config.url?.startsWith('/agent')) {
+            return response.data;
+        }
+
         const { data } = response;
         const store = useLoginStore.getState();
         if (data?.code !== successCode) {

@@ -51,6 +51,11 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     rewrite: (path) => path,
                 },
+                '/agent': {
+                    target: 'http://localhost:8089', // 代理到本地的 8089 端口
+                    changeOrigin: true,
+                    rewrite: (path) => path,
+                },
             },
             host: '0.0.0.0',
             hmr: true,

@@ -22,7 +22,7 @@ export const getSSARiskFilterOptions = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskFilterOptions>> =>
     axios.get<never, ResponseData<TSSARiskFilterOptions>>(
-        '/ssa/risk/filter-options',
+        '/api/ssa/risk/filter-options',
         {
             signal,
         },
@@ -33,7 +33,7 @@ export const getSSARisks = (
     params: TSSARiskQueryParams,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskListResponse>> =>
-    axios.get<never, ResponseData<TSSARiskListResponse>>('/ssa/risk', {
+    axios.get<never, ResponseData<TSSARiskListResponse>>('/api/ssa/risk', {
         params,
         signal,
     });
@@ -42,27 +42,27 @@ export const getSSARisks = (
 export const postSSARisk = (
     data: TSSARiskRequest,
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/ssa/risk', data);
+    axios.post<never, ResponseData<boolean>>('/api/ssa/risk', data);
 
 // POST /ssa/risk - 更新单个 SSA 风险（简化版，用于标记已读等）
 export const updateSSARisk = (
     data: Partial<TSSARiskRequest> & { id: number },
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/ssa/risk', data);
+    axios.post<never, ResponseData<boolean>>('/api/ssa/risk', data);
 
 // DELETE /ssa/risk - 删除 SSA 风险
 export const deleteSSARisk = (params: {
     id?: number;
     hash?: string;
 }): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>('/ssa/risk', { params });
+    axios.delete<never, ResponseData<boolean>>('/api/ssa/risk', { params });
 
 // GET /ssa/risk/fetch - 获取 SSA 风险详情
 export const fetchSSARisk = (
     params: { id?: number; hash?: string },
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARisk>> =>
-    axios.get<never, ResponseData<TSSARisk>>('/ssa/risk/fetch', {
+    axios.get<never, ResponseData<TSSARisk>>('/api/ssa/risk/fetch', {
         params,
         signal,
     });
@@ -71,7 +71,7 @@ export const fetchSSARisk = (
 export const batchUpdateSSARisks = (
     data: TSSARiskBatchRequest,
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/ssa/risk/batch', data);
+    axios.post<never, ResponseData<boolean>>('/api/ssa/risk/batch', data);
 
 // GET /ssa/risk/export - 导出 SSA 风险
 export const exportSSARisks = (params?: {
@@ -80,7 +80,7 @@ export const exportSSARisks = (params?: {
     risk_type?: string;
     from_rule?: string;
 }): Promise<ResponseData<TSSARiskExportData>> =>
-    axios.get<never, ResponseData<TSSARiskExportData>>('/ssa/risk/export', {
+    axios.get<never, ResponseData<TSSARiskExportData>>('/api/ssa/risk/export', {
         params,
     });
 
@@ -95,7 +95,7 @@ export const importSSARisks = async (
         const response = await axios.post<
             never,
             ResponseData<TSSARiskImportResult>
-        >('/ssa/risk/import', formData, {
+        >('/api/ssa/risk/import', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -110,14 +110,14 @@ export const importSSARisks = async (
 
 // DELETE /ssa/risk/clear - 清空所有 SSA 风险
 export const clearSSARisks = (): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>('/ssa/risk/clear');
+    axios.delete<never, ResponseData<boolean>>('/api/ssa/risk/clear');
 
 // GET /ssa/risk/audit - 获取 SSA 风险审计信息
 export const getSSARiskAudit = (
     hash: string,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskAuditInfo>> =>
-    axios.get<never, ResponseData<TSSARiskAuditInfo>>('/ssa/risk/audit', {
+    axios.get<never, ResponseData<TSSARiskAuditInfo>>('/api/ssa/risk/audit', {
         params: { hash },
         signal,
     });
@@ -128,7 +128,7 @@ export const getSsaRiskAuditFiles = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskRelatedFiles>> =>
     axios.get<never, ResponseData<TSSARiskRelatedFiles>>(
-        '/ssa/risk/audit/files',
+        '/api/ssa/risk/audit/files',
         {
             params: { hash },
             signal,
@@ -142,7 +142,7 @@ export const getSsaRiskFileContent = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskFileContent>> =>
     axios.get<never, ResponseData<TSSARiskFileContent>>(
-        '/ssa/risk/audit/file/content',
+        '/api/ssa/risk/audit/file/content',
         {
             params: { hash, file_path: filePath },
             signal,
@@ -153,7 +153,7 @@ export const getSsaRiskFileContent = (
 export const postSSARiskDisposal = (
     data: TSSARiskDisposalRequest,
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/ssa/risk/disposal', data);
+    axios.post<never, ResponseData<boolean>>('/api/ssa/risk/disposal', data);
 
 // GET /ssa/risk/disposal - 查询 SSA 风险处置列表
 export const getSSARiskDisposals = (
@@ -166,7 +166,7 @@ export const getSSARiskDisposals = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskDisposalListResponse>> =>
     axios.get<never, ResponseData<TSSARiskDisposalListResponse>>(
-        '/ssa/risk/disposal',
+        '/api/ssa/risk/disposal',
         {
             params,
             signal,
@@ -179,7 +179,7 @@ export const getSSARiskDisposal = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskDisposal>> =>
     axios.get<never, ResponseData<TSSARiskDisposal>>(
-        '/ssa/risk/disposal/fetch',
+        '/api/ssa/risk/disposal/fetch',
         {
             params: { id },
             signal,
@@ -190,6 +190,6 @@ export const getSSARiskDisposal = (
 export const deleteSSARiskDisposal = (
     id: number,
 ): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>('/ssa/risk/disposal', {
+    axios.delete<never, ResponseData<boolean>>('/api/ssa/risk/disposal', {
         params: { id },
     });

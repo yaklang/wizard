@@ -26,7 +26,7 @@ const getSyntaxFlowRules = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TSyntaxFlowRuleListResponse>> =>
     axios.get<never, ResponseData<TSyntaxFlowRuleListResponse>>(
-        `/syntaxflow/rule`,
+        `/api/syntaxflow/rule`,
         { params, signal },
     );
 
@@ -34,24 +34,29 @@ const getSyntaxFlowRules = (
 const postSyntaxFlowRule = (
     data: TSyntaxFlowRuleRequest,
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>(`/syntaxflow/rule`, data);
+    axios.post<never, ResponseData<boolean>>(`/api/syntaxflow/rule`, data);
 
 // DELETE /syntaxflow/rule
 const deleteSyntaxFlowRule = (params: {
     rule_name?: string;
     rule_id?: string;
 }): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(`/syntaxflow/rule`, { params });
+    axios.delete<never, ResponseData<boolean>>(`/api/syntaxflow/rule`, {
+        params,
+    });
 
 // GET /syntaxflow/rule/fetch
 const fetchSyntaxFlowRule = (
     params: { rule_name?: string; rule_id?: string },
     signal?: AbortSignal,
 ): Promise<ResponseData<TSyntaxFlowRule>> =>
-    axios.get<never, ResponseData<TSyntaxFlowRule>>(`/syntaxflow/rule/fetch`, {
-        params,
-        signal,
-    });
+    axios.get<never, ResponseData<TSyntaxFlowRule>>(
+        `/api/syntaxflow/rule/fetch`,
+        {
+            params,
+            signal,
+        },
+    );
 
 // GET /syntaxflow/rule/export
 const exportSyntaxFlowRules = (params: {
@@ -65,7 +70,7 @@ const exportSyntaxFlowRules = (params: {
     is_build_in_rule?: boolean;
     group_name?: string;
 }) =>
-    axios.get(`/syntaxflow/rule/export`, {
+    axios.get(`/api/syntaxflow/rule/export`, {
         params,
         responseType: 'blob',
     });
@@ -75,19 +80,23 @@ const importSyntaxFlowRules = (
     data: FormData,
     config?: { onUploadProgress?: (progressEvent: any) => void },
 ): Promise<ResponseData<string>> =>
-    axios.post<never, ResponseData<string>>(`/syntaxflow/rule/import`, data, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
+    axios.post<never, ResponseData<string>>(
+        `/api/syntaxflow/rule/import`,
+        data,
+        {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            ...config,
         },
-        ...config,
-    });
+    );
 
 // GET /async/task/status
 const getAsyncTaskStatus = (
     taskId: string,
 ): Promise<ResponseData<TAsyncTaskStatusResponse>> =>
     axios.get<never, ResponseData<TAsyncTaskStatusResponse>>(
-        `/async/task/status`,
+        `/api/async/task/status`,
         {
             params: { task_id: taskId },
         },
@@ -102,7 +111,7 @@ const createRuleSnapshot = (
     axios.post<
         never,
         ResponseData<{ version: string; hash: string; rule_count: number }>
-    >(`/syntaxflow/rules/snapshot`, { note });
+    >(`/api/syntaxflow/rules/snapshot`, { note });
 
 export {
     getSyntaxFlowRules,

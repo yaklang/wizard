@@ -13,7 +13,7 @@ const scanSSAProject = (
     data?: TSSAScanRequest,
 ): Promise<ResponseData<TSSATaskResponse>> =>
     axios.post<never, ResponseData<TSSATaskResponse>>(
-        `/ssa/project/${projectId}/scan`,
+        `/api/ssa/project/${projectId}/scan`,
         data || {},
     );
 
@@ -21,12 +21,12 @@ const scanSSAProject = (
 const querySSATasks = (
     params?: TSSATaskQueryParams,
 ): Promise<ResponseData<TSSATaskListResponse>> =>
-    axios.get<never, ResponseData<TSSATaskListResponse>>('/ssa/task', {
+    axios.get<never, ResponseData<TSSATaskListResponse>>('/api/ssa/task', {
         params,
     });
 
 // DELETE /ssa/task/{task_id} - 取消任务
 const cancelSSATask = (taskId: string): Promise<ResponseData<void>> =>
-    axios.delete<never, ResponseData<void>>(`/ssa/task/${taskId}`);
+    axios.delete<never, ResponseData<void>>(`/api/ssa/task/${taskId}`);
 
 export { scanSSAProject, querySSATasks, cancelSSATask };

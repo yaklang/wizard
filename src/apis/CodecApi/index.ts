@@ -12,11 +12,11 @@ const getAllCodecMethods = (): Promise<
     axios.get<
         never,
         ResponseData<TableResponseData<TGetAllCodecMethodsResponse>>
-    >(`/codec/getAllCodecMethods`);
+    >(`/api/codec/getAllCodecMethods`);
 
 const postRunCodec = (
     data: TPostRunCodecResponse,
 ): Promise<ResponseData<any>> =>
-    axios.post<never, ResponseData<any>>(`/run/codec`, data);
+    axios.post<never, ResponseData<any>>(`/api/run/codec`, data);
 
 export { getAllCodecMethods, postRunCodec };

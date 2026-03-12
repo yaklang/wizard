@@ -329,7 +329,7 @@ const ModifyTaskScript: FC = () => {
                                                 <div className="flex items-center font-normal text-xs color-[#85899E]">
                                                     可将TXT、Excel文件拖入框内或
                                                     <ChunkUpload
-                                                        url="/material/files"
+                                                        url="/api/material/files"
                                                         chunkSize={2}
                                                         accept=".txt"
                                                         maxCount={1}
@@ -364,7 +364,7 @@ const ModifyTaskScript: FC = () => {
                                             }
                                         >
                                             <ChunkUpload
-                                                url="/material/files"
+                                                url="/api/material/files"
                                                 chunkSize={2}
                                                 accept=".txt"
                                                 childrenType="textArea"

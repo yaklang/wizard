@@ -6,7 +6,7 @@ const getFileExists = (
     file_name: 'yak' | 'docker-compose',
 ): Promise<ResponseData<boolean>> =>
     axios.get<never, ResponseData<boolean>>(
-        `/file-exists?file_name=${file_name}`,
+        `/api/file-exists?file_name=${file_name}`,
     );
 
 export { getFileExists };

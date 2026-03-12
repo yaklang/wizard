@@ -11,7 +11,7 @@ const postCveQuery = (
     data: TCveQueryRequest,
 ): Promise<ResponseData<TableResponseData<TCveQueryResponse>>> =>
     axios.post<never, ResponseData<TableResponseData<TCveQueryResponse>>>(
-        `/cve/query`,
+        `/api/cve/query`,
         data,
     );
 
@@ -20,9 +20,12 @@ const getCveUpdate = (
     params: TGetCveUpdateResquest,
     signal?: AbortSignal,
 ): Promise<ResponseData<boolean>> =>
-    axios.get<never, ResponseData<boolean>>(`/cve/update`, { params, signal });
+    axios.get<never, ResponseData<boolean>>(`/api/cve/update`, {
+        params,
+        signal,
+    });
 
 const getCveOfflineUpdate = (): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>(`/reset/cve`);
+    axios.post<never, ResponseData<boolean>>(`/api/reset/cve`);
 
 export { postCveQuery, getCveUpdate, getCveOfflineUpdate };
