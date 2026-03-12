@@ -76,7 +76,20 @@ const PreviewReportDrawer = forwardRef<
     const downloadPdf = () => {
         if (!divRef || !divRef.current) return;
         const div = divRef.current;
-        html2pdf().from(div).set(opt(reportTitleRef.current)).save(); // 导出
+
+        // 商业美化：PDF 生成时的额外配置
+        const printOptions = {
+            ...opt(reportTitleRef.current),
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                windowWidth: 1200, // 保持固定宽度以优化排版
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        };
+
+        html2pdf().from(div).set(printOptions).save();
     };
 
     return (

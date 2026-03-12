@@ -32,9 +32,8 @@ export const opt = (filename?: string) => {
             scale: 1.2,
         },
         pagebreak: {
-            // 自动分页控制属性
-            // mode: 'avoid-all',
-            after: '#cover',
+            mode: ['css', 'legacy'],
+            avoid: '.report-block-wrapper',
         },
     };
 };
