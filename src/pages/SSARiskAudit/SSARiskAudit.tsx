@@ -1852,14 +1852,17 @@ const SSARiskAudit: React.FC = () => {
                             {taskAuditCarryEnabled ? (
                                 <>
                                     <Divider type="vertical" />
-                                    <Text type="secondary">
-                                        智能过滤:{' '}
-                                        <Text strong>
-                                            {showHiddenRisks
-                                                ? '已展开隐藏项'
-                                                : '已开启'}
-                                        </Text>
-                                    </Text>
+                                    <SSAAuditCarryInfoPanel
+                                        enabled
+                                        hiddenCount={taskHiddenCount}
+                                        showHiddenRisks={showHiddenRisks}
+                                        onToggleShowHidden={() =>
+                                            setShowHiddenRisks(
+                                                (value) => !value,
+                                            )
+                                        }
+                                        variant="pure-text"
+                                    />
                                 </>
                             ) : null}
                             {auditInfo?.risk && (
@@ -1871,18 +1874,6 @@ const SSARiskAudit: React.FC = () => {
                                 </>
                             )}
                         </div>
-                        {taskAuditCarryEnabled ? (
-                            <div style={{ marginTop: 12 }}>
-                                <SSAAuditCarryInfoPanel
-                                    enabled
-                                    hiddenCount={taskHiddenCount}
-                                    showHiddenRisks={showHiddenRisks}
-                                    onToggleShowHidden={() =>
-                                        setShowHiddenRisks((value) => !value)
-                                    }
-                                />
-                            </div>
-                        ) : null}
                     </>
                 ) : (
                     <>

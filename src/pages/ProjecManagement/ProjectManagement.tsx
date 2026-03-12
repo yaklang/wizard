@@ -840,15 +840,19 @@ const ProjectManagement: React.FC = () => {
                                                 );
                                             }}
                                         >
-                                            默认隐藏历史重复漏洞
+                                            智能审计过滤
                                         </Checkbox>
                                     </div>
-                                    <div style={{ marginTop: 10 }}>
-                                        <SSAAuditCarryInfoPanel
-                                            enabled={quickScanAuditCarryEnabled}
-                                            compact
-                                        />
-                                    </div>
+                                    {quickScanAuditCarryEnabled && (
+                                        <div style={{ marginTop: 8 }}>
+                                            <SSAAuditCarryInfoPanel
+                                                enabled={
+                                                    quickScanAuditCarryEnabled
+                                                }
+                                                variant="minimal"
+                                            />
+                                        </div>
+                                    )}
                                     <div style={{ marginTop: 12 }}>
                                         <Space>
                                             <Button

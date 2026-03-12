@@ -175,10 +175,20 @@ const CreateSSAScanTask = () => {
                         <Form.Item
                             name="audit_carry_enabled"
                             valuePropName="checked"
+                            style={{ marginBottom: 8 }}
                         >
-                            <Checkbox>默认隐藏历史重复漏洞</Checkbox>
+                            <Checkbox>
+                                智能审计过滤 (自动隐藏历史重复漏洞)
+                            </Checkbox>
                         </Form.Item>
-                        <SSAAuditCarryInfoPanel enabled={auditCarryEnabled} />
+                        {auditCarryEnabled && (
+                            <div style={{ marginBottom: 24 }}>
+                                <SSAAuditCarryInfoPanel
+                                    enabled={auditCarryEnabled}
+                                    variant="minimal"
+                                />
+                            </div>
+                        )}
                     </Form>
                 </Spin>
             </Card>

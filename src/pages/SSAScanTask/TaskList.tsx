@@ -73,10 +73,7 @@ import SSAReportExportProgressModal, {
 import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { useEventSource } from '@/hooks';
-import {
-    saveSSAReportPdf,
-    saveSSAReportDocx,
-} from '@/utils/ssaReportExport';
+import { saveSSAReportPdf, saveSSAReportDocx } from '@/utils/ssaReportExport';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
@@ -678,7 +675,10 @@ const TaskList: React.FC = () => {
                     if (!res.data) {
                         throw new Error('empty report pdf');
                     }
-                    updateExportProgress(78, '报告数据已返回，正在写入 PDF 文件...');
+                    updateExportProgress(
+                        78,
+                        '报告数据已返回，正在写入 PDF 文件...',
+                    );
                     saveSSAReportPdf(
                         res.data,
                         values.report_name,
@@ -1260,11 +1260,11 @@ const TaskList: React.FC = () => {
                             </Tooltip>
                         </div>
                         {task.audit_carry_enabled ? (
-                            <div style={{ marginTop: 10 }}>
+                            <div style={{ marginTop: 8 }}>
                                 <SSAAuditCarryInfoPanel
                                     enabled
                                     hiddenCount={hiddenCount}
-                                    compact
+                                    variant="pure-text"
                                 />
                             </div>
                         ) : null}
