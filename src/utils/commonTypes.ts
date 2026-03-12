@@ -62,3 +62,11 @@ export interface ProjectDetailNodes {
     level: number;
     projectId: string;
 }
+
+// AI数据返回封装
+export interface AIResponseData<T> {
+    code: number;
+    data: T;
+    message: string;
+    error?: string;
+}

@@ -35,10 +35,11 @@ import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/Reverse
 import GlobalReverseLink from '@/pages/ReverseLink';
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
 import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
-import CodecEntry from '@/pages/Codec';
+// import CodecEntry from '@/pages/Codec';
 import SpecialTask from '@/pages/SpecialTask';
 import CreateTask from '@/pages/CreateTask';
 import { AIAgent } from '@/pages/AIAgent/ai-agent/AIAgent';
+import { TestAi } from '@/apis/AiEventApi/test';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -154,7 +155,7 @@ const routers: RouteObjectRootMy[] = [
                 name: 'Codec',
                 key: 'codec',
                 icon: <PublicCodec />,
-                element: <CodecEntry />,
+                element: <TestAi />,
             },
             {
                 path: 'acti-chain',
