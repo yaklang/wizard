@@ -112,9 +112,8 @@ export interface TSSARiskExportParams {
     from_rule?: string;
     latest_disposal_status?: string;
     audited_state?: 'all' | 'audited' | 'unaudited';
-    format?: 'json' | 'html' | 'docx';
+    format?: 'json' | 'html' | 'docx' | 'pdf';
     report_name?: string;
-    template_id?: string;
 }
 
 // 列表响应类型

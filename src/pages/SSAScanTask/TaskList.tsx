@@ -48,7 +48,7 @@ import {
 } from '@/apis/SSAScanTaskApi';
 import {
     exportSSARiskReportDocx,
-    exportSSARiskReportHTML,
+    exportSSARiskReportPDF,
     getSSARiskFilterOptions,
 } from '@/apis/SSARiskApi';
 import type {
@@ -74,7 +74,7 @@ import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { useEventSource } from '@/hooks';
 import {
-    exportSSAReportToPDF,
+    saveSSAReportPdf,
     saveSSAReportDocx,
 } from '@/utils/ssaReportExport';
 import dayjs from 'dayjs';
@@ -599,7 +599,6 @@ const TaskList: React.FC = () => {
             risk_type: [],
             audited_state: 'all',
             latest_disposal_status: [],
-            template_id: 'default-ssa-v1',
         }),
         [exportScopeName],
     );
@@ -644,7 +643,6 @@ const TaskList: React.FC = () => {
                 );
                 const params: TSSARiskExportParams = {
                     report_name: values.report_name,
-                    template_id: values.template_id,
                     severity: values.severity?.join(',') || undefined,
                     risk_type: values.risk_type?.join(',') || undefined,
                     audited_state: values.audited_state || 'all',
@@ -676,14 +674,13 @@ const TaskList: React.FC = () => {
                         },
                     );
                 } else {
-                    const res = await exportSSARiskReportHTML(params);
-                    const html = res.data || '';
-                    if (!html.trim()) {
-                        throw new Error('empty report html');
+                    const res = await exportSSARiskReportPDF(params);
+                    if (!res.data) {
+                        throw new Error('empty report pdf');
                     }
-                    updateExportProgress(30, '报告数据已返回，正在渲染 PDF...');
-                    await exportSSAReportToPDF(
-                        html,
+                    updateExportProgress(78, '报告数据已返回，正在写入 PDF 文件...');
+                    saveSSAReportPdf(
+                        res.data,
                         values.report_name,
                         (progress) => {
                             updateExportProgress(

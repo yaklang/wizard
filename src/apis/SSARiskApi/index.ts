@@ -82,20 +82,21 @@ export const exportSSARisks = (
         params,
     });
 
-// GET /ssa/risk/export - 获取 HTML 报告源
-export const exportSSARiskReportHTML = (
+// GET /ssa/risk/export - 下载 PDF 报告
+export const exportSSARiskReportPDF = (
     params: TSSARiskExportParams,
-): Promise<ResponseData<string>> =>
-    axios.get<never, ResponseData<string>>('/ssa/risk/export', {
+): Promise<ResponseData<Blob>> =>
+    axios.get<never, ResponseData<Blob>>('/ssa/risk/export', {
         params: {
             ...params,
-            format: 'html',
+            format: 'pdf',
         },
-        responseType: 'text',
+        responseType: 'blob',
         transformResponse: [
             (data) => ({
                 data,
                 code: 200,
+                msg: '',
             }),
         ],
     });

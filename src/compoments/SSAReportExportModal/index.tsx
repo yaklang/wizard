@@ -6,7 +6,6 @@ export type TSSAReportExportFormat = 'pdf' | 'word';
 export interface TSSAReportExportFormValues {
     report_name?: string;
     format: TSSAReportExportFormat;
-    template_id?: string;
     severity?: string[];
     risk_type?: string[];
     audited_state?: 'all' | 'audited' | 'unaudited';
@@ -33,14 +32,8 @@ const disposalOptions = [
     { label: '确认漏洞', value: 'is_issue' },
 ];
 
-const templateOptions = [
-    { label: '标准模板（推荐）', value: 'default-ssa-v1' },
-    { label: '旧版模板（legacy）', value: 'legacy-ssa-v1' },
-];
-
 const defaultValues: TSSAReportExportFormValues = {
     format: 'pdf',
-    template_id: 'default-ssa-v1',
     audited_state: 'all',
     severity: [],
     risk_type: [],
@@ -112,10 +105,6 @@ const SSAReportExportModal: React.FC<SSAReportExportModalProps> = ({
                             optionType="button"
                             buttonStyle="solid"
                         />
-                    </Form.Item>
-
-                    <Form.Item label="模板" name="template_id">
-                        <Select options={templateOptions} />
                     </Form.Item>
 
                     {allowFilters ? (
