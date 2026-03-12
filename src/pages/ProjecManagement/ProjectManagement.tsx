@@ -5,7 +5,6 @@ import {
     Table,
     Space,
     Button,
-    Checkbox,
     Popconfirm,
     Popover,
     Modal,
@@ -33,7 +32,6 @@ import {
 // 语言官方图标
 import { SiPhp, SiJavascript, SiPython, SiGo } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
-import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
@@ -42,7 +40,6 @@ import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
 import { scanSSAIR } from '@/apis/SSAIRApi';
 import type { TSSAIRScanRequest } from '@/apis/SSAIRApi/type';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
-import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
 import dayjs from 'dayjs';
@@ -104,9 +101,6 @@ const ProjectManagement: React.FC = () => {
     const [scanPopoverProjectId, setScanPopoverProjectId] = useState<
         number | null
     >(null);
-    const [scanAuditCarryMap, setScanAuditCarryMap] = useState<
-        Record<number, boolean>
-    >({});
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
     const selectedProjects = data.filter(
@@ -776,9 +770,6 @@ const ProjectManagement: React.FC = () => {
                         .split('/')
                         .pop()
                         ?.replace(/\.git$/, '') || '代码仓库';
-                const quickScanAuditCarryEnabled = record.id
-                    ? (scanAuditCarryMap[record.id] ?? true)
-                    : true;
 
                 return (
                     <Space size="small">
@@ -825,35 +816,6 @@ const ProjectManagement: React.FC = () => {
                                         IR（黑盒）。
                                     </div>
                                     <div style={{ marginTop: 12 }}>
-                                        <Checkbox
-                                            checked={quickScanAuditCarryEnabled}
-                                            onChange={(
-                                                e: CheckboxChangeEvent,
-                                            ) => {
-                                                if (!record.id) return;
-                                                setScanAuditCarryMap(
-                                                    (prev) => ({
-                                                        ...prev,
-                                                        [record.id!]:
-                                                            e.target.checked,
-                                                    }),
-                                                );
-                                            }}
-                                        >
-                                            智能审计过滤
-                                        </Checkbox>
-                                    </div>
-                                    {quickScanAuditCarryEnabled && (
-                                        <div style={{ marginTop: 8 }}>
-                                            <SSAAuditCarryInfoPanel
-                                                enabled={
-                                                    quickScanAuditCarryEnabled
-                                                }
-                                                variant="minimal"
-                                            />
-                                        </div>
-                                    )}
-                                    <div style={{ marginTop: 12 }}>
                                         <Space>
                                             <Button
                                                 size="small"
@@ -861,10 +823,7 @@ const ProjectManagement: React.FC = () => {
                                                     setScanPopoverProjectId(
                                                         null,
                                                     );
-                                                    await handleScan(
-                                                        record,
-                                                        quickScanAuditCarryEnabled,
-                                                    );
+                                                    await handleScan(record);
                                                 }}
                                             >
                                                 内存扫描
@@ -878,7 +837,6 @@ const ProjectManagement: React.FC = () => {
                                                     );
                                                     await handleScanWithIRDB(
                                                         record,
-                                                        quickScanAuditCarryEnabled,
                                                     );
                                                 }}
                                             >
