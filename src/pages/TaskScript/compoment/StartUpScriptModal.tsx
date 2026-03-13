@@ -30,6 +30,7 @@ import type { ScriptGroupOption, TaskScriptListItem } from '../types';
 
 export type TScannerDataList = {
     name?: string;
+    display_name?: string;
     size?: number;
     date: string | number;
 }[];

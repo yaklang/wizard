@@ -2,6 +2,7 @@ import type { RouteObjectRootMy } from '@/App/routers/routers';
 import type { ReactNode } from 'react';
 import type { RuleObject } from 'antd/lib/form';
 import type { Dayjs } from 'dayjs';
+import { saveAs } from 'file-saver';
 
 // 计算表格总宽度
 export function getColumnsWidth(columns: any[]) {
@@ -121,11 +122,7 @@ export const saveFile = (content: string | Blob, filename: string): void => {
         content instanceof Blob
             ? content
             : new Blob([content], { type: 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename; // 自定义文件名
-    a.click();
-    URL.revokeObjectURL(a.href);
+    saveAs(blob, filename);
 };
 
 // 递归节点树

@@ -50,6 +50,8 @@ import {
     getSSARisks,
     getSSARiskDisposals,
 } from '@/apis/SSARiskApi';
+import { querySSATasks } from '@/apis/SSAScanTaskApi';
+import type { TSSATask } from '@/apis/SSAScanTaskApi/type';
 import type {
     TSSARiskAuditInfo,
     TRelatedFile,
@@ -59,8 +61,10 @@ import type {
     TSSARisk,
     TSSARiskDisposal,
 } from '@/apis/SSARiskApi/type';
+import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { YakCodemirror } from '@/compoments/YakCodemirror/YakCodemirror';
 import Markdown from '@/compoments/MarkDown';
+import { fetchSyntaxFlowRule } from '@/apis/SyntaxFlowRuleApi';
 import { instance } from '@viz-js/viz';
 import './SSARiskAudit.scss';
 
@@ -104,6 +108,7 @@ class ErrorBoundary extends React.Component<
 
 // 左侧视图模式类型
 type LeftViewMode = 'type' | 'file' | 'tree';
+type SeverityFilterKey = 'critical' | 'high' | 'middle' | 'low' | 'info';
 
 // 严重程度颜色映射
 const severityColorMap: Record<string, string> = {
@@ -125,17 +130,84 @@ const severityLabelMap: Record<string, string> = {
     info: '信息',
 };
 
+const normalizeSeverity = (s?: string) => (s || 'info').toLowerCase();
+
+const dedupRisksByHash = (list: TSSARisk[]) => {
+    const byHash = new Map<string, TSSARisk>();
+    const noHash: TSSARisk[] = [];
+    for (const r of list) {
+        const h = (r.hash || '').trim();
+        if (!h) {
+            noHash.push(r);
+            continue;
+        }
+        const prev = byHash.get(h);
+        if (!prev) {
+            byHash.set(h, r);
+            continue;
+        }
+        // Keep the newest one for stable UI selection and correct counts.
+        const prevTs = prev.updated_at || prev.created_at || 0;
+        const curTs = r.updated_at || r.created_at || 0;
+        if (curTs >= prevTs) {
+            byHash.set(h, r);
+        }
+    }
+    return [...byHash.values(), ...noHash];
+};
+
+const parseCodeRange = (codeRange?: string) => {
+    if (!codeRange) return null;
+    try {
+        const obj = JSON.parse(codeRange);
+        if (!obj || typeof obj !== 'object') return null;
+        return {
+            startLine: Number(obj.start_line) || undefined,
+            endLine: Number(obj.end_line) || undefined,
+            startCol: Number(obj.start_column) || undefined,
+            endCol: Number(obj.end_column) || undefined,
+        };
+    } catch {
+        return null;
+    }
+};
+
+const formatLineAndCol = (risk: TSSARisk) => {
+    const line = risk.line;
+    const r = parseCodeRange(risk.code_range);
+    if (!line && !r?.startLine) return '';
+    const l = line || r?.startLine;
+    if (!l) return '';
+    if (r?.startCol && r?.endCol) {
+        return `[${l}:${r.startCol}-${r.endCol}]`;
+    }
+    return `[${l}]`;
+};
+
+const formatProjectBatchLabel = (
+    projectName?: string,
+    scanBatch?: number,
+): string => {
+    const name = (projectName || '').trim();
+    if (!name) return '-';
+    if (scanBatch && scanBatch > 0) {
+        return `${name} · 第${scanBatch}批`;
+    }
+    return name;
+};
+
 const SSARiskAudit: React.FC = () => {
     const [searchParams] = useSearchParams();
     const hash = searchParams.get('hash') || '';
     const taskId = searchParams.get('task_id') || '';
-    const programName = searchParams.get('program_name') || '';
+    const projectNameFromQuery = searchParams.get('project_name') || '';
+    const scanBatchFromQuery = Number(searchParams.get('scan_batch') || 0);
 
     const navigate = useNavigate();
     const [form] = Form.useForm();
 
     // 判断是任务模式还是单个风险模式
-    const isTaskMode = !!taskId && !!programName;
+    const isTaskMode = !!taskId && !hash;
 
     const [loading, setLoading] = useState(false);
     const [auditInfo, setAuditInfo] = useState<TSSARiskAuditInfo | null>(null);
@@ -151,17 +223,27 @@ const SSARiskAudit: React.FC = () => {
 
     // 任务模式相关状态
     const [riskList, setRiskList] = useState<TSSARisk[]>([]);
+    const [taskMeta, setTaskMeta] = useState<TSSATask | null>(null);
     const [loadingRisks, setLoadingRisks] = useState(false);
     const [selectedRiskHash, setSelectedRiskHash] = useState<string | null>(
         null,
     );
     const [leftViewMode, setLeftViewMode] = useState<LeftViewMode>('type');
-    const [severityFilter, setSeverityFilter] = useState<string | null>(null);
+    const [severityFilter, setSeverityFilter] =
+        useState<SeverityFilterKey | null>(null);
     const [expandedFiles, setExpandedFiles] = useState<string[]>([]);
+    const [showHiddenRisks, setShowHiddenRisks] = useState(false);
 
     // 左侧面板宽度控制
     const [leftPanelWidth, setLeftPanelWidth] = useState(280);
     const [isResizing, setIsResizing] = useState(false);
+
+    // 点击漏洞后待跳转的 risk 对象
+    const pendingJumpRiskRef = useRef<TSSARisk | null>(null);
+    // 用 ref 持有最新的 jumpToCodeLocation，避免函数引用变化触发 effect 误执行
+    const jumpToCodeLocationRef = useRef<(nodeInfo: any) => Promise<void>>();
+    // 当前正在请求的 auditInfo hash，用于丢弃过期响应
+    const pendingAuditHashRef = useRef<string | null>(null);
 
     // DOT 图相关状态
     const svgBoxRef = useRef<HTMLDivElement>(null);
@@ -184,6 +266,25 @@ const SSARiskAudit: React.FC = () => {
         [],
     );
     const [loadingHistory, setLoadingHistory] = useState(false);
+
+    // 规则 UUID
+    const [ruleUUID, setRuleUUID] = useState<string | null>(null);
+    useEffect(() => {
+        const ruleName = auditInfo?.risk?.from_rule;
+        if (!ruleName) {
+            setRuleUUID(null);
+            return;
+        }
+        const ctrl = new AbortController();
+        fetchSyntaxFlowRule({ rule_name: ruleName }, ctrl.signal)
+            .then((res) => {
+                if (res.code === 200 && res.data?.rule_id) {
+                    setRuleUUID(res.data.rule_id);
+                }
+            })
+            .catch(() => {});
+        return () => ctrl.abort();
+    }, [auditInfo?.risk?.from_rule]);
 
     // 左侧面板拖拽调整宽度
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -315,24 +416,57 @@ const SSARiskAudit: React.FC = () => {
 
         setLoadingRisks(true);
         try {
-            const res = await getSSARisks({
-                task_id: taskId,
-                program_name: programName,
-                limit: 1000, // 加载所有风险
-            });
-            if (res?.data?.list) {
-                setRiskList(res.data.list);
-                // 如果有风险，默认选中第一个
-                if (res.data.list.length > 0 && res.data.list[0].hash) {
-                    setSelectedRiskHash(res.data.list[0].hash);
-                }
+            // /ssa/risk 是分页接口。这里必须分页拉取全量，否则会出现:
+            // 1) 统计显示 critical=0 但数据库里确实存在
+            // 2) 点击某个 severity 后提示“暂无漏洞”，因为对应条目不在第一页
+            const limit = 1000;
+            let page = 1;
+            let all: TSSARisk[] = [];
+            // 最多循环 1000 页，避免后端 pagemeta 异常导致死循环
+            for (let i = 0; i < 1000; i++) {
+                const res = await getSSARisks({
+                    task_id: taskId,
+                    page,
+                    limit,
+                    show_hidden: showHiddenRisks || undefined,
+                });
+                const list = res?.data?.list || [];
+                const pagemeta = res?.data?.pagemeta;
+
+                all = all.concat(list);
+                if (!pagemeta) break;
+                if (all.length >= (pagemeta.total || 0)) break;
+                if (pagemeta.total_page && page >= pagemeta.total_page) break;
+                if (list.length === 0) break;
+                page++;
+            }
+            // Historical data may already have duplicates (same hash) due to past importer races.
+            // Dedupe in UI to avoid inflated counts and multi-select highlighting.
+            const deduped = dedupRisksByHash(all);
+            setRiskList(deduped);
+            if (deduped.length === 0) {
+                setSelectedRiskHash(null);
             }
         } catch (err: any) {
             message.error(`加载风险列表失败: ${err.message}`);
         } finally {
             setLoadingRisks(false);
         }
-    }, [taskId, programName]);
+    }, [taskId, showHiddenRisks]);
+
+    const fetchTaskMeta = useCallback(async () => {
+        if (!taskId) return;
+        try {
+            const res = await querySSATasks({
+                task_id: taskId,
+                page: 1,
+                limit: 1,
+            });
+            setTaskMeta(res.data?.list?.[0] || null);
+        } catch (err) {
+            console.error('Failed to fetch task meta:', err);
+        }
+    }, [taskId]);
 
     // 获取处置历史
     const fetchDisposalHistory = useCallback(
@@ -369,26 +503,26 @@ const SSARiskAudit: React.FC = () => {
 
     const fetchAuditInfo = async (targetHash?: string) => {
         const hashToUse = targetHash || hash;
-        if (!hashToUse) {
-            console.log('No hash provided');
-            return;
-        }
+        if (!hashToUse) return;
 
-        console.log('Fetching audit info for hash:', hashToUse);
+        pendingAuditHashRef.current = hashToUse;
         setLoading(true);
         try {
-            const res = await getSSARiskAudit(hashToUse);
-            console.log('API Response:', res);
+            const res = await getSSARiskAudit(hashToUse, taskId);
+            // 丢弃过期响应：用户可能已经切换到另一个漏洞
+            if (pendingAuditHashRef.current !== hashToUse) return;
             if (res?.data) {
                 setAuditInfo(res.data);
-            } else {
-                console.warn('No data in response');
             }
         } catch (err: any) {
-            console.error('Failed to fetch audit info:', err);
-            message.error(`加载审计信息失败: ${err.message}`);
+            if (pendingAuditHashRef.current === hashToUse) {
+                console.error('Failed to fetch audit info:', err);
+                message.error(`加载审计信息失败: ${err.message}`);
+            }
         } finally {
-            setLoading(false);
+            if (pendingAuditHashRef.current === hashToUse) {
+                setLoading(false);
+            }
         }
     };
 
@@ -398,7 +532,7 @@ const SSARiskAudit: React.FC = () => {
         if (!hashToUse) return;
 
         try {
-            const res = await getSsaRiskAuditFiles(hashToUse);
+            const res = await getSsaRiskAuditFiles(hashToUse, taskId);
             if (res?.data?.files && res.data.files.length > 0) {
                 // 从扁平列表构建目录树
                 const tree = buildFileTree(res.data.files);
@@ -421,11 +555,14 @@ const SSARiskAudit: React.FC = () => {
                 };
                 setExpandedKeys(collectDirKeys(tree));
 
-                // 默认选中第一个文件
-                const firstFile = res.data.files[0];
-                if (firstFile) {
-                    setSelectedFilePath(firstFile.path);
-                    fetchFileContent(firstFile.path, hashToUse);
+                // 有待跳转的漏洞时由 jumpToCodeLocation 负责加载文件，
+                // 避免与 jumpToCodeLocation 竞态覆盖文件内容和高亮
+                if (!pendingJumpRiskRef.current) {
+                    const firstFile = res.data.files[0];
+                    if (firstFile) {
+                        setSelectedFilePath(firstFile.path);
+                        fetchFileContent(firstFile.path, hashToUse);
+                    }
                 }
             }
         } catch (err: any) {
@@ -441,7 +578,7 @@ const SSARiskAudit: React.FC = () => {
         const grouped: Record<string, Record<string, TSSARisk[]>> = {};
         risks.forEach((risk) => {
             const type = risk.risk_type_verbose || risk.risk_type || '未分类';
-            const severity = risk.severity || 'info';
+            const severity = normalizeSeverity(risk.severity);
             if (!grouped[type]) grouped[type] = {};
             if (!grouped[type][severity]) grouped[type][severity] = [];
             grouped[type][severity].push(risk);
@@ -463,20 +600,26 @@ const SSARiskAudit: React.FC = () => {
     // 计算严重程度统计
     const calculateSeverityStats = useCallback((risks: TSSARisk[]) => {
         const stats = {
+            critical: { audited: 0, pending: 0, total: 0 },
             high: { audited: 0, pending: 0, total: 0 },
             middle: { audited: 0, pending: 0, total: 0 },
             low: { audited: 0, pending: 0, total: 0 },
+            info: { audited: 0, pending: 0, total: 0 },
             all: { audited: 0, pending: 0, total: 0 },
         };
 
         risks.forEach((risk) => {
-            const severity = risk.severity || 'info';
+            const severity = normalizeSeverity(risk.severity);
             // 只要有处置状态且不是 not_set，就认为是已审计
             const isAudited =
                 risk.latest_disposal_status &&
                 risk.latest_disposal_status !== 'not_set';
 
-            if (severity === 'high' || severity === 'critical') {
+            if (severity === 'critical') {
+                stats.critical.total++;
+                if (isAudited) stats.critical.audited++;
+                else stats.critical.pending++;
+            } else if (severity === 'high') {
                 stats.high.total++;
                 if (isAudited) stats.high.audited++;
                 else stats.high.pending++;
@@ -484,10 +627,15 @@ const SSARiskAudit: React.FC = () => {
                 stats.middle.total++;
                 if (isAudited) stats.middle.audited++;
                 else stats.middle.pending++;
-            } else {
+            } else if (severity === 'low') {
                 stats.low.total++;
                 if (isAudited) stats.low.audited++;
                 else stats.low.pending++;
+            } else {
+                // Treat unknown/empty severity as info to avoid inflating "low".
+                stats.info.total++;
+                if (isAudited) stats.info.audited++;
+                else stats.info.pending++;
             }
 
             stats.all.total++;
@@ -498,23 +646,37 @@ const SSARiskAudit: React.FC = () => {
         return stats;
     }, []);
 
+    // 排除 info 级别的风险列表
+    const nonInfoRiskList = useMemo(
+        () => riskList.filter((r) => normalizeSeverity(r.severity) !== 'info'),
+        [riskList],
+    );
+
+    const displayRiskList = useMemo(
+        () => (showHiddenRisks ? riskList : nonInfoRiskList),
+        [showHiddenRisks, riskList, nonInfoRiskList],
+    );
+
     // 过滤风险列表
     const filteredRisks = useMemo(() => {
-        if (!severityFilter) return riskList;
+        if (!severityFilter) return displayRiskList;
 
-        return riskList.filter((risk) => {
-            if (severityFilter === 'high') {
-                return risk.severity === 'high' || risk.severity === 'critical';
+        return displayRiskList.filter((risk) => {
+            const severity = normalizeSeverity(risk.severity);
+            if (severityFilter === 'critical') {
+                return severity === 'critical';
+            } else if (severityFilter === 'high') {
+                return severity === 'high';
             } else if (severityFilter === 'middle') {
-                return (
-                    risk.severity === 'middle' || risk.severity === 'warning'
-                );
+                return severity === 'middle' || severity === 'warning';
             } else if (severityFilter === 'low') {
-                return risk.severity === 'low' || risk.severity === 'info';
+                return severity === 'low';
+            } else if (severityFilter === 'info') {
+                return severity === 'info';
             }
             return true;
         });
-    }, [riskList, severityFilter]);
+    }, [displayRiskList, severityFilter]);
 
     // 文件折叠切换
     const toggleFileExpand = useCallback((filePath: string) => {
@@ -527,8 +689,8 @@ const SSARiskAudit: React.FC = () => {
 
     // 计算当前统计
     const severityStats = useMemo(
-        () => calculateSeverityStats(riskList),
-        [riskList, calculateSeverityStats],
+        () => calculateSeverityStats(displayRiskList),
+        [displayRiskList, calculateSeverityStats],
     );
 
     // 获取文件内容
@@ -539,7 +701,11 @@ const SSARiskAudit: React.FC = () => {
 
             setLoadingFile(true);
             try {
-                const res = await getSsaRiskFileContent(hashToUse, filePath);
+                const res = await getSsaRiskFileContent(
+                    hashToUse,
+                    taskId,
+                    filePath,
+                );
                 if (res?.data) {
                     setFileContent(res.data);
                     return true;
@@ -577,13 +743,37 @@ const SSARiskAudit: React.FC = () => {
         );
         if (isTaskMode) {
             // 任务模式：加载该任务的所有风险
+            fetchTaskMeta();
             fetchRiskList();
         } else if (hash) {
             // 单个风险模式：直接加载审计信息
             fetchAuditInfo();
             fetchFileTree();
         }
-    }, [hash, isTaskMode, fetchRiskList]);
+    }, [hash, isTaskMode, fetchRiskList, fetchTaskMeta]);
+
+    useEffect(() => {
+        if (!isTaskMode) return;
+        if (!showHiddenRisks && severityFilter === 'info') {
+            setSeverityFilter(null);
+        }
+    }, [isTaskMode, showHiddenRisks, severityFilter]);
+
+    useEffect(() => {
+        if (!isTaskMode) return;
+        if (displayRiskList.length === 0) {
+            setSelectedRiskHash(null);
+            return;
+        }
+
+        const selectedExists = displayRiskList.some(
+            (risk) => risk.hash && risk.hash === selectedRiskHash,
+        );
+        if (selectedExists) return;
+
+        const nextRisk = displayRiskList.find((risk) => !!risk.hash);
+        setSelectedRiskHash(nextRisk?.hash || null);
+    }, [displayRiskList, isTaskMode, selectedRiskHash]);
 
     // 当选中的风险变化时，加载对应的审计信息
     useEffect(() => {
@@ -607,86 +797,47 @@ const SSARiskAudit: React.FC = () => {
     );
 
     // 从完整 URL 中提取相对路径（移除 programName 前缀）
-    const extractRelativePath = useCallback(
-        (url: string, programName?: string): string => {
-            if (!url) return '';
+    const extractRelativePath = useCallback((url: string): string => {
+        if (!url) return '';
 
-            // URL 格式可能是：/programName/src/main/java/... 或 programName/src/main/java/...
-            let path = url;
+        // URL 格式可能是：/programName/src/main/java/... 或 programName/src/main/java/...
+        let path = url;
 
-            // 移除开头的斜杠
-            if (path.startsWith('/')) {
-                path = path.substring(1);
-            }
+        // 移除开头的斜杠
+        if (path.startsWith('/')) {
+            path = path.substring(1);
+        }
 
-            // 如果有 programName，尝试移除它
-            if (programName) {
-                // 转义 programName 中的正则特殊字符
-                const escapedName = programName.replace(
-                    /[.*+?^${}()|[\]\\]/g,
-                    '\\$&',
-                );
-                const regex = new RegExp(`^${escapedName}/`);
-                if (regex.test(path)) {
-                    path = path.replace(regex, '');
-                } else {
-                    // 尝试匹配第一个斜杠之前的内容（可能是 programName）
-                    const firstSlash = path.indexOf('/');
-                    if (firstSlash > 0) {
-                        path = path.substring(firstSlash + 1);
-                    }
-                }
-            } else {
-                // 如果没有 programName，假设第一段是 programName
-                const firstSlash = path.indexOf('/');
-                if (firstSlash > 0) {
-                    path = path.substring(firstSlash + 1);
-                }
-            }
+        // 默认移除路径的第一段前缀（历史上可能是 program_name 或项目名）
+        const firstSlash = path.indexOf('/');
+        if (firstSlash > 0) {
+            path = path.substring(firstSlash + 1);
+        }
 
-            return path;
-        },
-        [],
-    );
+        return path;
+    }, []);
 
     // 跳转到代码位置并高亮
     const jumpToCodeLocation = useCallback(
         async (nodeInfo: TGraphNodeInfo) => {
-            console.log('jumpToCodeLocation called with:', nodeInfo);
-
-            if (!nodeInfo.code_range) {
-                console.warn('No code_range in nodeInfo');
-                return;
-            }
+            if (!nodeInfo.code_range) return;
 
             const codeRange = nodeInfo.code_range;
-            console.log('Code range:', codeRange);
 
             // 从完整 URL 提取相对路径
-            const filePath = extractRelativePath(
-                codeRange.url,
-                auditInfo?.program_name,
-            );
+            const filePath = extractRelativePath(codeRange.url);
 
-            if (!filePath) {
-                console.warn('无法提取文件路径:', codeRange.url);
-                return;
-            }
-
-            console.log('Extracted file path:', filePath);
-            console.log('Current file path:', fileContent?.path);
+            if (!filePath) return;
 
             // 更新选中的文件路径
             setSelectedFilePath(filePath);
 
-            // 先获取文件内容
-            if (filePath !== fileContent?.path) {
-                const success = await fetchFileContent(filePath);
-                if (!success) {
-                    console.error('Failed to load file:', filePath);
-                    return;
-                }
-            }
+            // 先清除旧高亮，确保编辑器重新渲染
+            setCodeHighlight(null);
+
+            // 加载文件内容（总是重新获取以保证内容最新）
+            const success = await fetchFileContent(filePath);
+            if (!success) return;
 
             // 计算高亮位置
             const sourceCodeStart =
@@ -702,27 +853,32 @@ const SSARiskAudit: React.FC = () => {
                 },
             };
 
-            console.log('Highlight range:', highlightRange);
-
-            // 先清除旧高亮，再设置新高亮
-            setCodeHighlight(null);
-
-            // 延迟设置高亮，确保文件内容已渲染
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 setCodeHighlight(highlightRange);
-                console.log(
-                    'Code highlight set, line:',
-                    highlightRange.from.line,
-                );
-            }, 200);
+            });
         },
-        [
-            fileContent?.path,
-            fetchFileContent,
-            extractRelativePath,
-            auditInfo?.program_name,
-        ],
+        [fetchFileContent, extractRelativePath],
     );
+
+    // 每次渲染同步更新 ref，保证 effect 中始终调用最新版本
+    jumpToCodeLocationRef.current = jumpToCodeLocation;
+
+    // 当 auditInfo 加载完成时，自动跳转到漏洞代码位置
+    // 仅依赖 auditInfo，不依赖 jumpToCodeLocation（通过 ref 调用最新版本）
+    useEffect(() => {
+        if (!pendingJumpRiskRef.current || !auditInfo?.graph_info) return;
+
+        // 校验 auditInfo 属于当前待跳转的漏洞，防止过期数据触发跳转
+        const pendingHash = pendingJumpRiskRef.current.hash;
+        const auditHash = auditInfo.risk?.hash;
+        if (pendingHash && auditHash && pendingHash !== auditHash) return;
+
+        const targetNode = auditInfo.graph_info.find((n) => n.code_range?.url);
+        if (targetNode) {
+            jumpToCodeLocationRef.current?.(targetNode);
+        }
+        pendingJumpRiskRef.current = null;
+    }, [auditInfo]);
 
     // DOT 图节点点击处理
     const handleGraphNodeClick = useCallback(
@@ -1268,6 +1424,7 @@ const SSARiskAudit: React.FC = () => {
     // 处理漏洞选择
     const handleRiskSelect = (risk: TSSARisk) => {
         if (risk.hash) {
+            pendingJumpRiskRef.current = risk;
             setSelectedRiskHash(risk.hash);
         }
     };
@@ -1357,14 +1514,17 @@ const SSARiskAudit: React.FC = () => {
                                                             )}
                                                             {risk.line && (
                                                                 <span className="line-number">
-                                                                    [{risk.line}
-                                                                    ]
+                                                                    {formatLineAndCol(
+                                                                        risk,
+                                                                    )}
                                                                 </span>
                                                             )}
                                                             {' - '}
                                                             <span className="user-name">
-                                                                {risk.program_name ||
-                                                                    'admin'}
+                                                                {formatProjectBatchLabel(
+                                                                    risk.project_name,
+                                                                    risk.scan_batch,
+                                                                )}
                                                             </span>
                                                         </div>
                                                         {risk.latest_disposal_status &&
@@ -1457,8 +1617,14 @@ const SSARiskAudit: React.FC = () => {
                                             }
                                         >
                                             <div className="risk-location">
-                                                {fileName}[{risk.line || '?'}] -{' '}
-                                                {risk.program_name || 'admin'}
+                                                {fileName}
+                                                {formatLineAndCol(risk) ||
+                                                    `[${risk.line || '?'}]`}{' '}
+                                                -{' '}
+                                                {formatProjectBatchLabel(
+                                                    risk.project_name,
+                                                    risk.scan_batch,
+                                                )}
                                             </div>
                                             <div className="risk-type-info">
                                                 {risk.risk_type_verbose ||
@@ -1568,13 +1734,42 @@ const SSARiskAudit: React.FC = () => {
     }
 
     if (isTaskMode && riskList.length === 0 && !loadingRisks) {
+        const auditCarryEnabled = !!taskMeta?.audit_carry_enabled;
+        const hiddenCount = Number(taskMeta?.audit_carry_hidden_count || 0);
         return (
             <Card style={{ margin: 20 }}>
                 <Alert
-                    message="该任务暂无风险"
-                    description={`任务 ID: ${taskId}`}
-                    type="info"
+                    message={
+                        auditCarryEnabled && hiddenCount > 0 && !showHiddenRisks
+                            ? '当前批次没有新增风险'
+                            : '该任务暂无风险'
+                    }
+                    description={
+                        auditCarryEnabled && hiddenCount > 0 && !showHiddenRisks
+                            ? `任务 ID: ${taskId}。系统已按历史记录为您过滤 ${hiddenCount} 个重复漏洞。`
+                            : `任务 ID: ${taskId}`
+                    }
+                    type={
+                        auditCarryEnabled && hiddenCount > 0 && !showHiddenRisks
+                            ? 'success'
+                            : 'info'
+                    }
                     showIcon
+                    action={
+                        auditCarryEnabled && hiddenCount > 0 ? (
+                            <Button
+                                size="small"
+                                type="link"
+                                onClick={() =>
+                                    setShowHiddenRisks((value) => !value)
+                                }
+                            >
+                                {showHiddenRisks
+                                    ? '恢复智能过滤'
+                                    : '查看已隐藏项'}
+                            </Button>
+                        ) : null
+                    }
                 />
             </Card>
         );
@@ -1602,6 +1797,37 @@ const SSARiskAudit: React.FC = () => {
     }
 
     const treeData = buildTreeData(fileTree);
+    const currentRiskTitle =
+        auditInfo?.risk?.title_verbose || auditInfo?.risk?.title || '-';
+    const taskProjectName =
+        taskMeta?.project_name ||
+        projectNameFromQuery ||
+        riskList[0]?.project_name ||
+        auditInfo?.risk?.project_name ||
+        '-';
+    const taskScanBatch =
+        taskMeta?.scan_batch ||
+        scanBatchFromQuery ||
+        riskList[0]?.scan_batch ||
+        auditInfo?.risk?.scan_batch ||
+        0;
+    const taskAuditCarryEnabled = !!taskMeta?.audit_carry_enabled;
+    const taskHiddenCount = Number(taskMeta?.audit_carry_hidden_count || 0);
+    const severityFilterOptions: Array<{
+        key: SeverityFilterKey;
+        label: string;
+    }> = [
+        { key: 'critical', label: '严重' },
+        { key: 'high', label: '高' },
+        { key: 'middle', label: '中' },
+        { key: 'low', label: '低' },
+        ...(showHiddenRisks
+            ? ([{ key: 'info', label: '信息' }] as Array<{
+                  key: SeverityFilterKey;
+                  label: string;
+              }>)
+            : []),
+    ];
 
     return (
         <div className="ssa-risk-audit">
@@ -1609,18 +1835,41 @@ const SSARiskAudit: React.FC = () => {
             <Card className="audit-header" size="small">
                 {isTaskMode ? (
                     <>
-                        <Title level={4}>缺陷审计 - {programName}</Title>
+                        <Title level={4}>
+                            缺陷审计 -{' '}
+                            {formatProjectBatchLabel(
+                                taskProjectName,
+                                taskScanBatch,
+                            )}
+                        </Title>
                         <div className="risk-meta">
                             <Text type="secondary">任务 ID: {taskId}</Text>
                             <Divider type="vertical" />
                             <Text type="secondary">
-                                漏洞总数: <Text strong>{riskList.length}</Text>
+                                漏洞总数:{' '}
+                                <Text strong>{displayRiskList.length}</Text>
                             </Text>
+                            {taskAuditCarryEnabled ? (
+                                <>
+                                    <Divider type="vertical" />
+                                    <SSAAuditCarryInfoPanel
+                                        enabled
+                                        hiddenCount={taskHiddenCount}
+                                        showHiddenRisks={showHiddenRisks}
+                                        onToggleShowHidden={() =>
+                                            setShowHiddenRisks(
+                                                (value) => !value,
+                                            )
+                                        }
+                                        variant="pure-text"
+                                    />
+                                </>
+                            ) : null}
                             {auditInfo?.risk && (
                                 <>
                                     <Divider type="vertical" />
                                     <Text type="secondary">
-                                        当前: {auditInfo.risk.title || '-'}
+                                        当前: {currentRiskTitle}
                                     </Text>
                                 </>
                             )}
@@ -1629,7 +1878,7 @@ const SSARiskAudit: React.FC = () => {
                 ) : (
                     <>
                         <Title level={4}>
-                            {auditInfo?.risk?.title || '风险审计'}
+                            {currentRiskTitle || '风险审计'}
                         </Title>
                         <div className="risk-meta">
                             <Text type="secondary">
@@ -1648,7 +1897,11 @@ const SSARiskAudit: React.FC = () => {
                             </Text>
                             <Divider type="vertical" />
                             <Text type="secondary">
-                                项目: {auditInfo?.risk?.program_name || '-'}
+                                项目:{' '}
+                                {formatProjectBatchLabel(
+                                    auditInfo?.risk?.project_name,
+                                    auditInfo?.risk?.scan_batch,
+                                )}
                             </Text>
                         </div>
                     </>
@@ -1693,7 +1946,9 @@ const SSARiskAudit: React.FC = () => {
                         <Card
                             title={
                                 <div className="panel-header">
-                                    <span>漏洞列表 ({riskList.length})</span>
+                                    <span>
+                                        漏洞列表 ({displayRiskList.length})
+                                    </span>
                                 </div>
                             }
                             size="small"
@@ -1728,70 +1983,53 @@ const SSARiskAudit: React.FC = () => {
                                 <>
                                     {/* 严重程度统计栏 */}
                                     <div className="severity-stats">
-                                        <div
-                                            className={`stat-item ${severityFilter === 'high' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'high'
-                                                        ? null
-                                                        : 'high',
-                                                )
-                                            }
+                                        {severityFilterOptions.map(
+                                            ({ key, label }) => {
+                                                const s = severityStats[key];
+                                                return (
+                                                    <Tooltip
+                                                        key={key}
+                                                        title={`已审计 ${s.audited} / 待审计 ${s.pending} / 总计 ${s.total}`}
+                                                    >
+                                                        <div
+                                                            className={`stat-item ${severityFilter === key ? 'active' : ''}`}
+                                                            onClick={() =>
+                                                                setSeverityFilter(
+                                                                    severityFilter ===
+                                                                        key
+                                                                        ? null
+                                                                        : key,
+                                                                )
+                                                            }
+                                                        >
+                                                            <span className="label">
+                                                                {label}
+                                                            </span>
+                                                            <span className="count">
+                                                                {s.total}
+                                                            </span>
+                                                        </div>
+                                                    </Tooltip>
+                                                );
+                                            },
+                                        )}
+                                        <Tooltip
+                                            title={`已审计 ${severityStats.all.audited} / 待审计 ${severityStats.all.pending} / 总计 ${severityStats.all.total}`}
                                         >
-                                            <span className="label">高</span>
-                                            <span className="count">
-                                                {severityStats.high.audited}|
-                                                {severityStats.high.pending}|
-                                                {severityStats.high.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === 'middle' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'middle'
-                                                        ? null
-                                                        : 'middle',
-                                                )
-                                            }
-                                        >
-                                            <span className="label">中</span>
-                                            <span className="count">
-                                                {severityStats.middle.audited}|
-                                                {severityStats.middle.pending}|
-                                                {severityStats.middle.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === 'low' ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(
-                                                    severityFilter === 'low'
-                                                        ? null
-                                                        : 'low',
-                                                )
-                                            }
-                                        >
-                                            <span className="label">低</span>
-                                            <span className="count">
-                                                {severityStats.low.audited}|
-                                                {severityStats.low.pending}|
-                                                {severityStats.low.total}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`stat-item ${severityFilter === null ? 'active' : ''}`}
-                                            onClick={() =>
-                                                setSeverityFilter(null)
-                                            }
-                                        >
-                                            <span className="label">所有</span>
-                                            <span className="count">
-                                                {severityStats.all.audited}|
-                                                {severityStats.all.pending}|
-                                                {severityStats.all.total}
-                                            </span>
-                                        </div>
+                                            <div
+                                                className={`stat-item ${severityFilter === null ? 'active' : ''}`}
+                                                onClick={() =>
+                                                    setSeverityFilter(null)
+                                                }
+                                            >
+                                                <span className="label">
+                                                    所有
+                                                </span>
+                                                <span className="count">
+                                                    {severityStats.all.total}
+                                                </span>
+                                            </div>
+                                        </Tooltip>
                                     </div>
 
                                     {leftViewMode === 'type' &&
@@ -1963,17 +2201,39 @@ const SSARiskAudit: React.FC = () => {
                                                                 span={2}
                                                             >
                                                                 <Text
-                                                                    ellipsis
+                                                                    copyable
                                                                     style={{
-                                                                        maxWidth: 400,
+                                                                        wordBreak:
+                                                                            'break-all',
                                                                     }}
                                                                 >
-                                                                    {auditInfo
-                                                                        .risk
-                                                                        ?.code_source_url ||
-                                                                        '-'}
+                                                                    {auditInfo.risk?.code_source_url?.replace(
+                                                                        /^\/[^/]+\//,
+                                                                        '',
+                                                                    ) || '-'}
                                                                 </Text>
                                                             </Descriptions.Item>
+                                                            {(ruleUUID ||
+                                                                auditInfo.risk
+                                                                    ?.from_rule) && (
+                                                                <Descriptions.Item
+                                                                    label="规则ID"
+                                                                    span={2}
+                                                                >
+                                                                    <Text
+                                                                        copyable
+                                                                        style={{
+                                                                            wordBreak:
+                                                                                'break-all',
+                                                                        }}
+                                                                    >
+                                                                        {ruleUUID ||
+                                                                            auditInfo
+                                                                                .risk
+                                                                                ?.from_rule}
+                                                                    </Text>
+                                                                </Descriptions.Item>
+                                                            )}
                                                             {auditInfo.risk
                                                                 ?.line && (
                                                                 <Descriptions.Item label="行号">

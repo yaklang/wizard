@@ -1,22 +1,35 @@
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Select, Space, Spin, message } from 'antd';
+import {
+    Button,
+    Card,
+    Checkbox,
+    Form,
+    Select,
+    Space,
+    Spin,
+    message,
+} from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
 import { getSSAProjects } from '@/apis/SSAProjectApi';
 import { getNodeManage } from '@/apis/NodeManageApi';
+import SSAAuditCarryInfoPanel from '@/compoments/SSAAuditCarryInfoPanel';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
 interface FormValues {
     project_id: number;
     node_id?: string;
     rule_groups?: string[];
+    audit_carry_enabled?: boolean;
 }
 
 const CreateSSAScanTask = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm<FormValues>();
+    const auditCarryEnabled =
+        Form.useWatch('audit_carry_enabled', form) ?? true;
 
     const { data: projectsData, loading: loadingProjects } = useRequest(
         async () => {
@@ -42,11 +55,13 @@ const CreateSSAScanTask = () => {
 
     const { loading: submitting, runAsync: submitTask } = useRequest(
         async (values: FormValues) => {
-            const { project_id, node_id, rule_groups } = values;
+            const { project_id, node_id, rule_groups, audit_carry_enabled } =
+                values;
             const payload: TSSAScanRequest = {};
             if (node_id) payload.node_id = node_id;
             if (rule_groups && rule_groups.length > 0)
                 payload.rule_groups = rule_groups;
+            payload.audit_carry_enabled = !!audit_carry_enabled;
             return scanSSAProject(project_id, payload);
         },
         {
@@ -104,6 +119,7 @@ const CreateSSAScanTask = () => {
                     <Form
                         layout="vertical"
                         form={form}
+                        initialValues={{ audit_carry_enabled: true }}
                         style={{ maxWidth: 800 }}
                     >
                         <Form.Item
@@ -155,6 +171,24 @@ const CreateSSAScanTask = () => {
                                 }
                             />
                         </Form.Item>
+
+                        <Form.Item
+                            name="audit_carry_enabled"
+                            valuePropName="checked"
+                            style={{ marginBottom: 8 }}
+                        >
+                            <Checkbox>
+                                智能审计过滤 (自动隐藏历史重复漏洞)
+                            </Checkbox>
+                        </Form.Item>
+                        {auditCarryEnabled && (
+                            <div style={{ marginBottom: 24 }}>
+                                <SSAAuditCarryInfoPanel
+                                    enabled={auditCarryEnabled}
+                                    variant="minimal"
+                                />
+                            </div>
+                        )}
                     </Form>
                 </Spin>
             </Card>

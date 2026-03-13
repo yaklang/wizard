@@ -53,6 +53,18 @@ const getSeverityColor = (severity?: string): string => {
     return 'default';
 };
 
+const formatProjectBatchLabel = (
+    projectName?: string,
+    scanBatch?: number,
+): string => {
+    const name = (projectName || '').trim();
+    if (!name) return '-';
+    if (scanBatch && scanBatch > 0) {
+        return `${name} · 第${scanBatch}批`;
+    }
+    return name;
+};
+
 // --- Main Component ---
 const TaskDefectAudit: React.FC = () => {
     const { taskId } = useParams<{ taskId: string }>();
@@ -133,7 +145,7 @@ const TaskDefectAudit: React.FC = () => {
                         key: `type-${type}`,
                         icon: <FolderOutlined />,
                         children: risks.map((r) => ({
-                            title: `${r.program_name}/${r.code_source_url?.split('/').pop() || 'Unknown'} - ${r.line}`,
+                            title: `${formatProjectBatchLabel(r.project_name, r.scan_batch)}/${r.code_source_url?.split('/').pop() || 'Unknown'} - ${r.line}`,
                             key: r.hash,
                             isLeaf: true,
                             icon: <FileTextOutlined />,
@@ -190,7 +202,7 @@ const TaskDefectAudit: React.FC = () => {
         try {
             // Extract relative path logic
             // Simplified for now, assume path is valid or already relative
-            const res = await getSsaRiskFileContent(hash, path);
+            const res = await getSsaRiskFileContent(hash, undefined, path);
             if (res.data) {
                 setFileContent(res.data);
             }

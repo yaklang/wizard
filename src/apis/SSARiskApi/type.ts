@@ -22,6 +22,8 @@ export interface TSSARisk {
     tags?: string;
     from_rule?: string;
     program_name?: string;
+    project_name?: string;
+    scan_batch?: number;
     code_source_url?: string;
     code_range?: string;
     code_fragment?: string;
@@ -96,7 +98,22 @@ export interface TSSARiskQueryParams {
     ignore?: boolean;
     runtime_id?: string;
     task_id?: string; // ✅ 新增 task_id 筛选
+    show_hidden?: boolean;
     result_id?: number;
+}
+
+export interface TSSARiskExportParams {
+    program_name?: string;
+    task_id?: string;
+    task_ids?: string;
+    ids?: string;
+    severity?: string;
+    risk_type?: string;
+    from_rule?: string;
+    latest_disposal_status?: string;
+    audited_state?: 'all' | 'audited' | 'unaudited';
+    format?: 'json' | 'html' | 'docx' | 'pdf';
+    report_name?: string;
 }
 
 // 列表响应类型
@@ -105,7 +122,7 @@ export type TSSARiskListResponse = TableResponseData<TSSARisk>;
 // 筛选选项类型
 export interface TSSARiskFilterOptions {
     risk_types?: string[];
-    program_names?: string[];
+    project_names?: string[];
     severities?: string[];
     languages?: string[];
 }

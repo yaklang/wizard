@@ -6,21 +6,24 @@ import { NetworkError } from '@/pages/NetworkError';
 import License from '@/pages/License';
 
 // Reuse existing components
-import { ProjectManagement, ProjectEditor } from '@/pages/ProjecManagement';
-import CreateSSAProject from '@/pages/ProjecManagement/CreateSSAProject';
+import {
+    ProjectManagement,
+    ProjectEditor,
+    CreateProject,
+} from '@/pages/ProjecManagement';
 import RuleManagement from '@/pages/RuleManagement';
 import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
-import NodeManagePage from '@/pages/NodeManage';
-import SystemManagement from '@/pages/SystemManagement';
+import IRifyNodeManagePage from '@/pages/NodeManage/IRifyNodeManagePage';
+import IRifySystemManagementPage from '@/pages/SystemManagement/IRifySystemManagementPage';
 import ReportManage from '@/pages/ReportManage';
+import CompileArtifactsPage from '@/pages/CompileArtifacts/CompileArtifactsPage';
 
 import IRifyDashboard from '@/pages/IRifyDashboard';
-import { CreateTask } from '@/pages/CreateTask/CreateTask';
-import { SpecialTask } from '@/pages/SpecialTask/SpecialTask';
-import { TaskPageList } from '@/pages/TaskPageList/TaskPageList';
-import TaskDetail from '@/pages/TaskDetail';
+import VulnerabilityList from '@/pages/VulnerabilityList';
+import { TaskPageList as IRifyTaskPageList } from '@/pages/TaskPageList/IRifyTaskPageList';
+import CreateStrategy from '@/pages/TaskPageList/CreateStrategy';
 import { NodeConfig } from '@/pages/NodeConfig/NodeConfig';
 import { TaskScript } from '@/pages/TaskScript/TaskScript';
 import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
@@ -49,7 +52,7 @@ const irifyRouters: RouteObject[] = [
                     },
                     {
                         path: 'create',
-                        element: <CreateSSAProject />,
+                        element: <CreateProject />,
                     },
                     {
                         path: ':id/edit',
@@ -62,7 +65,7 @@ const irifyRouters: RouteObject[] = [
                 children: [
                     {
                         index: true,
-                        element: <SSARiskAudit />,
+                        element: <VulnerabilityList />,
                     },
                     {
                         path: 'audit',
@@ -91,23 +94,15 @@ const irifyRouters: RouteObject[] = [
                 path: 'task',
                 children: [
                     {
-                        path: 'new-create-task',
-                        element: <CreateTask />,
-                    },
-                    {
-                        path: 'special-task',
-                        element: <SpecialTask />,
-                    },
-                    {
                         path: 'task-list',
                         children: [
                             {
                                 index: true,
-                                element: <TaskPageList />,
+                                element: <IRifyTaskPageList />,
                             },
                             {
-                                path: 'detail',
-                                element: <TaskDetail />,
+                                path: 'create',
+                                element: <CreateStrategy />,
                             },
                         ],
                     },
@@ -126,7 +121,7 @@ const irifyRouters: RouteObject[] = [
                     },
                     {
                         path: 'manage',
-                        element: <NodeManagePage />,
+                        element: <IRifyNodeManagePage />,
                     },
                 ],
             },
@@ -135,7 +130,7 @@ const irifyRouters: RouteObject[] = [
                 children: [
                     {
                         path: 'userinfo',
-                        element: <SystemManagement />,
+                        element: <IRifySystemManagementPage />,
                     },
                     {
                         path: 'task-script',
@@ -157,6 +152,10 @@ const irifyRouters: RouteObject[] = [
                     {
                         path: 'global-reverse-link',
                         element: <GlobalReverseLink />,
+                    },
+                    {
+                        path: 'compile-artifacts',
+                        element: <CompileArtifactsPage />,
                     },
                 ],
             },

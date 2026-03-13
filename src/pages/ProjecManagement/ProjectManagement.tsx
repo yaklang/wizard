@@ -6,17 +6,47 @@ import {
     Space,
     Button,
     Popconfirm,
+    Popover,
+    Modal,
     message,
     Tag,
     Input,
     Select,
+    DatePicker,
+    Dropdown,
+    Tooltip,
+    Typography,
 } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import {
+    PlusOutlined,
+    GithubOutlined,
+    FolderOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    MoreOutlined,
+    PlayCircleOutlined,
+    EditOutlined,
+    EyeOutlined,
+    CopyOutlined,
+} from '@ant-design/icons';
+// 语言官方图标
+import { SiPhp, SiJavascript, SiPython, SiGo } from 'react-icons/si';
+import { DiJava } from 'react-icons/di';
+import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
+import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
+import { scanSSAIR } from '@/apis/SSAIRApi';
+import type { TSSAIRScanRequest } from '@/apis/SSAIRApi/type';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import ProjectDrawer from './ProjectDrawer';
+import dayjs from 'dayjs';
+import './ProjectManagement.scss';
+
+const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 const { Search } = Input;
 
@@ -46,13 +76,36 @@ const ProjectManagement: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<TSSAProject[]>([]);
-    const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(20);
+    const [hasMore, setHasMore] = useState(true);
+
+    // 抽屉状态
+    const [drawerVisible, setDrawerVisible] = useState(false);
+    const [editingProjectId, setEditingProjectId] = useState<
+        number | undefined
+    >();
 
     // 筛选条件
     const [searchName, setSearchName] = useState<string>('');
     const [filterLanguage, setFilterLanguage] = useState<string | undefined>();
+    const [filterSourceKind, setFilterSourceKind] = useState<
+        string | undefined
+    >();
+    const [filterTags, setFilterTags] = useState<string | undefined>();
+    const [filterDateRange, setFilterDateRange] = useState<
+        [number, number] | undefined
+    >();
+
+    // 仅允许一个“发起扫描”弹层同时展开
+    const [scanPopoverProjectId, setScanPopoverProjectId] = useState<
+        number | null
+    >(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+    const selectedProjects = data.filter(
+        (item) => item.id && selectedRowKeys.includes(item.id),
+    );
 
     const fetchList = useCallback(
         async (options: {
@@ -60,8 +113,21 @@ const ProjectManagement: React.FC = () => {
             l: number;
             projectName?: string;
             language?: string;
+            sourceKind?: string;
+            tags?: string;
+            dateRange?: [number, number];
+            append?: boolean;
         }) => {
-            const { p, l, projectName, language } = options;
+            const {
+                p,
+                l,
+                projectName,
+                language,
+                sourceKind,
+                tags,
+                dateRange,
+                append = false,
+            } = options;
             setLoading(true);
             try {
                 const res = await getSSAProjects({
@@ -69,6 +135,11 @@ const ProjectManagement: React.FC = () => {
                     limit: l,
                     project_name: projectName || undefined,
                     language: language || undefined,
+                    // 注意：这些参数需要后端API支持，如果后端还没实现，可以在前端过滤
+                    // source_kind: sourceKind || undefined,
+                    tags: tags || undefined,
+                    // created_at_start: dateRange?.[0],
+                    // created_at_end: dateRange?.[1],
                     order_by: 'updated_at',
                     order: 'desc',
                 });
@@ -76,11 +147,37 @@ const ProjectManagement: React.FC = () => {
                     message.error('获取项目列表失败');
                     return;
                 }
-                const list = res.data?.list ?? [];
-                setData(list);
-                setTotal(res.data?.pagemeta?.total ?? 0);
+                let list = res.data?.list ?? [];
+
+                // 前端过滤（如果后端不支持这些筛选）
+                if (sourceKind) {
+                    list = list.filter(
+                        (item) => item.config?.CodeSource?.kind === sourceKind,
+                    );
+                }
+                if (dateRange) {
+                    list = list.filter((item) => {
+                        const createdAt = item.created_at || 0;
+                        return (
+                            createdAt >= dateRange[0] &&
+                            createdAt <= dateRange[1]
+                        );
+                    });
+                }
+
+                if (append) {
+                    setData((prevData) => [...prevData, ...list]);
+                } else {
+                    setData(list);
+                }
                 setPage(res.data?.pagemeta?.page ?? p);
                 setLimit(res.data?.pagemeta?.limit ?? l);
+
+                // 检查是否还有更多数据
+                const currentTotal = append
+                    ? data.length + list.length
+                    : list.length;
+                setHasMore(currentTotal < (res.data?.pagemeta?.total ?? 0));
             } catch (err) {
                 message.error('获取项目列表出错');
             } finally {
@@ -90,25 +187,96 @@ const ProjectManagement: React.FC = () => {
         [],
     );
 
-    useEffect(() => {
+    const reloadFirstPage = useCallback(() => {
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        setSelectedRowKeys([]);
         fetchList({
             p: 1,
             l: limit,
             projectName: searchName,
             language: filterLanguage,
+            sourceKind: filterSourceKind,
+            tags: filterTags,
+            dateRange: filterDateRange,
         });
-    }, [fetchList, searchName, filterLanguage]);
+    }, [
+        fetchList,
+        limit,
+        searchName,
+        filterLanguage,
+        filterSourceKind,
+        filterTags,
+        filterDateRange,
+    ]);
 
-    const handleTableChange = (pagination: TablePaginationConfig) => {
-        const newPage = pagination.current ?? 1;
-        const newLimit = pagination.pageSize ?? 10;
+    useEffect(() => {
+        // 筛选条件改变时，重置到第一页
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        setSelectedRowKeys([]);
         fetchList({
-            p: newPage,
-            l: newLimit,
+            p: 1,
+            l: limit,
             projectName: searchName,
             language: filterLanguage,
+            sourceKind: filterSourceKind,
+            tags: filterTags,
+            dateRange: filterDateRange,
         });
-    };
+    }, [
+        searchName,
+        filterLanguage,
+        filterSourceKind,
+        filterTags,
+        filterDateRange,
+    ]);
+
+    const handleLoadMore = useCallback(() => {
+        if (loading || !hasMore) return;
+
+        fetchList({
+            p: page + 1,
+            l: limit,
+            projectName: searchName,
+            language: filterLanguage,
+            sourceKind: filterSourceKind,
+            tags: filterTags,
+            dateRange: filterDateRange,
+            append: true,
+        });
+    }, [
+        loading,
+        hasMore,
+        page,
+        limit,
+        searchName,
+        filterLanguage,
+        filterSourceKind,
+        filterTags,
+        filterDateRange,
+        fetchList,
+    ]);
+
+    // 监听滚动事件
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop =
+                window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+
+            // 距离底部200px时开始加载
+            if (scrollTop + clientHeight >= scrollHeight - 200) {
+                handleLoadMore();
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [handleLoadMore]);
 
     const handleDelete = async (record: TSSAProject) => {
         if (!record.id) return;
@@ -116,12 +284,10 @@ const ProjectManagement: React.FC = () => {
             const res = await deleteSSAProject({ id: record.id });
             if (res) {
                 message.success('删除成功');
-                fetchList({
-                    p: page,
-                    l: limit,
-                    projectName: searchName,
-                    language: filterLanguage,
-                });
+                setSelectedRowKeys((prev) =>
+                    prev.filter((id) => id !== record.id),
+                );
+                reloadFirstPage();
             }
         } catch (err) {
             message.error('删除失败');
@@ -129,13 +295,22 @@ const ProjectManagement: React.FC = () => {
     };
 
     const handleEdit = (record: TSSAProject) => {
-        navigate(getRoutePath(RouteKey.PROJECT_EDIT), {
-            state: { id: record.id },
-        });
+        setEditingProjectId(record.id);
+        setDrawerVisible(true);
     };
 
     const handleCreate = () => {
         navigate(getRoutePath(RouteKey.PROJECT_CREATE));
+    };
+
+    const handleDrawerClose = () => {
+        setDrawerVisible(false);
+        setEditingProjectId(undefined);
+    };
+
+    const handleDrawerSuccess = () => {
+        // 保存后重新加载第一页
+        reloadFirstPage();
     };
 
     const handleSearch = (value: string) => {
@@ -148,9 +323,29 @@ const ProjectManagement: React.FC = () => {
         setPage(1);
     };
 
-    const handleViewRisks = (record: TSSAProject) => {
-        navigate(getRoutePath(RouteKey.SSA_RISK), {
-            state: { program_name: record.project_name },
+    const handleBatchDelete = () => {
+        if (!selectedProjects.length) return;
+        Modal.confirm({
+            title: '批量删除项目',
+            content: `确认删除已选中的 ${selectedProjects.length} 个项目？删除后不可恢复。`,
+            okText: '删除',
+            okButtonProps: { danger: true },
+            cancelText: '取消',
+            async onOk() {
+                const ids = selectedProjects
+                    .map((item) => item.id)
+                    .filter((id): id is number => Boolean(id));
+                try {
+                    await Promise.all(
+                        ids.map((id) => deleteSSAProject({ id })),
+                    );
+                    message.success('批量删除成功');
+                    reloadFirstPage();
+                } catch (err: any) {
+                    message.error(err?.message || '批量删除失败');
+                    throw err;
+                }
+            },
         });
     };
 
@@ -160,80 +355,330 @@ const ProjectManagement: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
-    const handleScan = async (record: TSSAProject) => {
+    const handleScan = async (
+        record: TSSAProject,
+        auditCarryEnabled = true,
+    ) => {
         if (!record.id) return;
         try {
-            await scanSSAProject(record.id, {
-                // node_id 可选，不传则由后端自动分配
-                // rule_groups 可选，使用默认规则集
+            const scanRequest: TSSAScanRequest = {
+                audit_carry_enabled: auditCarryEnabled,
+            };
+            const scanNode = record.config?.ScanNode;
+            if (scanNode?.mode === 'manual' && scanNode.node_id) {
+                scanRequest.node_id = scanNode.node_id;
+            }
+
+            const schedule = record.config?.ScanSchedule;
+            if (schedule?.enabled) {
+                const now = dayjs();
+                const timeStr = schedule.time || '02:00';
+                const [hourStr, minuteStr] = timeStr.split(':');
+                const hour = Number(hourStr);
+                const minute = Number(minuteStr);
+                let start = now
+                    .hour(Number.isFinite(hour) ? hour : 2)
+                    .minute(Number.isFinite(minute) ? minute : 0)
+                    .second(0)
+                    .millisecond(0);
+                if (start.isBefore(now)) {
+                    start = start.add(1, 'day');
+                }
+
+                scanRequest.enable_sched = true;
+                scanRequest.interval_type = schedule.interval_type || 1;
+                scanRequest.interval_time = schedule.interval_time || 1;
+                scanRequest.sched_type = schedule.sched_type || 3;
+                scanRequest.start_timestamp = Math.floor(
+                    start.valueOf() / 1000,
+                );
+                scanRequest.end_timestamp = Math.floor(
+                    start.add(365, 'day').valueOf() / 1000,
+                );
+            }
+
+            const res = await scanSSAProject(record.id, scanRequest);
+            const taskId = res.data?.task_id;
+            message.success({
+                content: (
+                    <span>
+                        扫描任务已创建{taskId ? ` (#${taskId})` : ''}，
+                        <Button
+                            type="link"
+                            size="small"
+                            onClick={() => {
+                                message.destroy();
+                                navigate(
+                                    `${getRoutePath(
+                                        RouteKey.TASK_LIST,
+                                    )}?project_id=${record.id}`,
+                                );
+                            }}
+                            style={{ padding: 0, height: 'auto' }}
+                        >
+                            查看任务列表 →
+                        </Button>
+                    </span>
+                ),
+                duration: 6,
             });
-            message.success('扫描任务已创建');
         } catch (err: any) {
             message.error(`创建扫描失败: ${err.msg || err.message}`);
         }
     };
 
+    const handleScanWithIRDB = async (
+        record: TSSAProject,
+        auditCarryEnabled = true,
+    ) => {
+        if (!record.id) return;
+
+        const msgKey = `ssa-ir-scan-${record.id}-${Date.now()}`;
+        try {
+            message.loading({
+                content: '数据库扫描：正在创建任务...',
+                key: msgKey,
+                duration: 0,
+            });
+
+            const scanReq: TSSAIRScanRequest = {
+                prepare_ir: true,
+                incremental: true,
+                force_full: false,
+                snapshot_id: String(Date.now()),
+                audit_carry_enabled: auditCarryEnabled,
+            };
+            const scanNode = record.config?.ScanNode;
+            if (scanNode?.mode === 'manual' && scanNode.node_id) {
+                scanReq.node_id = scanNode.node_id;
+            }
+            const scanRes = await scanSSAIR(record.id, scanReq);
+            const scanData = scanRes?.data || {};
+            const taskId = scanData?.task_id;
+
+            message.success({
+                content: (
+                    <span>
+                        数据库扫描任务已创建{taskId ? ` (#${taskId})` : ''}
+                        ，编译与扫描进度可在任务历史中查看。
+                        <Button
+                            type="link"
+                            size="small"
+                            onClick={() => {
+                                message.destroy();
+                                navigate(
+                                    `${getRoutePath(
+                                        RouteKey.TASK_LIST,
+                                    )}?project_id=${record.id}`,
+                                );
+                            }}
+                            style={{ padding: 0, height: 'auto' }}
+                        >
+                            查看任务列表 →
+                        </Button>
+                    </span>
+                ),
+                key: msgKey,
+                duration: 6,
+            });
+        } catch (err: any) {
+            message.error({
+                content: `数据库扫描失败: ${err?.msg || err?.message || '未知错误'}`,
+                key: msgKey,
+                duration: 6,
+            });
+        }
+    };
+
+    // 语言图标映射（官方品牌 SVG 图标）
+    const languageIconMap: Record<
+        string,
+        {
+            icon: React.ComponentType<{ size?: number; color?: string }>;
+            color: string;
+        }
+    > = {
+        php: { icon: SiPhp, color: '#777BB4' },
+        java: { icon: DiJava, color: '#007396' },
+        javascript: { icon: SiJavascript, color: '#F7DF1E' },
+        js: { icon: SiJavascript, color: '#F7DF1E' },
+        go: { icon: SiGo, color: '#00ADD8' },
+        golang: { icon: SiGo, color: '#00ADD8' },
+        python: { icon: SiPython, color: '#3776AB' },
+    };
+
+    const getLanguageIcon = (language: string) => {
+        const langKey = language?.toLowerCase();
+        const langConfig = langKey ? languageIconMap[langKey] : null;
+
+        if (langConfig) {
+            return React.createElement(langConfig.icon, {
+                size: 16,
+                color: langConfig.color,
+            });
+        }
+
+        return <FolderOutlined style={{ fontSize: 16, color: '#8c8c8c' }} />;
+    };
+
+    const getSourceTypeIcon = (kind?: string) => {
+        switch (kind) {
+            case 'git':
+                return <GithubOutlined style={{ fontSize: 14 }} />;
+            case 'svn':
+                return <FolderOutlined style={{ fontSize: 14 }} />;
+            default:
+                return <FolderOutlined style={{ fontSize: 14 }} />;
+        }
+    };
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        message.success('已复制到剪贴板');
+    };
+
     const columns: ColumnsType<TSSAProject> = [
         {
-            title: '项目名称',
-            dataIndex: 'project_name',
-            key: 'project_name',
-            width: 200,
-            ellipsis: true,
-            render: (text, record) => (
-                <a onClick={() => handleEdit(record)}>{text}</a>
-            ),
-        },
-        {
-            title: '语言',
-            dataIndex: 'language',
-            key: 'language',
-            width: 100,
-            render: (language: string) => {
-                if (!language) return '-';
+            title: '项目信息',
+            key: 'project_info',
+            width: 280,
+            render: (_, record) => {
+                const language = record.language || '';
                 const color =
                     languageColorMap[language.toLowerCase()] || 'default';
                 const label =
                     languageLabelMap[language.toLowerCase()] || language;
-                return <Tag color={color}>{label}</Tag>;
-            },
-        },
-        {
-            title: '描述',
-            dataIndex: 'description',
-            key: 'description',
-            ellipsis: true,
-            render: (text) => text || '-',
-        },
-        {
-            title: '源码地址',
-            dataIndex: 'url',
-            key: 'url',
-            width: 200,
-            ellipsis: true,
-            render: (url: string) => {
-                if (!url) return '-';
+
                 return (
-                    <a href={url} target="_blank" rel="noopener noreferrer">
-                        {url}
-                    </a>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 12,
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: 32,
+                                lineHeight: 1,
+                                marginTop: 4,
+                                flexShrink: 0,
+                            }}
+                        >
+                            {getLanguageIcon(language)}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div>
+                                <a
+                                    onClick={() => handleEdit(record)}
+                                    style={{
+                                        fontWeight: 600,
+                                        fontSize: 14,
+                                        color: '#1890ff',
+                                    }}
+                                >
+                                    {record.project_name}
+                                </a>
+                                <Tag
+                                    color={color}
+                                    style={{ marginLeft: 8, fontSize: 12 }}
+                                >
+                                    {label}
+                                </Tag>
+                            </div>
+                            <div
+                                style={{
+                                    color: '#999',
+                                    fontSize: 12,
+                                    marginTop: 4,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                {record.description ||
+                                    `创建于 ${formatTimestamp(record.created_at)}`}
+                            </div>
+                        </div>
+                    </div>
                 );
             },
         },
         {
-            title: '关联漏洞',
-            dataIndex: 'risk_count',
-            key: 'risk_count',
-            width: 100,
-            align: 'center',
-            render: (count: number, record) => {
-                if (!count || count === 0) {
-                    return <span style={{ color: '#999' }}>0</span>;
-                }
+            title: '代码源',
+            key: 'code_source',
+            width: 300,
+            render: (_, record) => {
+                const sourceKind = record.config?.CodeSource?.kind || 'git';
+                const url = record.config?.CodeSource?.url || record.url || '-';
+                const branch = record.config?.CodeSource?.branch || 'master';
+                const hasAuth =
+                    record.config?.CodeSource?.auth?.kind !== 'none';
+
                 return (
-                    <a onClick={() => handleViewRisks(record)}>
-                        <Tag color="red">{count}</Tag>
-                    </a>
+                    <div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                            }}
+                        >
+                            {getSourceTypeIcon(sourceKind)}
+                            <Tooltip title={url}>
+                                <Text
+                                    ellipsis
+                                    style={{
+                                        maxWidth: 200,
+                                        fontSize: 13,
+                                        color: '#1890ff',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => copyToClipboard(url)}
+                                >
+                                    {url}
+                                </Text>
+                            </Tooltip>
+                            <CopyOutlined
+                                style={{
+                                    fontSize: 12,
+                                    color: '#999',
+                                    cursor: 'pointer',
+                                }}
+                                onClick={() => copyToClipboard(url)}
+                            />
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                marginTop: 6,
+                                fontSize: 12,
+                            }}
+                        >
+                            <Tag style={{ margin: 0, fontSize: 11 }}>
+                                分支: {branch}
+                            </Tag>
+                            {hasAuth ? (
+                                <Tag
+                                    icon={<CheckCircleOutlined />}
+                                    color="success"
+                                    style={{ margin: 0, fontSize: 11 }}
+                                >
+                                    已认证
+                                </Tag>
+                            ) : (
+                                <Tag
+                                    icon={<CloseCircleOutlined />}
+                                    color="default"
+                                    style={{ margin: 0, fontSize: 11 }}
+                                >
+                                    无认证
+                                </Tag>
+                            )}
+                        </div>
+                    </div>
                 );
             },
         },
@@ -241,69 +686,184 @@ const ProjectManagement: React.FC = () => {
             title: '标签',
             dataIndex: 'tags',
             key: 'tags',
-            width: 150,
-            ellipsis: true,
+            width: 180,
             render: (tags: string) => {
-                if (!tags) return '-';
+                if (!tags) return <Text type="secondary">-</Text>;
                 const tagList = tags.split(',').filter(Boolean);
                 return (
                     <Space size={[0, 4]} wrap>
-                        {tagList.slice(0, 3).map((tag, index) => (
-                            <Tag key={index}>{tag.trim()}</Tag>
+                        {tagList.slice(0, 2).map((tag, index) => (
+                            <Tag key={index} style={{ fontSize: 11 }}>
+                                {tag.trim()}
+                            </Tag>
                         ))}
-                        {tagList.length > 3 && <Tag>+{tagList.length - 3}</Tag>}
+                        {tagList.length > 2 && (
+                            <Tooltip title={tagList.slice(2).join(', ')}>
+                                <Tag style={{ fontSize: 11 }}>
+                                    +{tagList.length - 2}
+                                </Tag>
+                            </Tooltip>
+                        )}
                     </Space>
                 );
             },
         },
         {
-            title: '更新时间',
-            dataIndex: 'updated_at',
-            key: 'updated_at',
-            width: 170,
-            render: formatTimestamp,
+            title: '更新信息',
+            key: 'update_info',
+            width: 160,
+            render: (_, record) => (
+                <div style={{ fontSize: 12 }}>
+                    <div style={{ color: '#666' }}>
+                        {formatTimestamp(record.updated_at)}
+                    </div>
+                </div>
+            ),
         },
         {
             title: '操作',
             key: 'action',
-            width: 280,
+            width: 180,
             fixed: 'right',
-            render: (_, record) => (
-                <Space>
-                    <Button
-                        size="small"
-                        type="primary"
-                        ghost
-                        onClick={() => handleScan(record)}
-                    >
-                        扫描
-                    </Button>
-                    <Button
-                        size="small"
-                        onClick={() =>
+            render: (_, record) => {
+                const menuItems: MenuProps['items'] = [
+                    {
+                        key: 'edit',
+                        icon: <EditOutlined />,
+                        label: '配置',
+                        onClick: () => handleEdit(record),
+                    },
+                    {
+                        key: 'view-tasks',
+                        icon: <EyeOutlined />,
+                        label: '查看任务',
+                        onClick: () =>
                             navigate(
                                 `${getRoutePath(RouteKey.TASK_LIST)}?project_id=${record.id}`,
-                            )
-                        }
-                    >
-                        查看任务
-                    </Button>
-                    <Button size="small" onClick={() => handleEdit(record)}>
-                        编辑
-                    </Button>
-                    <Popconfirm
-                        title="确认删除该项目吗？"
-                        description="删除后不可恢复，关联的漏洞数据不会被删除。"
-                        onConfirm={() => handleDelete(record)}
-                        okText="确认"
-                        cancelText="取消"
-                    >
-                        <Button size="small" danger>
-                            删除
-                        </Button>
-                    </Popconfirm>
-                </Space>
-            ),
+                            ),
+                    },
+                    {
+                        type: 'divider',
+                    },
+                    {
+                        key: 'delete',
+                        icon: <CloseCircleOutlined />,
+                        label: (
+                            <Popconfirm
+                                title="确认删除该项目吗？"
+                                description="删除后不可恢复，关联的漏洞数据不会被删除。"
+                                onConfirm={() => handleDelete(record)}
+                                okText="确认"
+                                cancelText="取消"
+                            >
+                                <span>删除</span>
+                            </Popconfirm>
+                        ),
+                        danger: true,
+                    },
+                ];
+
+                const branch = record.config?.CodeSource?.branch || 'master';
+                const url = record.config?.CodeSource?.url || '';
+                const repoName =
+                    url
+                        .split('/')
+                        .pop()
+                        ?.replace(/\.git$/, '') || '代码仓库';
+
+                return (
+                    <Space size="small">
+                        <Popover
+                            title="确认发起扫描"
+                            placement="topRight"
+                            trigger="click"
+                            open={scanPopoverProjectId === record.id}
+                            onOpenChange={(open) =>
+                                setScanPopoverProjectId(
+                                    open ? (record.id ?? null) : null,
+                                )
+                            }
+                            content={
+                                <div style={{ maxWidth: 320 }}>
+                                    <div style={{ marginBottom: 4 }}>
+                                        <strong>项目：</strong>
+                                        {record.project_name}
+                                    </div>
+                                    <div style={{ marginBottom: 4 }}>
+                                        <strong>分支：</strong>
+                                        {branch}
+                                    </div>
+                                    <div style={{ marginBottom: 4 }}>
+                                        <strong>仓库：</strong>
+                                        <span
+                                            style={{
+                                                fontSize: 12,
+                                                color: '#666',
+                                                wordBreak: 'break-all',
+                                            }}
+                                        >
+                                            {repoName}
+                                        </span>
+                                    </div>
+                                    <div
+                                        style={{
+                                            fontSize: 12,
+                                            color: '#999',
+                                            marginTop: 8,
+                                        }}
+                                    >
+                                        扫描将在后台执行。数据库扫描会自动复用/更新
+                                        IR（黑盒）。
+                                    </div>
+                                    <div style={{ marginTop: 12 }}>
+                                        <Space>
+                                            <Button
+                                                size="small"
+                                                onClick={async () => {
+                                                    setScanPopoverProjectId(
+                                                        null,
+                                                    );
+                                                    await handleScan(record);
+                                                }}
+                                            >
+                                                内存扫描
+                                            </Button>
+                                            <Button
+                                                type="primary"
+                                                size="small"
+                                                onClick={async () => {
+                                                    setScanPopoverProjectId(
+                                                        null,
+                                                    );
+                                                    await handleScanWithIRDB(
+                                                        record,
+                                                    );
+                                                }}
+                                            >
+                                                数据库扫描
+                                            </Button>
+                                        </Space>
+                                    </div>
+                                </div>
+                            }
+                        >
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<PlayCircleOutlined />}
+                            >
+                                发起扫描
+                            </Button>
+                        </Popover>
+                        <Dropdown
+                            menu={{ items: menuItems }}
+                            trigger={['click']}
+                        >
+                            <Button size="small" icon={<MoreOutlined />} />
+                        </Dropdown>
+                    </Space>
+                );
+            },
         },
     ];
 
@@ -317,13 +877,19 @@ const ProjectManagement: React.FC = () => {
         { label: 'Yak', value: 'yak' },
     ];
 
+    // 代码源类型选项
+    const sourceKindOptions = [
+        { label: 'Git', value: 'git' },
+        { label: 'SVN', value: 'svn' },
+        { label: '压缩包', value: 'compression' },
+        { label: 'Jar包', value: 'jar' },
+    ];
+
     return (
-        <div className="p-4">
+        <div className="p-4 project-management-page">
             <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <div className="text-lg font-bold">
-                        静态代码分析 · 项目管理
-                    </div>
+                    <div className="text-lg font-bold">项目管理</div>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -347,11 +913,46 @@ const ProjectManagement: React.FC = () => {
                         }}
                     />
                     <Select
-                        placeholder="语言"
+                        placeholder="选择语言"
                         allowClear
-                        style={{ width: 120 }}
+                        style={{ width: 140 }}
                         onChange={handleLanguageFilter}
                         options={languageOptions}
+                    />
+                    <Select
+                        placeholder="代码源类型"
+                        allowClear
+                        style={{ width: 140 }}
+                        onChange={(value) => {
+                            setFilterSourceKind(value || undefined);
+                            setPage(1);
+                        }}
+                        options={sourceKindOptions}
+                    />
+                    <Input
+                        placeholder="标签筛选"
+                        allowClear
+                        style={{ width: 140 }}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            setFilterTags(value || undefined);
+                            setPage(1);
+                        }}
+                    />
+                    <RangePicker
+                        placeholder={['创建开始', '创建结束']}
+                        style={{ width: 260 }}
+                        onChange={(dates) => {
+                            if (dates && dates[0] && dates[1]) {
+                                setFilterDateRange([
+                                    dates[0].unix(),
+                                    dates[1].unix(),
+                                ]);
+                            } else {
+                                setFilterDateRange(undefined);
+                            }
+                            setPage(1);
+                        }}
                     />
                 </div>
 
@@ -359,19 +960,61 @@ const ProjectManagement: React.FC = () => {
                     columns={columns}
                     dataSource={data}
                     rowKey={(r) => r.id ?? r.project_name}
-                    loading={loading}
-                    scroll={{ x: 1200 }}
-                    pagination={{
-                        current: page,
-                        pageSize: limit,
-                        total,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (t) => `共 ${t} 个项目`,
+                    rowSelection={{
+                        selectedRowKeys,
+                        onChange: setSelectedRowKeys,
+                        columnWidth: 52,
                     }}
-                    onChange={handleTableChange}
+                    loading={loading && page === 1}
+                    scroll={{ x: 1200 }}
+                    pagination={false}
                 />
+
+                {/* 加载更多提示 */}
+                <div
+                    style={{
+                        textAlign: 'center',
+                        padding: '20px 0',
+                        color: '#999',
+                    }}
+                >
+                    {loading && page > 1 && <span>加载中...</span>}
+                    {!loading && hasMore && data.length > 0 && (
+                        <span>向下滚动加载更多</span>
+                    )}
+                    {!loading && !hasMore && data.length > 0 && (
+                        <span>已加载全部 {data.length} 个项目</span>
+                    )}
+                    {!loading && data.length === 0 && <span>暂无项目</span>}
+                </div>
             </Card>
+
+            {selectedProjects.length > 0 ? (
+                <div className="project-selection-bar">
+                    <div className="selection-info">
+                        已选中{' '}
+                        <span className="selected-count">
+                            {selectedProjects.length}
+                        </span>{' '}
+                        个项目
+                    </div>
+                    <Space>
+                        <Button onClick={() => setSelectedRowKeys([])}>
+                            取消选择
+                        </Button>
+                        <Button danger onClick={handleBatchDelete}>
+                            删除所选
+                        </Button>
+                    </Space>
+                </div>
+            ) : null}
+
+            <ProjectDrawer
+                visible={drawerVisible}
+                projectId={editingProjectId}
+                onClose={handleDrawerClose}
+                onSuccess={handleDrawerSuccess}
+            />
         </div>
     );
 };

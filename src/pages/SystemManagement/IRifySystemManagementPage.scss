@@ -1,0 +1,165 @@
+.irify-system-management-page {
+    &.has-selection-bar {
+        padding-bottom: 104px;
+    }
+
+    .ant-table-wrapper .ant-table-thead > tr > th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        background: #fafbfc;
+    }
+
+    .ant-table-wrapper .ant-table-tbody > tr > td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        font-size: 13px;
+        color: #334155;
+    }
+
+    .ant-table-wrapper .ant-table-tbody > tr:hover > td {
+        background: #fafcff;
+    }
+
+    .user-name-value {
+        color: #1890ff;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 22px;
+    }
+
+    .user-cell-value {
+        color: #334155;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .user-action-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .user-edit-btn.ant-btn-sm {
+        height: 24px;
+        padding: 0 10px;
+        font-size: 12px;
+        font-weight: 400;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .user-more-btn.ant-btn-sm {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        .anticon {
+            font-size: 12px;
+        }
+    }
+
+    .load-state {
+        margin-top: 18px;
+        min-height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #9ca3af;
+    }
+
+    .task-selection-bar {
+        position: fixed;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        width: min(1080px, calc(100vw - 148px));
+        z-index: 1002;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        box-shadow:
+            0 18px 40px rgba(0, 0, 0, 0.35),
+            0 6px 16px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(8px);
+        animation: selectionBarRise 0.22s ease-out;
+
+        @keyframes selectionBarRise {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 10px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .selection-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .selected-count {
+            color: #7dd3fc;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .ant-btn:not(.ant-btn-dangerous) {
+            border-color: rgba(255, 255, 255, 0.32);
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+
+            &:hover {
+                border-color: rgba(255, 255, 255, 0.5);
+                background: rgba(255, 255, 255, 0.16);
+                color: #fff;
+            }
+        }
+    }
+
+    @media (max-width: 992px) {
+        .task-selection-bar {
+            width: calc(100vw - 24px);
+            padding: 12px 14px;
+            gap: 10px;
+
+            .selection-info {
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+.user-action-dropdown {
+    .ant-dropdown-menu-item {
+        min-height: 34px;
+        padding: 6px 12px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .anticon {
+            font-size: 14px;
+            color: #64748b;
+        }
+    }
+
+    .ant-dropdown-menu-item-danger .anticon {
+        color: #ef4444;
+    }
+}

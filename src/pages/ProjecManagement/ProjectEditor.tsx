@@ -5,16 +5,23 @@ import {
     Card,
     Form,
     Input,
+    InputNumber,
     Select,
     Space,
     Spin,
     message,
     Upload,
+    Radio,
+    Switch,
+    TimePicker,
 } from 'antd';
 import { ArrowLeftOutlined, UploadOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import { fetchSSAProject, postSSAProject } from '@/apis/SSAProjectApi';
 import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
+import { ROUTES } from '@/utils/routeMap';
+import { getNodeList } from '@/apis/task';
+import dayjs from 'dayjs';
 
 interface LocationState {
     id?: number;
@@ -44,6 +51,10 @@ const ProjectEditor = () => {
     const [form] = Form.useForm<TSSAProjectRequest>();
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [authType, setAuthType] = useState<string>('none');
+    const [nodeOptions, setNodeOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [loadingNodes, setLoadingNodes] = useState(false);
+    const scanNodeMode = Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+    const scheduleEnabled = Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
 
     const { loading: saving, runAsync: saveProject } = useRequest(
         async (payload: TSSAProjectRequest) => postSSAProject(payload),
@@ -51,7 +62,7 @@ const ProjectEditor = () => {
             manual: true,
             onSuccess: () => {
                 message.success(isEdit ? '保存成功' : '创建成功');
-                navigate(-1);
+                navigate(ROUTES.GO_BACK);
             },
             onError: (err) => {
                 message.error(`保存失败: ${err.message || '未知错误'}`);
@@ -82,6 +93,8 @@ const ProjectEditor = () => {
                                 CodeSource: {
                                     ...res.data.config?.CodeSource,
                                 },
+                                ScanNode: res.data.config?.ScanNode,
+                                ScanSchedule: res.data.config?.ScanSchedule,
                             },
                         });
 
@@ -99,6 +112,31 @@ const ProjectEditor = () => {
                 });
         }
     }, [isEdit, editorState.id, form]);
+
+    useEffect(() => {
+        const loadNodes = async () => {
+            setLoadingNodes(true);
+            try {
+                const res = await getNodeList();
+                const list = res?.data?.list || [];
+                const options = list
+                    .filter((item) => item?.node_id)
+                    .map((item) => ({
+                        value: item.node_id as string,
+                        label:
+                            item.hostname ||
+                            item.node_id ||
+                            '未知节点',
+                    }));
+                setNodeOptions(options);
+            } catch (error) {
+                // 静默失败
+            } finally {
+                setLoadingNodes(false);
+            }
+        };
+        loadNodes();
+    }, []);
 
     const handleSubmit = async () => {
         try {
@@ -120,6 +158,27 @@ const ProjectEditor = () => {
                 values.config.BaseInfo.tags = (tags as string).split(',');
             }
 
+            if (values.config?.ScanNode) {
+                if (values.config.ScanNode.mode !== 'manual') {
+                    values.config.ScanNode.mode = 'auto';
+                    delete values.config.ScanNode.node_id;
+                }
+            }
+            if (values.config?.ScanSchedule) {
+                if (dayjs.isDayjs(values.config.ScanSchedule.time)) {
+                    values.config.ScanSchedule.time = values.config.ScanSchedule.time.format('HH:mm');
+                }
+                if (!values.config.ScanSchedule.enabled) {
+                    delete values.config.ScanSchedule.time;
+                }
+                values.config.ScanSchedule.interval_type =
+                    values.config.ScanSchedule.interval_type || 1;
+                values.config.ScanSchedule.interval_time =
+                    values.config.ScanSchedule.interval_time || 1;
+                values.config.ScanSchedule.sched_type =
+                    values.config.ScanSchedule.sched_type || 3;
+            }
+
             await saveProject(values);
         } catch (error) {
             // Form validation handles errors
@@ -127,7 +186,7 @@ const ProjectEditor = () => {
     };
 
     const handleBack = () => {
-        navigate(-1);
+        navigate(ROUTES.GO_BACK);
     };
 
     return (
@@ -172,6 +231,16 @@ const ProjectEditor = () => {
                                     auth: {
                                         kind: 'none',
                                     },
+                                },
+                                ScanNode: {
+                                    mode: 'auto',
+                                },
+                                ScanSchedule: {
+                                    enabled: false,
+                                    time: '02:00',
+                                    interval_type: 1,
+                                    interval_time: 1,
+                                    sched_type: 3,
                                 },
                             },
                         }}
@@ -461,6 +530,82 @@ const ProjectEditor = () => {
                                 placeholder="请输入项目描述（可选）"
                             />
                         </Form.Item>
+
+                        <Form.Item
+                            label="扫描并发(可选)"
+                            name={['config', 'SyntaxFlowScan', 'concurrency']}
+                            extra="不填或填 0 表示使用默认并发"
+                        >
+                            <InputNumber
+                                min={0}
+                                max={64}
+                                precision={0}
+                                style={{ width: '100%' }}
+                                placeholder="默认"
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="扫描节点"
+                            name={['config', 'ScanNode', 'mode']}
+                        >
+                            <Radio.Group optionType="button" buttonStyle="solid">
+                                <Radio.Button value="auto">自动检测</Radio.Button>
+                                <Radio.Button value="manual">指定节点</Radio.Button>
+                            </Radio.Group>
+                        </Form.Item>
+
+                        {scanNodeMode === 'manual' && (
+                            <Form.Item
+                                label="执行节点"
+                                name={['config', 'ScanNode', 'node_id']}
+                                rules={[{ required: true, message: '请选择扫描节点' }]}
+                            >
+                                <Select
+                                    placeholder="请选择扫描节点"
+                                    options={nodeOptions}
+                                    loading={loadingNodes}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '')
+                                            .toLowerCase()
+                                            .includes(input.toLowerCase())
+                                    }
+                                />
+                            </Form.Item>
+                        )}
+
+                        <Form.Item label="定时扫描">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Form.Item
+                                    name={['config', 'ScanSchedule', 'enabled']}
+                                    valuePropName="checked"
+                                    noStyle
+                                >
+                                    <Switch />
+                                </Form.Item>
+                                <span>启用定时扫描</span>
+                            </div>
+                        </Form.Item>
+
+                        {scheduleEnabled && (
+                            <Form.Item
+                                label="扫描时间"
+                                name={['config', 'ScanSchedule', 'time']}
+                                getValueProps={(value) => ({
+                                    value: value ? dayjs(value, 'HH:mm') : undefined,
+                                })}
+                                normalize={(val) =>
+                                    val ? dayjs(val).format('HH:mm') : undefined
+                                }
+                            >
+                                <TimePicker
+                                    format="HH:mm"
+                                    placeholder="选择扫描时间"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+                        )}
 
                         <Form.Item
                             label="标签"

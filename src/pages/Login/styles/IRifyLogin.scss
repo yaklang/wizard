@@ -1,0 +1,335 @@
+.irify-login-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: white;
+    display: flex;
+}
+
+.irify-login-left {
+    position: relative;
+    width: 42%;
+    height: 100vh;
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    display: flex;
+    flex-direction: column;
+    padding: 48px 40px;
+    overflow: hidden;
+    
+    &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+}
+
+.irify-login-right {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    // Subtle dot pattern background
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(
+            circle,
+            rgba(37, 99, 235, 0.04) 1px,
+            transparent 1px
+        );
+        background-size: 24px 24px;
+        pointer-events: none;
+    }
+}
+
+.irify-login-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.irify-login-header {
+    position: relative;
+    margin-bottom: 60px;
+}
+
+.irify-login-card {
+    width: 480px;
+    padding: 60px 48px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+    border: none;
+    position: relative;
+    z-index: 1;
+
+    .ant-card-body {
+        padding: 0;
+    }
+
+    .irify-login-card-title {
+        margin-bottom: 8px;
+        text-align: center;
+
+        span {
+            font-size: 32px;
+            font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: 0.5px;
+        }
+    }
+
+    .irify-login-subtitle {
+        text-align: center;
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 16px;
+        font-weight: 500;
+    }
+
+    .irify-tech-brief {
+        text-align: center;
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 40px;
+        line-height: 1.6;
+        padding: 0 16px;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+    }
+
+    .ant-form-item {
+        margin-bottom: 24px;
+    }
+
+    .irify-input {
+        height: 50px;
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        background-color: white !important;
+        font-size: 16px;
+        color: #1e293b !important;
+        transition: all 0.3s ease;
+
+        &:hover {
+            border-color: #4a94f8;
+            background-color: white !important;
+        }
+
+        &:focus,
+        &.ant-input-focused {
+            border-color: #4a94f8;
+            background-color: white !important;
+            box-shadow: 0 0 0 4px rgba(74, 148, 248, 0.1) !important;
+        }
+
+        &.ant-input-affix-wrapper {
+            padding: 0 18px;
+            color: #1e293b !important;
+            background-color: white !important;
+            
+            &:hover,
+            &:focus,
+            &.ant-input-affix-wrapper-focused,
+            &.ant-input-affix-wrapper-status-error {
+                background-color: white !important;
+            }
+        }
+
+        input {
+            background-color: transparent !important;
+            font-size: 16px;
+            color: #1e293b !important;
+        }
+
+        .ant-input-password-icon {
+            font-size: 16px;
+        }
+
+        &::placeholder {
+            color: #94a3b8;
+            opacity: 1;
+        }
+    }
+
+    input.ant-input {
+        color: #1e293b !important;
+        background-color: white !important;
+    }
+
+    .ant-input-affix-wrapper {
+        background-color: white !important;
+        
+        &:not(:focus-within) {
+            background-color: white !important;
+        }
+        
+        input {
+            color: #1e293b !important;
+            background-color: transparent !important;
+        }
+    }
+
+    .ant-input-affix-wrapper-status-error {
+        background-color: white !important;
+    }
+
+    // 强制清除所有可能的蓝色背景
+    .ant-input,
+    .ant-input-affix-wrapper,
+    .ant-input-password {
+        background-color: white !important;
+        background-image: none !important;
+        
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus,
+        &:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px white inset !important;
+            -webkit-text-fill-color: #1e293b !important;
+            background-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px white inset !important;
+        -webkit-text-fill-color: #1e293b !important;
+        background-color: transparent !important;
+    }
+
+    .irify-verification-wrapper {
+        position: relative;
+
+        .ant-form-item {
+            margin-bottom: 0;
+        }
+
+        .irify-input {
+            background: white !important;
+        }
+
+        .irify-captcha-wrapper {
+            position: absolute;
+            right: 12px;
+            top: 8px;
+            display: flex;
+            align-items: center;
+
+            .irify-captcha-image {
+                cursor: pointer;
+                border-radius: 6px;
+                transition: all 0.2s ease;
+                height: 34px;
+                border: 1.5px solid #e2e8f0;
+                background: white;
+                padding: 2px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+                &:hover {
+                    transform: scale(1.05);
+                    border-color: #4a94f8;
+                    box-shadow: 0 2px 8px rgba(74, 148, 248, 0.15);
+                }
+            }
+        }
+    }
+
+    .irify-login-button {
+        width: 100%;
+        height: 50px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        margin-top: 16px;
+        border: none;
+        background: linear-gradient(135deg, #4a94f8 0%, #68a6fa 100%);
+        box-shadow: 0 4px 16px rgba(74, 148, 248, 0.3);
+        transition: all 0.3s ease;
+
+        &:hover:not(:disabled) {
+            background: linear-gradient(135deg, #3a84e8 0%, #58a6fa 100%);
+            box-shadow: 0 6px 20px rgba(74, 148, 248, 0.4);
+            transform: translateY(-2px);
+        }
+
+        &:active:not(:disabled) {
+            transform: translateY(0);
+        }
+    }
+}
+
+@media (max-width: 1024px) {
+    .irify-login-left {
+        width: 40%;
+        padding: 32px 40px;
+    }
+
+    .irify-login-card {
+        width: 440px;
+        padding: 50px 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .irify-login-container {
+        flex-direction: column;
+    }
+
+    .irify-login-left {
+        width: 100%;
+        height: 30%;
+        padding: 24px;
+    }
+
+    .irify-login-card {
+        width: 90%;
+        max-width: 480px;
+        padding: 48px 32px;
+        
+        .irify-login-card-title span {
+            font-size: 28px;
+        }
+        
+        .irify-input {
+            height: 48px;
+            font-size: 15px;
+        }
+        
+        .irify-login-button {
+            height: 48px;
+            font-size: 15px;
+        }
+    }
+}
