@@ -99,6 +99,11 @@ const collapsibleNavItems = [
                 label: '节点管理',
                 path: '/node-config/manage',
             },
+            {
+                key: '/node-config/observability',
+                label: '扫描观测',
+                path: '/node-config/observability',
+            },
         ],
     },
     {
@@ -202,6 +207,8 @@ const IRifyLayout: React.FC = () => {
             return ['节点配置', '节点安装'];
         if (path.startsWith('/node-config/manage'))
             return ['节点配置', '节点管理'];
+        if (path.startsWith('/node-config/observability'))
+            return ['节点配置', '扫描观测'];
 
         if (path.startsWith('/system-management/userinfo'))
             return ['系统管理', '用户管理'];
