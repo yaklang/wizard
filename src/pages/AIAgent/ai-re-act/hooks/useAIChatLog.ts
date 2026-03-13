@@ -1,18 +1,28 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMemoizedFn } from 'ahooks';
 import type {
     AIChatLogData,
     AIChatLogToStream,
     UseAIChatLogEvents,
+    useAIChatLogParams,
 } from './type';
 import { formatTimestamp } from '@/utils/timeUtil';
 import cloneDeep from 'lodash/cloneDeep';
+import { BroadcastCommEvents, useBroadcastComm } from '@/hooks';
 
-// const { ipcRenderer } = window.require('electron');
+function useAIChatLog(params?: useAIChatLogParams): UseAIChatLogEvents;
 
-function useAIChatLog(): UseAIChatLogEvents;
+function useAIChatLog(params?: useAIChatLogParams) {
+    const { channelName } = params || {}
 
-function useAIChatLog() {
+    const broadcastComm = useRef<BroadcastCommEvents<string> | null>(null)
+
+    useEffect(() => {
+        if (channelName) {
+            broadcastComm.current = useBroadcastComm(channelName)
+        }
+    }, [])
+
     const streamInfo = useRef<Map<string, AIChatLogToStream>>(new Map());
 
     const pushLog = useMemoizedFn((info: AIChatLogData) => {
@@ -23,7 +33,7 @@ function useAIChatLog() {
                 message: logInfo.message,
                 timestamp: formatTimestamp(info.Timestamp),
             };
-            // ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
+            broadcastComm.current?.onSend(JSON.stringify(sendData))
         }
         if (info.type === 'stream') {
             const { EventUUID, content } = info.data;
@@ -47,7 +57,7 @@ function useAIChatLog() {
             isStream: true,
         };
         streamInfo.current.delete(uuid);
-        // ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
+        broadcastComm.current?.onSend(JSON.stringify(sendData))
     });
 
     const clearLogs = useMemoizedFn(() => {
@@ -59,7 +69,7 @@ function useAIChatLog() {
     const cancelLogsWin = useMemoizedFn(() => {
         clearLogs();
         // ipc 发送关闭页面的通知
-        ipcRenderer.send('close-ai-chat-window');
+        // ipcRenderer.send('close-ai-chat-window');
     });
 
     return { pushLog, sendStreamLog, clearLogs, cancelLogsWin };

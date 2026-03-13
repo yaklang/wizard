@@ -16,7 +16,7 @@ import { handleGrpcDataPushLog } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 import type { AIAgentGrpcApi, AIOutputEvent } from './grpcApi';
 import type { AIYakExecFileRecord } from './aiRender';
-import useThrottleState from '@/hooks/useThrottleState';
+import { useThrottleState } from '@/hooks';
 
 // 属于该 hook 处理数据的类型
 export const UseYakExecResultTypes = ['yak_exec_result'];

@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router-dom';
+import { Navigate, type RouteObject } from 'react-router-dom';
 import AppLayout from '../AppLayout';
 import type { ReactNode } from 'react';
 import AuthRoute from './AuthRoute';
@@ -35,10 +35,12 @@ import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/Reverse
 import GlobalReverseLink from '@/pages/ReverseLink';
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer';
 import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon';
-import CodecEntry from '@/pages/Codec';
+// import CodecEntry from '@/pages/Codec';
 import SpecialTask from '@/pages/SpecialTask';
 import CreateTask from '@/pages/CreateTask';
 import { AIAgent } from '@/pages/AIAgent/ai-agent/AIAgent';
+import AIAgentLog from '@/pages/AIAgent/ai-agent-log/AIAgentLog';
+import { TestAi } from '@/apis/AiEventApi/test';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -154,7 +156,7 @@ const routers: RouteObjectRootMy[] = [
                 name: 'Codec',
                 key: 'codec',
                 icon: <PublicCodec />,
-                element: <CodecEntry />,
+                element: <TestAi />,
             },
             {
                 path: 'acti-chain',
@@ -271,7 +273,8 @@ const routers: RouteObjectRootMy[] = [
     },
     {
         path: '/login',
-        element: <Login />,
+        // element: <Login />,
+        element: <Navigate to="/" replace />,
     },
     {
         path: '/license',
@@ -281,6 +284,10 @@ const routers: RouteObjectRootMy[] = [
     {
         path: '/network-err',
         element: <NetworkError />,
+    },
+    {
+        path: 'agent-log',
+        element: <AIAgentLog />
     },
 ];
 

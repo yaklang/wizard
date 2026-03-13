@@ -8,7 +8,7 @@ import type {
 import AIAgentContext from './useContext/AIAgentContext';
 import { getRemoteValue, setRemoteValue } from '@/utils/kv';
 import { RemoteAIAgentGV } from '../enums/aiAgent';
-import useGetSetState from '../hooks/useGetSetState';
+import { useGetSetState } from '@/hooks';
 import type { AIChatInfo } from './type/aiChat';
 import {
     useDebounceFn,

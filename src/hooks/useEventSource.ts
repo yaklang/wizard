@@ -115,6 +115,7 @@ function useEventSource<T>(url: string, options?: SSEHookOptions<T>) {
                     showErrorMessage('最大重试次数已达到，停止尝试连接');
                     setConnStatus('retry');
                     es.close();
+                    options?.onend?.();
                 } else {
                     options?.onerror?.({
                         msg: statusText,

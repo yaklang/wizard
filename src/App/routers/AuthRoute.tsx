@@ -1,13 +1,13 @@
 import type { FC, ReactNode } from 'react';
-import useLoginStore from '../store/loginStore';
-import { NoLoginPermission } from '@/compoments';
+// import useLoginStore from '../store/loginStore';
+// import { NoLoginPermission } from '@/compoments';
 
 interface AuthRouteType {
     children: ReactNode;
 }
 
 const AuthRoute: FC<AuthRouteType> = ({ children }) => {
-    const { token } = useLoginStore((state) => state);
+    // const { token } = useLoginStore((state) => state);
 
     // useEffect(() => {
     //   if (!token) {
@@ -15,6 +15,7 @@ const AuthRoute: FC<AuthRouteType> = ({ children }) => {
     //   }
     // }, [token]);
 
-    return token ? children : <NoLoginPermission />;
+    // return token ? children : <NoLoginPermission />;
+    return children;
 };
 export default AuthRoute;

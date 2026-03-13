@@ -123,6 +123,8 @@ export interface AIChatIPCNotifyMessage {
 export interface UseChatIPCParams {
     /** 文件数据缓存实例类 */
     cacheDataStore?: ChatDataStore;
+    /** 跨标签页通信的频道名称 */
+    channelName?: string;
     /** 获取流接口请求参数 */
     getRequest?: () => AIAgentSetting | undefined;
     /** 设置会话的名字 */
@@ -206,8 +208,8 @@ export interface AIChatIPCStartParams {
     params: AIInputEvent;
     /** 供前端处理逻辑和UI的额外参数 */
     extraValue?:
-        | CustomPluginExecuteFormValue
-        | Record<string, CustomPluginExecuteFormValue[]>;
+    | CustomPluginExecuteFormValue
+    | Record<string, CustomPluginExecuteFormValue[]>;
 }
 
 /** 执行流途中发送消息的参数 */
@@ -247,6 +249,10 @@ export interface UseChatIPCEvents {
 // #endregion
 
 // #region useAIChatLog相关定义
+export interface useAIChatLogParams {
+    channelName: UseChatIPCParams["channelName"]
+}
+
 export interface AIChatLogToInfo {
     type: 'log';
     Timestamp: AIOutputEvent['Timestamp'];
@@ -291,8 +297,8 @@ export type UseChatContentEvents = UseHookBaseEvents;
 
 // #region useHistoryChat相关定义
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface UseHistoryChatParams {}
+export interface UseHistoryChatParams { }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface UseHistoryChatEvents {}
+export interface UseHistoryChatEvents { }
 // #endregion

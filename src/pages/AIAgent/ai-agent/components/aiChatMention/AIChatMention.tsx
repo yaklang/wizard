@@ -49,7 +49,7 @@ import type { InputRef } from 'antd';
 import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput';
 import { YakitSideTab } from '@/compoments/yakitSideTab/YakitSideTab';
 import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
-import useGetSetState from '@/hooks/useGetSetState';
+import { useGetSetState } from '@/hooks';
 import type { RollingLoadListRef } from '@/compoments/RollingLoadList/RollingLoadList';
 import { RollingLoadList } from '@/compoments/RollingLoadList/RollingLoadList';
 
