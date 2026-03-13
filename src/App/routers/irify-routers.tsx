@@ -16,6 +16,7 @@ import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
 import IRifyNodeManagePage from '@/pages/NodeManage/IRifyNodeManagePage';
+import IRifyScanObservabilityPage from '@/pages/NodeManage/IRifyScanObservabilityPage';
 import IRifySystemManagementPage from '@/pages/SystemManagement/IRifySystemManagementPage';
 import ReportManage from '@/pages/ReportManage';
 import CompileArtifactsPage from '@/pages/CompileArtifacts/CompileArtifactsPage';
@@ -122,6 +123,10 @@ const irifyRouters: RouteObject[] = [
                     {
                         path: 'manage',
                         element: <IRifyNodeManagePage />,
+                    },
+                    {
+                        path: 'observability',
+                        element: <IRifyScanObservabilityPage />,
                     },
                 ],
             },
