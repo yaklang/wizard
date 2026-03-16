@@ -51,6 +51,11 @@ import {
     exportSSARiskReportPDF,
     getSSARiskFilterOptions,
 } from '@/apis/SSARiskApi';
+import { createSSAReportRecord } from '@/apis/SSAReportRecordApi';
+import {
+    createSSAReportRecordFile,
+    downloadSSAReportRecordFile,
+} from '@/apis/SSAReportRecordFileApi';
 import type {
     TSSATask,
     TSSATaskQueryParams,
@@ -629,6 +634,19 @@ const TaskList: React.FC = () => {
                 message.warning('导出范围为空，无法导出');
                 return;
             }
+            const params: TSSARiskExportParams = {
+                report_name: values.report_name,
+                severity: values.severity?.join(',') || undefined,
+                risk_type: values.risk_type?.join(',') || undefined,
+                audited_state: values.audited_state || 'all',
+                latest_disposal_status:
+                    values.latest_disposal_status?.join(',') || undefined,
+            };
+            if (exportTaskIDs.length === 1) {
+                params.task_id = exportTaskIDs[0];
+            } else {
+                params.task_ids = exportTaskIDs.join(',');
+            }
             try {
                 setExportSubmitting(true);
                 openExportProgress(
@@ -637,28 +655,43 @@ const TaskList: React.FC = () => {
                         ? '正在请求 Word 报告数据...'
                         : '正在请求 PDF 报告数据...',
                 );
-                const params: TSSARiskExportParams = {
+                const record = await createSSAReportRecord({
+                    task_id: params.task_id,
+                    task_ids: params.task_ids,
                     report_name: values.report_name,
-                    severity: values.severity?.join(',') || undefined,
-                    risk_type: values.risk_type?.join(',') || undefined,
-                    audited_state: values.audited_state || 'all',
-                    latest_disposal_status:
-                        values.latest_disposal_status?.join(',') || undefined,
-                };
-                if (exportTaskIDs.length === 1) {
-                    params.task_id = exportTaskIDs[0];
-                } else {
-                    params.task_ids = exportTaskIDs.join(',');
+                    severity: params.severity,
+                    risk_type: params.risk_type,
+                    latest_disposal_status: params.latest_disposal_status,
+                    audited_state: params.audited_state,
+                });
+                const recordId = record.data?.id;
+                if (!recordId) {
+                    throw new Error('empty report record id');
+                }
+                updateExportProgress(
+                    42,
+                    values.format === 'word'
+                        ? '报告快照已保存，正在生成 Word 文件...'
+                        : '报告快照已保存，正在生成 PDF 文件...',
+                );
+                const file = await createSSAReportRecordFile(recordId, {
+                    format: values.format === 'word' ? 'docx' : 'pdf',
+                });
+                const fileId = file.data?.id;
+                if (!fileId) {
+                    throw new Error('empty report file id');
+                }
+                updateExportProgress(
+                    78,
+                    values.format === 'word'
+                        ? '文件已入库，正在下载 Word 文件...'
+                        : '文件已入库，正在下载 PDF 文件...',
+                );
+                const res = await downloadSSAReportRecordFile(fileId);
+                if (!res.data) {
+                    throw new Error('empty report file');
                 }
                 if (values.format === 'word') {
-                    const res = await exportSSARiskReportDocx(params);
-                    if (!res.data) {
-                        throw new Error('empty report docx');
-                    }
-                    updateExportProgress(
-                        78,
-                        '报告数据已返回，正在写入 Word 文件...',
-                    );
                     saveSSAReportDocx(
                         res.data,
                         values.report_name,
@@ -670,14 +703,6 @@ const TaskList: React.FC = () => {
                         },
                     );
                 } else {
-                    const res = await exportSSARiskReportPDF(params);
-                    if (!res.data) {
-                        throw new Error('empty report pdf');
-                    }
-                    updateExportProgress(
-                        78,
-                        '报告数据已返回，正在写入 PDF 文件...',
-                    );
                     saveSSAReportPdf(
                         res.data,
                         values.report_name,
@@ -692,9 +717,59 @@ const TaskList: React.FC = () => {
                 updateExportProgress(100, '导出完成');
                 setExportModalOpen(false);
                 message.success('导出成功');
-            } catch {
+            } catch (error: any) {
+                const errorMessage = error?.message || '';
+                if (errorMessage.includes('object storage')) {
+                    try {
+                        updateExportProgress(
+                            78,
+                            values.format === 'word'
+                                ? '对象存储未启用，回退为直接下载 Word 文件...'
+                                : '对象存储未启用，回退为直接下载 PDF 文件...',
+                        );
+                        if (values.format === 'word') {
+                            const res = await exportSSARiskReportDocx(params);
+                            if (!res.data) {
+                                throw new Error('empty report docx');
+                            }
+                            saveSSAReportDocx(
+                                res.data,
+                                values.report_name,
+                                (progress) => {
+                                    updateExportProgress(
+                                        progress.percent,
+                                        progress.message,
+                                    );
+                                },
+                            );
+                        } else {
+                            const res = await exportSSARiskReportPDF(params);
+                            if (!res.data) {
+                                throw new Error('empty report pdf');
+                            }
+                            saveSSAReportPdf(
+                                res.data,
+                                values.report_name,
+                                (progress) => {
+                                    updateExportProgress(
+                                        progress.percent,
+                                        progress.message,
+                                    );
+                                },
+                            );
+                        }
+                        updateExportProgress(100, '导出完成');
+                        setExportModalOpen(false);
+                        message.success('导出成功（未写入文件资产）');
+                        return;
+                    } catch (fallbackError: any) {
+                        setExportProgress(defaultExportProgressState);
+                        message.error(fallbackError?.message || '导出失败');
+                        return;
+                    }
+                }
                 setExportProgress(defaultExportProgressState);
-                message.error('导出失败');
+                message.error(errorMessage || '导出失败');
             } finally {
                 window.setTimeout(() => {
                     setExportProgress(defaultExportProgressState);

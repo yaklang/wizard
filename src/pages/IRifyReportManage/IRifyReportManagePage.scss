@@ -1,0 +1,285 @@
+.irify-report-manage-page {
+    min-height: 100vh;
+    padding: 24px;
+    background-color: var(--irify-bg-base);
+
+    .report-toolbar {
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .report-filter-card,
+    .report-table-card {
+        border: 1px solid var(--irify-border) !important;
+        border-radius: 4px !important;
+        background: var(--irify-bg-container) !important;
+        box-shadow: 0 1px 2px var(--irify-glass-shadow);
+        margin-bottom: 16px;
+    }
+
+    .report-filter-row {
+        display: grid;
+        grid-template-columns: minmax(280px, 1.4fr) 180px 280px auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .report-filter-item {
+        margin-bottom: 0;
+    }
+
+    .report-filter-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding-bottom: 1px;
+    }
+
+    .report-table-card {
+        .ant-table {
+            font-size: 13px;
+        }
+
+        .ant-table-thead > tr > th {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--irify-text-secondary);
+            background: transparent;
+        }
+
+        .ant-table-cell {
+            vertical-align: top;
+            padding-top: 14px;
+            padding-bottom: 14px;
+        }
+    }
+
+    .report-table-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 16px;
+        margin-bottom: 14px;
+
+        h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--irify-text);
+        }
+
+        .report-table-meta {
+            font-size: 13px;
+            color: var(--irify-text-secondary);
+        }
+    }
+
+    .report-scope-cell,
+    .report-risk-cell,
+    .report-time-cell,
+    .report-status-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .report-scope-head {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .report-scope-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--irify-text);
+    }
+
+    .report-scope-tag {
+        margin-inline-end: 0;
+        border-radius: 999px;
+    }
+
+    .report-scope-sub {
+        font-size: 12px;
+        color: var(--irify-text-secondary);
+        word-break: break-all;
+    }
+
+    .report-scope-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        font-size: 12px;
+        color: var(--irify-text-secondary);
+    }
+
+    .report-risk-total {
+        display: inline-flex;
+        align-self: flex-start;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+
+        &.tone-critical {
+            color: #7a1fa2;
+            background: rgba(122, 31, 162, 0.08);
+        }
+
+        &.tone-high {
+            color: #b42318;
+            background: rgba(180, 35, 24, 0.08);
+        }
+
+        &.tone-medium {
+            color: #b54708;
+            background: rgba(181, 71, 8, 0.08);
+        }
+
+        &.tone-clean {
+            color: #027a48;
+            background: rgba(2, 122, 72, 0.08);
+        }
+    }
+
+    .report-risk-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .report-risk-hint {
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--irify-text-secondary);
+    }
+
+    .report-time-primary {
+        font-weight: 600;
+        color: var(--irify-text);
+    }
+
+    .report-time-secondary {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 12px;
+        color: var(--irify-text-secondary);
+    }
+
+    .report-status-cell {
+        gap: 10px;
+    }
+
+    .report-action-group {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .report-file-panel {
+        margin-bottom: 20px;
+        padding: 16px 18px;
+        border: 1px solid var(--irify-border);
+        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.02);
+    }
+
+    .report-file-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+
+        h4 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--irify-text);
+        }
+    }
+
+    .report-file-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .report-file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 14px;
+        border: 1px solid var(--irify-border);
+        border-radius: 12px;
+        background: var(--irify-bg-container);
+    }
+
+    .report-file-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--irify-text);
+        word-break: break-all;
+    }
+
+    .report-file-sub {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--irify-text-secondary);
+    }
+
+    @media (max-width: 1280px) {
+        .report-filter-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .report-filter-actions {
+            justify-content: flex-start;
+        }
+    }
+
+    @media (max-width: 960px) {
+        padding: 16px;
+
+        .report-table-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .report-file-head,
+        .report-file-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .report-filter-row {
+            grid-template-columns: 1fr;
+        }
+
+        .report-filter-actions {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .report-toolbar {
+            justify-content: stretch;
+
+            .ant-space {
+                width: 100%;
+                display: flex;
+            }
+
+            .ant-btn {
+                flex: 1;
+            }
+        }
+    }
+}
