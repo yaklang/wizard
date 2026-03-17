@@ -36,9 +36,10 @@ import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
-import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
-import { scanSSAIR } from '@/apis/SSAIRApi';
-import type { TSSAIRScanRequest } from '@/apis/SSAIRApi/type';
+import type {
+    TSSAScanModeOverride,
+    TSSAScanRequest,
+} from '@/apis/SSAScanTaskApi/type';
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
@@ -72,6 +73,17 @@ const languageLabelMap: Record<string, string> = {
     yak: 'Yak',
 };
 
+const resolveMemoryScanOverrideVisible = (): boolean => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    const query = new URLSearchParams(window.location.search);
+    if (query.get('ssa_memory_scan') === '1') {
+        return true;
+    }
+    return window.localStorage.getItem('irify:ssa-memory-scan') === '1';
+};
+
 const ProjectManagement: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -102,6 +114,8 @@ const ProjectManagement: React.FC = () => {
         number | null
     >(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [showMemoryScanOverride, setShowMemoryScanOverride] =
+        useState<boolean>(resolveMemoryScanOverrideVisible);
 
     const selectedProjects = data.filter(
         (item) => item.id && selectedRowKeys.includes(item.id),
@@ -355,9 +369,14 @@ const ProjectManagement: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
+    useEffect(() => {
+        setShowMemoryScanOverride(resolveMemoryScanOverrideVisible());
+    }, []);
+
     const handleScan = async (
         record: TSSAProject,
         auditCarryEnabled = true,
+        scanMode: TSSAScanModeOverride = 'auto',
     ) => {
         if (!record.id) return;
         try {
@@ -397,7 +416,9 @@ const ProjectManagement: React.FC = () => {
                 );
             }
 
-            const res = await scanSSAProject(record.id, scanRequest);
+            const res = await scanSSAProject(record.id, scanRequest, {
+                scan_mode: scanMode,
+            });
             const taskId = res.data?.task_id;
             message.success({
                 content: (
@@ -424,69 +445,6 @@ const ProjectManagement: React.FC = () => {
             });
         } catch (err: any) {
             message.error(`创建扫描失败: ${err.msg || err.message}`);
-        }
-    };
-
-    const handleScanWithIRDB = async (
-        record: TSSAProject,
-        auditCarryEnabled = true,
-    ) => {
-        if (!record.id) return;
-
-        const msgKey = `ssa-ir-scan-${record.id}-${Date.now()}`;
-        try {
-            message.loading({
-                content: '数据库扫描：正在创建任务...',
-                key: msgKey,
-                duration: 0,
-            });
-
-            const scanReq: TSSAIRScanRequest = {
-                prepare_ir: true,
-                incremental: true,
-                force_full: false,
-                snapshot_id: String(Date.now()),
-                audit_carry_enabled: auditCarryEnabled,
-            };
-            const scanNode = record.config?.ScanNode;
-            if (scanNode?.mode === 'manual' && scanNode.node_id) {
-                scanReq.node_id = scanNode.node_id;
-            }
-            const scanRes = await scanSSAIR(record.id, scanReq);
-            const scanData = scanRes?.data || {};
-            const taskId = scanData?.task_id;
-
-            message.success({
-                content: (
-                    <span>
-                        数据库扫描任务已创建{taskId ? ` (#${taskId})` : ''}
-                        ，编译与扫描进度可在任务历史中查看。
-                        <Button
-                            type="link"
-                            size="small"
-                            onClick={() => {
-                                message.destroy();
-                                navigate(
-                                    `${getRoutePath(
-                                        RouteKey.TASK_LIST,
-                                    )}?project_id=${record.id}`,
-                                );
-                            }}
-                            style={{ padding: 0, height: 'auto' }}
-                        >
-                            查看任务列表 →
-                        </Button>
-                    </span>
-                ),
-                key: msgKey,
-                duration: 6,
-            });
-        } catch (err: any) {
-            message.error({
-                content: `数据库扫描失败: ${err?.msg || err?.message || '未知错误'}`,
-                key: msgKey,
-                duration: 6,
-            });
         }
     };
 
@@ -770,6 +728,9 @@ const ProjectManagement: React.FC = () => {
                         .split('/')
                         .pop()
                         ?.replace(/\.git$/, '') || '代码仓库';
+                const hasSchedule = Boolean(
+                    record.config?.ScanSchedule?.enabled,
+                );
 
                 return (
                     <Space size="small">
@@ -812,12 +773,13 @@ const ProjectManagement: React.FC = () => {
                                             marginTop: 8,
                                         }}
                                     >
-                                        扫描将在后台执行。数据库扫描会自动复用/更新
-                                        IR（黑盒）。
+                                        扫描将在后台执行。系统默认会优先复用/更新编译产物；
+                                        当前项目若启用了调度，则仍会走兼容的调度链路。
                                     </div>
                                     <div style={{ marginTop: 12 }}>
-                                        <Space>
+                                        <Space wrap>
                                             <Button
+                                                type="primary"
                                                 size="small"
                                                 onClick={async () => {
                                                     setScanPopoverProjectId(
@@ -826,22 +788,27 @@ const ProjectManagement: React.FC = () => {
                                                     await handleScan(record);
                                                 }}
                                             >
-                                                内存扫描
+                                                {hasSchedule
+                                                    ? '开始扫描（含调度）'
+                                                    : '开始扫描'}
                                             </Button>
-                                            <Button
-                                                type="primary"
-                                                size="small"
-                                                onClick={async () => {
-                                                    setScanPopoverProjectId(
-                                                        null,
-                                                    );
-                                                    await handleScanWithIRDB(
-                                                        record,
-                                                    );
-                                                }}
-                                            >
-                                                数据库扫描
-                                            </Button>
+                                            {showMemoryScanOverride && (
+                                                <Button
+                                                    size="small"
+                                                    onClick={async () => {
+                                                        setScanPopoverProjectId(
+                                                            null,
+                                                        );
+                                                        await handleScan(
+                                                            record,
+                                                            true,
+                                                            'memory',
+                                                        );
+                                                    }}
+                                                >
+                                                    内存扫描（隐藏兜底）
+                                                </Button>
+                                            )}
                                         </Space>
                                     </div>
                                 </div>

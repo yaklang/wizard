@@ -2,6 +2,7 @@ import axios from '@/utils/axios';
 import type { ResponseData } from '@/utils/commonTypes';
 import type {
     TSSAScanRequest,
+    TSSAScanModeOverride,
     TSSATaskResponse,
     TSSATaskQueryParams,
     TSSATaskListResponse,
@@ -13,10 +14,14 @@ import type {
 const scanSSAProject = (
     projectId: number,
     data?: TSSAScanRequest,
+    opts?: { scan_mode?: TSSAScanModeOverride },
 ): Promise<ResponseData<TSSATaskResponse>> =>
     axios.post<never, ResponseData<TSSATaskResponse>>(
         `/ssa/project/${projectId}/scan`,
         data || {},
+        opts?.scan_mode && opts.scan_mode !== 'auto'
+            ? { params: { scan_mode: opts.scan_mode } }
+            : undefined,
     );
 
 // GET /ssa/task - 查询任务列表
