@@ -27,7 +27,7 @@ import { YakitSpin } from '../yakitUI/YakitSpin/YakitSpin';
 import styles from './WebTree.module.scss';
 import { requestYakURLList, YakURL } from '@/pages/AIAgent/utils/netif';
 import type { YakURLResource } from '@/pages/YakRunnerAuditCode/utils';
-import useGetSetState from '@/hooks/useGetSetState';
+import { useGetSetState } from '@/hooks';
 
 type TreeNodeType = 'dir' | 'file' | 'query' | 'path';
 export interface TreeNode extends DataNode {

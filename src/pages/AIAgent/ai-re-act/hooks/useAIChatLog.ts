@@ -1,21 +1,25 @@
 import { useRef } from 'react';
 import { useMemoizedFn } from 'ahooks';
-import type {
-    AIChatLogData,
-    AIChatLogToStream,
-    UseAIChatLogEvents,
-} from './type';
+import type { AIChatLogData, AIChatLogToStream, UseAIChatLogEvents, useAIChatLogParams } from './type';
 import { formatTimestamp } from '@/utils/timeUtil';
 import cloneDeep from 'lodash/cloneDeep';
+import { useBroadcastComm } from '@/hooks';
+import type { MessageItem } from '../../ai-agent-log/AIAgentLog';
 
-// const { ipcRenderer } = window.require('electron');
+function useAIChatLog(params?: useAIChatLogParams): UseAIChatLogEvents;
 
-function useAIChatLog(): UseAIChatLogEvents;
+function useAIChatLog(params?: useAIChatLogParams) {
+    const channelName = params?.channelName;
+    const hasChannel = !!channelName;
 
-function useAIChatLog() {
+    // 顶层调用 Hook；当 channelName 为空时内部不会创建真正的 BroadcastChannel
+    const broadcastComm = useBroadcastComm<MessageItem>(channelName || '');
+
     const streamInfo = useRef<Map<string, AIChatLogToStream>>(new Map());
 
     const pushLog = useMemoizedFn((info: AIChatLogData) => {
+        if (!hasChannel) return;
+
         if (info.type === 'log') {
             const logInfo = info.data;
             const sendData = {
@@ -23,7 +27,7 @@ function useAIChatLog() {
                 message: logInfo.message,
                 timestamp: formatTimestamp(info.Timestamp),
             };
-            // ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
+            broadcastComm.onSend(sendData);
         }
         if (info.type === 'stream') {
             const { EventUUID, content } = info.data;
@@ -38,6 +42,8 @@ function useAIChatLog() {
     });
 
     const sendStreamLog = useMemoizedFn((uuid: string) => {
+        if (!hasChannel) return;
+
         const stream = streamInfo.current.get(uuid);
         if (!stream) return;
         const sendData = {
@@ -47,7 +53,7 @@ function useAIChatLog() {
             isStream: true,
         };
         streamInfo.current.delete(uuid);
-        // ipcRenderer.invoke('forward-ai-chat-log-data', sendData);
+        broadcastComm.onSend(sendData);
     });
 
     const clearLogs = useMemoizedFn(() => {
@@ -59,7 +65,7 @@ function useAIChatLog() {
     const cancelLogsWin = useMemoizedFn(() => {
         clearLogs();
         // ipc 发送关闭页面的通知
-        ipcRenderer.send('close-ai-chat-window');
+        // ipcRenderer.send('close-ai-chat-window');
     });
 
     return { pushLog, sendStreamLog, clearLogs, cancelLogsWin };

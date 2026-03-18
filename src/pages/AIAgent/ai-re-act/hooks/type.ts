@@ -6,12 +6,7 @@ import type {
     AIYakExecFileRecord,
     ReActChatRenderItem,
 } from './aiRender';
-import type {
-    AIAgentGrpcApi,
-    AIInputEvent,
-    AIOutputEvent,
-    AIStartParams,
-} from './grpcApi';
+import type { AIAgentGrpcApi, AIInputEvent, AIOutputEvent, AIStartParams } from './grpcApi';
 import type { AIAgentSetting } from '@/pages/AIAgent/ai-agent/aiAgentType';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AIChatData } from '@/pages/AIAgent/ai-agent/type/aiChat';
@@ -123,8 +118,8 @@ export interface AIChatIPCNotifyMessage {
 export interface UseChatIPCParams {
     /** 文件数据缓存实例类 */
     cacheDataStore?: ChatDataStore;
-    /** 获取流接口请求参数 */
-    getRequest?: () => AIAgentSetting | undefined;
+    /** 跨标签页通信的频道名称 */
+    channelName?: string;
     /** 设置会话的名字 */
     setSessionChatName?: (session: string, name: string) => void;
 
@@ -205,9 +200,7 @@ export interface AIChatIPCStartParams {
     token: string;
     params: AIInputEvent;
     /** 供前端处理逻辑和UI的额外参数 */
-    extraValue?:
-        | CustomPluginExecuteFormValue
-        | Record<string, CustomPluginExecuteFormValue[]>;
+    extraValue?: CustomPluginExecuteFormValue | Record<string, CustomPluginExecuteFormValue[]>;
 }
 
 /** 执行流途中发送消息的参数 */
@@ -222,6 +215,8 @@ export interface AIChatSendParams {
 export interface UseChatIPCEvents {
     /** 获取当前执行接口流的唯一标识符 */
     fetchToken: () => string;
+    /** 获取当前执行接口流的请求参数 */
+    fetchAIRequest: () => AIStartParams | undefined;
     /** 获取当前执行任务规划的问题id */
     fetchTaskChatID: () => string;
     /** 获取当前外界传入的数据类实例 */
@@ -243,10 +238,16 @@ export interface UseChatIPCEvents {
     onReset: () => void;
     /** 取消任务规划当前的Review */
     handleTaskReviewRelease: (id: string) => void;
+    /** 删除会话操作的关联逻辑 */
+    onDelChats: (session: string[]) => void;
 }
 // #endregion
 
 // #region useAIChatLog相关定义
+export interface useAIChatLogParams {
+    channelName: UseChatIPCParams['channelName'];
+}
+
 export interface AIChatLogToInfo {
     type: 'log';
     Timestamp: AIOutputEvent['Timestamp'];

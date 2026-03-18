@@ -32,11 +32,15 @@ interface useEventSourceEvents {
     loading: boolean;
     /** SSE的连接状态 */
     connStatus: SSEConnStatusType;
-    /** 连接SSE */
-    connect: () => void;
+    /** 连接SSE(可指定目标地址, 如果url不为空, 则target参数不生效) */
+    connect: (target?: string) => void;
     /** 断开SSE */
     disconnect: () => void;
 }
+
+/**
+ * @param url 连接的目标地址(可传空字符，通过释放的events里connect方法传入指定目标地址)
+ */
 function useEventSource<T>(
     url: string,
     options?: SSEHookOptions<T>,
@@ -62,11 +66,17 @@ function useEventSource<T>(url: string, options?: SSEHookOptions<T>) {
     const retryCountRef = useRef(0);
 
     // 连接方法
-    const connect = useMemoizedFn(async () => {
-        if (eventSourceRef.current || loading || connStatus === 'link') {
+    const connect = useMemoizedFn(async (target?: string) => {
+        if (!url && !target) {
+            showErrorMessage('连接地址不能为空');
             return;
         }
 
+        if (eventSourceRef.current || connStatus === 'link') {
+            return;
+        }
+
+        const targetUrl = url || target;
         setLoading(true); // 设置为加载中
         retryCountRef.current = 0;
         const headers = {
@@ -77,7 +87,7 @@ function useEventSource<T>(url: string, options?: SSEHookOptions<T>) {
         };
 
         const es = new EventSourcePolyfill(
-            `${options?.isAIAgent ? 'agent' : 'api'}/${url}`,
+            `${options?.isAIAgent ? 'agent' : 'api'}/${targetUrl}`,
             {
                 heartbeatTimeout: 60 * 1000 * 1.5,
                 withCredentials: true,
@@ -91,6 +101,7 @@ function useEventSource<T>(url: string, options?: SSEHookOptions<T>) {
         };
 
         es.onmessage = (e) => {
+            if (!eventSourceRef.current) return;
             const data = JSON.parse(e.data);
             options?.onsuccess?.(data);
         };
@@ -105,16 +116,25 @@ function useEventSource<T>(url: string, options?: SSEHookOptions<T>) {
                 es.close();
                 await getLoginOut();
                 store.outLogin();
-            } else if (code === 500) {
+                options?.onend?.();
+            } else if (
+                code === 500 ||
+                code === 501 ||
+                code === 505 ||
+                (code >= 400 && code <= 499) ||
+                (code >= 300 && code <= 399)
+            ) {
                 message.destroy();
                 showErrorMessage('连接异常，请刷新页面后重试');
                 setConnStatus('error');
                 es.close();
+                options?.onend?.();
             } else {
                 if (retryCountRef.current >= retryCountMax) {
                     showErrorMessage('最大重试次数已达到，停止尝试连接');
                     setConnStatus('retry');
                     es.close();
+                    options?.onend?.();
                 } else {
                     options?.onerror?.({
                         msg: statusText,

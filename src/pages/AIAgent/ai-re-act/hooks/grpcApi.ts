@@ -199,10 +199,12 @@ export interface AIOutputEvent {
     IsStream: boolean;
     // AI思考输出
     IsReason: boolean;
-    StreamDelta: Uint8Array;
+    /** base64-encoded bytes */
+    StreamDelta: string;
     IsJson: boolean;
     IsResult: boolean;
-    Content: Uint8Array;
+    /** base64-encoded bytes */
+    Content: string;
     Timestamp: number;
     // 任务索引
     TaskIndex: string;

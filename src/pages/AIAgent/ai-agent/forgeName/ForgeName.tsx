@@ -60,7 +60,7 @@ import type { LogListInfo } from '@/compoments/YakitUploadModal/YakitUploadModal
 import classNames from 'classnames';
 import styles from './ForgeName.module.scss';
 import { YakitRoute } from '../../enums/yakitRoute';
-import useGetSetState from '../../hooks/useGetSetState';
+import { useGetSetState } from '@/hooks';
 import {
     genDefaultPagination,
     type PaginationSchema,

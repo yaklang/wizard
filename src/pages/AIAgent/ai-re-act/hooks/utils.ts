@@ -2,12 +2,27 @@
  * chat 对话数据相关处理工具
  */
 import { generateTaskChatExecution } from '@/pages/AIAgent/ai-agent/defaultConstant';
-import { Uint8ArrayToString } from '@/utils/str';
 import { v4 as uuidv4 } from 'uuid';
 import type { AIAgentGrpcApi, AIOutputEvent } from './grpcApi';
 import type { AITaskInfoProps } from './aiRender';
 import type { AIChatLogData, AIChatLogToInfo } from './type';
 import type { AIAgentSetting } from '../../ai-agent/aiAgentType';
+
+/** 将 base64-encoded bytes 转换成json对象并parse出来 */
+export const base64ToJson = (base64: string) => {
+    try {
+        // Base64 → Uint8Array
+        const binary = atob(base64);
+        const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+        // UTF-8 解码
+        const utf8 = new TextDecoder('utf-8').decode(bytes);
+        const obj = JSON.parse(utf8);
+
+        return obj;
+    } catch (error) {
+        throw error;
+    }
+};
 
 /** 生成AI-UI展示的必须基础数据 */
 export const genBaseAIChatData = (info: AIOutputEvent) => {
@@ -40,7 +55,7 @@ export const handleGrpcDataPushLog = (params: {
         const { info, pushLog } = params;
         // 这类类型的数据从日志数据中屏蔽掉，后续的stream类型逻辑会使用到
         if (info.Type === 'stream_start') return;
-        let ipcContent = Uint8ArrayToString(info.Content) || '';
+        let ipcContent = base64ToJson(info.Content) || '';
         const logInfo: AIChatLogData = {
             type: 'log',
             Timestamp: info.Timestamp,
