@@ -1,72 +1,235 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+    Layout,
     Card,
-    Table,
+    Tree,
     Space,
     Button,
-    Popconfirm,
     message,
     Input,
     Upload,
-    Select,
     Tag,
     Modal,
     Progress,
     Spin,
+    Empty,
+    Select,
+    Tabs,
+    Form,
+    Dropdown,
+    Descriptions,
 } from 'antd';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
-
-const severityMap: Record<string, { label: string; color: string }> = {
-    critical: { label: '严重', color: 'red' },
-    high: { label: '高危', color: 'orange' },
-    medium: { label: '中危', color: 'gold' },
-    low: { label: '低危', color: 'green' },
-    info: { label: '信息', color: 'blue' },
-};
-
-const languageOptions = [
-    { label: 'Go', value: 'go' },
-    { label: 'Java', value: 'java' },
-    { label: 'Python', value: 'python' },
-    { label: 'JavaScript', value: 'javascript' },
-    { label: 'TypeScript', value: 'typescript' },
-    { label: 'PHP', value: 'php' },
-    { label: 'C#', value: 'csharp' },
-    { label: 'C/C++', value: 'cpp' },
-    { label: 'Ruby', value: 'ruby' },
-    { label: 'Rust', value: 'rust' },
-    { label: 'Swift', value: 'swift' },
-    { label: 'Kotlin', value: 'kotlin' },
-];
-import { UploadOutlined } from '@ant-design/icons';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import {
+    BugOutlined,
+    UploadOutlined,
+    ShrinkOutlined,
+    FileTextOutlined,
+    CodeOutlined,
+    CopyOutlined,
+    PlusOutlined,
+    ExportOutlined,
+    ImportOutlined,
+    DeleteOutlined,
+    SettingOutlined,
+    RocketOutlined,
+} from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
+// 语言官方图标
+import {
+    SiPhp,
+    SiJavascript,
+    SiTypescript,
+    SiPython,
+    SiGo,
+    SiRuby,
+    SiRust,
+    SiC,
+    SiCplusplus,
+    SiKotlin,
+    SiSwift,
+} from 'react-icons/si';
+import { DiJava } from 'react-icons/di';
 import {
     getSyntaxFlowRules,
     deleteSyntaxFlowRule,
     exportSyntaxFlowRules,
     importSyntaxFlowRules,
     createRuleSnapshot,
+    getSyntaxFlowRuleFilterOptions,
+    fetchSyntaxFlowRule,
+    updateSyntaxFlowRuleMetadata,
 } from '@/apis/SyntaxFlowRuleApi';
-import type { TSyntaxFlowRule } from '@/apis/SyntaxFlowRuleApi/type';
+import type {
+    TSyntaxFlowRule,
+    TSyntaxFlowRuleFilterOptions,
+    TSyntaxFlowAlertDesc,
+} from '@/apis/SyntaxFlowRuleApi/type';
+import { WizardAceEditor } from '@/compoments';
+import Markdown from '@/compoments/MarkDown';
+import RelatedVulnerabilityList from './RelatedVulnerabilityList';
+import { useTheme } from '@/theme';
+import './RuleManagement.scss';
+
+const { Sider, Content } = Layout;
+
+// 语言图标映射（官方品牌 SVG 图标）
+const languageIconMap: Record<
+    string,
+    {
+        icon: React.ComponentType<{ size?: number; color?: string }>;
+        color: string;
+    }
+> = {
+    php: { icon: SiPhp, color: '#777BB4' },
+    java: { icon: DiJava, color: '#007396' },
+    javascript: { icon: SiJavascript, color: '#F7DF1E' },
+    typescript: { icon: SiTypescript, color: '#3178C6' },
+    python: { icon: SiPython, color: '#3776AB' },
+    go: { icon: SiGo, color: '#00ADD8' },
+    golang: { icon: SiGo, color: '#00ADD8' },
+    ruby: { icon: SiRuby, color: '#CC342D' },
+    rust: { icon: SiRust, color: '#CE422B' },
+    c: { icon: SiC, color: '#555555' },
+    'c++': { icon: SiCplusplus, color: '#00599C' },
+    kotlin: { icon: SiKotlin, color: '#7F52FF' },
+    swift: { icon: SiSwift, color: '#FA7343' },
+};
+
+const renderTreeNodeTitle = (node: FilterTreeNode) => {
+    const isRuleNode = node.filterType === 'rule';
+    const isParentNode = node.children && node.children.length > 0;
+    const langKey = node.language?.toLowerCase();
+    const langConfig = langKey ? languageIconMap[langKey] : null;
+
+    return (
+        <div className="tree-node-title">
+            {isRuleNode && langConfig && (
+                <span
+                    className="lang-icon"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '2px',
+                    }}
+                    title={node.language}
+                >
+                    {React.createElement(langConfig.icon, {
+                        size: 15,
+                        color: langConfig.color,
+                    })}
+                </span>
+            )}
+            {!isRuleNode && (
+                <span className="icon-wrapper">
+                    <BugOutlined />
+                </span>
+            )}
+            <span
+                className="label-text"
+                style={{
+                    fontWeight: isParentNode ? 600 : isRuleNode ? 400 : 500,
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                }}
+            >
+                {node.title}
+            </span>
+            {node.count !== undefined && !isRuleNode && (
+                <span className="node-count-text">({node.count})</span>
+            )}
+        </div>
+    );
+};
+
+// 树节点标题渲染（带加载状态）
+const renderTreeNodeTitleWithLoading = (node: FilterTreeNode, loadingNodes: Set<string>) => {
+    const nodeKey = node.key as string;
+    const isLoading = loadingNodes.has(nodeKey);
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+            }}
+        >
+            {renderTreeNodeTitle(node)}
+            {isLoading && (
+                <Spin
+                    size="small"
+                    style={{ marginLeft: 'auto' }}
+                />
+            )}
+        </div>
+    );
+};
+
+const severityMap: Record<string, { label: string; color: string }> = {
+    critical: { label: '严重', color: 'red' },
+    high: { label: '高危', color: 'orange' },
+    medium: { label: '中危', color: 'gold' },
+    middle: { label: '中危', color: 'gold' },
+    low: { label: '低危', color: 'gold' },
+    info: { label: '信息', color: 'blue' },
+};
+
+// 左侧筛选树的节点类型
+type FilterTreeNodeType =
+    | 'category' // Level 1: 大分类（如 "OWASP Top 10"）
+    | 'group' // Level 2: 具体分类（如 "A01: Broken Access Control"）
+    | 'rule' // Level 3: 具体规则
+    | 'risk_type'; // 缺陷类型
+
+interface FilterTreeNode {
+    title: string;
+    key: string;
+    icon?: React.ReactNode;
+    children?: FilterTreeNode[];
+    filterType?: FilterTreeNodeType;
+    filterValue?: string;
+    count?: number;
+    language?: string; // 规则节点的语言
+    ruleId?: string; // 规则节点的ID
+    ruleName?: string; // 规则节点的名称
+    isLeaf?: boolean; // 是否为叶子节点
+}
 
 const RuleManagement: React.FC = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [data, setData] = useState<TSyntaxFlowRule[]>([]);
-    const [total, setTotal] = useState(0);
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
+    const [form] = Form.useForm();
+    const { isDark } = useTheme();
 
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [filters, setFilters] = useState<{
-        rule_name?: string;
-        language?: string;
-        severity?: string;
-        type?: string;
+    // 选中的规则详情
+    const [selectedRule, setSelectedRule] = useState<TSyntaxFlowRule | null>(
+        null,
+    );
+    const [loadingRuleDetail, setLoadingRuleDetail] = useState(false);
+    const [savingRule, setSavingRule] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [isAlertDescModified, setIsAlertDescModified] = useState(false);
+
+    // 告警信息状态
+    const [alertDescState, setAlertDescState] = useState<{
+        [key: string]: TSyntaxFlowAlertDesc;
+    }>({});
+    const [initialAlertDescState, setInitialAlertDescState] = useState<{
+        [key: string]: TSyntaxFlowAlertDesc;
     }>({});
 
+    // 筛选状态
+    const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+    const [filters, setFilters] = useState<{
+        rule_name?: string;
+        languages?: string[];
+        group_name?: string;
+        risk_type?: string;
+    }>({});
+
+    // Modal 状态
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [exportPassword, setExportPassword] = useState('');
@@ -74,6 +237,218 @@ const RuleManagement: React.FC = () => {
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [importLoading, setImportLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+
+    // 筛选选项和树（现在包含三层：分组 -> 分类 -> 规则）
+    const [filterTreeData, setFilterTreeData] = useState<FilterTreeNode[]>([]);
+    const [selectedFilterKeys, setSelectedFilterKeys] = useState<string[]>([]);
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+
+    // 规则缓存（避免重复请求）
+    const [rulesCache, setRulesCache] = useState<
+        Record<string, FilterTreeNode[]>
+    >({});
+
+    // 节点加载状态
+    const [loadingNodes] = useState<Set<string>>(new Set());
+
+    // Tab 视图模式：group（分组视图） 或 risk-type（缺陷类型视图）
+    const [viewMode, setViewMode] = useState<'group' | 'risk-type'>('group');
+
+    // 收集所有父节点的 key（用于默认展开）
+    const collectParentKeys = (nodes: FilterTreeNode[]): string[] => {
+        const keys: string[] = [];
+        const traverse = (nodeList: FilterTreeNode[]) => {
+            nodeList.forEach((node) => {
+                if (node.children && node.children.length > 0) {
+                    keys.push(node.key as string);
+                    traverse(node.children);
+                }
+            });
+        };
+        traverse(nodes);
+        return keys;
+    };
+
+    // 构建筛选树 - 三层结构（Level 1: 标准/分组，Level 2: 具体分类，Level 3: 规则）
+    const buildFilterTree = useCallback(
+        (
+            options: TSyntaxFlowRuleFilterOptions,
+            mode: 'group' | 'risk-type' = 'group',
+        ): FilterTreeNode[] => {
+            const treeNodes: FilterTreeNode[] = [];
+
+            // 如果是缺陷类型视图，只显示缺陷类型
+            if (mode === 'risk-type') {
+                if (options.risk_types && options.risk_types.length > 0) {
+                    return options.risk_types.map((rt) => ({
+                        title: rt.name || '',
+                        key: `risk-type-${rt.name}`,
+                        filterType: 'risk_type' as FilterTreeNodeType,
+                        filterValue: rt.name,
+                        count: rt.count,
+                        children: [],
+                        isLeaf: false,
+                    }));
+                }
+                return [];
+            }
+
+            // 1. 标准分组 - 按前缀分类
+            if (options.groups && options.groups.length > 0) {
+                // OWASP Top 10
+                const owaspGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('OWASP '),
+                );
+                if (owaspGroups.length > 0) {
+                    treeNodes.push({
+                        title: 'OWASP Top 10',
+                        key: 'category-owasp',
+                        filterType: 'category',
+                        children: owaspGroups.map((g) => ({
+                            title: g.name || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group',
+                            filterValue: g.name,
+                            count: g.count,
+                            children: [], // 设置空数组以显示展开图标
+                            isLeaf: false, // 明确标记为非叶子节点
+                        })),
+                    });
+                }
+
+                // CWE Top 25
+                const cweTopGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('CWE Top '),
+                );
+                if (cweTopGroups.length > 0) {
+                    treeNodes.push({
+                        title: 'CWE Top 25',
+                        key: 'category-cwe-top',
+                        filterType: 'category',
+                        children: cweTopGroups.map((g) => ({
+                            title: g.name || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group',
+                            filterValue: g.name,
+                            count: g.count,
+                            children: [],
+                            isLeaf: false,
+                        })),
+                    });
+                }
+
+                // 框架分组
+                const frameworkGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('Framework - '),
+                );
+                if (frameworkGroups.length > 0) {
+                    treeNodes.push({
+                        title: '框架/组件',
+                        key: 'category-frameworks',
+                        filterType: 'category',
+                        children: frameworkGroups.map((g) => ({
+                            title: g.name?.replace('Framework - ', '') || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group',
+                            filterValue: g.name,
+                            count: g.count,
+                            children: [],
+                            isLeaf: false,
+                        })),
+                    });
+                }
+
+                // 语言库分组
+                const langLibGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('Language Library - '),
+                );
+                if (langLibGroups.length > 0) {
+                    treeNodes.push({
+                        title: '语言库',
+                        key: 'category-lang-libs',
+                        filterType: 'category',
+                        children: langLibGroups.map((g) => ({
+                            title:
+                                g.name?.replace('Language Library - ', '') ||
+                                '',
+                            key: `group-${g.name}`,
+                            filterType: 'group',
+                            filterValue: g.name,
+                            count: g.count,
+                            children: [],
+                            isLeaf: false,
+                        })),
+                    });
+                }
+
+                // SCA 分组
+                const scaGroups = options.groups.filter((g) =>
+                    g.name?.startsWith('SCA - '),
+                );
+                if (scaGroups.length > 0) {
+                    treeNodes.push({
+                        title: 'SCA / 其他',
+                        key: 'category-sca',
+                        filterType: 'category',
+                        children: scaGroups.map((g) => ({
+                            title: g.name?.replace('SCA - ', '') || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group',
+                            filterValue: g.name,
+                            count: g.count,
+                            children: [],
+                            isLeaf: false,
+                        })),
+                    });
+                }
+
+                // 其他分组（不符合标准命名的）
+                const otherGroups = options.groups.filter(
+                    (g) =>
+                        !g.name?.startsWith('OWASP ') &&
+                        !g.name?.startsWith('CWE Top ') &&
+                        !g.name?.startsWith('Framework - ') &&
+                        !g.name?.startsWith('Language Library - ') &&
+                        !g.name?.startsWith('SCA - '),
+                );
+                if (otherGroups.length > 0) {
+                    treeNodes.push({
+                        title: '自定义分组',
+                        key: 'category-custom',
+                        filterType: 'category',
+                        children: otherGroups.map((g) => ({
+                            title: g.name || '',
+                            key: `group-${g.name}`,
+                            filterType: 'group',
+                            filterValue: g.name,
+                            count: g.count,
+                            children: [],
+                            isLeaf: false,
+                        })),
+                    });
+                }
+            }
+
+            return treeNodes;
+        },
+        [],
+    );
+
+    // 筛选选项和树数据
+    const [rawFilterOptions, setRawFilterOptions] =
+        useState<TSyntaxFlowRuleFilterOptions>({});
+
+    useEffect(() => {
+        getSyntaxFlowRuleFilterOptions().then((res) => {
+            if (res.code === 200 && res.data) {
+                setRawFilterOptions(res.data);
+                const treeData = buildFilterTree(res.data, viewMode);
+                setFilterTreeData(treeData);
+                // 默认展开所有父节点
+                setExpandedKeys(collectParentKeys(treeData));
+            }
+        });
+    }, [buildFilterTree, viewMode]);
 
     const handleExportClick = () => {
         setExportPassword('');
@@ -91,8 +466,6 @@ const RuleManagement: React.FC = () => {
             const res = await exportSyntaxFlowRules({
                 password: exportPassword,
             });
-
-            // res is the blob data because of axios interceptor
             const blob = new Blob([res as any], { type: 'application/zip' });
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -102,7 +475,6 @@ const RuleManagement: React.FC = () => {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-
             message.success('导出成功');
             setIsExportModalOpen(false);
         } catch (err) {
@@ -145,100 +517,296 @@ const RuleManagement: React.FC = () => {
             message.success('导入成功');
             setImportLoading(false);
             setIsImportModalOpen(false);
-            fetchList(1, limit);
+            setSelectedRule(null);
+            refreshFilterOptions();
         } catch (error) {
             setImportLoading(false);
             console.error(error);
         }
     };
 
-    const fetchList = useCallback(
-        async (p: number, l: number, currentFilters?: any) => {
-            setLoading(true);
+    // 加载特定分组下的规则列表（用于填充第三层节点）- 优化版本
+    const loadRulesForGroup = useCallback(
+        async (
+            groupName: string,
+            riskType?: string,
+        ): Promise<FilterTreeNode[]> => {
+            // 生成缓存 key
+            const cacheKey = `${groupName || ''}_${riskType || ''}_${selectedLanguages.join(',')}`;
+
+            // 检查缓存
+            if (rulesCache[cacheKey]) {
+                return rulesCache[cacheKey];
+            }
+
             try {
-                const res = await getSyntaxFlowRules({
-                    page: p,
-                    limit: l,
-                    ...currentFilters,
-                });
-                if (!res) {
-                    message.error('获取规则列表失败');
-                    return;
+                const params: any = { limit: 500 }; // 减少单次加载量
+                if (groupName) params.group_name = groupName;
+                if (riskType) params.risk_type = riskType;
+
+                let allRules: TSyntaxFlowRule[] = [];
+
+                if (selectedLanguages.length > 0) {
+                    // 并行加载多个语言的规则（性能优化）
+                    const promises = selectedLanguages.map((lang) =>
+                        getSyntaxFlowRules({ ...params, language: lang }).then(
+                            (res) => res.data?.list || [],
+                        ),
+                    );
+                    const results = await Promise.all(promises);
+                    allRules = results.flat();
+                } else {
+                    const res = await getSyntaxFlowRules(params);
+                    allRules = res.data?.list ?? [];
                 }
-                const list = res.data?.list ?? [];
-                setData(list);
-                setTotal(res.data?.pagemeta?.total ?? 0);
-                setPage(res.data?.pagemeta?.page ?? p);
-                setLimit(res.data?.pagemeta?.limit ?? l);
+
+                const ruleNodes = allRules.map((rule) => ({
+                    title: rule.title_zh || rule.title || rule.rule_name,
+                    key: `rule-${rule.rule_id || rule.rule_name}`,
+                    filterType: 'rule' as FilterTreeNodeType,
+                    filterValue: rule.rule_name,
+                    language: rule.language,
+                    ruleId: rule.rule_id,
+                    ruleName: rule.rule_name,
+                    isLeaf: true,
+                }));
+
+                // 缓存结果
+                setRulesCache((prev) => ({ ...prev, [cacheKey]: ruleNodes }));
+
+                return ruleNodes;
             } catch (err) {
-                // axios interceptor already shows message; extra fallback
-                message.destroy();
-                message.error('获取规则列表出错');
-            } finally {
-                setLoading(false);
+                message.error('加载规则列表失败');
+                return [];
             }
         },
-        [],
+        [selectedLanguages, rulesCache],
     );
 
-    useEffect(() => {
-        fetchList(1, 10, filters);
-    }, [fetchList, filters]);
-
-    const handleTableChange = (pagination: TablePaginationConfig) => {
-        const nextPage = pagination.current ?? 1;
-        const nextLimit = pagination.pageSize ?? 10;
-        fetchList(Number(nextPage), Number(nextLimit), filters);
-    };
-
-    const handleSearch = (value: string) => {
-        setFilters((prev) => ({ ...prev, rule_name: value }));
-    };
-
-    const handleFilterChange = (key: string, value: any) => {
-        setFilters((prev) => ({ ...prev, [key]: value }));
-    };
-
-    const handleBatchDelete = async () => {
-        if (selectedRowKeys.length === 0) return;
-
-        Modal.confirm({
-            title: `确认删除选中的 ${selectedRowKeys.length} 个规则？`,
-            content: '此操作不可恢复',
-            okText: '删除',
-            okButtonProps: { danger: true },
-            onOk: async () => {
-                try {
-                    const promises = selectedRowKeys.map((id) =>
-                        deleteSyntaxFlowRule({ rule_id: String(id) }),
-                    );
-                    await Promise.all(promises);
-                    message.success('批量删除成功');
-                    setSelectedRowKeys([]);
-                    fetchList(page, limit, filters);
-                } catch (e) {
-                    message.error('批量删除过程中出现错误');
-                }
-            },
+    // 更新树节点的子节点
+    const updateTreeData = (
+        list: FilterTreeNode[],
+        key: React.Key,
+        children: FilterTreeNode[],
+    ): FilterTreeNode[] => {
+        return list.map((node) => {
+            if (node.key === key) {
+                return { ...node, children };
+            }
+            if (node.children) {
+                return {
+                    ...node,
+                    children: updateTreeData(node.children, key, children),
+                };
+            }
+            return node;
         });
     };
 
-    const handleDelete = async (record: TSyntaxFlowRule) => {
-        try {
-            const params: { rule_name?: string; rule_id?: string } = {};
-            if (record.rule_id) params.rule_id = record.rule_id;
-            else params.rule_name = record.rule_name;
+    // 加载规则详情
+    const loadRuleDetail = useCallback(
+        async (ruleName: string, ruleId?: string) => {
+            setLoadingRuleDetail(true);
+            try {
+                const res = await fetchSyntaxFlowRule({
+                    rule_name: ruleName,
+                    rule_id: ruleId,
+                });
+                if (res.code === 200 && res.data) {
+                    setSelectedRule(res.data);
+                    // 初始化告警信息
+                    const alertDesc = res.data.alert_desc || {};
+                    setAlertDescState(alertDesc);
+                    setInitialAlertDescState(JSON.parse(JSON.stringify(alertDesc)));
+                    // 重置脏状态
+                    setIsDirty(false);
+                    setIsAlertDescModified(false);
+                    // 填充表单
+                    form.setFieldsValue({
+                        title: res.data.title,
+                        title_zh: res.data.title_zh,
+                        description: res.data.description,
+                        solution: res.data.solution,
+                        severity: res.data.severity,
+                        risk_type: res.data.risk_type,
+                        cwe: res.data.cwe,
+                        language: res.data.language,
+                    });
+                }
+            } catch (err) {
+                message.error('加载规则详情失败');
+            } finally {
+                setLoadingRuleDetail(false);
+            }
+        },
+        [form],
+    );
 
-            const res = await deleteSyntaxFlowRule(params);
-            if (res) {
-                message.success('删除成功');
-                fetchList(page, limit, filters);
+    // 监听 alertDescState 变化，设置脏状态
+    useEffect(() => {
+        if (!selectedRule) {
+            setIsDirty(false);
+            setIsAlertDescModified(false);
+            return;
+        }
+        
+        // 比较当前状态与初始状态
+        const hasChanges = JSON.stringify(alertDescState) !== JSON.stringify(initialAlertDescState);
+        setIsDirty(hasChanges);
+        setIsAlertDescModified(hasChanges);
+    }, [alertDescState, initialAlertDescState, selectedRule]);
+
+    const handleSearch = (value: string) => {
+        const newFilters = { ...filters, rule_name: value };
+        setFilters(newFilters);
+        // TODO: 可以在这里添加搜索逻辑，过滤树节点
+    };
+
+    // 树节点选择处理
+    const handleTreeSelect = async (keys: any[], info: any) => {
+        const node = info.node as FilterTreeNode;
+
+        // 如果点击的是规则节点（叶子节点），加载规则详情
+        if (node.filterType === 'rule' && node.ruleName) {
+            setSelectedFilterKeys(keys as string[]);
+            loadRuleDetail(node.ruleName, node.ruleId);
+            return;
+        }
+
+        // 如果点击的是分类或分组节点（非规则节点），切换展开/折叠状态
+        if (
+            node.filterType === 'category' ||
+            node.filterType === 'group' ||
+            node.filterType === 'risk_type'
+        ) {
+            const nodeKey = node.key as string;
+            const isExpanded = expandedKeys.includes(nodeKey);
+
+            if (isExpanded) {
+                // 折叠节点
+                setExpandedKeys(expandedKeys.filter((k) => k !== nodeKey));
             } else {
-                message.error('删除失败');
+                // 展开节点
+                const newExpandedKeys = [...expandedKeys, nodeKey];
+                setExpandedKeys(newExpandedKeys);
+
+                // 如果是 group 或 risk_type 节点，且还没有加载子节点，则加载规则列表
+                if (
+                    (node.filterType === 'group' ||
+                        node.filterType === 'risk_type') &&
+                    (!node.children || node.children.length === 0)
+                ) {
+                    try {
+                        const rules = await loadRulesForGroup(
+                            node.filterType === 'group'
+                                ? node.filterValue || ''
+                                : '',
+                            node.filterType === 'risk_type'
+                                ? node.filterValue
+                                : undefined,
+                        );
+                        setFilterTreeData((prev) =>
+                            updateTreeData(prev, node.key, rules),
+                        );
+                    } catch (err) {
+                        message.error('加载规则失败');
+                    }
+                }
+            }
+        }
+    };
+
+    // 树节点展开处理（懒加载规则列表）
+    const handleTreeExpand = async (keys: React.Key[], info: any) => {
+        setExpandedKeys(keys as string[]);
+
+        // 如果展开的是第二层节点（group），且还没有加载子节点，则加载规则列表
+        if (info.expanded && info.node) {
+            const node = info.node as FilterTreeNode;
+
+            // 检查是否是 group 或 risk_type 节点，且子节点未加载（undefined 或空数组）
+            if (
+                (node.filterType === 'group' ||
+                    node.filterType === 'risk_type') &&
+                (!node.children || node.children.length === 0)
+            ) {
+                try {
+                    const rules = await loadRulesForGroup(
+                        node.filterType === 'group'
+                            ? node.filterValue || ''
+                            : '',
+                        node.filterType === 'risk_type'
+                            ? node.filterValue
+                            : undefined,
+                    );
+                    setFilterTreeData((prev) =>
+                        updateTreeData(prev, node.key, rules),
+                    );
+                } catch (err) {
+                    message.error('加载规则失败');
+                }
+            }
+        }
+    };
+
+    const handleCollapseAll = () => {
+        setExpandedKeys([]);
+    };
+
+    // 保存规则修改
+    const handleSaveRule = async () => {
+        if (!selectedRule) return;
+
+        try {
+            setSavingRule(true);
+
+            // 构建请求参数
+            const params: any = {
+                rule_name: selectedRule.rule_name,
+                rule_id: selectedRule.rule_id,
+            };
+
+            // 如果只修改了漏洞信息，只提交 alert_desc
+            if (isAlertDescModified) {
+                params.alert_desc = alertDescState;
+            } else {
+                // 如果修改了基础信息，提交所有字段
+                const values = await form.validateFields();
+                Object.assign(params, values);
+                params.alert_desc = alertDescState;
+            }
+
+            const res = await updateSyntaxFlowRuleMetadata(params);
+
+            if (res.code === 200) {
+                message.success('保存成功');
+                // 刷新规则详情
+                loadRuleDetail(selectedRule.rule_name, selectedRule.rule_id);
+            } else {
+                message.error(res.msg || '保存失败');
             }
         } catch (err) {
-            message.destroy();
-            message.error('删除失败');
+            message.error('保存失败');
+        } finally {
+            setSavingRule(false);
+        }
+    };
+
+    // 重置表单
+    const handleResetForm = () => {
+        if (selectedRule) {
+            form.setFieldsValue({
+                title: selectedRule.title,
+                title_zh: selectedRule.title_zh,
+                description: selectedRule.description,
+                solution: selectedRule.solution,
+                severity: selectedRule.severity,
+                risk_type: selectedRule.risk_type,
+                cwe: selectedRule.cwe,
+                language: selectedRule.language,
+            });
+            // 重置告警信息
+            setAlertDescState(selectedRule.alert_desc || {});
         }
     };
 
@@ -255,7 +823,9 @@ const RuleManagement: React.FC = () => {
                     });
                     if (res) {
                         message.success('规则已清空');
-                        fetchList(1, limit);
+                        setSelectedRule(null);
+                        // 刷新筛选选项
+                        refreshFilterOptions();
                     } else {
                         message.error('清空失败');
                     }
@@ -288,214 +858,902 @@ const RuleManagement: React.FC = () => {
         });
     };
 
-    const handleEdit = (record: TSyntaxFlowRule) => {
-        if (!record.rule_id && !record.rule_name) {
-            message.warning('该规则缺少唯一标识，无法编辑');
-            return;
-        }
+    // 跳转到独立的规则编辑器（用于完整编辑）
+    const handleEditInEditor = () => {
+        if (!selectedRule) return;
         navigate(getRoutePath(RouteKey.RULE_EDITOR), {
             state: {
                 mode: 'edit',
-                rule_id: record.rule_id,
-                rule_name: record.rule_name,
+                rule_id: selectedRule.rule_id,
+                rule_name: selectedRule.rule_name,
             },
         });
     };
 
+    // 创建新规则
     const handleCreate = () => {
         navigate(getRoutePath(RouteKey.RULE_EDITOR), {
             state: { mode: 'add' },
         });
     };
 
-    const columns: ColumnsType<TSyntaxFlowRule> = [
-        {
-            title: '规则名',
-            dataIndex: 'rule_name',
-            key: 'rule_name',
-            render: (text, record) => (
-                <a onClick={() => handleEdit(record)} className="font-medium">
-                    {text}
-                </a>
-            ),
-        },
-        {
-            title: '语言',
-            dataIndex: 'language',
-            key: 'language',
-            width: 120,
-            render: (text) => (text ? <Tag>{text}</Tag> : '-'),
-        },
-        {
-            title: '严重度',
-            dataIndex: 'severity',
-            key: 'severity',
-            width: 100,
-            render: (val) => {
-                const conf = severityMap[val?.toLowerCase()] || {
-                    label: val || '-',
-                    color: 'default',
-                };
-                return <Tag color={conf.color}>{conf.label}</Tag>;
-            },
-        },
-        {
-            title: '类型',
-            dataIndex: 'type',
-            key: 'type',
-            width: 120,
-            render: (text) => text || '-',
-        },
-        {
-            title: '标签',
-            dataIndex: 'tag',
-            key: 'tag',
-            ellipsis: true,
-            render: (text) => (text ? <Tag>{text}</Tag> : '-'),
-        },
-        {
-            title: '操作',
-            key: 'action',
-            width: 150,
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button
-                        type="link"
-                        size="small"
-                        onClick={() => handleEdit(record)}
-                        style={{ padding: 0 }}
-                    >
-                        编辑
-                    </Button>
-                    <Popconfirm
-                        title="确定删除吗？"
-                        onConfirm={() => handleDelete(record)}
-                    >
-                        <Button
-                            type="link"
-                            size="small"
-                            danger
-                            style={{ padding: 0 }}
-                        >
-                            删除
-                        </Button>
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ];
+    // 删除当前选中的规则
+    const handleDeleteSelectedRule = () => {
+        if (!selectedRule) return;
 
-    const rowSelection = {
-        selectedRowKeys,
-        onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
+        Modal.confirm({
+            title: '确认删除该规则？',
+            content: `规则名称: ${selectedRule.title_zh || selectedRule.rule_name}`,
+            okText: '删除',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                try {
+                    await deleteSyntaxFlowRule({
+                        rule_id: selectedRule.rule_id,
+                        rule_name: selectedRule.rule_name,
+                    });
+                    message.success('删除成功');
+                    setSelectedRule(null);
+                    refreshFilterOptions();
+                } catch (err) {
+                    message.error('删除失败');
+                }
+            },
+        });
+    };
+
+    // 刷新筛选选项
+    const refreshFilterOptions = () => {
+        getSyntaxFlowRuleFilterOptions().then((res) => {
+            if (res.code === 200 && res.data) {
+                setRawFilterOptions(res.data);
+                const treeData = buildFilterTree(res.data, viewMode);
+                setFilterTreeData(treeData);
+                setExpandedKeys(collectParentKeys(treeData));
+            }
+        });
+    };
+
+    // 语言标准化显示映射（行业通用格式）
+    const standardizeLanguage = (lang: string): string => {
+        const langLower = lang.toLowerCase();
+        const langMap: Record<string, string> = {
+            php: 'PHP',
+            java: 'Java',
+            javascript: 'JavaScript',
+            python: 'Python',
+            golang: 'Go',
+            go: 'Go',
+            c: 'C',
+            'c++': 'C++',
+            'c#': 'C#',
+            typescript: 'TypeScript',
+            ruby: 'Ruby',
+            rust: 'Rust',
+            kotlin: 'Kotlin',
+            swift: 'Swift',
+        };
+        return (
+            langMap[langLower] || lang.charAt(0).toUpperCase() + lang.slice(1)
+        );
     };
 
     return (
-        <div className="p-4">
-            <Card>
-                <div className="flex justify-between items-center mb-4">
-                    <div className="text-[18px] font-bold">
-                        静态分析 · 规则管理
+        <Layout className="rule-management-layout">
+            {/* 左侧导航栏 */}
+            <Sider
+                width={320}
+                className="filter-sider"
+                theme={isDark ? 'dark' : 'light'}
+                style={{ position: 'relative' }}
+            >
+                {/* 顶部筛选区 */}
+                <div
+                    className="sider-header"
+                    style={{
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        gap: '12px',
+                        padding: '16px',
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <span className="title">规则导航</span>
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<ShrinkOutlined />}
+                            onClick={handleCollapseAll}
+                            disabled={expandedKeys.length === 0}
+                            title="收起所有分组"
+                        />
                     </div>
-                    <div>
-                        <Space>
-                            <Input.Search
-                                placeholder="规则名"
-                                allowClear
-                                onSearch={handleSearch}
-                                style={{ width: 160 }}
-                            />
-                            <Select
-                                placeholder="语言"
-                                allowClear
-                                showSearch
-                                style={{ width: 120 }}
-                                onChange={(val) =>
-                                    handleFilterChange('language', val)
-                                }
-                                options={languageOptions}
-                            />
-                            <Select
-                                placeholder="严重度"
-                                allowClear
-                                style={{ width: 100 }}
-                                onChange={(v) =>
-                                    handleFilterChange('severity', v)
-                                }
-                                options={Object.entries(severityMap).map(
-                                    ([k, v]) => ({ label: v.label, value: k }),
-                                )}
-                            />
-                            <Button onClick={handleImportClick}>
-                                导入规则
-                            </Button>
-                            <Button onClick={handleExportClick}>
-                                导出规则
-                            </Button>
-                            <Button danger onClick={handleClearRules}>
-                                清空规则
-                            </Button>
-                            <Button
-                                type="default"
-                                style={{
-                                    backgroundColor: '#52c41a',
-                                    borderColor: '#52c41a',
-                                    color: '#fff',
-                                }}
-                                onClick={handlePublishSnapshot}
+
+                    {/* 语言筛选（多选） */}
+                    <Select
+                        mode="multiple"
+                        placeholder="筛选语言"
+                        value={selectedLanguages}
+                        onChange={(values) => {
+                            setSelectedLanguages(values);
+                            // 语言变化时，清空缓存和已加载的规则节点
+                            setRulesCache({});
+                            const treeData = buildFilterTree(
+                                rawFilterOptions,
+                                viewMode,
+                            );
+                            setFilterTreeData(treeData);
+                        }}
+                        style={{ width: '100%' }}
+                        allowClear
+                        maxTagCount="responsive"
+                    >
+                        {rawFilterOptions.languages?.map((lang) => (
+                            <Select.Option
+                                key={lang.name}
+                                value={lang.name || ''}
                             >
-                                发布快照
-                            </Button>
-                            <Button type="primary" onClick={handleCreate}>
-                                新增规则
-                            </Button>
-                        </Space>
+                                {standardizeLanguage(lang.name || '')} (
+                                {lang.count})
+                            </Select.Option>
+                        ))}
+                    </Select>
+
+                    {/* 搜索框 */}
+                    <Input.Search
+                        placeholder="搜索规则名称"
+                        allowClear
+                        onSearch={handleSearch}
+                    />
+
+                    {/* 导入 / 新增规则 */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <Button
+                            icon={<ImportOutlined />}
+                            onClick={handleImportClick}
+                            size="middle"
+                            style={{ flex: 1 }}
+                        >
+                            导入
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleCreate}
+                            size="middle"
+                            style={{ flex: 1 }}
+                        >
+                            新增
+                        </Button>
                     </div>
                 </div>
 
-                {selectedRowKeys.length > 0 && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded flex items-center justify-between">
-                        <span>
-                            已选择{' '}
-                            <span style={{ fontWeight: 600, color: '#1890ff' }}>
-                                {selectedRowKeys.length}
-                            </span>{' '}
-                            项
-                        </span>
-                        <Space>
-                            <Button
-                                danger
-                                size="small"
-                                onClick={handleBatchDelete}
-                            >
-                                批量删除
-                            </Button>
-                            <Button
-                                size="small"
-                                onClick={() => setSelectedRowKeys([])}
-                            >
-                                取消选择
-                            </Button>
-                        </Space>
-                    </div>
-                )}
-
-                <Table<TSyntaxFlowRule>
-                    rowSelection={rowSelection}
-                    columns={columns}
-                    dataSource={data}
-                    rowKey={(r) => r.rule_id ?? r.rule_name}
-                    loading={loading}
-                    pagination={{
-                        current: page,
-                        pageSize: limit,
-                        total,
-                        showSizeChanger: true,
+                {/* 视图切换 Tab */}
+                <div
+                    style={{
+                        padding: '0 16px 8px 16px',
+                        borderBottom:
+                            '1px solid var(--irify-border-color, #e8e8e8)',
+                        flexShrink: 0,
                     }}
-                    onChange={handleTableChange}
-                />
-            </Card>
+                >
+                    <Tabs
+                        activeKey={viewMode}
+                        onChange={(key) => {
+                            setViewMode(key as 'group' | 'risk-type');
+                            // 切换视图时清空缓存和选中状态
+                            setRulesCache({});
+                            setSelectedFilterKeys([]);
+                            setSelectedRule(null);
+                        }}
+                        size="small"
+                        items={[
+                            {
+                                key: 'group',
+                                label: '分组视图',
+                            },
+                            {
+                                key: 'risk-type',
+                                label: '缺陷类型',
+                            },
+                        ]}
+                    />
+                </div>
 
+                {/* 规则树 */}
+                <div className="filter-tree-container">
+                    {filterTreeData.length > 0 ? (
+                        <Tree
+                            treeData={filterTreeData}
+                            selectedKeys={selectedFilterKeys}
+                            expandedKeys={expandedKeys}
+                            onSelect={handleTreeSelect}
+                            onExpand={handleTreeExpand}
+                            blockNode
+                            showIcon={false}
+                            titleRender={(node) => renderTreeNodeTitleWithLoading(node as FilterTreeNode, loadingNodes)}
+                            virtual={false}
+                        />
+                    ) : (
+                        <Empty description="暂无规则" style={{ margin: 0 }} />
+                    )}
+                </div>
+
+                {/* 底部操作栏 */}
+                <div
+                    className="sider-footer"
+                    style={{
+                        padding: '12px 16px',
+                        borderTop:
+                            '1px solid var(--irify-border-color, #e8e8e8)',
+                        flexShrink: 0,
+                        background: 'var(--irify-bg-container, #fff)',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Button
+                        type="primary"
+                        icon={<RocketOutlined />}
+                        onClick={handlePublishSnapshot}
+                        style={{ flex: 1 }}
+                        size="middle"
+                    >
+                        发布快照
+                    </Button>
+                    <Dropdown
+                        menu={{
+                            items: [
+                                {
+                                    key: 'export',
+                                    label: '导出规则',
+                                    icon: <ExportOutlined />,
+                                    onClick: handleExportClick,
+                                },
+                                {
+                                    type: 'divider',
+                                },
+                                {
+                                    key: 'clear',
+                                    label: '清空规则库',
+                                    icon: <DeleteOutlined />,
+                                    danger: true,
+                                    onClick: handleClearRules,
+                                },
+                            ],
+                        }}
+                        trigger={['click']}
+                        placement="topRight"
+                    >
+                        <Button
+                            icon={<SettingOutlined />}
+                            size="middle"
+                            title="规则管理"
+                        />
+                    </Dropdown>
+                </div>
+            </Sider>
+
+            {/* 右侧详情/编辑区 */}
+            <Content
+                className="rule-content"
+                style={{
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: isDark
+                        ? 'var(--irify-bg-base)'
+                        : '#F9FAFB',
+                }}
+            >
+                {/* 内容区域 */}
+                <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+                    {!selectedRule ? (
+                        // 空状态
+                        <div
+                            style={{
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description={
+                                    <div>
+                                        <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+                                            请选择左侧规则进行查看或编辑
+                                        </div>
+                                        <div
+                                            style={{
+                                                fontSize: '14px',
+                                                color: isDark ? 'rgba(255, 255, 255, 0.45)' : '#8c8c8c',
+                                            }}
+                                        >
+                                            或使用顶部工具栏的&ldquo;新增规则&rdquo;按钮创建规则
+                                        </div>
+                                    </div>
+                                }
+                            />
+                        </div>
+                    ) : (
+                        // 规则详情编辑区
+                        <div
+                            style={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                            }}
+                        >
+                            {/* 顶部头信息 */}
+                            <Card
+                                style={{
+                                    marginBottom: '16px',
+                                    borderRadius: '12px',
+                                    boxShadow: isDark
+                                        ? '0 1px 3px 0 rgba(0, 0, 0, 0.3)'
+                                        : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+                                    border: isDark
+                                        ? '1px solid var(--irify-border)'
+                                        : '1px solid rgba(0, 0, 0, 0.06)',
+                                    background: isDark
+                                        ? 'var(--irify-bg-container)'
+                                        : undefined,
+                                }}
+                                bodyStyle={{ padding: '20px 24px' }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'flex-start',
+                                        gap: '24px',
+                                    }}
+                                >
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        {/* 标题和标签徽章（同一行） */}
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                marginBottom: '8px',
+                                                flexWrap: 'wrap',
+                                            }}
+                                        >
+                                            <h2
+                                                style={{
+                                                    fontSize: '20px',
+                                                    fontWeight: 600,
+                                                    margin: 0,
+                                                    lineHeight: 1.4,
+                                                }}
+                                            >
+                                                {selectedRule.title_zh ||
+                                                    selectedRule.title ||
+                                                    selectedRule.rule_name}
+                                            </h2>
+
+                                            {/* 标签徽章（缩小版，移到标题右侧） */}
+                                            {selectedRule.language && (
+                                                <Tag
+                                                    color="blue"
+                                                    style={{
+                                                        fontSize: '11px',
+                                                        padding: '0 6px',
+                                                        borderRadius: '3px',
+                                                        marginLeft: 0,
+                                                        height: '20px',
+                                                        lineHeight: '20px',
+                                                    }}
+                                                >
+                                                    {standardizeLanguage(
+                                                        selectedRule.language,
+                                                    )}
+                                                </Tag>
+                                            )}
+                                            {selectedRule.severity && (
+                                                <Tag
+                                                    color={
+                                                        severityMap[
+                                                            selectedRule.severity?.toLowerCase()
+                                                        ]?.color || 'default'
+                                                    }
+                                                    style={{
+                                                        fontSize: '11px',
+                                                        padding: '0 6px',
+                                                        borderRadius: '3px',
+                                                        marginLeft: 0,
+                                                        height: '20px',
+                                                        lineHeight: '20px',
+                                                    }}
+                                                >
+                                                    {severityMap[
+                                                        selectedRule.severity?.toLowerCase()
+                                                    ]?.label ||
+                                                        selectedRule.severity}
+                                                </Tag>
+                                            )}
+                                            {selectedRule.risk_type && (
+                                                <Tag
+                                                    style={{
+                                                        fontSize: '11px',
+                                                        padding: '0 6px',
+                                                        borderRadius: '3px',
+                                                        marginLeft: 0,
+                                                        height: '20px',
+                                                        lineHeight: '20px',
+                                                    }}
+                                                >
+                                                    {selectedRule.risk_type}
+                                                </Tag>
+                                            )}
+                                            {selectedRule.cwe
+                                                ?.slice(0, 2)
+                                                .map((cwe) => (
+                                                    <Tag
+                                                        key={cwe}
+                                                        color="purple"
+                                                        style={{
+                                                            fontSize: '11px',
+                                                            padding: '0 6px',
+                                                            borderRadius: '3px',
+                                                            marginLeft: 0,
+                                                            height: '20px',
+                                                            lineHeight: '20px',
+                                                        }}
+                                                    >
+                                                        {cwe}
+                                                    </Tag>
+                                                ))}
+                                            {selectedRule.cwe &&
+                                                selectedRule.cwe.length > 2 && (
+                                                    <Tag
+                                                        style={{
+                                                            fontSize: '11px',
+                                                            padding: '0 6px',
+                                                            borderRadius: '3px',
+                                                            marginLeft: 0,
+                                                            height: '20px',
+                                                            lineHeight: '20px',
+                                                        }}
+                                                    >
+                                                        +
+                                                        {selectedRule.cwe
+                                                            .length - 2}
+                                                    </Tag>
+                                                )}
+                                        </div>
+
+                                        {/* UUID（第二行，独立） */}
+                                        <span
+                                            className="uuid-container"
+                                            style={{
+                                                fontSize: '11px',
+                                                color: isDark
+                                                    ? 'rgba(255, 255, 255, 0.45)'
+                                                    : '#bfbfbf',
+                                                fontFamily: 'monospace',
+                                                cursor: 'pointer',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                padding: '2px 8px',
+                                                background: isDark
+                                                    ? 'rgba(255, 255, 255, 0.05)'
+                                                    : 'rgba(0,0,0,0.015)',
+                                                borderRadius: '4px',
+                                                transition: 'all 0.2s',
+                                                position: 'relative',
+                                            }}
+                                            onClick={() => {
+                                                const uuid =
+                                                    selectedRule.rule_id ||
+                                                    selectedRule.rule_name;
+                                                navigator.clipboard.writeText(
+                                                    uuid,
+                                                );
+                                                message.success('已复制 UUID');
+                                            }}
+                                            title="点击复制"
+                                        >
+                                            {selectedRule.rule_id ||
+                                                selectedRule.rule_name}
+                                            <CopyOutlined
+                                                className="copy-icon"
+                                                style={{
+                                                    fontSize: '10px',
+                                                    opacity: 0,
+                                                    transition: 'opacity 0.2s',
+                                                }}
+                                            />
+                                        </span>
+                                    </div>
+
+                                    {/* 操作按钮 */}
+                                    <Space>
+                                        <Button
+                                            onClick={handleResetForm}
+                                            size="middle"
+                                        >
+                                            重置
+                                        </Button>
+                                        <Button
+                                            onClick={handleEditInEditor}
+                                            size="middle"
+                                        >
+                                            完整编辑
+                                        </Button>
+                                        <Button
+                                            onClick={handleDeleteSelectedRule}
+                                            danger
+                                            size="middle"
+                                            ghost
+                                        >
+                                            删除
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={handleSaveRule}
+                                            loading={savingRule}
+                                            size="middle"
+                                            style={{
+                                                backgroundColor: isDirty
+                                                    ? (isDark ? '#722ed1' : '#722ed1')
+                                                    : undefined,
+                                                borderColor: isDirty
+                                                    ? '#722ed1'
+                                                    : undefined,
+                                                animation: isDirty
+                                                    ? 'pulse 2s ease-in-out infinite'
+                                                    : 'none',
+                                            }}
+                                        >
+                                            保存修改{isDirty && ' *'}
+                                        </Button>
+                                    </Space>
+                                </div>
+                            </Card>
+
+                            {/* 内容编辑区 */}
+                            <Card
+                                style={{
+                                    flex: 1,
+                                    overflow: 'hidden',
+                                    borderRadius: '12px',
+                                    boxShadow: isDark
+                                        ? '0 1px 3px 0 rgba(0, 0, 0, 0.3)'
+                                        : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+                                    border: isDark
+                                        ? '1px solid var(--irify-border)'
+                                        : '1px solid rgba(0, 0, 0, 0.06)',
+                                    background: isDark
+                                        ? 'var(--irify-bg-container)'
+                                        : undefined,
+                                }}
+                                bodyStyle={{
+                                    height: '100%',
+                                    padding: '16px',
+                                    overflow: 'auto',
+                                }}
+                            >
+                                <Spin spinning={loadingRuleDetail}>
+                                    <Tabs
+                                        defaultActiveKey="basic"
+                                        items={[
+                                            {
+                                                key: 'basic',
+                                                label: (
+                                                    <span>
+                                                        <FileTextOutlined />{' '}
+                                                        基础信息
+                                                    </span>
+                                                ),
+                                                children: (
+                                                    <div
+                                                        style={{
+                                                            padding: '8px 0',
+                                                        }}
+                                                    >
+                                                        {/* 基本属性卡片 */}
+                                                        <div
+                                                            style={{
+                                                                background: isDark
+                                                                    ? 'var(--irify-bg-container)'
+                                                                    : '#fff',
+                                                                padding: '20px',
+                                                                borderRadius:
+                                                                    '8px',
+                                                                boxShadow: isDark
+                                                                    ? '0 1px 2px rgba(0,0,0,0.3)'
+                                                                    : '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: isDark
+                                                                    ? '1px solid var(--irify-border)'
+                                                                    : '1px solid rgba(0,0,0,0.06)',
+                                                                marginBottom:
+                                                                    '16px',
+                                                            }}
+                                                        >
+                                                            <Descriptions
+                                                                bordered
+                                                                column={2}
+                                                                size="middle"
+                                                            >
+                                                                <Descriptions.Item
+                                                                    label="标题（英文）"
+                                                                    span={1}
+                                                                >
+                                                                    {selectedRule.title ||
+                                                                        '-'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item
+                                                                    label="标题（中文）"
+                                                                    span={1}
+                                                                >
+                                                                    {selectedRule.title_zh ||
+                                                                        '-'}
+                                                                </Descriptions.Item>
+                                                    <Descriptions.Item label="严重度">
+                                                        <Tag
+                                                            color={
+                                                                (selectedRule.severity &&
+                                                                    severityMap[
+                                                                        selectedRule.severity.toLowerCase()
+                                                                    ]?.color) ||
+                                                                'default'
+                                                            }
+                                                        >
+                                                            {(selectedRule.severity &&
+                                                                severityMap[
+                                                                    selectedRule.severity.toLowerCase()
+                                                                ]?.label) ||
+                                                                selectedRule.severity ||
+                                                                '-'}
+                                                        </Tag>
+                                                    </Descriptions.Item>
+                                                                <Descriptions.Item label="风险类型">
+                                                                    {selectedRule.risk_type ||
+                                                                        '-'}
+                                                                </Descriptions.Item>
+                                                                <Descriptions.Item
+                                                                    label="CWE"
+                                                                    span={2}
+                                                                >
+                                                                    {selectedRule.cwe &&
+                                                                    selectedRule
+                                                                        .cwe
+                                                                        .length >
+                                                                        0 ? (
+                                                                        <Space
+                                                                            wrap
+                                                                        >
+                                                                            {selectedRule.cwe.map(
+                                                                                (
+                                                                                    cwe,
+                                                                                ) => (
+                                                                                    <Tag
+                                                                                        key={
+                                                                                            cwe
+                                                                                        }
+                                                                                        color="purple"
+                                                                                    >
+                                                                                        {
+                                                                                            cwe
+                                                                                        }
+                                                                                    </Tag>
+                                                                                ),
+                                                                            )}
+                                                                        </Space>
+                                                                    ) : (
+                                                                        '-'
+                                                                    )}
+                                                                </Descriptions.Item>
+                                                            </Descriptions>
+                                                        </div>
+
+                                                        {/* 描述卡片 */}
+                                                        <div
+                                                            style={{
+                                                                background: isDark
+                                                                    ? 'var(--irify-bg-container)'
+                                                                    : '#fff',
+                                                                padding: '20px',
+                                                                borderRadius:
+                                                                    '8px',
+                                                                boxShadow: isDark
+                                                                    ? '0 1px 2px rgba(0,0,0,0.3)'
+                                                                    : '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: isDark
+                                                                    ? '1px solid var(--irify-border)'
+                                                                    : '1px solid rgba(0,0,0,0.06)',
+                                                                marginBottom:
+                                                                    '16px',
+                                                            }}
+                                                        >
+                                                            <h3
+                                                                style={{
+                                                                    fontSize:
+                                                                        '16px',
+                                                                    fontWeight: 600,
+                                                                    marginTop: 0,
+                                                                    marginBottom:
+                                                                        '12px',
+                                                                    paddingBottom: '12px',
+                                                                    borderBottom: isDark
+                                                                        ? '1px solid rgba(255, 255, 255, 0.12)'
+                                                                        : '1px solid #E8E8E8',
+                                                                    color: isDark
+                                                                        ? 'var(--irify-text)'
+                                                                        : 'rgba(0,0,0,0.85)',
+                                                                }}
+                                                            >
+                                                                描述
+                                                            </h3>
+                                                            <div
+                                                                className="rule-content-markdown"
+                                                                style={{
+                                                                    maxHeight:
+                                                                        '300px',
+                                                                    overflow:
+                                                                        'auto',
+                                                                    lineHeight:
+                                                                        '1.6',
+                                                                }}
+                                                            >
+                                                                <Markdown>
+                                                                    {selectedRule.description ||
+                                                                        '*暂无内容*'}
+                                                                </Markdown>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* 修复建议卡片 */}
+                                                        <div
+                                                            style={{
+                                                                background: isDark
+                                                                    ? 'var(--irify-bg-container)'
+                                                                    : '#fff',
+                                                                padding: '20px',
+                                                                borderRadius:
+                                                                    '8px',
+                                                                boxShadow: isDark
+                                                                    ? '0 1px 2px rgba(0,0,0,0.3)'
+                                                                    : '0 1px 2px rgba(0,0,0,0.05)',
+                                                                border: isDark
+                                                                    ? '1px solid var(--irify-border)'
+                                                                    : '1px solid rgba(0,0,0,0.06)',
+                                                            }}
+                                                        >
+                                                            <h3
+                                                                style={{
+                                                                    fontSize:
+                                                                        '16px',
+                                                                    fontWeight: 600,
+                                                                    marginTop: 0,
+                                                                    marginBottom:
+                                                                        '12px',
+                                                                    paddingBottom: '12px',
+                                                                    borderBottom: isDark
+                                                                        ? '1px solid rgba(255, 255, 255, 0.12)'
+                                                                        : '1px solid #E8E8E8',
+                                                                    color: isDark
+                                                                        ? 'var(--irify-text)'
+                                                                        : 'rgba(0,0,0,0.85)',
+                                                                }}
+                                                            >
+                                                                修复建议
+                                                            </h3>
+                                                            <div
+                                                                className="rule-content-markdown"
+                                                                style={{
+                                                                    maxHeight:
+                                                                        '300px',
+                                                                    overflow:
+                                                                        'auto',
+                                                                    lineHeight:
+                                                                        '1.6',
+                                                                }}
+                                                            >
+                                                                <Markdown>
+                                                                    {selectedRule.solution ||
+                                                                        '*暂无内容*'}
+                                                                </Markdown>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            },
+                                            {
+                                                key: 'vulnerabilities',
+                                                label: (
+                                                    <span>
+                                                        <BugOutlined /> 漏洞信息
+                                                        {Object.keys(
+                                                            alertDescState,
+                                                        ).length > 0 && (
+                                                            <span
+                                                                style={{
+                                                                    marginLeft: 4,
+                                                                    fontSize:
+                                                                        '12px',
+                                                                    color: '#1890ff',
+                                                                    fontWeight: 600,
+                                                                }}
+                                                            >
+                                                                (
+                                                                {
+                                                                    Object.keys(
+                                                                        alertDescState,
+                                                                    ).length
+                                                                }
+                                                                )
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                ),
+                                                children: (
+                                                    <RelatedVulnerabilityList
+                                                        alertDesc={
+                                                            alertDescState
+                                                        }
+                                                        onChange={
+                                                            setAlertDescState
+                                                        }
+                                                        readOnly={false}
+                                                    />
+                                                ),
+                                            },
+                                            {
+                                                key: 'code',
+                                                label: (
+                                                    <span>
+                                                        <CodeOutlined />{' '}
+                                                        规则代码
+                                                    </span>
+                                                ),
+                                                children: (
+                                                    <div
+                                                        style={{
+                                                            height: '500px',
+                                                            border: isDark
+                                                                ? '1px solid var(--irify-border)'
+                                                                : '1px solid #d9d9d9',
+                                                            borderRadius: '4px',
+                                                        }}
+                                                    >
+                                                        <WizardAceEditor
+                                                            value={
+                                                                selectedRule.content ||
+                                                                ''
+                                                            }
+                                                            mode="text"
+                                                            readOnly
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ),
+                                            },
+                                        ]}
+                                    />
+                                </Spin>
+                            </Card>
+                        </div>
+                    )}
+                </div>
+            </Content>
+
+            {/* 导出Modal */}
             <Modal
                 title="导出规则"
                 open={isExportModalOpen}
@@ -512,6 +1770,7 @@ const RuleManagement: React.FC = () => {
                 </div>
             </Modal>
 
+            {/* 导入Modal */}
             <Modal
                 title="导入规则"
                 open={isImportModalOpen}
@@ -539,35 +1798,18 @@ const RuleManagement: React.FC = () => {
                                 percent={uploadProgress}
                                 status="active"
                             />
-                            <div
-                                style={{
-                                    marginTop: 8,
-                                    color: '#666',
-                                    fontSize: 12,
-                                }}
-                            >
-                                正在上传文件...
-                            </div>
                         </div>
                     )}
                     {importLoading && uploadProgress >= 100 && (
-                        <div
-                            style={{
-                                marginTop: 16,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
+                        <div style={{ marginTop: 16, textAlign: 'center' }}>
                             <Spin />
-                            <span style={{ marginLeft: 8, color: '#666' }}>
+                            <span style={{ marginLeft: 8 }}>
                                 正在导入数据库...
                             </span>
                         </div>
                     )}
                 </div>
-
-                <div style={{ marginBottom: 16 }}>
+                <div>
                     <p>请输入解压密码（可选）：</p>
                     <Input.Password
                         value={importPassword}
@@ -576,7 +1818,7 @@ const RuleManagement: React.FC = () => {
                     />
                 </div>
             </Modal>
-        </div>
+        </Layout>
     );
 };
 

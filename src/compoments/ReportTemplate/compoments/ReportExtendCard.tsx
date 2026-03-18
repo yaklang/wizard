@@ -82,11 +82,80 @@ export const FoldHoleCard: React.FC<FoldHoleCardProps> = (props) => {
                                         {title}：
                                     </div>
                                     <div className={styles['content']}>
-                                        {content ? (
-                                            <Markdown>{content}</Markdown>
-                                        ) : (
-                                            '-'
-                                        )}
+                                        {content
+                                            ? (() => {
+                                                  let displayContent = content;
+                                                  // 如果是审计路径，尝试格式化 JSON 或添加美化符号
+                                                  if (
+                                                      title.includes('审计路径')
+                                                  ) {
+                                                      try {
+                                                          const path =
+                                                              JSON.parse(
+                                                                  content,
+                                                              );
+                                                          if (
+                                                              Array.isArray(
+                                                                  path,
+                                                              )
+                                                          ) {
+                                                              displayContent =
+                                                                  path
+                                                                      .map(
+                                                                          (
+                                                                              step,
+                                                                          ) =>
+                                                                              Array.isArray(
+                                                                                  step,
+                                                                              )
+                                                                                  ? step[1] ||
+                                                                                    step[0]
+                                                                                  : step,
+                                                                      )
+                                                                      .join(
+                                                                          ' ➔ ',
+                                                                      );
+                                                          }
+                                                      } catch (e) {
+                                                          // 如果不是 JSON，尝试直接把逗号替换为箭头
+                                                          if (
+                                                              typeof content ===
+                                                                  'string' &&
+                                                              content.includes(
+                                                                  ',',
+                                                              )
+                                                          ) {
+                                                              displayContent =
+                                                                  content
+                                                                      .split(
+                                                                          ',',
+                                                                      )
+                                                                      .map(
+                                                                          (s) =>
+                                                                              s.trim(),
+                                                                      )
+                                                                      .join(
+                                                                          ' ➔ ',
+                                                                      );
+                                                          }
+                                                      }
+                                                  }
+                                                  return (
+                                                      <Markdown
+                                                          filterFirstHeader={
+                                                              title.includes(
+                                                                  '描述',
+                                                              ) ||
+                                                              title.includes(
+                                                                  '建议',
+                                                              )
+                                                          }
+                                                      >
+                                                          {displayContent}
+                                                      </Markdown>
+                                                  );
+                                              })()
+                                            : '-'}
                                     </div>
                                 </div>
                             );

@@ -6,6 +6,7 @@ import type {
     TSSARiskRequest,
     TSSARiskBatchRequest,
     TSSARiskQueryParams,
+    TSSARiskExportParams,
     TSSARiskExportData,
     TSSARiskImportResult,
     TSSARiskFilterOptions,
@@ -74,14 +75,49 @@ export const batchUpdateSSARisks = (
     axios.post<never, ResponseData<boolean>>('/ssa/risk/batch', data);
 
 // GET /ssa/risk/export - 导出 SSA 风险
-export const exportSSARisks = (params?: {
-    program_name?: string;
-    severity?: string;
-    risk_type?: string;
-    from_rule?: string;
-}): Promise<ResponseData<TSSARiskExportData>> =>
+export const exportSSARisks = (
+    params?: TSSARiskExportParams,
+): Promise<ResponseData<TSSARiskExportData>> =>
     axios.get<never, ResponseData<TSSARiskExportData>>('/ssa/risk/export', {
         params,
+    });
+
+// GET /ssa/risk/export - 下载 PDF 报告
+export const exportSSARiskReportPDF = (
+    params: TSSARiskExportParams,
+): Promise<ResponseData<Blob>> =>
+    axios.get<never, ResponseData<Blob>>('/ssa/risk/export', {
+        params: {
+            ...params,
+            format: 'pdf',
+        },
+        responseType: 'blob',
+        transformResponse: [
+            (data) => ({
+                data,
+                code: 200,
+                msg: '',
+            }),
+        ],
+    });
+
+// GET /ssa/risk/export - 下载 DOCX 报告
+export const exportSSARiskReportDocx = (
+    params: TSSARiskExportParams,
+): Promise<ResponseData<Blob>> =>
+    axios.get<never, ResponseData<Blob>>('/ssa/risk/export', {
+        params: {
+            ...params,
+            format: 'docx',
+        },
+        responseType: 'blob',
+        transformResponse: [
+            (data) => ({
+                data,
+                code: 200,
+                msg: '',
+            }),
+        ],
     });
 
 // POST /ssa/risk/import - 导入 SSA 风险
@@ -115,22 +151,24 @@ export const clearSSARisks = (): Promise<ResponseData<boolean>> =>
 // GET /ssa/risk/audit - 获取 SSA 风险审计信息
 export const getSSARiskAudit = (
     hash: string,
+    taskId?: string,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskAuditInfo>> =>
     axios.get<never, ResponseData<TSSARiskAuditInfo>>('/ssa/risk/audit', {
-        params: { hash },
+        params: { hash, task_id: taskId },
         signal,
     });
 
 // GET /ssa/risk/audit/files - 获取风险关联的文件列表
 export const getSsaRiskAuditFiles = (
     hash: string,
+    taskId?: string,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskRelatedFiles>> =>
     axios.get<never, ResponseData<TSSARiskRelatedFiles>>(
         '/ssa/risk/audit/files',
         {
-            params: { hash },
+            params: { hash, task_id: taskId },
             signal,
         },
     );
@@ -138,13 +176,14 @@ export const getSsaRiskAuditFiles = (
 // GET /ssa/risk/audit/file/content - 获取指定文件的内容
 export const getSsaRiskFileContent = (
     hash: string,
+    taskId: string | undefined,
     filePath: string,
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSARiskFileContent>> =>
     axios.get<never, ResponseData<TSSARiskFileContent>>(
         '/ssa/risk/audit/file/content',
         {
-            params: { hash, file_path: filePath },
+            params: { hash, task_id: taskId, file_path: filePath },
             signal,
         },
     );

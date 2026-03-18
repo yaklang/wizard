@@ -1,0 +1,673 @@
+.rule-management-layout {
+    height: 100vh;
+    background: var(--irify-bg-base, #f0f2f5);
+    position: relative;
+
+    .filter-sider {
+        background: var(--irify-bg-base, #fff) !important;
+        border-right: 1px solid var(--irify-border-color, #e8e8e8);
+        overflow: hidden;
+        height: 100vh;
+        
+        .ant-layout-sider-children {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .sider-header {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid var(--irify-border-color, #e8e8e8);
+            flex-shrink: 0;
+
+            .title {
+                font-weight: 600;
+                font-size: 16px;
+                color: var(--irify-text, #333);
+            }
+        }
+
+        // 视图切换 Tab 样式（平分空间并居中）
+        .ant-tabs {
+            .ant-tabs-nav {
+                margin-bottom: 0;
+                width: 100%;
+                
+                &::before {
+                    border-bottom: none;
+                }
+                
+                .ant-tabs-nav-list {
+                    width: 100%;
+                    display: flex;
+                }
+            }
+            
+            .ant-tabs-tab {
+                flex: 1;
+                margin: 0 !important;
+                padding: 8px 0;
+                font-size: 13px;
+                display: flex;
+                justify-content: center;
+                
+                .ant-tabs-tab-btn {
+                    width: 100%;
+                    text-align: center;
+                }
+                
+                &:hover {
+                    color: var(--irify-accent, #1890ff);
+                }
+            }
+            
+            .ant-tabs-tab-active {
+                .ant-tabs-tab-btn {
+                    color: var(--irify-accent, #1890ff);
+                    font-weight: 500;
+                }
+            }
+            
+            .ant-tabs-ink-bar {
+                background: var(--irify-accent, #1890ff);
+            }
+        }
+
+        .sider-footer {
+            border-top: 1px solid var(--irify-border-color, #e8e8e8);
+            background: var(--irify-bg-container, #fff);
+        }
+
+
+        .filter-tree-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 8px;
+            padding-bottom: 0;
+            scroll-behavior: smooth;
+            
+            // 自定义滚动条样式（针对 webkit 浏览器）
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            
+            &::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 3px;
+                
+                &:hover {
+                    background: rgba(0, 0, 0, 0.3);
+                }
+            }
+
+            .ant-empty {
+                margin: 0;
+                padding: 40px 0;
+            }
+
+            .ant-tree {
+                background: transparent;
+                padding-bottom: 0;
+                margin-bottom: 0;
+
+                .ant-tree-treenode {
+                    padding: 0;
+                    margin-bottom: 2px;
+                    width: 100%;
+                    position: relative;
+                    
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+
+                    &:hover {
+                        .ant-tree-node-content-wrapper {
+                            background: var(--irify-bg-hover, #f5f5f5);
+                        }
+                    }
+
+                    &.ant-tree-treenode-selected {
+                        // 左侧高亮竖条（加强版）
+                        &::before {
+                            content: '';
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            bottom: 0;
+                            width: 4px;
+                            background: var(--irify-accent, #1890ff);
+                            border-radius: 0 2px 2px 0;
+                        }
+                        
+                        .ant-tree-node-content-wrapper {
+                            background: #e6f7ff !important;
+                            font-weight: 500;
+                        }
+                        
+                        // 加强选中态文字样式
+                        .tree-node-title .label-text {
+                            font-weight: 600;
+                            color: var(--irify-accent, #1890ff);
+                        }
+                    }
+                }
+
+                .ant-tree-node-content-wrapper {
+                    display: flex;
+                    align-items: center;
+                    padding: 6px 8px;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                    width: 100%;
+                    min-height: 32px;
+                }
+
+                .ant-tree-switcher {
+                    width: 20px;
+                    line-height: 32px;
+                }
+
+                    .tree-node-title {
+                        display: flex;
+                        align-items: center;
+                        width: 100%;
+                        gap: 6px;
+                        flex-wrap: wrap;
+
+                        .lang-icon {
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            vertical-align: middle;
+                        }
+
+                        .icon-wrapper {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: #8c8c8c;
+                            font-size: 14px;
+                        }
+
+                        .label-text {
+                            flex: 1;
+                            font-size: 14px;
+                            line-height: 1.6;
+                            min-width: 0;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            display: flex;
+                            align-items: center;
+                        }
+
+                    .node-count-text {
+                        font-size: 13px;
+                        color: #8c8c8c;
+                        margin-left: auto;
+                        flex-shrink: 0;
+                    }
+                }
+            }
+        }
+    }
+
+    .rule-content {
+        overflow: hidden;
+        position: relative;
+        background: var(--irify-bg-base, #f0f2f5);
+
+        // UUID 悬停效果
+        .uuid-container {
+            &:hover {
+                background: rgba(0,0,0,0.04) !important;
+                color: #8c8c8c !important;
+                
+                .copy-icon {
+                    opacity: 1 !important;
+                }
+            }
+        }
+
+        // Markdown 预览样式
+        .markdown-body {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--irify-text, #333);
+
+            h2 {
+                font-size: 18px;
+                font-weight: 600;
+                margin-top: 16px;
+                margin-bottom: 8px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid var(--irify-border-color, #e8e8e8);
+            }
+
+            h3 {
+                font-size: 16px;
+                font-weight: 600;
+                margin-top: 12px;
+                margin-bottom: 6px;
+            }
+
+            p {
+                margin-bottom: 8px;
+            }
+
+            ul, ol {
+                margin-bottom: 8px;
+                padding-left: 24px;
+            }
+
+            code {
+                background: rgba(0, 0, 0, 0.06);
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 13px;
+                font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            }
+
+            pre {
+                background: rgba(0, 0, 0, 0.03);
+                padding: 12px;
+                border-radius: 4px;
+                overflow-x: auto;
+                margin-bottom: 8px;
+
+                code {
+                    background: transparent;
+                    padding: 0;
+                }
+            }
+
+            blockquote {
+                border-left: 3px solid #1890ff;
+                padding-left: 12px;
+                margin-left: 0;
+                color: rgba(0, 0, 0, 0.65);
+            }
+
+            strong {
+                font-weight: 600;
+            }
+        }
+
+        .rule-card {
+            height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+            .header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+                gap: 12px;
+
+                .title-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+
+                    .page-title {
+                        font-size: 20px;
+                        font-weight: 600;
+                        color: var(--irify-text, #333);
+                    }
+                }
+            }
+
+            .batch-action-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 16px;
+                background: #e6f7ff;
+                border-radius: 6px;
+                margin-bottom: 16px;
+                border: 1px solid #91d5ff;
+
+                .count {
+                    font-weight: 600;
+                    color: #1890ff;
+                }
+            }
+        }
+    }
+
+    // Light Mode muted tag styles
+    .muted-tag {
+        background-color: #f5f5f5 !important;
+        color: #595959 !important;
+        border: 1px solid #d9d9d9 !important;
+        font-size: 12px;
+    }
+
+    .muted-tag-overflow {
+        background-color: #fafafa !important;
+        color: #8c8c8c !important;
+        border: 1px solid #d9d9d9 !important;
+        font-size: 11px;
+    }
+
+    .rule-title-link {
+        color: #262626;
+        font-weight: 600;
+        font-size: 14px;
+        
+        &:hover {
+            color: #1890ff;
+        }
+    }
+}
+
+/* 暗色模式适配 */
+.irify-dark {
+    .rule-management-layout {
+        // 强制整体背景变黑
+        background: var(--irify-bg-base);
+
+        .filter-sider {
+            // 强制覆盖 Sider 背景，不依赖不稳定的变量
+            background: var(--irify-bg-container) !important;
+            border-right: 1px solid var(--irify-border) !important;
+
+            .ant-layout-sider-children {
+                background: var(--irify-bg-container);
+            }
+
+            .sider-header {
+                border-bottom: 1px solid var(--irify-border) !important;
+                background: var(--irify-bg-container); // 确保 Header 也是深色
+
+                .title {
+                    color: var(--irify-text);
+                }
+            }
+
+            // 暗黑模式 Tab 样式（平分空间并居中）
+            .ant-tabs {
+                .ant-tabs-nav {
+                    .ant-tabs-nav-list {
+                        width: 100%;
+                    }
+                }
+                
+                .ant-tabs-tab {
+                    flex: 1;
+                    color: var(--irify-text-secondary);
+                    
+                    &:hover {
+                        color: var(--irify-accent);
+                    }
+                }
+                
+                .ant-tabs-tab-active {
+                    .ant-tabs-tab-btn {
+                        color: var(--irify-accent);
+                    }
+                }
+                
+                .ant-tabs-ink-bar {
+                    background: var(--irify-accent);
+                }
+            }
+
+            .sider-footer {
+                border-top: 1px solid var(--irify-border) !important;
+                background: var(--irify-bg-container);
+            }
+
+
+            .filter-tree-container {
+                // Dark Mode 滚动条样式
+                &::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                    
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.3);
+                    }
+                }
+                
+                .ant-empty-description {
+                    color: var(--irify-text-secondary);
+                }
+
+                .ant-empty-normal {
+                    color: var(--irify-text-secondary); 
+                }
+
+                .ant-tree {
+                    background: transparent;
+                    color: var(--irify-text);
+
+                    .ant-tree-treenode {
+                        padding: 0;
+                        margin-bottom: 2px;
+                        position: relative;
+                        
+                        &.ant-tree-treenode-selected {
+                            // 暗黑模式左侧高亮竖条
+                            &::before {
+                                content: '';
+                                position: absolute;
+                                left: 0;
+                                top: 0;
+                                bottom: 0;
+                                width: 3px;
+                                background: var(--irify-accent, #40a9ff);
+                                border-radius: 0 2px 2px 0;
+                            }
+                        }
+                    }
+
+                    .ant-tree-node-content-wrapper {
+                        padding: 6px 8px;
+                        min-height: 32px;
+                        border-radius: 4px;
+                        background: transparent !important;
+                        transition: all 0.2s;
+                        
+                        &:hover {
+                            background: var(--irify-bg-hover) !important;
+                        }
+
+                        &.ant-tree-node-selected {
+                            background: rgba(64, 169, 255, 0.15) !important;
+                            font-weight: 500;
+                        }
+                    }
+
+                    .ant-tree-switcher {
+                        width: 20px;
+                        line-height: 32px;
+                    }
+
+                    // Tree node flex alignment
+                    .tree-node-title {
+                        display: flex;
+                        align-items: center;
+                        width: 100%;
+                        gap: 6px;
+                        flex-wrap: wrap;
+
+                        .lang-icon {
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            vertical-align: middle;
+                        }
+
+                        .icon-wrapper {
+                            display: flex;
+                            align-items: center;
+                            color: var(--irify-text-secondary);
+                            font-size: 14px;
+                        }
+
+                        .label-text {
+                            flex: 1;
+                            font-size: 14px;
+                            line-height: 1.6;
+                            min-width: 0;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+
+                        .node-count-text {
+                            font-size: 13px;
+                            color: var(--irify-text-secondary);
+                            margin-left: auto;
+                            flex-shrink: 0;
+                        }
+                    }
+
+                    .ant-tree-treenode-switcher-open, 
+                    .ant-tree-treenode-switcher-close {
+                        .ant-tree-switcher-icon {
+                            color: var(--irify-text-secondary);
+                        }
+                    }
+
+                    .ant-tree-treenode-selected {
+                         .tree-node-title {
+                            color: var(--irify-accent);
+                            .icon-wrapper {
+                                color: var(--irify-accent);
+                            }
+                            .node-count-text {
+                                color: var(--irify-accent);
+                            }
+                         }
+                    }
+                }
+            }
+        }
+
+        .rule-content {
+            // Descriptions 组件深色模式
+            .ant-descriptions {
+                &.ant-descriptions-bordered {
+                    .ant-descriptions-item-label {
+                        background: rgba(255, 255, 255, 0.04);
+                        color: var(--irify-text);
+                        border-color: var(--irify-border);
+                    }
+
+                    .ant-descriptions-item-content {
+                        background: var(--irify-bg-container);
+                        color: var(--irify-text);
+                        border-color: var(--irify-border);
+                    }
+
+                    .ant-descriptions-view {
+                        border-color: var(--irify-border);
+                    }
+                }
+            }
+
+            // Markdown 预览样式 - 暗黑模式
+            .markdown-body {
+                color: var(--irify-text);
+
+                h2 {
+                    border-bottom-color: var(--irify-border);
+                }
+
+                code {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #e6e6e6;
+                }
+
+                pre {
+                    background: rgba(255, 255, 255, 0.05);
+
+                    code {
+                        background: transparent;
+                    }
+                }
+
+                blockquote {
+                    border-left-color: var(--irify-accent);
+                    color: var(--irify-text-secondary);
+                }
+            }
+
+            .rule-card {
+                .batch-action-bar {
+                    background: var(--irify-bg-selected);
+                    border-color: var(--irify-accent);
+                    .count {
+                        color: var(--irify-accent);
+                    }
+                }
+            }
+        }
+    }
+
+    // Muted tag styles for Dark Mode
+    .muted-tag {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: rgba(255, 255, 255, 0.65) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        font-size: 12px;
+    }
+
+    .muted-tag-overflow {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: rgba(255, 255, 255, 0.45) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        font-size: 11px;
+    }
+
+    .lang-tag {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: rgba(255, 255, 255, 0.65) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    .rule-title-link {
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-weight: 600;
+        font-size: 14px;
+        
+        &:hover {
+            color: var(--irify-accent) !important;
+        }
+    }
+}
+
+// 基础信息 tab 中的 Markdown 内容区域
+.rule-content-markdown {
+    // 隐藏 Markdown 中的第一个标题（避免与外层标题重复）
+    > div > h1:first-child,
+    > div > h2:first-child,
+    > div > h3:first-child {
+        display: none;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// 脏状态保存按钮的呼吸动画
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(114, 46, 209, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(114, 46, 209, 0);
+    }
+}

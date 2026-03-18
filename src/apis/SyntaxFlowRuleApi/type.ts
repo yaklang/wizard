@@ -81,16 +81,6 @@ interface TSyntaxFlowRuleRequest {
 // list response wraps paging meta and list
 type TSyntaxFlowRuleListResponse = TableResponseData<TSyntaxFlowRule>;
 
-export type {
-    TSyntaxFlowAlertDesc,
-    TSyntaxFlowGroup,
-    TSyntaxFlowRule,
-    TSyntaxFlowRuleRequest,
-    TSyntaxFlowRuleListResponse,
-    TAsyncTaskStatusResponse,
-    TAsyncTaskLog,
-};
-
 interface TAsyncTaskLog {
     level?: string;
     message?: string;
@@ -104,3 +94,57 @@ interface TAsyncTaskStatusResponse {
     progress_percent?: number;
     error?: string;
 }
+
+// 规则元数据更新请求
+interface TSyntaxFlowRuleMetadataUpdateRequest {
+    rule_name: string;
+    rule_id?: string;
+    type?: string;
+    severity?: string;
+    purpose?: string;
+    title?: string;
+    title_zh?: string;
+    description?: string;
+    solution?: string;
+    tag?: string;
+    risk_type?: string;
+    cve?: string;
+    cwe?: string[];
+    alert_desc?: { [key: string]: TSyntaxFlowAlertDesc };
+    groups?: string[];
+}
+
+// 规则筛选选项
+export interface TSyntaxFlowRuleFilterOptionItem {
+    name?: string;
+    count?: number;
+}
+
+// CWE 分类项（包含关联的 OWASP 信息）
+export interface TCWECategoryItem {
+    cwe?: string; // CWE-89
+    name?: string; // SQL Injection
+    count?: number; // 规则数量
+    owasp_categories?: string[]; // 关联的 OWASP 分类
+}
+
+export interface TSyntaxFlowRuleFilterOptions {
+    languages?: TSyntaxFlowRuleFilterOptionItem[];
+    severities?: TSyntaxFlowRuleFilterOptionItem[];
+    purposes?: TSyntaxFlowRuleFilterOptionItem[];
+    groups?: TSyntaxFlowRuleFilterOptionItem[];
+    types?: TSyntaxFlowRuleFilterOptionItem[];
+    risk_types?: TSyntaxFlowRuleFilterOptionItem[];
+    cwe_categories?: TCWECategoryItem[]; // ⭐ 新增：CWE 分类筛选
+}
+
+export type {
+    TSyntaxFlowAlertDesc,
+    TSyntaxFlowGroup,
+    TSyntaxFlowRule,
+    TSyntaxFlowRuleRequest,
+    TSyntaxFlowRuleListResponse,
+    TAsyncTaskStatusResponse,
+    TAsyncTaskLog,
+    TSyntaxFlowRuleMetadataUpdateRequest,
+};

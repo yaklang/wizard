@@ -201,7 +201,37 @@
 }
 
 .irify-sider-footer {
-    padding: 16px 8px;
+    padding: 12px 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.irify-sider-toggle-btn {
+    width: 100%;
+    height: 34px;
+    border: 1px solid var(--irify-border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--irify-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    font-weight: 500;
+
+    &:hover {
+        color: var(--irify-text);
+        background: var(--irify-bg-elevated);
+        border-color: color-mix(in srgb, var(--irify-accent) 35%, var(--irify-border) 65%);
+    }
+
+    &:active {
+        transform: translateY(1px);
+    }
 }
 
 .irify-user-card {
@@ -234,11 +264,41 @@
         margin-left 0.2s ease,
         background 0.3s ease;
     overflow: auto;
+    padding: 12px;
+}
+
+.irify-page-nav {
+    background: var(--irify-bg-container);
+    border: 1px solid var(--irify-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+
+    .ant-breadcrumb {
+        color: var(--irify-text-secondary);
+        font-size: 13px;
+    }
+
+    .ant-breadcrumb-link {
+        color: var(--irify-text-secondary);
+    }
+
+    .breadcrumb-home {
+        color: var(--irify-accent-secondary);
+        cursor: pointer;
+
+        &:hover {
+            color: var(--irify-accent);
+        }
+    }
+}
+
+.irify-page-body {
+    min-height: calc(100vh - 68px);
 }
 
 // When sidebar is expanded
-.irify-layout-sider:hover + .irify-layout-content,
-.irify-layout-sider:not(.ant-layout-sider-collapsed) + .irify-layout-content {
+.irify-layout.sider-expanded .irify-layout-content {
     margin-left: 200px;
 }
 

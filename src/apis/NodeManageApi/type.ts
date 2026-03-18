@@ -25,7 +25,7 @@ interface NetworkPingTableProp {
 }
 
 interface PostHostAliveDetectionRunRequest {
-    node: 'string';
+    node: string;
     result: Array<string>;
 }
 

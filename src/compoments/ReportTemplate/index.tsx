@@ -42,7 +42,9 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
             case 'markdown':
                 return (
                     <div key={`${item.type}-${randomString(5)}`}>
-                        <Markdown children={item.data} />
+                        <Markdown filterFirstHeader={true}>
+                            {item.data}
+                        </Markdown>
                         <br />
                     </div>
                 );
@@ -884,9 +886,35 @@ const ReportTemplate: FC<TReportTemplateProps> = ({
     });
 
     return (
-        <div ref={divRef}>
+        <div ref={divRef} className="report-print-container">
+            <style>{`
+                .report-print-container {
+                    padding: 20px;
+                    background: #fff;
+                }
+                .report-block-wrapper {
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                    margin-bottom: 24px;
+                    width: 100%;
+                }
+                @media print {
+                    .report-print-container {
+                        padding: 0;
+                    }
+                    /* 确保 Echarts 等 canvas 正常显示 */
+                    canvas {
+                        max-width: 100% !important;
+                    }
+                    /* 避免标题孤行 */
+                    h1, h2, h3, h4 {
+                        page-break-after: avoid;
+                        break-after: avoid;
+                    }
+                }
+            `}</style>
             {blocks?.map((item) => (
-                <div key={generateUniqueId()}>
+                <div key={generateUniqueId()} className="report-block-wrapper">
                     {transformBlocks(item as BlockType)}
                 </div>
             ))}

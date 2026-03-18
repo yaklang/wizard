@@ -5,6 +5,8 @@ import type {
     TSSATaskResponse,
     TSSATaskQueryParams,
     TSSATaskListResponse,
+    TSSAArtifactMetricsSummary,
+    TSSAArtifactEventsResponse,
 } from './type';
 
 // POST /ssa/project/{id}/scan - 创建扫描任务
@@ -29,4 +31,26 @@ const querySSATasks = (
 const cancelSSATask = (taskId: string): Promise<ResponseData<void>> =>
     axios.delete<never, ResponseData<void>>(`/ssa/task/${taskId}`);
 
-export { scanSSAProject, querySSATasks, cancelSSATask };
+const querySSAArtifactSummary = (
+    taskId: string,
+): Promise<ResponseData<TSSAArtifactMetricsSummary>> =>
+    axios.get<never, ResponseData<TSSAArtifactMetricsSummary>>(
+        `/ssa/task/${taskId}/artifact/summary`,
+    );
+
+const querySSAArtifactEvents = (
+    taskId: string,
+    params?: { stage?: string; limit?: number },
+): Promise<ResponseData<TSSAArtifactEventsResponse>> =>
+    axios.get<never, ResponseData<TSSAArtifactEventsResponse>>(
+        `/ssa/task/${taskId}/artifact/events`,
+        { params },
+    );
+
+export {
+    scanSSAProject,
+    querySSATasks,
+    cancelSSATask,
+    querySSAArtifactSummary,
+    querySSAArtifactEvents,
+};

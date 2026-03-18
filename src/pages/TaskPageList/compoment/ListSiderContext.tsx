@@ -48,14 +48,14 @@ const ListSiderContext: FC<TListSiderContext> = ({
     const { runAsync, loading } = useRequest(postTaskGrounp, {
         manual: true,
         onSuccess: async () => {
-            message.success('新建任务组成功');
+            message.success('策略分组保存成功');
             setPreTaskGroupName(undefined);
             await refreshAsync();
         },
         onError: (error) => {
             message.destroy();
             setPreTaskGroupName(undefined);
-            showErrorMessage(error.message ?? '新建任务组失败');
+            showErrorMessage(error.message ?? '策略分组保存失败');
             setSiderContextList((values) => values.filter((it) => !it.isEdit));
         },
     });

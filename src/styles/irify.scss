@@ -14,6 +14,9 @@
     --irify-glass-bg: rgba(255, 255, 255, 0.7);
     --irify-glass-border: rgba(226, 232, 240, 0.5);
     --irify-glass-shadow: rgba(0, 0, 0, 0.05);
+    --irify-bg-secondary: #E2E8F0;
+    --irify-bg-hover: #F1F5F9;
+    --irify-bg-selected: #E6F7FF;
 }
 
 // Dark Mode Overrides
@@ -29,6 +32,9 @@
     --irify-glass-bg: rgba(22, 27, 34, 0.7);
     --irify-glass-border: rgba(48, 54, 61, 0.5);
     --irify-glass-shadow: rgba(0, 0, 0, 0.3);
+    --irify-bg-secondary: #30363D;
+    --irify-bg-hover: rgba(255, 255, 255, 0.04);
+    --irify-bg-selected: #111D2C;
 }
 
 // Global body styling using CSS variables
@@ -411,4 +417,36 @@ body.irify-app {
 
 .irify-fade-in {
     animation: irify-fade-in 0.3s ease-out;
+}
+
+// Login page specific overrides for IRify mode
+.irify-login-container {
+    * {
+        box-sizing: border-box;
+    }
+
+    // Override Ant Design theme for login page
+    .ant-input,
+    .ant-input-password {
+        &:hover {
+            border-color: #4a94f8 !important;
+        }
+
+        &:focus,
+        &.ant-input-focused {
+            border-color: #4a94f8 !important;
+        }
+    }
+
+    .ant-btn-primary {
+        &:not(:disabled):hover {
+            background: linear-gradient(135deg, #3a84e8 0%, #58a6fa 100%) !important;
+        }
+    }
+}
+
+// Ensure smooth fonts for IRify
+body[data-app-mode='irify'] {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }

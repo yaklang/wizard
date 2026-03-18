@@ -1,12 +1,11 @@
 import React, { useMemo, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Tooltip, Avatar, Dropdown, Spin } from 'antd';
+import { Layout, Tooltip, Avatar, Dropdown, Spin, Breadcrumb } from 'antd';
 import type { MenuProps } from 'antd';
 import { useRequest, useSafeState } from 'ahooks';
 import {
     DashboardOutlined,
     FolderOutlined,
-    BugOutlined,
     ThunderboltOutlined,
     LogoutOutlined,
     UserOutlined,
@@ -15,10 +14,14 @@ import {
     FileTextOutlined,
     ControlOutlined,
     AppstoreOutlined,
+    HddOutlined,
     DownOutlined,
     RightOutlined,
     NodeIndexOutlined,
     SafetyCertificateOutlined,
+    BugOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
 } from '@ant-design/icons';
 import { getLicense } from '@/apis/login';
 import { useNetworkStatus } from '@/hooks';
@@ -51,7 +54,7 @@ const mainNavItems = [
     {
         key: '/scans',
         icon: <ThunderboltOutlined />,
-        label: '扫描任务',
+        label: '扫描历史',
         path: '/scans',
     },
     {
@@ -64,32 +67,22 @@ const mainNavItems = [
 
 const collapsibleNavItems = [
     {
-        key: '/task',
+        key: '/task/task-list',
         icon: <AppstoreOutlined />,
-        label: '任务中心',
-        children: [
-            {
-                key: '/task/new-create-task',
-                label: '新建扫描',
-                path: '/task/new-create-task',
-            },
-            {
-                key: '/task/special-task',
-                label: '专项扫描',
-                path: '/task/special-task',
-            },
-            {
-                key: '/task/task-list',
-                label: '任务列表',
-                path: '/task/task-list',
-            },
-        ],
+        label: '自动化策略',
+        path: '/task/task-list',
     },
     {
         key: '/reports',
         icon: <FileTextOutlined />,
         label: '报告管理',
         path: '/reports',
+    },
+    {
+        key: '/compile-artifacts',
+        icon: <HddOutlined />,
+        label: '编译产物',
+        path: '/system-management/compile-artifacts',
     },
     {
         key: '/node-config',
@@ -117,21 +110,6 @@ const collapsibleNavItems = [
                 key: '/system-management/userinfo',
                 label: '用户管理',
                 path: '/system-management/userinfo',
-            },
-            {
-                key: '/system-management/task-script',
-                label: '脚本管理',
-                path: '/system-management/task-script',
-            },
-            {
-                key: '/system-management/cve-loophole',
-                label: '漏洞库管理',
-                path: '/system-management/cve-loophole',
-            },
-            {
-                key: '/system-management/global-reverse-link',
-                label: '全局反连',
-                path: '/system-management/global-reverse-link',
             },
         ],
     },
@@ -188,9 +166,59 @@ const IRifyLayout: React.FC = () => {
         return '/';
     }, [location.pathname]);
 
+    const pageBreadcrumb = useMemo(() => {
+        const path = location.pathname;
+
+        if (path === '/') return ['工作台'];
+
+        if (path.startsWith('/projects')) {
+            if (path === '/projects/create') return ['项目管理', '新建项目'];
+            if (/^\/projects\/\d+\/edit$/.test(path))
+                return ['项目管理', '编辑项目'];
+            return ['项目管理'];
+        }
+
+        if (path.startsWith('/vulnerabilities')) {
+            if (path.startsWith('/vulnerabilities/audit'))
+                return ['漏洞管理', '缺陷审计'];
+            return ['漏洞管理'];
+        }
+
+        if (path.startsWith('/scans')) return ['扫描历史'];
+
+        if (path.startsWith('/rules')) {
+            if (path.startsWith('/rules/create')) return ['规则管理', '规则编辑'];
+            return ['规则管理'];
+        }
+
+        if (path.startsWith('/task/task-list')) {
+            if (path.includes('/create')) return ['自动化策略', '新建策略'];
+            return ['自动化策略'];
+        }
+
+        if (path.startsWith('/reports')) return ['报告管理'];
+
+        if (path.startsWith('/node-config/install'))
+            return ['节点配置', '节点安装'];
+        if (path.startsWith('/node-config/manage'))
+            return ['节点配置', '节点管理'];
+
+        if (path.startsWith('/system-management/userinfo'))
+            return ['系统管理', '用户管理'];
+        if (path.startsWith('/system-management/compile-artifacts'))
+            return ['编译产物'];
+        if (path.startsWith('/system-management')) return ['系统管理'];
+
+        return ['工作台'];
+    }, [location.pathname]);
+
     // Handle navigation
     const handleNavClick = (path: string) => {
         navigate(path);
+    };
+
+    const toggleSiderCollapsed = () => {
+        setCollapsed((prev) => !prev);
     };
 
     const toggleMenu = (menuKey: string) => {
@@ -209,30 +237,40 @@ const IRifyLayout: React.FC = () => {
         return expandedMenus.has(menuKey);
     };
 
-    // Theme toggle handler
-    const handleThemeToggle = () => {
-        if (themeMode === 'dark') {
-            setThemeMode('light');
-        } else if (themeMode === 'light') {
-            setThemeMode('system');
-        } else {
-            setThemeMode('dark');
-        }
-    };
-
-    // Get theme label
-    const getThemeLabel = () => {
-        if (themeMode === 'system') return '跟随系统';
-        if (themeMode === 'dark') return '深色模式';
-        return '浅色模式';
+    const getThemeLabel = (mode: 'light' | 'dark' | 'system') => {
+        const labels = {
+            light: '浅色模式',
+            dark: '深色模式',
+            system: '跟随系统',
+        };
+        return themeMode === mode ? `${labels[mode]} ✓` : labels[mode];
     };
 
     const userMenuItems: MenuProps['items'] = [
         {
             key: 'theme',
             icon: isDark ? <MoonOutlined /> : <SunOutlined />,
-            label: getThemeLabel(),
-            onClick: handleThemeToggle,
+            label: '主题设置',
+            children: [
+                {
+                    key: 'theme-light',
+                    icon: <SunOutlined />,
+                    label: getThemeLabel('light'),
+                    onClick: () => setThemeMode('light'),
+                },
+                {
+                    key: 'theme-dark',
+                    icon: <MoonOutlined />,
+                    label: getThemeLabel('dark'),
+                    onClick: () => setThemeMode('dark'),
+                },
+                {
+                    key: 'theme-system',
+                    icon: <ControlOutlined />,
+                    label: getThemeLabel('system'),
+                    onClick: () => setThemeMode('system'),
+                },
+            ],
         },
         {
             key: 'profile',
@@ -265,7 +303,9 @@ const IRifyLayout: React.FC = () => {
     }
 
     return (
-        <Layout className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'}`}>
+        <Layout
+            className={`irify-layout ${isDark ? 'irify-dark' : 'irify-light'} ${collapsed ? 'sider-collapsed' : 'sider-expanded'}`}
+        >
             <Sider
                 className="irify-layout-sider"
                 theme={isDark ? 'dark' : 'light'}
@@ -273,8 +313,6 @@ const IRifyLayout: React.FC = () => {
                 collapsible
                 collapsed={collapsed}
                 trigger={null}
-                onMouseEnter={() => setCollapsed(false)}
-                onMouseLeave={() => setCollapsed(true)}
             >
                 {/* Logo */}
                 <div className="irify-logo" onClick={() => navigate('/')}>
@@ -374,6 +412,25 @@ const IRifyLayout: React.FC = () => {
 
                 {/* Bottom Section */}
                 <div className="irify-sider-footer">
+                    <Tooltip
+                        title={collapsed ? '展开菜单' : '收起菜单'}
+                        placement="right"
+                    >
+                        <button
+                            type="button"
+                            className="irify-sider-toggle-btn"
+                            onClick={toggleSiderCollapsed}
+                            aria-label={collapsed ? '展开菜单' : '收起菜单'}
+                        >
+                            {collapsed ? (
+                                <MenuUnfoldOutlined />
+                            ) : (
+                                <MenuFoldOutlined />
+                            )}
+                            {!collapsed && <span>收起</span>}
+                        </button>
+                    </Tooltip>
+
                     {/* User */}
                     <Dropdown
                         menu={{ items: userMenuItems }}
@@ -393,7 +450,29 @@ const IRifyLayout: React.FC = () => {
             </Sider>
 
             <Content className="irify-layout-content">
-                <Outlet />
+                <div className="irify-page-nav">
+                    <Breadcrumb
+                        separator=">"
+                        items={[
+                            {
+                                title: (
+                                    <span
+                                        className="breadcrumb-home"
+                                        onClick={() => navigate('/')}
+                                    >
+                                        首页
+                                    </span>
+                                ),
+                            },
+                            ...pageBreadcrumb.map((name) => ({
+                                title: <span>{name}</span>,
+                            })),
+                        ]}
+                    />
+                </div>
+                <div className="irify-page-body">
+                    <Outlet />
+                </div>
             </Content>
         </Layout>
     );

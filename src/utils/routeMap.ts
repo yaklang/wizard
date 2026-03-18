@@ -20,12 +20,13 @@ export enum RouteKey {
     IRIFY_DASHBOARD = 'IRIFY_DASHBOARD',
     IRIFY_PROJECTS = 'IRIFY_PROJECTS',
     IRIFY_PROJECT_CREATE = 'IRIFY_PROJECT_CREATE',
-    IRIFY_VULNERABILITIES = 'IRIFY_VULNERABILITIES',
     IRIFY_SCANS = 'IRIFY_SCANS',
     IRIFY_SETTINGS_RULES = 'IRIFY_SETTINGS_RULES',
     IRIFY_SETTINGS_NODES = 'IRIFY_SETTINGS_NODES',
     IRIFY_SETTINGS_USERS = 'IRIFY_SETTINGS_USERS',
     IRIFY_SETTINGS_REPORTS = 'IRIFY_SETTINGS_REPORTS',
+    IRIFY_SETTINGS_COMPILE_ARTIFACTS = 'IRIFY_SETTINGS_COMPILE_ARTIFACTS',
+    IRIFY_VULNERABILITIES = 'IRIFY_VULNERABILITIES',
 
     // Common Routes
     LOGIN = 'LOGIN',
@@ -75,12 +76,14 @@ const wizardRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_DASHBOARD]: '/',
     [RouteKey.IRIFY_PROJECTS]: '/projects',
     [RouteKey.IRIFY_PROJECT_CREATE]: '/projects/create',
-    [RouteKey.IRIFY_VULNERABILITIES]: '/vulnerabilities',
     [RouteKey.IRIFY_SCANS]: '/scans',
+    [RouteKey.IRIFY_VULNERABILITIES]: '/vulnerabilities',
     [RouteKey.IRIFY_SETTINGS_RULES]: '/settings/rules',
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
     [RouteKey.IRIFY_SETTINGS_REPORTS]: '/settings/reports',
+    [RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS]:
+        '/system-management/compile-artifacts',
 };
 
 // IRify 模式特有路由
@@ -88,7 +91,7 @@ const irifyRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.PROJECT_LIST]: '/projects',
     [RouteKey.PROJECT_CREATE]: '/projects/create',
     [RouteKey.PROJECT_EDIT]: '/projects/:id/edit',
-    [RouteKey.SSA_RISK]: '/vulnerabilities',
+    [RouteKey.SSA_RISK]: '/vulnerabilities/audit',
     [RouteKey.TASK_LIST]: '/scans',
     [RouteKey.SSA_RISK_DETAIL]: '/vulnerabilities/:id',
     [RouteKey.SSA_RISK_AUDIT]: '/vulnerabilities/audit',
@@ -99,12 +102,14 @@ const irifyRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_DASHBOARD]: '/',
     [RouteKey.IRIFY_PROJECTS]: '/projects',
     [RouteKey.IRIFY_PROJECT_CREATE]: '/projects/create',
-    [RouteKey.IRIFY_VULNERABILITIES]: '/vulnerabilities',
     [RouteKey.IRIFY_SCANS]: '/scans',
+    [RouteKey.IRIFY_VULNERABILITIES]: '/vulnerabilities',
     [RouteKey.IRIFY_SETTINGS_RULES]: '/settings/rules',
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
     [RouteKey.IRIFY_SETTINGS_REPORTS]: '/settings/reports',
+    [RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS]:
+        '/system-management/compile-artifacts',
 };
 
 // 路由映射表
@@ -155,12 +160,15 @@ export const ROUTES = {
     IRIFY_DASHBOARD: getRoutePath(RouteKey.IRIFY_DASHBOARD),
     IRIFY_PROJECTS: getRoutePath(RouteKey.IRIFY_PROJECTS),
     IRIFY_PROJECT_CREATE: getRoutePath(RouteKey.IRIFY_PROJECT_CREATE),
-    IRIFY_VULNERABILITIES: getRoutePath(RouteKey.IRIFY_VULNERABILITIES),
     IRIFY_SCANS: getRoutePath(RouteKey.IRIFY_SCANS),
+    IRIFY_VULNERABILITIES: getRoutePath(RouteKey.IRIFY_VULNERABILITIES),
     IRIFY_SETTINGS_RULES: getRoutePath(RouteKey.IRIFY_SETTINGS_RULES),
     IRIFY_SETTINGS_NODES: getRoutePath(RouteKey.IRIFY_SETTINGS_NODES),
     IRIFY_SETTINGS_USERS: getRoutePath(RouteKey.IRIFY_SETTINGS_USERS),
     IRIFY_SETTINGS_REPORTS: getRoutePath(RouteKey.IRIFY_SETTINGS_REPORTS),
+    IRIFY_SETTINGS_COMPILE_ARTIFACTS: getRoutePath(
+        RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS,
+    ),
 
     LOGIN: getRoutePath(RouteKey.LOGIN),
     LICENSE: getRoutePath(RouteKey.LICENSE),

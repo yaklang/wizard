@@ -1,7 +1,7 @@
 import axios from '@/utils/axios';
 import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
 import type {
-    UserResponse,
+    User,
     UserRequest,
     TAddUserRequest,
     TAddUserResponse,
@@ -11,8 +11,8 @@ import type {
 // 获取用户管理 表格数据
 const getUserList = (
     params: UserRequest,
-): Promise<ResponseData<TableResponseData<UserResponse>>> =>
-    axios.get<never, ResponseData<TableResponseData<UserResponse>>>(`/user`, {
+): Promise<ResponseData<TableResponseData<User>>> =>
+    axios.get<never, ResponseData<TableResponseData<User>>>(`/user`, {
         params,
     });
 
