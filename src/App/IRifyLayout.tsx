@@ -21,6 +21,7 @@ import {
     SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import { getLicense } from '@/apis/login';
+import { resolveLicenseGateValue, shouldBypassLicense } from '@/utils/license';
 import { useNetworkStatus } from '@/hooks';
 import useLoginStore from '@/App/store/loginStore';
 import { useTheme } from '@/theme';
@@ -147,12 +148,13 @@ const IRifyLayout: React.FC = () => {
         new Set(),
     );
     const { isDark, themeMode, setThemeMode } = useTheme();
+    const bypassLicense = shouldBypassLicense();
 
     const { data: license, loading } = useRequest(async () => {
         const { data } = await getLicense();
         const { license } = data;
-        return license?.length > 0 ? license : undefined;
-    });
+        return resolveLicenseGateValue(license);
+    }, { manual: bypassLicense });
 
     // Check network status
     useEffect(() => {

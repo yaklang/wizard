@@ -5,11 +5,17 @@ import showErrorMessage from '@/utils/showErrorMessage';
 import { useNavigate } from 'react-router-dom';
 import { useRequest } from 'ahooks';
 import { getLicense } from '@/apis/login';
+import { resolveLicenseGateValue, shouldBypassLicense } from '@/utils/license';
 
 const NoLoginPermission: FC = () => {
     const navigate = useNavigate();
+    const bypassLicense = shouldBypassLicense();
 
     const headLogin = () => {
+        if (bypassLicense) {
+            navigate('/login', { replace: true });
+            return;
+        }
         runAsync();
     };
 
@@ -17,7 +23,7 @@ const NoLoginPermission: FC = () => {
         async () => {
             const { data } = await getLicense();
             const { license } = data;
-            return license?.length > 0 ? license : undefined;
+            return resolveLicenseGateValue(license);
         },
         {
             manual: true,

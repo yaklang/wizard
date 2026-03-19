@@ -11,6 +11,7 @@ import login_logo from '@/assets/compoments/telecommunicationsLogo.svg';
 import login_background from '@/assets/login/login_background.png';
 import { getAuth, getCaptcha, getLicense } from '@/apis/login';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { resolveLicenseGateValue, shouldBypassLicense } from '@/utils/license';
 interface FieldType {
     username: string;
     password: string;
@@ -29,12 +30,13 @@ const Login = () => {
 
     const { login, token } = useLoginStore((state) => state);
     const { updatePower } = permissionsSliceFn();
+    const bypassLicense = shouldBypassLicense();
 
     const { runAsync } = useRequest(
         async () => {
             const { data } = await getLicense();
             const { license } = data;
-            return license?.length > 0 ? license : undefined;
+            return resolveLicenseGateValue(license);
         },
         {
             manual: true,
@@ -88,8 +90,16 @@ const Login = () => {
     });
 
     useEffect(() => {
+        if (bypassLicense) {
+            if (token) {
+                navigate('/');
+            } else {
+                run();
+            }
+            return;
+        }
         runAsync();
-    }, []);
+    }, [bypassLicense, navigate, run, runAsync, token]);
 
     const confirm = () => {
         modal.confirm({

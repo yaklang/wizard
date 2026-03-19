@@ -20,6 +20,7 @@ import { UserCard } from './UserCard';
 import { findFullPath, findPathNodes, processMenu } from '@/utils';
 import { LeftOutlined } from '@ant-design/icons';
 import { getLicense } from '@/apis/login';
+import { resolveLicenseGateValue, shouldBypassLicense } from '@/utils/license';
 // import useLoginStore from './store/loginStore';
 
 const { Header, Content, Sider } = Layout;
@@ -34,14 +35,15 @@ const AppLayout = () => {
     const [headerTitle, setHeaderTitle] = useSafeState<
         Array<Record<'name' | 'path', string>> | undefined
     >([]);
+    const bypassLicense = shouldBypassLicense();
 
     const { permissionsSlice } = usePermissionsSlice();
 
     const { data: license, loading } = useRequest(async () => {
         const { data } = await getLicense();
         const { license } = data;
-        return license?.length > 0 ? license : undefined;
-    });
+        return resolveLicenseGateValue(license);
+    }, { manual: bypassLicense });
 
     // 路由重定向
     useEffect(() => {
