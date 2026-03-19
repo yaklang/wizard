@@ -62,8 +62,6 @@ import {
     SwitchAIAgentTabEventEnum,
 } from '../defaultConstant';
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute';
-import useHoldGRPCStream from '@/hook/useHoldGRPCStream/useHoldGRPCStream';
-import { randomString } from '@/utils/randomUtil';
 import { grpcGetRandomAIMaterials } from '../grpc';
 // import type { DebugPluginRequest } from '@/pages/AIAgent/plugins/utils';
 // import { apiDebugPlugin } from '@/pages/AIAgent/plugins/utils';
@@ -71,7 +69,8 @@ import type { GetRandomAIMaterialsResponse } from '@/pages/AIAgent/ai-re-act/hoo
 import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType';
 import classNames from 'classnames';
 import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
-import { isEqual } from 'lodash';
+import { postCreateSession } from '@/apis/AiEventApi';
+import { yakitNotify } from '@/utils/notification';
 
 import { RemoteAIAgentGV } from '@/pages/AIAgent/enums/aiAgent';
 import { getRemoteValue, setRemoteValue } from '@/utils/kv';
@@ -95,10 +94,10 @@ import AIToolList from '../aiToolList/AIToolList';
 //     }
 // ]
 
-const getRandomItems = (array: StreamResult.Log[], count = 3) => {
-    const shuffled = [...array].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count) as unknown as string[];
-};
+// const getRandomItems = (array: StreamResult.Log[], count = 3) => {
+//     const shuffled = [...array].sort(() => 0.5 - Math.random());
+//     return shuffled.slice(0, count) as unknown as string[];
+// };
 
 const randomAIMaterialsDataIsEmpty = (randObj: any) => {
     try {
@@ -147,7 +146,7 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
             AIRecommendItemProps['item'][]
         >([]);
         const [questionList, setQuestionList] = useState<string[]>([]);
-        const [loading, setLoading] = useState<boolean>(false);
+        // const [loading, setLoading] = useState<boolean>(false);
         const [loadingAIMaterials, setLoadingAIMaterials] =
             useState<boolean>(false);
         // 控制下拉菜单
@@ -160,19 +159,19 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
 
         // const [sidebarSelected, setSidebarSelected] = useSafeState<string>("fileTree")
 
-        const tokenRef = useRef<string>(randomString(40));
-        const [streamInfo, debugPluginStreamEvent] = useHoldGRPCStream({
-            taskName: 'debug-plugin',
-            apiKey: 'DebugPlugin',
-            token: tokenRef.current,
-            isShowError: false,
-            isShowEnd: false,
-            isLimitLogs: false,
-            onEnd: () => {
-                setLoading(false);
-                debugPluginStreamEvent.stop();
-            },
-        });
+        // const tokenRef = useRef<string>(randomString(40));
+        // const [streamInfo, debugPluginStreamEvent] = useHoldGRPCStream({
+        //     taskName: 'debug-plugin',
+        //     apiKey: 'DebugPlugin',
+        //     token: tokenRef.current,
+        //     isShowError: false,
+        //     isShowEnd: false,
+        //     isLimitLogs: false,
+        //     onEnd: () => {
+        //         setLoading(false);
+        //         debugPluginStreamEvent.stop();
+        //     },
+        // });
 
         useEffect(() => {
             if (inViewPort) {
@@ -180,20 +179,20 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
             }
         }, [inViewPort]);
 
-        useDebounceEffect(
-            () => {
-                const list = streamInfo.logState
-                    .filter((i) => i.level === 'text')
-                    .map((i) => i.data);
-                questionListAllRef.current = [...list];
-                const randList = list.slice(0, 3);
-                if (list.length > 0 && !isEqual(randList, questionList)) {
-                    setQuestionList([...randList]);
-                }
-            },
-            [streamInfo.logState],
-            { wait: 500, leading: true },
-        );
+        // useDebounceEffect(
+        //     () => {
+        //         const list = streamInfo.logState
+        //             .filter((i) => i.level === 'text')
+        //             .map((i) => i.data);
+        //         questionListAllRef.current = [...list];
+        //         const randList = list.slice(0, 3);
+        //         if (list.length > 0 && !isEqual(randList, questionList)) {
+        //             setQuestionList([...randList]);
+        //         }
+        //     },
+        //     [streamInfo.logState],
+        //     { wait: 500, leading: true },
+        // );
 
         useDebounceEffect(
             () => {
@@ -208,9 +207,9 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
             aiChatTextareaRef.current?.setValue(value ?? '');
         });
         const onStartExecute = useMemoizedFn(() => {
-            debugPluginStreamEvent.cancel();
-            debugPluginStreamEvent.stop();
-            debugPluginStreamEvent.reset();
+            // debugPluginStreamEvent.cancel();
+            // debugPluginStreamEvent.stop();
+            // debugPluginStreamEvent.reset();
             const toolNames: string[] = [];
             const forgeNames: string[] = [];
             const knowledgeNames: string[] = [];
@@ -265,7 +264,7 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
             setLoadingAIMaterials(true);
             grpcGetRandomAIMaterials({ Limit: 3 })
                 .then((res) => {
-                    debugPluginStreamEvent.stop();
+                    // debugPluginStreamEvent.stop();
                     setRandomAIMaterials(res);
                     setCheckItems([]);
                     setQuestionList([]);
@@ -284,8 +283,13 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
             setLineStartDOMRect(lineStartRect); // 确定初始定位点位置
         });
         const handleTriageSubmit = useMemoizedFn(
-            (value: AIChatTextareaSubmit) => {
-                onTriageSubmit(value);
+            async (value: AIChatTextareaSubmit) => {
+                try {
+                    const { run_id } = await postCreateSession({});
+                    onTriageSubmit({ ...value, sessionId: run_id });
+                } catch (error) {
+                    yakitNotify('error', '创建会话失败，请稍后重试');
+                }
                 onSetQuestion('');
             },
         );
@@ -390,10 +394,10 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
         const isEmptyAIMaterials = useCreation(() => {
             return randomAIMaterialsDataIsEmpty(randomAIMaterialsData);
         }, [randomAIMaterials]);
-        const onSwitchQuestion = useMemoizedFn(() => {
-            setCheckItems([]);
-            setQuestionList(getRandomItems(questionListAllRef.current));
-        });
+        // const onSwitchQuestion = useMemoizedFn(() => {
+        //     setCheckItems([]);
+        //     setQuestionList(getRandomItems(questionListAllRef.current));
+        // });
 
         // const knowledgeSidebarListRef = useRef<KnowledgeModalRef>(null);
         const forgeNameRef = useRef<ForgeNameRef>(null);
@@ -569,7 +573,7 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
                                         }
                                     >
                                         <span>你可能想问:</span>
-                                        {loading ? (
+                                        {/* {loading ? (
                                             <YakitSpin
                                                 size="small"
                                                 wrapperClassName={
@@ -592,7 +596,7 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
                                                     换一换
                                                 </YakitButton>
                                             )
-                                        )}
+                                        )} */}
                                     </div>
                                     <div
                                         className={

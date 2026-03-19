@@ -98,7 +98,7 @@ const ToolStdoutCard: React.FC<ToolStdoutCardProps> = memo((props) => {
     const { stream } = useTypedStream({
         chatType,
         token: data.stream.EventUUID,
-        session: activeChat?.session || '',
+        session: activeChat?.run_id || '',
     });
 
     const selectors = useCreation(() => {
@@ -242,7 +242,7 @@ const ToolResultCard: React.FC<ToolResultCardProps> = memo((props) => {
         grpcQueryAIToolDetails(params)
             .then((res) => {
                 const chatItem = fetchChatDataStore()?.getContentMap({
-                    session: activeChat?.session,
+                    session: activeChat?.run_id,
                     chatType,
                     mapKey: token,
                 });

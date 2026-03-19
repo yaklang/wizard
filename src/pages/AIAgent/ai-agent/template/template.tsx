@@ -90,7 +90,7 @@ export const AIChatTextarea: React.FC<AIChatTextareaProps> = memo(
 
         const footerLeftTypes: FooterLeftTypesComponentProps[] =
             useCreation(() => {
-                if (!!props.footerLeftTypes?.length) {
+                if (props.footerLeftTypes?.length) {
                     const list = props.footerLeftTypes
                         .map((item) => {
                             let node: FooterLeftTypesComponentProps =
@@ -218,7 +218,7 @@ export const AIChatTextarea: React.FC<AIChatTextareaProps> = memo(
                 }
             },
         );
-        /**插入提及数据 */
+        /** 插入提及数据 */
         const onSetMention = useMemoizedFn((params: AIMentionCommandParams) => {
             switch (params.mentionType) {
                 case 'focusMode':
@@ -234,7 +234,7 @@ export const AIChatTextarea: React.FC<AIChatTextareaProps> = memo(
                     break;
             }
         });
-        /**设置编辑器值 */
+        /** 设置编辑器值 */
         const onSetValue = useMemoizedFn((value: string) => {
             if (!editorMilkdown.current) return;
             setEditorValue(editorMilkdown.current, value);

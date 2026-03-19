@@ -153,7 +153,7 @@ const AIReActTaskChatContent: React.FC<AIReActTaskChatContentProps> =
                 <div className={styles['tab-content']}>
                     <AIAgentChatStream
                         streams={streams}
-                        session={activeChat?.session || ''}
+                        session={activeChat?.run_id || ''}
                         scrollToBottom={scrollToBottom}
                         taskStatus={chatIPCData.taskStatus}
                     />

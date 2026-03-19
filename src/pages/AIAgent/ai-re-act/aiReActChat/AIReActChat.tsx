@@ -106,9 +106,8 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
         });
 
         const handleStart = useMemoizedFn((value: HandleStartParams) => {
-            const { qs } = value;
-            const sessionID = activeChat?.session || ''; // 判断历史还是新建
-
+            const { qs, sessionId } = value;
+            const sessionID = activeChat?.run_id || ''; // 判断历史还是新建
             const request: AIStartParams = {
                 ...formatAIAgentSetting(setting),
                 UserQuery: qs,
@@ -119,6 +118,8 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
             let session = '';
             if (sessionID) {
                 session = sessionID;
+            } else if (sessionId) {
+                session = sessionId;
             } else if (setting.TimelineSessionID) {
                 session = setting.TimelineSessionID;
             } else {
@@ -137,20 +138,18 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
                 FocusModeLoop: value.focusMode,
             };
             const onStart = (res: AIHandleStartResProps) => {
-                const { params, extraParams, onChat, onChatFromHistory } = res;
+                const { params, onChat, onChatFromHistory } = res;
                 if (!sessionID) {
                     // 创建新的聊天记录
                     const newChat: AIChatInfo = {
-                        id: extraParams?.chatId || session,
-                        name: qs || `AI Agent - ${new Date().toLocaleString()}`,
-                        question: qs,
-                        time: new Date().getTime(),
-                        request,
-                        session,
+                        run_id: session,
+                        title:
+                            qs || `AI Agent - ${new Date().toLocaleString()}`,
+                        created_at: new Date().toISOString(),
                     };
 
                     setActiveChat && setActiveChat(newChat);
-                    setChats && setChats((old) => [...old, newChat]);
+                    setChats && setChats((old) => [newChat, ...old]);
                     // 新建的额外操作
                     onChat?.();
                 } else {
@@ -189,7 +188,7 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
 
         /** 自由对话 */
         const handleSend = useMemoizedFn((data: HandleStartParams) => {
-            if (!activeChat?.session) return;
+            if (!activeChat?.run_id) return;
             try {
                 const { extra, attachedResourceInfo } =
                     getAIReActRequestParams(data);
@@ -202,7 +201,7 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
                 const onSend = (res: AISendResProps) => {
                     const { params } = res;
                     chatIPCEvents.onSend({
-                        token: activeChat.session,
+                        token: activeChat.run_id,
                         type: 'casual',
                         params: {
                             IsFreeInput: true,

@@ -1,5 +1,4 @@
 import type { UseChatIPCState } from '@/pages/AIAgent/ai-re-act/hooks/type';
-import type { AIStartParams } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 import type { AIChatQSData } from '@/pages/AIAgent/ai-re-act/hooks/aiRender';
 
 export interface AIChatData {
@@ -33,16 +32,10 @@ export interface AIChatData {
 
 /** UI-chat 信息 */
 export interface AIChatInfo {
-    /** 唯一标识 */
-    id: string;
     /** 对话名称 */
-    name: string;
-    /** 对话问题 */
-    question: string;
-    /** 时间 */
-    time: number;
-    /** 请求参数 */
-    request: AIStartParams;
-    /** 会话 session */
-    session: string;
+    title: string;
+    /** 创建时间 */
+    created_at: string;
+    /** 会话 run_id */
+    run_id: string;
 }

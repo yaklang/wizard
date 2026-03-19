@@ -204,7 +204,7 @@ export const grpcStopLocalModel: APIFunc<
     });
 };
 
-/**获取线上和本地已启动的AI模型 */
+/** 获取线上和本地已启动的AI模型 */
 export const getAIModelList: APINoRequestFunc<GetAIModelListResponse> = (
     hiddenError,
 ) => {
@@ -213,7 +213,7 @@ export const getAIModelList: APINoRequestFunc<GetAIModelListResponse> = (
             let onlineModels: ThirdPartyApplicationConfig[] = [];
             let localModels: StartedLocalModelInfo[] = [];
             const config = await apiGetGlobalNetworkConfig();
-            if (!!config) {
+            if (config) {
                 onlineModels =
                     config.AppConfigs.filter((ele) =>
                         config.AiApiPriority.includes(ele.Type),

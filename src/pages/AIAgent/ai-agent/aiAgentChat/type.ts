@@ -19,6 +19,8 @@ export interface AIReActTaskChatReviewProps {
 }
 
 export interface HandleStartParams extends AIChatTextareaSubmit {
+    /** 通过 postCreateSession 获取的服务端会话 ID */
+    sessionId?: string;
     attachedResourceInfo?: AIInputEvent['AttachedResourceInfo'];
     extraValue?: AIChatIPCStartParams['extraValue'];
 }

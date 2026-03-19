@@ -36,7 +36,7 @@ import useAINodeLabel from './useAINodeLabel';
 import { grpcQueryAIEvent } from '../../ai-agent/grpc';
 import type { AIChatData } from '../../ai-agent/type/aiChat';
 import type { DeepPartial } from '../../ai-agent/store/ChatDataStore';
-import { postCancelMessage, postSendContinueMessage, postSendFirstMessage } from '@/apis/AiEventApi';
+import { postCancelMessage, postCreateSession, postSendContinueMessage, postSendFirstMessage } from '@/apis/AiEventApi';
 
 function useChatIPC(params?: UseChatIPCParams): [UseChatIPCState, UseChatIPCEvents];
 
@@ -143,7 +143,9 @@ function useChatIPC(params?: UseChatIPCParams) {
         const ids = getChatDataStore()?.coordinatorIDs;
         if (!ids) {
             try {
-                cacheDataStore?.updater(chatID.current, { coordinatorIDs: [id] });
+                cacheDataStore?.updater(chatID.current, {
+                    coordinatorIDs: [id],
+                });
             } catch (error) {}
         } else {
             if (!ids.includes(id)) ids.push(id);
@@ -155,7 +157,7 @@ function useChatIPC(params?: UseChatIPCParams) {
     const handleSetGrpcFolders = useMemoizedFn((info: AIFileSystemPin) => {
         setGrpcFolders((old) => {
             const isExist = old.find((item) => item.path === info.path);
-            if (!!isExist) return old;
+            if (isExist) return old;
             return [...old, info];
         });
     });
@@ -175,7 +177,9 @@ function useChatIPC(params?: UseChatIPCParams) {
 
     // #region 问题队列相关逻辑
     // 问题队列(自由对话专属)[todo: 后续存在任务规划的问题队列后，需要放入对应的hook中进行处理和储存]
-    const [questionQueue, setQuestionQueue] = useState<AIQuestionQueues>(cloneDeep(DeafultAIQuestionQueues));
+    const [questionQueue, setQuestionQueue] = useState<AIQuestionQueues>(
+        cloneDeep(DeafultAIQuestionQueues),
+    );
 
     const handleResetQuestionQueue = useMemoizedFn(() => {
         setQuestionQueue(cloneDeep(DeafultAIQuestionQueues));
@@ -183,8 +187,12 @@ function useChatIPC(params?: UseChatIPCParams) {
     // #endregion
 
     // #region 实时记忆列表相关逻辑
-    const reactMemorys = useRef<AIAgentGrpcApi.MemoryEntryList>(cloneDeep(DefaultMemoryList));
-    const taskMemorys = useRef<AIAgentGrpcApi.MemoryEntryList>(cloneDeep(DefaultMemoryList));
+    const reactMemorys = useRef<AIAgentGrpcApi.MemoryEntryList>(
+        cloneDeep(DefaultMemoryList),
+    );
+    const taskMemorys = useRef<AIAgentGrpcApi.MemoryEntryList>(
+        cloneDeep(DefaultMemoryList),
+    );
     const [memoryList, setMemoryList] = useState<AIAgentGrpcApi.MemoryEntryList>(cloneDeep(DefaultMemoryList));
 
     const handleResetMemoryList = useMemoizedFn(() => {
@@ -208,7 +216,8 @@ function useChatIPC(params?: UseChatIPCParams) {
     const systemEventUUID = useRef<string[]>([]);
     const [systemStream, setSystemStream] = useState('');
     const handleSetSystemStream = useMemoizedFn((uuid: string, content: string) => {
-        const lastUUID = systemEventUUID.current[systemEventUUID.current.length - 1];
+            const lastUUID =
+                systemEventUUID.current[systemEventUUID.current.length - 1];
         if (lastUUID) {
             if (lastUUID === uuid) {
                 setSystemStream((old) => old + content);
@@ -508,7 +517,7 @@ function useChatIPC(params?: UseChatIPCParams) {
         } catch {}
     });
 
-    const onStart = useMemoizedFn((args: AIChatIPCStartParams) => {
+    const onStart = useMemoizedFn(async (args: AIChatIPCStartParams) => {
         const { token, params, extraValue } = args;
 
         if (execute) {
@@ -524,6 +533,15 @@ function useChatIPC(params?: UseChatIPCParams) {
         handleResetBeforeStart();
         setExecute(true);
         chatID.current = token;
+
+        // 确保后端存在该会话（新建会话幂等；已有会话则恢复）
+        try {
+            await postCreateSession({ run_id: token });
+        } catch (error) {
+            yakitNotify('error', '创建/恢复会话失败，请稍后重试');
+            setExecute(false);
+            return;
+        }
 
         aiRequest.current = params.Params;
         sseEvents.connect(`run/${token}/events`);

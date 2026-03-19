@@ -16,7 +16,7 @@ export const EditChatNameModal: React.FC<EditChatNameModalProps> = memo(
 
         useEffect(() => {
             if (visible) {
-                form && form.setFieldsValue({ name: info?.name || '' });
+                form && form.setFieldsValue({ name: info?.title || '' });
                 return () => {
                     form.resetFields();
                 };
@@ -31,7 +31,7 @@ export const EditChatNameModal: React.FC<EditChatNameModalProps> = memo(
             form.validateFields()
                 .then(async (values) => {
                     values.name &&
-                        onCallback(true, { ...info, name: values.name });
+                        onCallback(true, { ...info, title: values.name });
                 })
                 .catch(() => {})
                 .finally(() => {

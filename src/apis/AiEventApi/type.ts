@@ -49,6 +49,11 @@ interface RunEvent {
     task_uuid: string;
 }
 
+interface TPostCreateSessionRequest {
+    run_id?: string;
+    params?: Partial<AIParams>;
+}
+
 interface TPostCreateSessionResponse {
     run_id: string;
     status: string;
@@ -226,6 +231,7 @@ interface TPostSessionTitle {
 }
 
 export type {
+    TPostCreateSessionRequest,
     TPostCreateSessionResponse,
     TPostSendFirstMessageResponse,
     TPostSendContinueMessageResponse,

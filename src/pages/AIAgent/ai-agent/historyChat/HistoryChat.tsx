@@ -26,6 +26,16 @@ import emiter from '@/utils/eventBus/eventBus';
 import { grpcDeleteAIEvent, grpcDeleteAITask } from '../grpc';
 import { aiChatDataStore } from '../store/ChatDataStore';
 import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome';
+import { postSessionTitle } from '@/apis/AiEventApi';
+
+const updateChatTitle = (list: AIChatInfo[], info: AIChatInfo) => {
+    return list.map((item) => {
+        if (item.run_id === info.run_id) {
+            return info;
+        }
+        return item;
+    });
+};
 
 /** 向对话框组件进行事件触发的通信 */
 export const onNewChat = () => {
@@ -36,7 +46,7 @@ const HistoryChat = memo(() => {
     const { chats, activeChat } = useAIAgentStore();
     const { setChats, setActiveChat } = useAIAgentDispatcher();
     const activeID = useMemo(() => {
-        return activeChat?.id || '';
+        return activeChat?.run_id || '';
     }, [activeChat]);
 
     const [search, setSearch] = useState('');
@@ -45,7 +55,7 @@ const HistoryChat = memo(() => {
     const showHistory = useMemo(() => {
         if (!search) return chats;
         return chats.filter((item) =>
-            item.name.toLowerCase().includes(search.toLowerCase()),
+            item.title.toLowerCase().includes(search.toLowerCase()),
         );
     }, [chats, searchDebounce]);
 
@@ -72,12 +82,12 @@ const HistoryChat = memo(() => {
     const handleSetActiveChat = useMemoizedFn((info: AIChatInfo) => {
         // 暂时性逻辑，因为老版本的对话信息里没有请求参数，导致在新版本无法使用对话里的重新执行功能
         // 所以会提示警告，由用户决定是否删除历史对话
-        if (!info.request) {
-            yakitNotify(
-                'warning',
-                '当前对话无请求参数信息，无法使用重新执行功能',
-            );
-        }
+        // if (!info.request) {
+        //     yakitNotify(
+        //         'warning',
+        //         '当前对话无请求参数信息，无法使用重新执行功能',
+        //     );
+        // }
         setActiveChat && setActiveChat(info);
     });
 
@@ -91,16 +101,12 @@ const HistoryChat = memo(() => {
     const handleCallbackEditName = useMemoizedFn(
         (result: boolean, info?: AIChatInfo) => {
             if (result && info) {
-                setChats &&
-                    setChats((old) => {
-                        // eslint-disable-next-line max-nested-callbacks
-                        return old.map((item) => {
-                            if (item.id === info.id) {
-                                return info;
-                            }
-                            return item;
-                        });
-                    });
+                try {
+                    postSessionTitle(info.run_id, info.title).catch(() => {});
+                    setChats?.((old) => updateChatTitle(old, info));
+                } catch (error) {
+                    yakitNotify('error', '修改对话标题失败:' + error);
+                }
             }
             setEditShow(false);
             editInfo.current = undefined;
@@ -109,40 +115,40 @@ const HistoryChat = memo(() => {
 
     const [delLoading, setDelLoading] = useState<string[]>([]);
     const handleDeleteChat = useMemoizedFn(async (info: AIChatInfo) => {
-        const { id, session } = info;
-        const isLoading = delLoading.includes(id);
+        const { run_id } = info;
+        const isLoading = delLoading.includes(run_id);
         if (isLoading) return;
-        const findIndex = chats.findIndex((item) => item.id === id);
+        const findIndex = chats.findIndex((item) => item.run_id === run_id);
         if (findIndex === -1) {
             yakitNotify('error', '未找到对应的对话');
             return;
         }
-        setDelLoading((old) => [...old, id]);
+        setDelLoading((old) => [...old, run_id]);
         let active: AIChatInfo | undefined =
             findIndex === chats.length - 1
                 ? chats[findIndex - 1]
                 : chats[findIndex + 1];
         // eslint-disable-next-line max-nested-callbacks
-        setChats && setChats((old) => old.filter((item) => item.id !== id));
+        setChats?.((old) => old.filter((item) => item.run_id !== run_id));
 
-        if (activeID !== id) active = undefined;
+        if (activeID !== run_id) active = undefined;
         active && handleSetActiveChat(active);
 
         try {
             await grpcDeleteAIEvent(
                 {
                     Filter: {
-                        SessionID: session,
+                        SessionID: run_id,
                     },
                 },
                 true,
             );
-            aiChatDataStore.remove(session);
+            aiChatDataStore.remove(run_id);
         } catch (error) {
             yakitNotify('error', '删除会话失败:' + error);
         } finally {
             // eslint-disable-next-line max-nested-callbacks
-            setDelLoading((old) => old.filter((el) => el !== id));
+            setDelLoading((old) => old.filter((el) => el !== run_id));
         }
     });
     return (
@@ -199,14 +205,14 @@ const HistoryChat = memo(() => {
             <div className={styles['content']}>
                 <div className={styles['history-chat-list']}>
                     {showHistory.map((item) => {
-                        const { id, name } = item;
-                        const delStatus = delLoading.includes(id);
+                        const { run_id, title } = item;
+                        const delStatus = delLoading.includes(run_id);
                         return (
                             <div
-                                key={id}
+                                key={run_id}
                                 className={classNames(styles['history-item'], {
                                     [styles['history-item-active']]:
-                                        activeID === id,
+                                        activeID === run_id,
                                 })}
                                 onClick={() => handleSetActiveChat(item)}
                             >
@@ -219,9 +225,9 @@ const HistoryChat = memo(() => {
                                             styles['info-title'],
                                             'yakit-content-single-ellipsis',
                                         )}
-                                        title={name}
+                                        title={title}
                                     >
-                                        {name}
+                                        {title}
                                     </div>
                                 </div>
 

@@ -32,6 +32,7 @@ import classNames from 'classnames';
 import styles from './AIAgent.module.scss';
 // import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
+import { getSessionAll } from '@/apis/AiEventApi';
 
 export const AIAgentCacheClearValue = '20260113';
 
@@ -62,7 +63,7 @@ export const AIAgent = () => {
         // 清空无效的用户缓存数据-全局配置数据
         setRemoteValue(RemoteAIAgentGV.AIAgentChatSetting, '');
         // 清空无效的用户缓存数据-taskChat历史对话数据
-        setRemoteValue(RemoteAIAgentGV.AIAgentChatHistory, '');
+        // setRemoteValue(RemoteAIAgentGV.AIAgentChatHistory, '');
         // 设置清空标志位
         setRemoteValue(
             RemoteAIAgentGV.AIAgentCacheClear,
@@ -90,13 +91,18 @@ export const AIAgent = () => {
             JSON.stringify(getSetting()),
         );
     }, [setting]);
+
+    const getSessionAllData = useMemoizedFn(async () => {
+        try {
+            const { sessions } = await getSessionAll();
+            setChats(sessions);
+        } catch (error) {}
+    });
+
     // 缓存历史对话数据
-    useUpdateEffect(() => {
-        setRemoteValue(
-            RemoteAIAgentGV.AIAgentChatHistory,
-            JSON.stringify(getChats()),
-        );
-    }, [chats]);
+    // useUpdateEffect(() => {
+    //     setRemoteValue(RemoteAIAgentGV.AIAgentChatHistory, JSON.stringify(getChats()));
+    // }, [chats]);
 
     const store: AIAgentContextStore = useMemo(() => {
         return {
@@ -131,17 +137,19 @@ export const AIAgent = () => {
 
             if (res >= AIAgentCacheClearValue) {
                 // 获取缓存的历史对话数据
-                getRemoteValue(RemoteAIAgentGV.AIAgentChatHistory)
-                    .then((res) => {
-                        if (!res) return;
-                        try {
-                            const cache = JSON.parse(res) as AIChatInfo[];
-                            if (!Array.isArray(cache) || cache.length === 0)
-                                return;
-                            setChats(cache);
-                        } catch (error) {}
-                    })
-                    .catch(() => {});
+                getSessionAllData();
+                // getRemoteValue(RemoteAIAgentGV.AIAgentChatHistory)
+                //     .then((res) => {
+                //         console.log('res:', res);
+                //         if (!res) return;
+                //         try {
+                //             const cache = JSON.parse(res) as AIChatInfo[];
+                //             if (!Array.isArray(cache) || cache.length === 0)
+                //                 return;
+                //             setChats(cache);
+                //         } catch (error) {}
+                //     })
+                //     .catch(() => {});
                 // 获取缓存的全局配置数据
                 getRemoteValue(RemoteAIAgentGV.AIAgentChatSetting)
                     .then((res) => {

@@ -1,6 +1,7 @@
 import axios from '@/utils/axios';
 import type { AIResponseData } from '@/utils/commonTypes';
 import type {
+    TPostCreateSessionRequest,
     TPostCreateSessionResponse,
     TPostSendFirstMessageResponse,
     TGetSettingResponse,
@@ -16,15 +17,12 @@ import type {
     GetSessionAllResponse,
     TPostSessionTitle,
 } from './type';
-import {
-    AIInputEvent,
-    AIStartParams,
-} from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
+import type { AIInputEvent } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 
 // #region 会话Session相关接口
-/** 创建会话通道, 并生成session */
+/** 创建会话通道, 并生成session（也可传 run_id 恢复已有会话） */
 const postCreateSession = (
-    data?: AIStartParams,
+    data?: TPostCreateSessionRequest,
 ): Promise<TPostCreateSessionResponse> =>
     axios.post<never, TPostCreateSessionResponse>('/agent/session', data);
 

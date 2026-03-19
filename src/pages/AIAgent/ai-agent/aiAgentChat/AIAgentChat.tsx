@@ -81,7 +81,7 @@ import { isForcedSetAIModal } from '../aiModelList/utils';
 import { RemoteAIAgentGV } from '../../enums/aiAgent';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
 import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
-import { YakitModalConfirm } from '@/compoments/yakitUI/YakitModal/YakitModalConfirm';
+import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm';
 
 const AIChatWelcome = React.lazy(
     () => import('../aiChatWelcome/AIChatWelcome'),
@@ -113,10 +113,10 @@ export const AIAgentChat = memo(() => {
     });
 
     useEffect(() => {
-        const chatData = aiChatDataStore.get(activeChat?.session || '');
+        const chatData = aiChatDataStore.get(activeChat?.run_id || '');
         if (taskChatIsEmpty(chatData?.taskChat)) {
             onSetKeyTask();
-        } else if (activeChat?.id) {
+        } else if (activeChat?.run_id) {
             onSetReAct();
         }
     }, [activeChat]);
@@ -182,7 +182,7 @@ export const AIAgentChat = memo(() => {
 
     /** 当前对话唯一ID */
     const activeID = useCreation(() => {
-        return activeChat?.session;
+        return activeChat?.run_id;
     }, [activeChat]);
 
     // 提问结束后缓存数据
@@ -193,16 +193,14 @@ export const AIAgentChat = memo(() => {
     const setSessionChatName = (session: string, name: string) => {
         setActiveChat?.((prev) => {
             if (!prev) return prev;
-            if (prev.session !== session) return prev;
-            return { ...prev, name };
+            if (prev.run_id !== session) return prev;
+            return { ...prev, title: name };
         });
         setChats?.((prev) => {
-            const chatIndex = prev.findIndex(
-                (item) => item.session === session,
-            );
+            const chatIndex = prev.findIndex((item) => item.run_id === session);
             if (chatIndex === -1) return prev;
             const newChats = [...prev];
-            newChats[chatIndex] = { ...newChats[chatIndex], name };
+            newChats[chatIndex] = { ...newChats[chatIndex], title: name };
             return newChats;
         });
     };
@@ -349,7 +347,7 @@ export const AIAgentChat = memo(() => {
 
     useUpdateEffect(() => {
         onHistoryAfter();
-        events.onSwitchChat(activeChat?.session);
+        events.onSwitchChat(activeChat?.run_id);
     }, [activeChat]);
 
     /** 切换历史后的处理逻辑 */

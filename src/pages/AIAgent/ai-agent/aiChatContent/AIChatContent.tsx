@@ -117,7 +117,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
 
         const onExportOk = useMemoizedFn(
             async (data: { types: string[]; outputPath: string }) => {
-                if (!activeChat?.id) {
+                if (!activeChat?.run_id) {
                     failed('当前没有活跃的会话');
                     return;
                 }
@@ -131,7 +131,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                     await grpcExportAILogs(
                         {
                             // CoordinatorIDs: ids,
-                            SessionID: activeChat.session,
+                            SessionID: activeChat.run_id,
                             ExportDataTypes: data.types,
                             OutputPath: data.outputPath,
                         },
@@ -269,13 +269,13 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
             chatId?: string;
             foldersLen: number;
         }>({
-            chatId: activeChat?.id,
+            chatId: activeChat?.run_id,
             foldersLen: grpcFolders.length,
         });
 
         useEffect(() => {
             const prev = prevRef.current;
-            const currentChatId = activeChat?.id;
+            const currentChatId = activeChat?.run_id;
             const currentLen = grpcFolders.length;
             let nextShowHot = false;
 
@@ -292,7 +292,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                 chatId: currentChatId,
                 foldersLen: currentLen,
             };
-        }, [grpcFolders.length, activeChat?.id, activeKey]);
+        }, [grpcFolders.length, activeChat?.run_id, activeKey]);
 
         const tabBarRender = useMemoizedFn(
             (tab: YakitTabsProps, node: ReactNode[]) => {
@@ -438,7 +438,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                                     className={styles['chat-alt-icon']}
                                 />
                                 <div className={styles['chat-title']}>
-                                    {activeChat?.name || '新会话'}
+                                    {activeChat?.title || '新会话'}
                                 </div>
                                 <Divider type="vertical" />
                                 <YakitButton
@@ -453,7 +453,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                             <div className={styles['extra']}>
                                 <AIContextToken
                                     execute={execute}
-                                    session={activeChat?.session}
+                                    session={activeChat?.run_id}
                                 />
                                 <YakitButton
                                     type="secondary2"
