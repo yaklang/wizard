@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 import { useCreation, useMemoizedFn } from 'ahooks';
-import { Uint8ArrayToString } from '@/utils/str';
 import cloneDeep from 'lodash/cloneDeep';
 import {
+    base64ToJson,
     genBaseAIChatData,
     genErrorLogData,
     handleGrpcDataPushLog,
@@ -71,7 +71,7 @@ function useCasualChat(params?: UseCasualChatParams) {
     // tool_review
     const handleToolReview = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.ToolUseReviewRequire;
@@ -125,7 +125,7 @@ function useCasualChat(params?: UseCasualChatParams) {
     // forge_review 事件处理
     const handleExecForgeReview = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.ExecForgeReview;
@@ -179,7 +179,7 @@ function useCasualChat(params?: UseCasualChatParams) {
     // AI人机交互的review事件处理
     const handleUserRequireReview = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIReviewRequire;
@@ -223,7 +223,7 @@ function useCasualChat(params?: UseCasualChatParams) {
     // 处理 tool_review和forge_view 的 ai 判断得分事件
     const handleReviewJudgement = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const score = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIReviewJudgement;
@@ -306,7 +306,7 @@ function useCasualChat(params?: UseCasualChatParams) {
         try {
             if (!review.current) return;
 
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(ipcContent) as AIAgentGrpcApi.ReviewRelease;
             if (!data?.id) {
                 handlePushLog(

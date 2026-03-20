@@ -1,11 +1,10 @@
 import { useCreation, useMemoizedFn } from 'ahooks';
-import { Uint8ArrayToString } from '@/utils/str';
 import type {
     AIChatLogData,
     UseAIPerfDataEvents,
     UseAIPerfDataParams,
 } from './type';
-import { handleGrpcDataPushLog } from './utils';
+import { base64ToJson, handleGrpcDataPushLog } from './utils';
 import type { AIAgentGrpcApi, AIOutputEvent } from './grpcApi';
 
 // 属于该 hook 处理数据的类型
@@ -28,7 +27,7 @@ function useAIPerfData(params?: UseAIPerfDataParams) {
 
     const handleSetData = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            let ipcContent = Uint8ArrayToString(res.Content) || '';
+            let ipcContent = base64ToJson(res.Content) || '';
 
             if (res.Type === 'consumption') {
                 // 消耗Token

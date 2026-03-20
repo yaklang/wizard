@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import { useCreation, useMemoizedFn } from 'ahooks';
-import { Uint8ArrayToString } from '@/utils/str';
 import cloneDeep from 'lodash/cloneDeep';
 import { AIReviewJudgeLevelMap } from './defaultConstant';
 import type {
@@ -11,6 +10,7 @@ import type {
     UseTaskChatState,
 } from './type';
 import {
+    base64ToJson,
     genBaseAIChatData,
     genErrorLogData,
     genExecTasks,
@@ -169,7 +169,7 @@ function useTaskChat(params?: UseTaskChatParams) {
     /** plan_review */
     const handlePlanReview = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.PlanReviewRequire;
@@ -248,7 +248,7 @@ function useTaskChat(params?: UseTaskChatParams) {
                 return;
             }
 
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.PlanReviewRequireExtra;
@@ -287,7 +287,7 @@ function useTaskChat(params?: UseTaskChatParams) {
     // tool_review
     const handleToolReview = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.ToolUseReviewRequire;
@@ -345,7 +345,7 @@ function useTaskChat(params?: UseTaskChatParams) {
     // task_review
     const handleTaskReview = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.TaskReviewRequire;
@@ -404,7 +404,7 @@ function useTaskChat(params?: UseTaskChatParams) {
     // AI人机交互的review事件处理(require_user_interactive)
     const handleUserRequireReview = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIReviewRequire;
@@ -438,7 +438,7 @@ function useTaskChat(params?: UseTaskChatParams) {
     // 处理 tool_review和forge_view 的 ai 判断得分事件
     const handleReviewJudgement = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const score = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIReviewJudgement;
@@ -493,7 +493,7 @@ function useTaskChat(params?: UseTaskChatParams) {
         try {
             if (!review.current) return;
 
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(ipcContent) as AIAgentGrpcApi.ReviewRelease;
             if (!data?.id) {
                 handlePushLog(
@@ -554,7 +554,7 @@ function useTaskChat(params?: UseTaskChatParams) {
     // 处理专属任务规划的特殊数据流
     const handleSpecialData = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            let ipcContent = Uint8ArrayToString(res.Content) || '';
+            let ipcContent = base64ToJson(res.Content) || '';
 
             if (res.Type === 'structured' && res.NodeId === 'system') {
                 const data = JSON.parse(ipcContent) || '';

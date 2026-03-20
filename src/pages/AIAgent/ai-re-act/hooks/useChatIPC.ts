@@ -21,7 +21,12 @@ import type {
     UseChatIPCState,
     UseHookBaseParams,
 } from './type';
-import type { AIAgentGrpcApi, AIInputEvent, AIOutputEvent, AIStartParams } from './grpcApi';
+import type {
+    AIAgentGrpcApi,
+    AIInputEvent,
+    AIOutputEvent,
+    AIStartParams,
+} from './grpcApi';
 import { AIInputEventSyncTypeEnum } from './grpcApi';
 import useAIChatLog from './useAIChatLog';
 import cloneDeep from 'lodash/cloneDeep';
@@ -36,9 +41,16 @@ import useAINodeLabel from './useAINodeLabel';
 import { grpcQueryAIEvent } from '../../ai-agent/grpc';
 import type { AIChatData } from '../../ai-agent/type/aiChat';
 import type { DeepPartial } from '../../ai-agent/store/ChatDataStore';
-import { postCancelMessage, postCreateSession, postSendContinueMessage, postSendFirstMessage } from '@/apis/AiEventApi';
+import {
+    postCancelMessage,
+    postCreateSession,
+    postSendContinueMessage,
+    postSendFirstMessage,
+} from '@/apis/AiEventApi';
 
-function useChatIPC(params?: UseChatIPCParams): [UseChatIPCState, UseChatIPCEvents];
+function useChatIPC(
+    params?: UseChatIPCParams,
+): [UseChatIPCState, UseChatIPCEvents];
 
 function useChatIPC(params?: UseChatIPCParams) {
     const {
@@ -65,19 +77,24 @@ function useChatIPC(params?: UseChatIPCParams) {
     });
 
     /** 消息通知提醒弹框 */
-    const handleNotifyMessage = useMemoizedFn((message: AIChatIPCNotifyMessage) => {
-        const { NodeIdVerbose, Content } = message;
-        const verbose = getLabelByParams(NodeIdVerbose);
-        yakitNotify('info', {
-            message: verbose,
-            description: Content,
-        });
-    });
+    const handleNotifyMessage = useMemoizedFn(
+        (message: AIChatIPCNotifyMessage) => {
+            const { NodeIdVerbose, Content } = message;
+            const verbose = getLabelByParams(NodeIdVerbose);
+            yakitNotify('info', {
+                message: verbose,
+                description: Content,
+            });
+        },
+    );
 
     /** 发送会话的第一条消息 */
     const sendFirstMessage = useMemoizedFn(() => {
         if (!chatID.current) {
-            yakitNotify('error', 'AI异常, 未记录session却处于执行状态, 请关闭AI页面重试!');
+            yakitNotify(
+                'error',
+                'AI异常, 未记录session却处于执行状态, 请关闭AI页面重试!',
+            );
             return;
         }
         postSendFirstMessage(chatID.current, {
@@ -127,12 +144,13 @@ function useChatIPC(params?: UseChatIPCParams) {
     });
 
     /** 获取全部聊天数据 */
-    const getChatDataStore: UseHookBaseParams['getChatDataStore'] = useMemoizedFn(() => {
-        if (!chatID.current) {
-            throw new Error('session is empty');
-        }
-        return cacheDataStore?.get(chatID.current);
-    });
+    const getChatDataStore: UseHookBaseParams['getChatDataStore'] =
+        useMemoizedFn(() => {
+            if (!chatID.current) {
+                throw new Error('session is empty');
+            }
+            return cacheDataStore?.get(chatID.current);
+        });
 
     // 通信的状态
     const [execute, setExecute, getExecute] = useGetSetState(false);
@@ -193,7 +211,8 @@ function useChatIPC(params?: UseChatIPCParams) {
     const taskMemorys = useRef<AIAgentGrpcApi.MemoryEntryList>(
         cloneDeep(DefaultMemoryList),
     );
-    const [memoryList, setMemoryList] = useState<AIAgentGrpcApi.MemoryEntryList>(cloneDeep(DefaultMemoryList));
+    const [memoryList, setMemoryList] =
+        useState<AIAgentGrpcApi.MemoryEntryList>(cloneDeep(DefaultMemoryList));
 
     const handleResetMemoryList = useMemoizedFn(() => {
         reactMemorys.current = cloneDeep(DefaultMemoryList);
@@ -204,7 +223,9 @@ function useChatIPC(params?: UseChatIPCParams) {
 
     // #region 时间线相关逻辑
     // 实时时间线
-    const [reActTimelines, setReActTimelines] = useThrottleState<AIAgentGrpcApi.TimelineItem[]>([], { wait: 100 });
+    const [reActTimelines, setReActTimelines] = useThrottleState<
+        AIAgentGrpcApi.TimelineItem[]
+    >([], { wait: 100 });
 
     const handleResetReActTimelines = useMemoizedFn(() => {
         setReActTimelines([]);
@@ -215,22 +236,24 @@ function useChatIPC(params?: UseChatIPCParams) {
     /** 记录都存在过的系统信息uuid, 只展示最新的一条系统信息 */
     const systemEventUUID = useRef<string[]>([]);
     const [systemStream, setSystemStream] = useState('');
-    const handleSetSystemStream = useMemoizedFn((uuid: string, content: string) => {
+    const handleSetSystemStream = useMemoizedFn(
+        (uuid: string, content: string) => {
             const lastUUID =
                 systemEventUUID.current[systemEventUUID.current.length - 1];
-        if (lastUUID) {
-            if (lastUUID === uuid) {
-                setSystemStream((old) => old + content);
+            if (lastUUID) {
+                if (lastUUID === uuid) {
+                    setSystemStream((old) => old + content);
+                } else {
+                    if (systemEventUUID.current.includes(uuid)) return;
+                    systemEventUUID.current.push(uuid);
+                    setSystemStream(content);
+                }
             } else {
-                if (systemEventUUID.current.includes(uuid)) return;
                 systemEventUUID.current.push(uuid);
                 setSystemStream(content);
             }
-        } else {
-            systemEventUUID.current.push(uuid);
-            setSystemStream(content);
-        }
-    });
+        },
+    );
     const handleResetSystemStream = useMemoizedFn(() => {
         systemEventUUID.current = [];
         setSystemStream('');
@@ -270,7 +293,9 @@ function useChatIPC(params?: UseChatIPCParams) {
     // #region 自由对话(ReAct)相关变量和hook
     const casualChatID = useRef(0);
     /** 自由对话(ReAct)的loading状态 */
-    const [casualStatus, setCasualStatus] = useState<CasualLoadingStatus>(cloneDeep(DefaultCasualLoadingStatus));
+    const [casualStatus, setCasualStatus] = useState<CasualLoadingStatus>(
+        cloneDeep(DefaultCasualLoadingStatus),
+    );
     const handleResetCasualChatLoading = useMemoizedFn(() => {
         casualChatID.current = 0;
         setCasualStatus(cloneDeep(DefaultCasualLoadingStatus));
@@ -294,7 +319,9 @@ function useChatIPC(params?: UseChatIPCParams) {
     /** 当前任务规划对应的数据流-CoordinatorId */
     const planCoordinatorId = useRef('');
     /** 任务规划的loading状态 */
-    const [taskStatus, setTaskStatus] = useState<PlanLoadingStatus>(cloneDeep(DefaultPlanLoadingStatus));
+    const [taskStatus, setTaskStatus] = useState<PlanLoadingStatus>(
+        cloneDeep(DefaultPlanLoadingStatus),
+    );
 
     const handleResetTaskChatLoading = useMemoizedFn(() => {
         taskChatID.current = '';
@@ -317,35 +344,45 @@ function useChatIPC(params?: UseChatIPCParams) {
     /** 更新问题队列状态 */
     const handleTriggerQuestionQueueRequest = useThrottleFn(
         () => {
-            sendMessage({ IsSyncMessage: true, SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_QUEUE_INFO });
+            sendMessage({
+                IsSyncMessage: true,
+                SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_QUEUE_INFO,
+            });
         },
         { wait: 50, leading: false },
     ).run;
 
     // 问题入队|出队变化时-进行通知逻辑
-    const handleQuestionQueueStatusChange = useMemoizedFn((res: AIOutputEvent) => {
-        try {
-            const { NodeId } = res;
-            const ipcContent = base64ToJson(res.Content) || '';
-            const data = JSON.parse(ipcContent) as AIAgentGrpcApi.QuestionQueueStatusChange;
-            if (NodeId === 'react_task_dequeue') {
-                if (!!data.focus_mode) {
-                    // 记录专注模式状态
-                    handleFocusModeChange(data.react_task_id, data.focus_mode);
-                } else {
-                    // 非专注模式状态
-                    handleResetFocusMode();
+    const handleQuestionQueueStatusChange = useMemoizedFn(
+        (res: AIOutputEvent) => {
+            try {
+                const { NodeId } = res;
+                const ipcContent = base64ToJson(res.Content) || '';
+                const data = JSON.parse(
+                    ipcContent,
+                ) as AIAgentGrpcApi.QuestionQueueStatusChange;
+                if (NodeId === 'react_task_dequeue') {
+                    if (data.focus_mode) {
+                        // 记录专注模式状态
+                        handleFocusModeChange(
+                            data.react_task_id,
+                            data.focus_mode,
+                        );
+                    } else {
+                        // 非专注模式状态
+                        handleResetFocusMode();
+                    }
                 }
+            } catch (error) {
+                handleGrpcDataPushLog({
+                    info: res,
+                    pushLog: logEvents.pushLog,
+                });
+            } finally {
+                handleTriggerQuestionQueueRequest();
             }
-        } catch (error) {
-            handleGrpcDataPushLog({
-                info: res,
-                pushLog: logEvents.pushLog,
-            });
-        } finally {
-            handleTriggerQuestionQueueRequest();
-        }
-    });
+        },
+    );
 
     // 问题队列清空操作-进行通知逻辑
     const handleReActTaskCleared = useMemoizedFn((res: AIOutputEvent) => {
@@ -369,48 +406,62 @@ function useChatIPC(params?: UseChatIPCParams) {
 
     // #region review事件相关方法
     /** review 界面选项触发事件 */
-    const onSend = useMemoizedFn(({ token, type, params, optionValue, extraValue }: AIChatSendParams) => {
-        try {
-            if (!execute) {
-                yakitNotify('warning', 'AI 未执行任务，无法发送选项');
-                return;
-            }
-            if (!chatID.current || chatID.current !== token) {
-                yakitNotify('warning', '该选项非本次 AI 执行的回答选项');
-                return;
-            }
+    const onSend = useMemoizedFn(
+        ({
+            token,
+            type,
+            params,
+            optionValue,
+            extraValue,
+        }: AIChatSendParams) => {
+            try {
+                if (!execute) {
+                    yakitNotify('warning', 'AI 未执行任务，无法发送选项');
+                    return;
+                }
+                if (!chatID.current || chatID.current !== token) {
+                    yakitNotify('warning', '该选项非本次 AI 执行的回答选项');
+                    return;
+                }
 
-            if (params.IsConfigHotpatch) {
-                aiRequest.current = { ...(aiRequest.current || {}), ...(params.Params || {}) };
-            }
+                if (params.IsConfigHotpatch) {
+                    aiRequest.current = {
+                        ...(aiRequest.current || {}),
+                        ...(params.Params || {}),
+                    };
+                }
 
-            switch (type) {
-                case 'casual':
-                case 'task':
-                    const events: UseCasualChatEvents | UseChatIPCEvents =
-                        type === 'casual' ? casualChatEvent : taskChatEvent;
-                    events.handleSend({
-                        request: params,
-                        optionValue,
-                        extraValue,
-                        cb: () => {
-                            sendMessage(params);
-                        },
-                    });
-                    break;
+                switch (type) {
+                    case 'casual':
+                    case 'task': {
+                        const events: UseCasualChatEvents | UseChatIPCEvents =
+                            type === 'casual' ? casualChatEvent : taskChatEvent;
+                        events.handleSend({
+                            request: params,
+                            optionValue,
+                            extraValue,
+                            cb: () => {
+                                sendMessage(params);
+                            },
+                        });
+                        break;
+                    }
 
-                default:
-                    sendMessage(params);
-                    break;
-            }
-        } catch (error) {}
-    });
+                    default:
+                        sendMessage(params);
+                        break;
+                }
+            } catch (error) {}
+        },
+    );
     // #endregion
 
     // #region 外界进行删除会话数据操作时的重置逻辑
     const delChats = useRef<string[]>([]);
     const onDelChats = useMemoizedFn((session: string[]) => {
-        const filterSessions = session.filter((item) => !delChats.current.includes(item));
+        const filterSessions = session.filter(
+            (item) => !delChats.current.includes(item),
+        );
         delChats.current.push(...filterSessions);
 
         let failedSessions: string[] = [];
@@ -424,7 +475,10 @@ function useChatIPC(params?: UseChatIPCParams) {
             }
         }
         if (failedSessions.length > 0 && !!err) {
-            yakitNotify('error', `删除会话(${failedSessions.join(',')})失败: ${err}`);
+            yakitNotify(
+                'error',
+                `删除会话(${failedSessions.join(',')})失败: ${err}`,
+            );
         }
     });
     // #endregion
@@ -465,9 +519,15 @@ function useChatIPC(params?: UseChatIPCParams) {
     /** 需要轮询获取最新的数据请求 */
     const handleStartQuestionQueue = useMemoizedFn(() => {
         // 获取最新问题队列数据
-        sendMessage({ IsSyncMessage: true, SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_QUEUE_INFO });
+        sendMessage({
+            IsSyncMessage: true,
+            SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_QUEUE_INFO,
+        });
         // 获取最新记忆列表数据
-        sendMessage({ IsSyncMessage: true, SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_MEMORY_CONTEXT });
+        sendMessage({
+            IsSyncMessage: true,
+            SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_MEMORY_CONTEXT,
+        });
     });
 
     /** 获取历史时间线 */
@@ -488,10 +548,14 @@ function useChatIPC(params?: UseChatIPCParams) {
             });
             if (Total === 0) return;
 
-            const timelineItems: AIAgentGrpcApi.TimelineItem[] = Events.map((item) => {
-                let ipcContent = base64ToJson(item.Content) || '';
-                return JSON.parse(ipcContent) as AIAgentGrpcApi.TimelineItem;
-            }).reverse();
+            const timelineItems: AIAgentGrpcApi.TimelineItem[] = Events.map(
+                (item) => {
+                    let ipcContent = base64ToJson(item.Content) || '';
+                    return JSON.parse(
+                        ipcContent,
+                    ) as AIAgentGrpcApi.TimelineItem;
+                },
+            ).reverse();
             setReActTimelines((old) => [...timelineItems, ...old]);
         } catch (error) {}
     });
@@ -500,7 +564,9 @@ function useChatIPC(params?: UseChatIPCParams) {
     const saveStateDataOfEnd = useMemoizedFn((session: string) => {
         if (delChats.current.includes(session)) {
             // 该session对应的会话数据实例已被删除
-            delChats.current = delChats.current.filter((item) => item !== session);
+            delChats.current = delChats.current.filter(
+                (item) => item !== session,
+            );
             return;
         }
 
@@ -578,7 +644,7 @@ function useChatIPC(params?: UseChatIPCParams) {
             });
 
             let ipcContent = base64ToJson(res.Content) || '';
-            // console.log('onStart-res', res, ipcContent);
+            console.log('onStart-res', res, ipcContent);
 
             if (res.Type === 'structured' && res.NodeId === 'session_title') {
                 // 生成会话的名称
@@ -590,16 +656,28 @@ function useChatIPC(params?: UseChatIPCParams) {
 
             if (res.Type === 'start_plan_and_execution') {
                 // 触发任务规划，并传出任务规划流的标识 coordinator_id
-                const startInfo = JSON.parse(ipcContent) as AIAgentGrpcApi.AIStartPlanAndExecution;
-                if (startInfo.coordinator_id && planCoordinatorId.current !== startInfo.coordinator_id) {
+                const startInfo = JSON.parse(
+                    ipcContent,
+                ) as AIAgentGrpcApi.AIStartPlanAndExecution;
+                if (
+                    startInfo.coordinator_id &&
+                    planCoordinatorId.current !== startInfo.coordinator_id
+                ) {
                     // 设置任务规划对应的问题ID, 并清除自由对话(ReAct)的loading状态
                     taskChatID.current = startInfo['re-act_task'];
                     casualChatID.current -= 1;
-                    setCasualStatus((old) => ({ ...old, loading: casualChatID.current > 0 }));
+                    setCasualStatus((old) => ({
+                        ...old,
+                        loading: casualChatID.current > 0,
+                    }));
                     // 标记grpc流里属于任务规划的流
                     planCoordinatorId.current = startInfo.coordinator_id;
                     // 任务规划的loading开始置为true
-                    setTaskStatus(() => ({ loading: true, plan: '加载中...', task: '加载中...' }));
+                    setTaskStatus(() => ({
+                        loading: true,
+                        plan: '加载中...',
+                        task: '加载中...',
+                    }));
                     // 触发任务规划UI展示的回调
                     onTaskStart && onTaskStart();
                 }
@@ -607,10 +685,18 @@ function useChatIPC(params?: UseChatIPCParams) {
             }
             if (res.Type === 'end_plan_and_execution') {
                 // 结束任务规划，并传出任务规划流的标识 coordinator_id
-                const startInfo = JSON.parse(ipcContent) as AIAgentGrpcApi.AIStartPlanAndExecution;
-                if (startInfo.coordinator_id && planCoordinatorId.current === startInfo.coordinator_id) {
+                const startInfo = JSON.parse(
+                    ipcContent,
+                ) as AIAgentGrpcApi.AIStartPlanAndExecution;
+                if (
+                    startInfo.coordinator_id &&
+                    planCoordinatorId.current === startInfo.coordinator_id
+                ) {
                     casualChatID.current += 1;
-                    setCasualStatus((old) => ({ ...old, loading: casualChatID.current > 0 }));
+                    setCasualStatus((old) => ({
+                        ...old,
+                        loading: casualChatID.current > 0,
+                    }));
                     taskChatEvent.handlePlanExecEnd(res);
                     taskChatEvent.handleCloseGrpc();
                     handleResetTaskChatLoading();
@@ -620,7 +706,9 @@ function useChatIPC(params?: UseChatIPCParams) {
 
             if (res.Type === 'memory_context') {
                 // 实时记忆列表
-                const lists = JSON.parse(ipcContent) as AIAgentGrpcApi.MemoryEntryList;
+                const lists = JSON.parse(
+                    ipcContent,
+                ) as AIAgentGrpcApi.MemoryEntryList;
                 if (planCoordinatorId.current === res.CoordinatorId) {
                     taskMemorys.current = lists;
                 } else {
@@ -628,37 +716,72 @@ function useChatIPC(params?: UseChatIPCParams) {
                 }
                 try {
                     const newMemoryEntryList: AIAgentGrpcApi.MemoryEntryList = {
-                        memories: [...(taskMemorys.current.memories || []), ...(reactMemorys.current.memories || [])],
+                        memories: [
+                            ...(taskMemorys.current.memories || []),
+                            ...(reactMemorys.current.memories || []),
+                        ],
                         memory_pool_limit:
                             Number(taskMemorys.current.memory_pool_limit) +
                             Number(reactMemorys.current.memory_pool_limit),
-                        memory_session_id: reactMemorys.current.memory_session_id,
+                        memory_session_id:
+                            reactMemorys.current.memory_session_id,
                         total_memories:
-                            Number(taskMemorys.current.total_memories) + Number(reactMemorys.current.total_memories),
-                        total_size: Number(taskMemorys.current.total_size) + Number(reactMemorys.current.total_size),
+                            Number(taskMemorys.current.total_memories) +
+                            Number(reactMemorys.current.total_memories),
+                        total_size:
+                            Number(taskMemorys.current.total_size) +
+                            Number(reactMemorys.current.total_size),
                         score_overview: {
                             A_total:
-                                Number(taskMemorys.current.score_overview.A_total) +
-                                Number(reactMemorys.current.score_overview.A_total),
+                                Number(
+                                    taskMemorys.current.score_overview.A_total,
+                                ) +
+                                Number(
+                                    reactMemorys.current.score_overview.A_total,
+                                ),
                             C_total:
-                                Number(taskMemorys.current.score_overview.C_total) +
-                                Number(reactMemorys.current.score_overview.C_total),
+                                Number(
+                                    taskMemorys.current.score_overview.C_total,
+                                ) +
+                                Number(
+                                    reactMemorys.current.score_overview.C_total,
+                                ),
                             E_total:
-                                Number(taskMemorys.current.score_overview.E_total) +
-                                Number(reactMemorys.current.score_overview.E_total),
+                                Number(
+                                    taskMemorys.current.score_overview.E_total,
+                                ) +
+                                Number(
+                                    reactMemorys.current.score_overview.E_total,
+                                ),
 
                             O_total:
-                                Number(taskMemorys.current.score_overview.O_total) +
-                                Number(reactMemorys.current.score_overview.O_total),
+                                Number(
+                                    taskMemorys.current.score_overview.O_total,
+                                ) +
+                                Number(
+                                    reactMemorys.current.score_overview.O_total,
+                                ),
                             P_total:
-                                Number(taskMemorys.current.score_overview.P_total) +
-                                Number(reactMemorys.current.score_overview.P_total),
+                                Number(
+                                    taskMemorys.current.score_overview.P_total,
+                                ) +
+                                Number(
+                                    reactMemorys.current.score_overview.P_total,
+                                ),
                             R_total:
-                                Number(taskMemorys.current.score_overview.R_total) +
-                                Number(reactMemorys.current.score_overview.R_total),
+                                Number(
+                                    taskMemorys.current.score_overview.R_total,
+                                ) +
+                                Number(
+                                    reactMemorys.current.score_overview.R_total,
+                                ),
                             T_total:
-                                Number(taskMemorys.current.score_overview.T_total) +
-                                Number(reactMemorys.current.score_overview.T_total),
+                                Number(
+                                    taskMemorys.current.score_overview.T_total,
+                                ) +
+                                Number(
+                                    reactMemorys.current.score_overview.T_total,
+                                ),
                         },
                     };
                     setMemoryList(newMemoryEntryList);
@@ -667,21 +790,39 @@ function useChatIPC(params?: UseChatIPCParams) {
                 return;
             }
 
-            if (['filesystem_pin_directory', 'filesystem_pin_filename'].includes(res.Type)) {
+            if (
+                [
+                    'filesystem_pin_directory',
+                    'filesystem_pin_filename',
+                ].includes(res.Type)
+            ) {
                 // 会话在本地缓存数据的(文件夹/文件)路径-更新就通知[不区分自由对话和任务规划]
-                const { path } = JSON.parse(ipcContent) as AIAgentGrpcApi.FileSystemPin;
-                handleSetGrpcFolders({ path, isFolder: res.Type === 'filesystem_pin_directory' });
+                const { path } = JSON.parse(
+                    ipcContent,
+                ) as AIAgentGrpcApi.FileSystemPin;
+                handleSetGrpcFolders({
+                    path,
+                    isFolder: res.Type === 'filesystem_pin_directory',
+                });
                 return;
             }
 
-            if (res.Type === 'structured' && ['react_task_enqueue', 'react_task_dequeue'].includes(res.NodeId)) {
+            if (
+                res.Type === 'structured' &&
+                ['react_task_enqueue', 'react_task_dequeue'].includes(
+                    res.NodeId,
+                )
+            ) {
                 // 展示只通知自由对话里的问题出入队消息
                 if (planCoordinatorId.current === res.CoordinatorId) return;
                 // 问题入队/问题出队
                 handleQuestionQueueStatusChange(res);
                 return;
             }
-            if (res.Type === 'structured' && res.NodeId === 'react_task_cleared') {
+            if (
+                res.Type === 'structured' &&
+                res.NodeId === 'react_task_cleared'
+            ) {
                 // 展示只通知自由对话里的问题出入队消息
                 if (planCoordinatorId.current === res.CoordinatorId) return;
                 // 问题队列清空操作
@@ -705,7 +846,9 @@ function useChatIPC(params?: UseChatIPCParams) {
                 // 因为问题队列也分自由对话和任务规划队列，所以需要先屏蔽处理任务规划的队列信息
                 if (planCoordinatorId.current === res.CoordinatorId) return;
                 // 问题队列信息由chatIPC-hook进行收集
-                const { tasks, total_tasks } = JSON.parse(ipcContent) as AIAgentGrpcApi.QuestionQueues;
+                const { tasks, total_tasks } = JSON.parse(
+                    ipcContent,
+                ) as AIAgentGrpcApi.QuestionQueues;
                 setQuestionQueue({
                     total: total_tasks,
                     data: tasks ?? [],
@@ -715,7 +858,9 @@ function useChatIPC(params?: UseChatIPCParams) {
 
             if (res.Type === 'structured' && res.NodeId === 'timeline_item') {
                 /* 实时时间线单条 */
-                const timelineItem = JSON.parse(ipcContent) as AIAgentGrpcApi.TimelineItem;
+                const timelineItem = JSON.parse(
+                    ipcContent,
+                ) as AIAgentGrpcApi.TimelineItem;
                 setReActTimelines((old) => [...old, timelineItem]);
                 return;
             }
@@ -744,23 +889,38 @@ function useChatIPC(params?: UseChatIPCParams) {
 
                     if (react_task_now_status === 'processing') {
                         casualChatID.current += 1;
-                        setCasualStatus((old) => ({ ...old, loading: casualChatID.current > 0 }));
+                        setCasualStatus((old) => ({
+                            ...old,
+                            loading: casualChatID.current > 0,
+                        }));
                     }
 
-                    if (['completed', 'aborted'].includes(react_task_now_status)) {
-                        if (focusOfTaskID.current === react_task_id) handleResetFocusMode();
+                    if (
+                        ['completed', 'aborted'].includes(react_task_now_status)
+                    ) {
+                        if (focusOfTaskID.current === react_task_id)
+                            handleResetFocusMode();
                         casualChatID.current -= 1;
-                        setCasualStatus((old) => ({ ...old, loading: casualChatID.current > 0 }));
+                        setCasualStatus((old) => ({
+                            ...old,
+                            loading: casualChatID.current > 0,
+                        }));
                     }
                     return;
                 } else if (res.NodeId === 'status') {
-                    const data = JSON.parse(ipcContent) as { key: string; value: string };
+                    const data = JSON.parse(ipcContent) as {
+                        key: string;
+                        value: string;
+                    };
                     if (data.key === 're-act-loading-status-key') {
                         if (planCoordinatorId.current === res.CoordinatorId) {
                             // 任务规划-loading展示标题
                             setTaskStatus((old) => {
                                 if (old.loading) {
-                                    return { ...old, task: data.value || '加载中...' };
+                                    return {
+                                        ...old,
+                                        task: data.value || '加载中...',
+                                    };
                                 }
                                 return old;
                             });
@@ -768,17 +928,25 @@ function useChatIPC(params?: UseChatIPCParams) {
                             // 自由对话-loading展示标题
                             setCasualStatus((old) => {
                                 if (old.loading) {
-                                    return { ...old, title: data.value || 'thinking...' };
+                                    return {
+                                        ...old,
+                                        title: data.value || 'thinking...',
+                                    };
                                 }
                                 return old;
                             });
                         }
-                    } else if (data.key === 'plan-executing-loading-status-key') {
+                    } else if (
+                        data.key === 'plan-executing-loading-status-key'
+                    ) {
                         if (planCoordinatorId.current === res.CoordinatorId) {
                             // 任务规划-loading展示标题
                             setTaskStatus((old) => {
                                 if (old.loading) {
-                                    return { ...old, plan: data.value || '加载中...' };
+                                    return {
+                                        ...old,
+                                        plan: data.value || '加载中...',
+                                    };
                                 }
                                 return old;
                             });
@@ -790,10 +958,15 @@ function useChatIPC(params?: UseChatIPCParams) {
                 } else {
                     // 因为流数据有日志类型，所以都放入日志逻辑过滤一遍
                     if (res.NodeId === 'stream-finished') {
-                        const { event_writer_id } = JSON.parse(ipcContent) as AIAgentGrpcApi.AIStreamFinished;
+                        const { event_writer_id } = JSON.parse(
+                            ipcContent,
+                        ) as AIAgentGrpcApi.AIStreamFinished;
                         if (!event_writer_id) {
                             logEvents.pushLog(
-                                genErrorLogData(res.Timestamp, `stream-finished数据异常, event_writer_id缺失`),
+                                genErrorLogData(
+                                    res.Timestamp,
+                                    `stream-finished数据异常, event_writer_id缺失`,
+                                ),
                             );
                             return;
                         }
@@ -811,7 +984,15 @@ function useChatIPC(params?: UseChatIPCParams) {
 
             if (res.Type === 'stream') {
                 if (res.IsSystem || res.IsReason) {
-                    const { CallToolID, TaskIndex, NodeId, NodeIdVerbose, EventUUID, StreamDelta, ContentType } = res;
+                    const {
+                        CallToolID,
+                        TaskIndex,
+                        NodeId,
+                        NodeIdVerbose,
+                        EventUUID,
+                        StreamDelta,
+                        ContentType,
+                    } = res;
                     if (!NodeId || !EventUUID) return;
                     let ipcStreamDelta = base64ToJson(StreamDelta) || '';
                     const content = ipcContent + ipcStreamDelta;
@@ -822,7 +1003,8 @@ function useChatIPC(params?: UseChatIPCParams) {
                             TaskIndex,
                             CallToolID,
                             NodeId,
-                            NodeIdVerbose: NodeIdVerbose || convertNodeIdToVerbose(NodeId),
+                            NodeIdVerbose:
+                                NodeIdVerbose || convertNodeIdToVerbose(NodeId),
                             EventUUID,
                             status: 'start',
                             content: content,
@@ -906,7 +1088,9 @@ function useChatIPC(params?: UseChatIPCParams) {
             setRunTimeIDs(chatData.runTimeIDs || []);
             setReActTimelines(() => chatData.reActTimelines || []);
             yakExecResultEvent.handleSetYakResult(chatData.yakExecResult || {});
-            casualChatEvent.handleSetElements(chatData.casualChat?.elements || []);
+            casualChatEvent.handleSetElements(
+                chatData.casualChat?.elements || [],
+            );
             taskChatEvent.handleSetElements(chatData.taskChat?.elements || []);
         } else {
             fetchHistoryTimelines(session);
@@ -926,7 +1110,10 @@ function useChatIPC(params?: UseChatIPCParams) {
     const endAfterSession = useRef('');
     const onSwitchChat = useMemoizedFn((session?: string) => {
         if (!chatID.current && execute) {
-            yakitNotify('warning', 'AI异常, 未记录session却处于执行状态, 请关闭AI页面重试!');
+            yakitNotify(
+                'warning',
+                'AI异常, 未记录session却处于执行状态, 请关闭AI页面重试!',
+            );
             return;
         }
         if (!chatID.current && !session) return;
@@ -944,17 +1131,19 @@ function useChatIPC(params?: UseChatIPCParams) {
         }
     });
 
-    const onClose = useMemoizedFn((token: string, option?: { tip: () => void }) => {
-        sseEvents.disconnect();
-        postCancelMessage(token).catch((err) => {
-            yakitNotify('error', `会话已关闭, 取消请求失败: ${err}`);
-        });
-        if (option?.tip) {
-            option.tip();
-        } else {
-            // yakitNotify("info", "useChatIPC AI 任务已取消")
-        }
-    });
+    const onClose = useMemoizedFn(
+        (token: string, option?: { tip: () => void }) => {
+            sseEvents.disconnect();
+            postCancelMessage(token).catch((err) => {
+                yakitNotify('error', `会话已关闭, 取消请求失败: ${err}`);
+            });
+            if (option?.tip) {
+                option.tip();
+            } else {
+                // yakitNotify("info", "useChatIPC AI 任务已取消")
+            }
+        },
+    );
 
     useInterval(
         () => {

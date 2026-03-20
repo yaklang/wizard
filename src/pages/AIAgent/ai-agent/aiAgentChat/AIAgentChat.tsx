@@ -211,7 +211,6 @@ export const AIAgentChat = memo(() => {
         onTaskReviewExtra: handleShowReviewExtra,
         onReviewRelease: handleReleaseReview,
         onTaskStart: handleTaskStart,
-        getRequest: getSetting,
         setSessionChatName,
         cacheDataStore: aiChatDataStore,
     });

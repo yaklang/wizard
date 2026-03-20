@@ -16,9 +16,7 @@ export const base64ToJson = (base64: string) => {
         const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
         // UTF-8 解码
         const utf8 = new TextDecoder('utf-8').decode(bytes);
-        const obj = JSON.parse(utf8);
-
-        return obj;
+        return utf8;
     } catch (error) {
         throw error;
     }
@@ -47,10 +45,7 @@ export const genErrorLogData = (
 };
 
 /** 将接口数据(AIOutputEvent)转换为日志数据(AIAgentGrpcApi.Log), 并push到日志队列中 */
-export const handleGrpcDataPushLog = (params: {
-    info: AIOutputEvent;
-    pushLog: (log: AIChatLogData) => void;
-}) => {
+export const handleGrpcDataPushLog = (params: { info: AIOutputEvent; pushLog: (log: AIChatLogData) => void }) => {
     try {
         const { info, pushLog } = params;
         // 这类类型的数据从日志数据中屏蔽掉，后续的stream类型逻辑会使用到
@@ -70,11 +65,7 @@ export const handleGrpcDataPushLog = (params: {
 
 // #region 处理任务规划-任务树相关方法
 /** 将传入任务区分出可执行任务和父任务两种情况 */
-const genExecTask = (params: {
-    task: AIAgentGrpcApi.PlanTask;
-    level: number;
-    tasks: AITaskInfoProps[];
-}) => {
+const genExecTask = (params: { task: AIAgentGrpcApi.PlanTask; level: number; tasks: AITaskInfoProps[] }) => {
     const { task, level, tasks } = params;
 
     if (!Array.isArray(task.subtasks) || task.subtasks.length === 0) {
@@ -99,10 +90,7 @@ export const genExecTasks = (taskTree: AIAgentGrpcApi.PlanTask) => {
 // #endregion
 
 /** 将树结构任务列表转换成一维数组 */
-export const handleFlatAITree = (
-    sum: AIAgentGrpcApi.PlanTask[],
-    task: AIAgentGrpcApi.PlanTask,
-) => {
+export const handleFlatAITree = (sum: AIAgentGrpcApi.PlanTask[], task: AIAgentGrpcApi.PlanTask) => {
     if (!Array.isArray(sum)) return null;
     sum.push(generateTaskChatExecution(task));
     if (task.subtasks && task.subtasks.length > 0) {
@@ -113,10 +101,7 @@ export const handleFlatAITree = (
 };
 
 /** 是否自动执行review的continue操作 */
-export const isAutoExecuteReviewContinue = (params: {
-    type?: string;
-    getFunc?: () => AIAgentSetting | undefined;
-}) => {
+export const isAutoExecuteReviewContinue = (params: { type?: string; getFunc?: () => AIAgentSetting | undefined }) => {
     try {
         const { type, getFunc } = params;
         if (!!type && ['require_user_interactive'].includes(type)) {

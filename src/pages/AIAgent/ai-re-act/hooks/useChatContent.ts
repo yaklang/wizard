@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useCreation, useMemoizedFn } from 'ahooks';
-import { Uint8ArrayToString } from '@/utils/str';
 import {
+    base64ToJson,
     genBaseAIChatData,
     genErrorLogData,
     handleGrpcDataPushLog,
@@ -267,7 +267,7 @@ function useChatContent(params: UseChatContentParams) {
             const { CallToolID, NodeId } = res;
             if (!NodeId) return;
 
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const { event_writer_id } = JSON.parse(ipcContent) as {
                 event_writer_id: string;
             };
@@ -408,8 +408,8 @@ function useChatContent(params: UseChatContentParams) {
             if (!EventUUID || !NodeId) return;
 
             const content =
-                (Uint8ArrayToString(res.Content) || '') +
-                (Uint8ArrayToString(res.StreamDelta) || '');
+                (base64ToJson(res.Content) || '') +
+                (base64ToJson(res.StreamDelta) || '');
 
             // tool-xxx-stderr 数据单独处理逻辑
             if (!!CallToolID && isToolStderrStream(NodeId)) {
@@ -532,7 +532,7 @@ function useChatContent(params: UseChatContentParams) {
     /** stream类型数据结束 */
     const handleEndStream = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            let ipcContent = Uint8ArrayToString(res.Content) || '';
+            let ipcContent = base64ToJson(res.Content) || '';
             const { event_writer_id, node_id } = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIStreamFinished;
@@ -663,7 +663,7 @@ function useChatContent(params: UseChatContentParams) {
     /** 工具开始执行 */
     const handleStartTool = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const { call_tool_id, tool, start_time, start_time_ms } =
                 JSON.parse(ipcContent) as AIAgentGrpcApi.AIToolCall;
             if (!call_tool_id) {
@@ -704,7 +704,7 @@ function useChatContent(params: UseChatContentParams) {
     /** 工具执行中的可操作项 */
     const handleExceTool = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const { call_tool_id, id, selectors } = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIToolCallWatcher;
@@ -766,7 +766,7 @@ function useChatContent(params: UseChatContentParams) {
     /** 工具执行中的工作文件目录路径 */
     const handleToolDirPath = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const { call_tool_id, dir_path } = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIToolCallDirPath;
@@ -824,7 +824,7 @@ function useChatContent(params: UseChatContentParams) {
     const handleToolResult = useMemoizedFn(
         (res: AIOutputEvent, status: AIToolResult['tool']['status']) => {
             try {
-                const ipcContent = Uint8ArrayToString(res.Content) || '';
+                const ipcContent = base64ToJson(res.Content) || '';
                 const { call_tool_id, ...rest } = JSON.parse(
                     ipcContent,
                 ) as AIAgentGrpcApi.AIToolCall;
@@ -897,7 +897,7 @@ function useChatContent(params: UseChatContentParams) {
     /** 工具执行的总结 */
     const handleToolSummary = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const { call_tool_id, summary } = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.AIToolCall;
@@ -967,7 +967,7 @@ function useChatContent(params: UseChatContentParams) {
     /** 参考资料类型-数据处理 */
     const handleStreamAppendReference = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            const ipcContent = Uint8ArrayToString(res.Content) || '';
+            const ipcContent = base64ToJson(res.Content) || '';
             const data = JSON.parse(
                 ipcContent,
             ) as AIAgentGrpcApi.ReferenceMaterialPayload;
@@ -1053,7 +1053,7 @@ function useChatContent(params: UseChatContentParams) {
     // 处理数据方法
     const handleSetData = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            let ipcContent = Uint8ArrayToString(res.Content) || '';
+            let ipcContent = base64ToJson(res.Content) || '';
 
             // #region 自由对话(ReAct)专属类型(OK)
             // 问题的思考

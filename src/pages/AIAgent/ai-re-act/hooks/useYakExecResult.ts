@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import { useCreation, useMemoizedFn } from 'ahooks';
-import { Uint8ArrayToString } from '@/utils/str';
 import {
     checkStreamValidity,
     convertCardInfo,
@@ -12,7 +11,7 @@ import type {
     UseYakExecResultParams,
     UseYakExecResultState,
 } from './type';
-import { handleGrpcDataPushLog } from './utils';
+import { base64ToJson, handleGrpcDataPushLog } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 import type { AIAgentGrpcApi, AIOutputEvent } from './grpcApi';
 import type { AIYakExecFileRecord } from './aiRender';
@@ -159,7 +158,7 @@ function useYakExecResult(params?: UseYakExecResultParams) {
 
     const handleSetData = useMemoizedFn((res: AIOutputEvent) => {
         try {
-            let ipcContent = Uint8ArrayToString(res.Content) || '';
+            let ipcContent = base64ToJson(res.Content) || '';
 
             if (res.Type === 'yak_exec_result') {
                 const data = JSON.parse(
