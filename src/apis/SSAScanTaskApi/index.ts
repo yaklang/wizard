@@ -36,6 +36,12 @@ const querySSATasks = (
 const cancelSSATask = (taskId: string): Promise<ResponseData<void>> =>
     axios.delete<never, ResponseData<void>>(`/ssa/task/${taskId}`);
 
+// DELETE /ssa/task/{task_id}?delete_mode=record - 删除任务记录
+const deleteSSATaskRecord = (taskId: string): Promise<ResponseData<void>> =>
+    axios.delete<never, ResponseData<void>>(`/ssa/task/${taskId}`, {
+        params: { delete_mode: 'record' },
+    });
+
 const querySSAArtifactSummary = (
     taskId: string,
 ): Promise<ResponseData<TSSAArtifactMetricsSummary>> =>
@@ -56,6 +62,7 @@ export {
     scanSSAProject,
     querySSATasks,
     cancelSSATask,
+    deleteSSATaskRecord,
     querySSAArtifactSummary,
     querySSAArtifactEvents,
 };
