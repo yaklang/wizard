@@ -9,6 +9,7 @@ import {
     FieldTimeOutlined,
     FireOutlined,
     ReloadOutlined,
+    ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import dayjs from 'dayjs';
@@ -559,15 +560,14 @@ const IRifyScanObservabilityPage: FC = () => {
         <div
             className={`irify-scan-observability-page ${isDark ? 'dark' : 'light'}`}
         >
-            <section className="observability-hero">
-                <div className="hero-copy">
-                    <span className="hero-kicker">Scanner Observability</span>
-                    <h1>扫描观测中心</h1>
-                    <p>
-                        面向并发扫描现场验证，直接展示节点真实执行数、排队长度、最近等待耗时和最近扫描分布。
+            <div className="page-header">
+                <div className="header-content">
+                    <h1 className="header-title">扫描观测中心</h1>
+                    <p className="header-subtitle">
+                        节点实时监控与任务调度观测
                     </p>
                 </div>
-                <div className="hero-actions">
+                <div className="header-actions">
                     <Button icon={<ReloadOutlined />} onClick={() => refresh()}>
                         刷新
                     </Button>
@@ -576,7 +576,7 @@ const IRifyScanObservabilityPage: FC = () => {
                         onClick={() => exportBundle('node')}
                         disabled={!selectedNodeId || usingMockData}
                     >
-                        导出当前节点诊断包
+                        导出节点诊断包
                     </Button>
                     <Button
                         type="primary"
@@ -587,7 +587,7 @@ const IRifyScanObservabilityPage: FC = () => {
                         导出全局诊断包
                     </Button>
                 </div>
-            </section>
+            </div>
 
             <Spin spinning={loading}>
                 {usingMockData ? (
@@ -600,80 +600,98 @@ const IRifyScanObservabilityPage: FC = () => {
                     />
                 ) : null}
                 <section className="summary-grid">
-                    <Card className="summary-card accent-fire" bordered={false}>
-                        <div className="summary-icon">
-                            <FireOutlined />
-                        </div>
-                        <div className="summary-value">
-                            {overview?.summary?.total_active ?? 0}
-                        </div>
-                        <div className="summary-label">真实执行中任务</div>
-                        <div className="summary-meta">
-                            队列 {overview?.summary?.total_queued ?? 0} 个
-                        </div>
-                    </Card>
-                    <Card
-                        className="summary-card accent-cluster"
-                        bordered={false}
-                    >
-                        <div className="summary-icon">
-                            <ClusterOutlined />
-                        </div>
-                        <div className="summary-value">
-                            {overview?.summary?.online_nodes ?? 0}/
-                            {overview?.summary?.total_nodes ?? 0}
-                        </div>
-                        <div className="summary-label">在线扫描节点</div>
-                        <div className="summary-meta">
-                            总并发容量 {overview?.summary?.total_capacity ?? 0}
+                    <Card className="stats-card" bordered={false}>
+                        <div className="stats-card-content">
+                            <div className="stats-head">
+                                <div className="stats-title">
+                                    真实执行中任务
+                                </div>
+                                <div className="stats-icon">
+                                    <FireOutlined />
+                                </div>
+                            </div>
+                            <div className="stats-value">
+                                {overview?.summary?.total_active ?? 0}
+                            </div>
+                            <div className="stats-meta">
+                                队列 {overview?.summary?.total_queued ?? 0} 个
+                            </div>
                         </div>
                     </Card>
-                    <Card
-                        className="summary-card accent-clock"
-                        bordered={false}
-                    >
-                        <div className="summary-icon">
-                            <FieldTimeOutlined />
-                        </div>
-                        <div className="summary-value">
-                            {msText(overview?.summary?.recent_avg_wait_ms)}
-                        </div>
-                        <div className="summary-label">最近平均排队等待</div>
-                        <div className="summary-meta">
-                            平均执行{' '}
-                            {msText(overview?.summary?.recent_avg_exec_ms)}
+                    <Card className="stats-card" bordered={false}>
+                        <div className="stats-card-content">
+                            <div className="stats-head">
+                                <div className="stats-title">在线扫描节点</div>
+                                <div className="stats-icon">
+                                    <ClusterOutlined />
+                                </div>
+                            </div>
+                            <div className="stats-value">
+                                {overview?.summary?.online_nodes ?? 0}/
+                                {overview?.summary?.total_nodes ?? 0}
+                            </div>
+                            <div className="stats-meta">
+                                总并发容量{' '}
+                                {overview?.summary?.total_capacity ?? 0}
+                            </div>
                         </div>
                     </Card>
-                    <Card
-                        className="summary-card accent-chart"
-                        bordered={false}
-                    >
-                        <div className="summary-icon">
-                            <AreaChartOutlined />
+                    <Card className="stats-card" bordered={false}>
+                        <div className="stats-card-content">
+                            <div className="stats-head">
+                                <div className="stats-title">
+                                    最近平均排队等待
+                                </div>
+                                <div className="stats-icon">
+                                    <FieldTimeOutlined />
+                                </div>
+                            </div>
+                            <div className="stats-value">
+                                {msText(overview?.summary?.recent_avg_wait_ms)}
+                            </div>
+                            <div className="stats-meta">
+                                平均执行{' '}
+                                {msText(overview?.summary?.recent_avg_exec_ms)}
+                            </div>
                         </div>
-                        <div className="summary-value">
-                            {overview?.summary?.recent_completed_count ?? 0}
-                        </div>
-                        <div className="summary-label">近窗口完成任务数</div>
-                        <div className="summary-meta">
-                            更新时间 {formatTs(overview?.generated_at)}
+                    </Card>
+                    <Card className="stats-card" bordered={false}>
+                        <div className="stats-card-content">
+                            <div className="stats-head">
+                                <div className="stats-title">
+                                    近窗口完成任务数
+                                </div>
+                                <div className="stats-icon">
+                                    <AreaChartOutlined />
+                                </div>
+                            </div>
+                            <div className="stats-value">
+                                {overview?.summary?.recent_completed_count ?? 0}
+                            </div>
+                            <div className="stats-meta">
+                                更新时间 {formatTs(overview?.generated_at)}
+                            </div>
                         </div>
                     </Card>
                 </section>
 
                 {overview?.nodes?.length ? (
-                    <section className="section-shell">
-                        <div className="section-heading">
-                            <div>
-                                <span className="section-kicker">
-                                    Live Nodes
-                                </span>
-                                <h2>节点实时负载</h2>
-                                <p>
-                                    按节点查看真实执行数、排队长度和最近等待时长，便于现场快速定位过载节点。
-                                </p>
+                    <Card
+                        className="content-card"
+                        bordered={false}
+                        title={
+                            <div className="card-title">
+                                <ClusterOutlined /> 节点实时负载
                             </div>
-                            <div className="section-heading-actions">
+                        }
+                        extra={
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: 8,
+                                    alignItems: 'center',
+                                }}
+                            >
                                 <Tag color="blue">
                                     已接入节点 {overview.nodes.length}
                                 </Tag>
@@ -692,7 +710,8 @@ const IRifyScanObservabilityPage: FC = () => {
                                     </Button>
                                 ) : null}
                             </div>
-                        </div>
+                        }
+                    >
                         <div className="node-card-grid">
                             {visibleNodes.map((node) => (
                                 <button
@@ -807,7 +826,7 @@ const IRifyScanObservabilityPage: FC = () => {
                                 </button>
                             ))}
                         </div>
-                    </section>
+                    </Card>
                 ) : (
                     <Card bordered={false}>
                         <Empty description="暂无扫描节点" />
@@ -815,28 +834,39 @@ const IRifyScanObservabilityPage: FC = () => {
                 )}
 
                 <section className="detail-layout">
-                    <Card className="detail-card" bordered={false}>
-                        <div className="detail-card-head">
-                            <div>
-                                <h2>
-                                    {selectedNode?.nickname ||
-                                        selectedNode?.node_id ||
-                                        '选择节点'}
-                                </h2>
-                                <p>
-                                    {selectedNode?.node_id || '-'} · 最近心跳{' '}
-                                    {formatTs(selectedNode?.last_seen_at)}
-                                </p>
+                    <Card
+                        className="content-card detail-card"
+                        bordered={false}
+                        title={
+                            <div className="card-title">
+                                {selectedNode?.nickname ||
+                                    selectedNode?.node_id ||
+                                    '选择节点'}
                             </div>
-                            {selectedNode?.rpc_error ? (
-                                <Alert
-                                    type="warning"
-                                    showIcon
-                                    message="该节点 RPC 拉取异常"
-                                    description={selectedNode.rpc_error}
-                                />
-                            ) : null}
-                        </div>
+                        }
+                        extra={
+                            selectedNode ? (
+                                <span
+                                    style={{
+                                        fontSize: 12,
+                                        color: 'var(--irify-text-secondary)',
+                                    }}
+                                >
+                                    {selectedNode.node_id} · 最近心跳{' '}
+                                    {formatTs(selectedNode.last_seen_at)}
+                                </span>
+                            ) : null
+                        }
+                    >
+                        {selectedNode?.rpc_error ? (
+                            <Alert
+                                type="warning"
+                                showIcon
+                                message="该节点 RPC 拉取异常"
+                                description={selectedNode.rpc_error}
+                                style={{ marginBottom: 18 }}
+                            />
+                        ) : null}
                         {selectedNode ? (
                             <>
                                 <div className="detail-metric-grid">
@@ -957,16 +987,15 @@ const IRifyScanObservabilityPage: FC = () => {
                         )}
                     </Card>
 
-                    <Card className="detail-card" bordered={false}>
-                        <div className="detail-card-head">
-                            <div>
-                                <h2>正在执行与排队</h2>
-                                <p>
-                                    展示所有节点的真实执行任务与队列中的脚本调用，不再混淆成单个
-                                    task_count。
-                                </p>
+                    <Card
+                        className="content-card detail-card"
+                        bordered={false}
+                        title={
+                            <div className="card-title">
+                                <ThunderboltOutlined /> 正在执行与排队
                             </div>
-                        </div>
+                        }
+                    >
                         <Table<ScannerObservabilityRunningTask>
                             rowKey={(record) =>
                                 `${record.node_id}-${record.task_id}-${record.runtime_id || ''}`
@@ -981,15 +1010,15 @@ const IRifyScanObservabilityPage: FC = () => {
                     </Card>
                 </section>
 
-                <Card className="detail-card recent-task-card" bordered={false}>
-                    <div className="detail-card-head">
-                        <div>
-                            <h2>最近扫描任务</h2>
-                            <p>
-                                用于现场判断任务是否均匀分配到节点，以及异常是否集中出现在某个批次。
-                            </p>
+                <Card
+                    className="content-card recent-task-card"
+                    bordered={false}
+                    title={
+                        <div className="card-title">
+                            <FieldTimeOutlined /> 最近扫描任务
                         </div>
-                    </div>
+                    }
+                >
                     <Table<ScannerObservabilityRecentTask>
                         rowKey={(record) => record.task_id}
                         columns={recentTaskColumns}
