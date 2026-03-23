@@ -5,7 +5,6 @@ import {
     Table,
     Space,
     Button,
-    Popconfirm,
     Popover,
     Modal,
     message,
@@ -16,6 +15,7 @@ import {
     Dropdown,
     Tooltip,
     Typography,
+    Radio,
 } from 'antd';
 import {
     PlusOutlined,
@@ -40,7 +40,10 @@ import type {
     TSSAScanModeOverride,
     TSSAScanRequest,
 } from '@/apis/SSAScanTaskApi/type';
-import type { TSSAProject } from '@/apis/SSAProjectApi/type';
+import type {
+    TSSAProject,
+    TSSAProjectDeleteMode,
+} from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
 import { dedupeSSAProjects, mergeSSAProjects } from './projectManagementUtils';
@@ -333,21 +336,121 @@ const ProjectManagement: React.FC = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [handleLoadMore]);
 
-    const handleDelete = async (record: TSSAProject) => {
-        if (!record.id) return;
-        try {
-            const res = await deleteSSAProject({ id: record.id });
-            if (res) {
-                message.success('删除成功');
-                setSelectedRowKeys((prev) =>
-                    prev.filter((id) => id !== record.id),
-                );
-                reloadFirstPage();
+    const executeDeleteProjects = useCallback(
+        async (projects: TSSAProject[], deleteMode: TSSAProjectDeleteMode) => {
+            const validProjects = projects.filter(
+                (project): project is TSSAProject & { id: number } =>
+                    typeof project.id === 'number',
+            );
+            if (!validProjects.length) {
+                return;
             }
-        } catch (err) {
-            message.error('删除失败');
-        }
-    };
+
+            const results = await Promise.allSettled(
+                validProjects.map((project) =>
+                    deleteSSAProject({
+                        id: project.id,
+                        delete_mode: deleteMode,
+                    }),
+                ),
+            );
+            const success = results.filter(
+                (result) => result.status === 'fulfilled',
+            ).length;
+            const failed = results.length - success;
+
+            if (failed === 0) {
+                message.success(
+                    deleteMode === 'cascade'
+                        ? `级联删除成功，共 ${success} 个项目`
+                        : `项目已删除，共 ${success} 个`,
+                );
+            } else if (success > 0) {
+                message.warning(
+                    `项目删除部分成功：成功 ${success}，失败 ${failed}`,
+                );
+            } else {
+                const rejected: any = results.find(
+                    (result) => result.status === 'rejected',
+                );
+                message.error(
+                    rejected?.reason?.reason ||
+                        rejected?.reason?.msg ||
+                        rejected?.reason?.message ||
+                        '删除失败',
+                );
+            }
+
+            const deletedIDSet = new Set(
+                validProjects.map((project) => project.id),
+            );
+            setSelectedRowKeys((prev) =>
+                prev.filter((id) => !deletedIDSet.has(Number(id))),
+            );
+            reloadFirstPage();
+        },
+        [reloadFirstPage],
+    );
+
+    const openDeleteProjectsDialog = useCallback(
+        (projects: TSSAProject[]) => {
+            const validProjects = projects.filter(
+                (project): project is TSSAProject & { id: number } =>
+                    typeof project.id === 'number',
+            );
+            if (!validProjects.length) {
+                return;
+            }
+
+            let deleteMode: TSSAProjectDeleteMode = 'config-only';
+            const isBatch = validProjects.length > 1;
+
+            Modal.confirm({
+                title: isBatch ? '批量删除项目' : '删除项目',
+                width: 560,
+                okText: '确认删除',
+                okButtonProps: { danger: true },
+                cancelText: '取消',
+                content: (
+                    <div style={{ marginTop: 8 }}>
+                        <div style={{ marginBottom: 12 }}>
+                            {isBatch
+                                ? `确认处理已选中的 ${validProjects.length} 个项目？`
+                                : `确认处理项目 ${validProjects[0].project_name}？`}
+                        </div>
+                        <Radio.Group
+                            defaultValue={deleteMode}
+                            onChange={(e) => {
+                                deleteMode = e.target.value;
+                            }}
+                        >
+                            <Space direction="vertical">
+                                <Radio value="config-only">
+                                    仅移除项目配置
+                                </Radio>
+                                <Text type="secondary">
+                                    项目将从项目管理中消失，但历史任务、漏洞、报告和编译产物会保留。
+                                </Text>
+                                <Radio value="cascade">
+                                    级联删除项目相关数据
+                                </Radio>
+                                <Text type="secondary">
+                                    将同时清理项目主库侧的扫描任务、SSA
+                                    漏洞、处置记录、artifact events、报告记录和
+                                    IR
+                                    series。若项目仍绑定自动化策略，后端会拒绝此次删除。
+                                </Text>
+                            </Space>
+                        </Radio.Group>
+                    </div>
+                ),
+                onOk: async () => {
+                    await executeDeleteProjects(validProjects, deleteMode);
+                },
+            });
+        },
+        [executeDeleteProjects],
+    );
 
     const handleEdit = (record: TSSAProject) => {
         setEditingProjectId(record.id);
@@ -380,28 +483,7 @@ const ProjectManagement: React.FC = () => {
 
     const handleBatchDelete = () => {
         if (!selectedProjects.length) return;
-        Modal.confirm({
-            title: '批量删除项目',
-            content: `确认删除已选中的 ${selectedProjects.length} 个项目？删除后不可恢复。`,
-            okText: '删除',
-            okButtonProps: { danger: true },
-            cancelText: '取消',
-            async onOk() {
-                const ids = selectedProjects
-                    .map((item) => item.id)
-                    .filter((id): id is number => Boolean(id));
-                try {
-                    await Promise.all(
-                        ids.map((id) => deleteSSAProject({ id })),
-                    );
-                    message.success('批量删除成功');
-                    reloadFirstPage();
-                } catch (err: any) {
-                    message.error(err?.message || '批量删除失败');
-                    throw err;
-                }
-            },
-        });
+        openDeleteProjectsDialog(selectedProjects);
     };
 
     // 格式化时间戳
@@ -768,17 +850,8 @@ const ProjectManagement: React.FC = () => {
                     {
                         key: 'delete',
                         icon: <CloseCircleOutlined />,
-                        label: (
-                            <Popconfirm
-                                title="确认删除该项目吗？"
-                                description="删除后不可恢复，关联的漏洞数据不会被删除。"
-                                onConfirm={() => handleDelete(record)}
-                                okText="确认"
-                                cancelText="取消"
-                            >
-                                <span>删除</span>
-                            </Popconfirm>
-                        ),
+                        label: <span>删除</span>,
+                        onClick: () => openDeleteProjectsDialog([record]),
                         danger: true,
                     },
                 ];
