@@ -1,4 +1,4 @@
-@use "../aiReActChat/AIReActChat.module.scss" as AIReActChat;
+@use '../aiReActChat/AIReActChat.module.scss' as AIReActChat;
 
 %display-flex-center {
     display: flex;
@@ -24,7 +24,7 @@
     flex: 1;
     // overflow: auto hidden;
     height: 100%;
-    @include AIReActChat.content-side("left");
+    @include AIReActChat.content-side('left');
     .chat-content-wrapper {
         @extend %display-column-center;
         flex: 1;

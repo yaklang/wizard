@@ -1,6 +1,11 @@
 import { useRef } from 'react';
 import { useMemoizedFn } from 'ahooks';
-import type { AIChatLogData, AIChatLogToStream, UseAIChatLogEvents, useAIChatLogParams } from './type';
+import type {
+    AIChatLogData,
+    AIChatLogToStream,
+    UseAIChatLogEvents,
+    useAIChatLogParams,
+} from './type';
 import { formatTimestamp } from '@/utils/timeUtil';
 import cloneDeep from 'lodash/cloneDeep';
 import { useBroadcastComm } from '@/hooks';

@@ -6,7 +6,12 @@ import type {
     AIYakExecFileRecord,
     ReActChatRenderItem,
 } from './aiRender';
-import type { AIAgentGrpcApi, AIInputEvent, AIOutputEvent, AIStartParams } from './grpcApi';
+import type {
+    AIAgentGrpcApi,
+    AIInputEvent,
+    AIOutputEvent,
+    AIStartParams,
+} from './grpcApi';
 import type { AIAgentSetting } from '@/pages/AIAgent/ai-agent/aiAgentType';
 import type { Dispatch, SetStateAction } from 'react';
 import type { AIChatData } from '@/pages/AIAgent/ai-agent/type/aiChat';
@@ -200,7 +205,9 @@ export interface AIChatIPCStartParams {
     token: string;
     params: AIInputEvent;
     /** 供前端处理逻辑和UI的额外参数 */
-    extraValue?: CustomPluginExecuteFormValue | Record<string, CustomPluginExecuteFormValue[]>;
+    extraValue?:
+        | CustomPluginExecuteFormValue
+        | Record<string, CustomPluginExecuteFormValue[]>;
 }
 
 /** 执行流途中发送消息的参数 */

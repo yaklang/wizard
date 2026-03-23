@@ -65,7 +65,7 @@
             }
         }
         .list-item:hover {
-            background-color: var(--Colors-Use-Neutral-Border)
+            background-color: var(--Colors-Use-Neutral-Border);
         }
 
         .list-item-active {
@@ -82,7 +82,7 @@
                 position: absolute;
                 width: 1px;
                 height: 100%;
-                content: "";
+                content: '';
                 top: 0;
                 left: -1px;
                 background-color: var(--Colors-Use-Main-Primary);
@@ -91,14 +91,14 @@
                 position: absolute;
                 width: 1px;
                 height: 100%;
-                content: "";
+                content: '';
                 top: 0;
                 right: -1px;
                 background-color: var(--Colors-Use-Main-Primary);
             }
 
             &.list-item:hover {
-                    background-color: var(--Colors-Use-Main-Hover);
+                background-color: var(--Colors-Use-Main-Hover);
                 &::before {
                     background-color: var(--Colors-Use-Main-Hover);
                 }

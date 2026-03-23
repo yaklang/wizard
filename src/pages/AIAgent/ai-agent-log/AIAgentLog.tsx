@@ -32,7 +32,10 @@ const AIAgentLog: FC = () => {
         el.scrollTop = el.scrollHeight;
     }, [logs]);
 
-    const headerTime = useMemo(() => new Date().toLocaleTimeString?.() ?? '', []);
+    const headerTime = useMemo(
+        () => new Date().toLocaleTimeString?.() ?? '',
+        [],
+    );
 
     return (
         <div className="h-full w-full p-4">
@@ -48,13 +51,24 @@ const AIAgentLog: FC = () => {
                     className="flex-1 px-4 py-3 overflow-y-auto space-y-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-black"
                 >
                     {logs.length === 0 ? (
-                        <div className="text-green-700">Waiting for logs...</div>
+                        <div className="text-green-700">
+                            Waiting for logs...
+                        </div>
                     ) : (
                         logs.map((item, index) => (
-                            <div key={index} className="flex gap-2 whitespace-pre-wrap text-[11px]">
-                                <span className="text-green-700 min-w-[70px]">{item.timestamp}</span>
-                                <span className="text-green-500 min-w-[52px]">[{item.level ?? 'info'}]</span>
-                                <span className="text-green-300 flex-1">{JSON.stringify(item.message)}</span>
+                            <div
+                                key={index}
+                                className="flex gap-2 whitespace-pre-wrap text-[11px]"
+                            >
+                                <span className="text-green-700 min-w-[70px]">
+                                    {item.timestamp}
+                                </span>
+                                <span className="text-green-500 min-w-[52px]">
+                                    [{item.level ?? 'info'}]
+                                </span>
+                                <span className="text-green-300 flex-1">
+                                    {JSON.stringify(item.message)}
+                                </span>
                             </div>
                         ))
                     )}

@@ -62,7 +62,7 @@
         flex: 1;
         overflow-y: auto;
         &-spin {
-           overflow-y: auto;
+            overflow-y: auto;
         }
         .knowledge-base-info-card {
             width: 100%;
@@ -97,7 +97,9 @@
                                     width: 16px;
                                 }
                                 &:hover {
-                                    background-color: var(--Colors-Use-Neutral-Bg-Hover);
+                                    background-color: var(
+                                        --Colors-Use-Neutral-Bg-Hover
+                                    );
                                     border-radius: 4px;
                                 }
                             }
@@ -106,10 +108,14 @@
                                 & > svg {
                                     height: 16px;
                                     width: 16px;
-                                    color: var(--Colors-Use-Neutral-Text-3-Secondary);
+                                    color: var(
+                                        --Colors-Use-Neutral-Text-3-Secondary
+                                    );
                                 }
                                 &:hover {
-                                    background-color: var(--Colors-Use-Neutral-Bg-Hover);
+                                    background-color: var(
+                                        --Colors-Use-Neutral-Bg-Hover
+                                    );
                                     border-radius: 4px;
                                 }
                             }
@@ -180,21 +186,29 @@
                                 width: 16px;
                             }
                             &:hover {
-                                background-color: var(--Colors-Use-Neutral-Bg-Hover);
+                                background-color: var(
+                                    --Colors-Use-Neutral-Bg-Hover
+                                );
                                 border-radius: 4px;
                             }
                         }
                         .dotsvertical-icon {
                             padding: 4px;
-                            background-color: var(--Colors-Use-Neutral-Bg-Hover);
+                            background-color: var(
+                                --Colors-Use-Neutral-Bg-Hover
+                            );
                             border-radius: 4px;
                             & > svg {
                                 height: 16px;
                                 width: 16px;
-                                color: var(--Colors-Use-Neutral-Text-3-Secondary);
+                                color: var(
+                                    --Colors-Use-Neutral-Text-3-Secondary
+                                );
                             }
                             &:hover {
-                                background-color: var(--Colors-Use-Neutral-Bg-Hover);
+                                background-color: var(
+                                    --Colors-Use-Neutral-Bg-Hover
+                                );
                                 border-radius: 4px;
                             }
                         }
@@ -316,7 +330,9 @@
             }
         }
         :global {
-            .ant-upload.ant-upload-drag.ant-upload-drag-hover:not(.ant-upload-disabled) {
+            .ant-upload.ant-upload-drag.ant-upload-drag-hover:not(
+                    .ant-upload-disabled
+                ) {
                 border-color: var(--Colors-Use-Main-Border);
             }
             .ant-upload.ant-upload-drag:not(.ant-upload-disabled):hover {

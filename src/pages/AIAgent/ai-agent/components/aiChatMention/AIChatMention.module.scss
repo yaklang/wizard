@@ -51,20 +51,20 @@
     }
 }
 .forge-name-list-of-mention {
-    @include ai-chat-mention-body("forge");
+    @include ai-chat-mention-body('forge');
     outline: none;
 }
 .tool-list-of-mention {
-    @include ai-chat-mention-body("tool");
+    @include ai-chat-mention-body('tool');
     outline: none;
 }
 
 .knowledge-base-list-of-mention {
-    @include ai-chat-mention-body("knowledge-base");
+    @include ai-chat-mention-body('knowledge-base');
     outline: none;
 }
 .focus-mode-list-of-mention {
-    @include ai-chat-mention-body("focus-mode");
+    @include ai-chat-mention-body('focus-mode');
     outline: none;
 }
 .file-system-tree-of-mention {
@@ -102,7 +102,9 @@
             background-color: rgba(242, 139, 68, 0.06);
             border-radius: 4px;
         }
-        .ant-tree.ant-tree-block-node .ant-tree-list-holder-inner .ant-tree-node-content-wrapper {
+        .ant-tree.ant-tree-block-node
+            .ant-tree-list-holder-inner
+            .ant-tree-node-content-wrapper {
             flex: 1;
             width: 0;
         }

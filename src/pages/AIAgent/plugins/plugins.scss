@@ -81,7 +81,6 @@
     padding-left: 4px;
     .ant-tooltip-arrow {
         left: 1px;
-        
     }
 }
 // -------------------- form组件样式 ↓↓↓ --------------------
@@ -92,7 +91,10 @@
         .ant-form-item-label {
             padding-bottom: 0;
         }
-        .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
+        .ant-form-item-label
+            > label.ant-form-item-required:not(
+                .ant-form-item-required-mark-optional
+            )::before {
             display: none;
         }
     }
@@ -248,7 +250,8 @@
         }
     }
 }
-.plugin-details-opt-wrapper-enableClick:hover + .plugin-details-opt-wrapper-enableClick {
+.plugin-details-opt-wrapper-enableClick:hover
+    + .plugin-details-opt-wrapper-enableClick {
     .plugin-details-item {
         border-color: transparent;
     }
