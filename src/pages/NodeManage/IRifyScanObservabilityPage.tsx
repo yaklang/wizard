@@ -1,15 +1,6 @@
 import type { FC } from 'react';
 import { useEffect, useMemo } from 'react';
-import {
-    Alert,
-    Button,
-    Card,
-    Empty,
-    Spin,
-    Table,
-    Tag,
-    message,
-} from 'antd';
+import { Alert, Button, Card, Empty, Spin, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
     AreaChartOutlined,
@@ -30,6 +21,7 @@ import {
     getScannerObservabilityOverview,
 } from '@/apis/NodeManageApi';
 import type {
+    ScannerObservabilityOverview,
     ScannerObservabilityRecentTask,
     ScannerObservabilityRunningTask,
 } from '@/apis/NodeManageApi/type';
@@ -38,7 +30,10 @@ import './IRifyScanObservabilityPage.scss';
 const TASK_LIMIT = 12;
 
 const unwrapOverviewPayload = (
-    payload: ScannerObservabilityOverview | { data?: ScannerObservabilityOverview } | undefined,
+    payload:
+        | ScannerObservabilityOverview
+        | { data?: ScannerObservabilityOverview }
+        | undefined,
 ): ScannerObservabilityOverview | undefined => {
     if (!payload) return undefined;
     if ('summary' in payload) return payload;
@@ -232,7 +227,10 @@ const buildMockOverview = (): ScannerObservabilityOverview => ({
     ],
 });
 
-const buildMockStats = (node?: { cpu_percent?: number; memory_percent?: number }): Palm.HealthInfos => {
+const buildMockStats = (node?: {
+    cpu_percent?: number;
+    memory_percent?: number;
+}): Palm.HealthInfos => {
     const cpuBase = percentValue(node?.cpu_percent ?? 54);
     const memBase = percentValue(node?.memory_percent ?? 46);
     const stats = Array.from({ length: 12 }).map((_, index) => ({
@@ -258,7 +256,8 @@ const percentValue = (value?: number | null) => {
     return Math.max(0, Math.min(100, n));
 };
 
-const percentText = (value?: number | null) => `${percentValue(value).toFixed(0)}%`;
+const percentText = (value?: number | null) =>
+    `${percentValue(value).toFixed(0)}%`;
 
 const kbText = (value?: number | null) => {
     const n = Number(value);
@@ -307,6 +306,15 @@ const statusColor = (status: string) => {
     }
 };
 
+const RecentTaskExpandedRow = (record: ScannerObservabilityRecentTask) => (
+    <div className="recent-task-expand">
+        <div>任务 ID: {record.task_id}</div>
+        <div>语言: {record.language || '-'}</div>
+        <div>来源: {record.source_origin || '-'}</div>
+        <div>错误: {record.error_message || '-'}</div>
+    </div>
+);
+
 const IRifyScanObservabilityPage: FC = () => {
     const [selectedNodeId, setSelectedNodeId] = useSafeState<string>('');
     const [usingMockData, setUsingMockData] = useSafeState(false);
@@ -329,7 +337,10 @@ const IRifyScanObservabilityPage: FC = () => {
                 setUsingMockData(false);
                 return overviewData;
             } catch (error) {
-                console.warn('[ScanObservability] fallback to mock data', error);
+                console.warn(
+                    '[ScanObservability] fallback to mock data',
+                    error,
+                );
                 setUsingMockData(true);
                 return buildMockOverview();
             }
@@ -341,7 +352,9 @@ const IRifyScanObservabilityPage: FC = () => {
 
     useEffect(() => {
         if (selectedNodeId) return;
-        const firstNode = overview?.nodes?.find((item) => item.online) || overview?.nodes?.[0];
+        const firstNode =
+            overview?.nodes?.find((item) => item.online) ||
+            overview?.nodes?.[0];
         if (firstNode?.node_id) {
             setSelectedNodeId(firstNode.node_id);
         }
@@ -416,7 +429,9 @@ const IRifyScanObservabilityPage: FC = () => {
         }
     };
 
-    const runningTaskColumns = useMemo<ColumnsType<ScannerObservabilityRunningTask>>(
+    const runningTaskColumns = useMemo<
+        ColumnsType<ScannerObservabilityRunningTask>
+    >(
         () => [
             {
                 title: '任务',
@@ -428,7 +443,9 @@ const IRifyScanObservabilityPage: FC = () => {
                             {record.root_task_id || record.task_id}
                         </div>
                         <div className="task-secondary">
-                            {record.runtime_id || record.sub_task_id || record.task_id}
+                            {record.runtime_id ||
+                                record.sub_task_id ||
+                                record.task_id}
                         </div>
                     </div>
                 ),
@@ -444,7 +461,9 @@ const IRifyScanObservabilityPage: FC = () => {
                 dataIndex: 'status',
                 key: 'status',
                 width: 110,
-                render: (value) => <Tag color={statusColor(value)}>{value}</Tag>,
+                render: (value) => (
+                    <Tag color={statusColor(value)}>{value}</Tag>
+                ),
             },
             {
                 title: '排队等待',
@@ -471,7 +490,9 @@ const IRifyScanObservabilityPage: FC = () => {
         [],
     );
 
-    const recentTaskColumns = useMemo<ColumnsType<ScannerObservabilityRecentTask>>(
+    const recentTaskColumns = useMemo<
+        ColumnsType<ScannerObservabilityRecentTask>
+    >(
         () => [
             {
                 title: '项目 / 批次',
@@ -479,7 +500,9 @@ const IRifyScanObservabilityPage: FC = () => {
                 key: 'project_name',
                 render: (_, record) => (
                     <div className="task-main-cell">
-                        <div className="task-primary">{record.project_name || '-'}</div>
+                        <div className="task-primary">
+                            {record.project_name || '-'}
+                        </div>
                         <div className="task-secondary">
                             scan_batch #{record.scan_batch || 0}
                         </div>
@@ -500,7 +523,9 @@ const IRifyScanObservabilityPage: FC = () => {
                 width: 120,
                 render: (_, record) => (
                     <div className="status-stack">
-                        <Tag color={statusColor(record.status)}>{record.status}</Tag>
+                        <Tag color={statusColor(record.status)}>
+                            {record.status}
+                        </Tag>
                         <span>{record.phase || '-'}</span>
                     </div>
                 ),
@@ -583,7 +608,10 @@ const IRifyScanObservabilityPage: FC = () => {
                             队列 {overview?.summary?.total_queued ?? 0} 个
                         </div>
                     </Card>
-                    <Card className="summary-card accent-cluster" bordered={false}>
+                    <Card
+                        className="summary-card accent-cluster"
+                        bordered={false}
+                    >
                         <div className="summary-icon">
                             <ClusterOutlined />
                         </div>
@@ -596,7 +624,10 @@ const IRifyScanObservabilityPage: FC = () => {
                             总并发容量 {overview?.summary?.total_capacity ?? 0}
                         </div>
                     </Card>
-                    <Card className="summary-card accent-clock" bordered={false}>
+                    <Card
+                        className="summary-card accent-clock"
+                        bordered={false}
+                    >
                         <div className="summary-icon">
                             <FieldTimeOutlined />
                         </div>
@@ -605,10 +636,14 @@ const IRifyScanObservabilityPage: FC = () => {
                         </div>
                         <div className="summary-label">最近平均排队等待</div>
                         <div className="summary-meta">
-                            平均执行 {msText(overview?.summary?.recent_avg_exec_ms)}
+                            平均执行{' '}
+                            {msText(overview?.summary?.recent_avg_exec_ms)}
                         </div>
                     </Card>
-                    <Card className="summary-card accent-chart" bordered={false}>
+                    <Card
+                        className="summary-card accent-chart"
+                        bordered={false}
+                    >
                         <div className="summary-icon">
                             <AreaChartOutlined />
                         </div>
@@ -626,9 +661,13 @@ const IRifyScanObservabilityPage: FC = () => {
                     <section className="section-shell">
                         <div className="section-heading">
                             <div>
-                                <span className="section-kicker">Live Nodes</span>
+                                <span className="section-kicker">
+                                    Live Nodes
+                                </span>
                                 <h2>节点实时负载</h2>
-                                <p>按节点查看真实执行数、排队长度和最近等待时长，便于现场快速定位过载节点。</p>
+                                <p>
+                                    按节点查看真实执行数、排队长度和最近等待时长，便于现场快速定位过载节点。
+                                </p>
                             </div>
                             <div className="section-heading-actions">
                                 <Tag color="blue">
@@ -638,7 +677,9 @@ const IRifyScanObservabilityPage: FC = () => {
                                     <Button
                                         size="small"
                                         onClick={() =>
-                                            setShowOfflineNodes((value) => !value)
+                                            setShowOfflineNodes(
+                                                (value) => !value,
+                                            )
                                         }
                                     >
                                         {showOfflineNodes
@@ -655,11 +696,15 @@ const IRifyScanObservabilityPage: FC = () => {
                                     type="button"
                                     className={[
                                         'node-ob-card',
-                                        node.node_id === selectedNodeId ? 'is-selected' : '',
+                                        node.node_id === selectedNodeId
+                                            ? 'is-selected'
+                                            : '',
                                     ]
                                         .filter(Boolean)
                                         .join(' ')}
-                                    onClick={() => setSelectedNodeId(node.node_id)}
+                                    onClick={() =>
+                                        setSelectedNodeId(node.node_id)
+                                    }
                                 >
                                     <div className="node-card-head">
                                         <div>
@@ -667,10 +712,19 @@ const IRifyScanObservabilityPage: FC = () => {
                                                 {node.nickname || node.node_id}
                                             </div>
                                             <div className="node-card-subtitle">
-                                                {node.location || node.external_ip || node.main_addr || '-'}
+                                                {node.location ||
+                                                    node.external_ip ||
+                                                    node.main_addr ||
+                                                    '-'}
                                             </div>
                                         </div>
-                                        <Tag color={node.online ? 'success' : 'default'}>
+                                        <Tag
+                                            color={
+                                                node.online
+                                                    ? 'success'
+                                                    : 'default'
+                                            }
+                                        >
                                             {node.online ? '在线' : '离线'}
                                         </Tag>
                                     </div>
@@ -678,7 +732,8 @@ const IRifyScanObservabilityPage: FC = () => {
                                         <div className="metric-pill">
                                             <span>真实执行</span>
                                             <strong>
-                                                {node.active_count}/{node.capacity || 0}
+                                                {node.active_count}/
+                                                {node.capacity || 0}
                                             </strong>
                                         </div>
                                         <div className="metric-pill">
@@ -687,11 +742,19 @@ const IRifyScanObservabilityPage: FC = () => {
                                         </div>
                                         <div className="metric-pill">
                                             <span>最近等待</span>
-                                            <strong>{msText(node.recent_avg_wait_ms)}</strong>
+                                            <strong>
+                                                {msText(
+                                                    node.recent_avg_wait_ms,
+                                                )}
+                                            </strong>
                                         </div>
                                         <div className="metric-pill">
                                             <span>最近执行</span>
-                                            <strong>{msText(node.recent_avg_exec_ms)}</strong>
+                                            <strong>
+                                                {msText(
+                                                    node.recent_avg_exec_ms,
+                                                )}
+                                            </strong>
                                         </div>
                                     </div>
                                     <div className="load-rows">
@@ -705,7 +768,9 @@ const IRifyScanObservabilityPage: FC = () => {
                                                     }}
                                                 />
                                             </div>
-                                            <span>{percentText(node.cpu_percent)}</span>
+                                            <span>
+                                                {percentText(node.cpu_percent)}
+                                            </span>
                                         </div>
                                         <div className="load-row">
                                             <span>MEM</span>
@@ -717,12 +782,23 @@ const IRifyScanObservabilityPage: FC = () => {
                                                     }}
                                                 />
                                             </div>
-                                            <span>{percentText(node.memory_percent)}</span>
+                                            <span>
+                                                {percentText(
+                                                    node.memory_percent,
+                                                )}
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="node-card-foot">
-                                        <span>最近心跳 {formatAgo(node.last_seen_at)}</span>
-                                        <span>{node.rpc_error ? 'RPC 异常' : 'RPC 正常'}</span>
+                                        <span>
+                                            最近心跳{' '}
+                                            {formatAgo(node.last_seen_at)}
+                                        </span>
+                                        <span>
+                                            {node.rpc_error
+                                                ? 'RPC 异常'
+                                                : 'RPC 正常'}
+                                        </span>
                                     </div>
                                 </button>
                             ))}
@@ -738,7 +814,11 @@ const IRifyScanObservabilityPage: FC = () => {
                     <Card className="detail-card" bordered={false}>
                         <div className="detail-card-head">
                             <div>
-                                <h2>{selectedNode?.nickname || selectedNode?.node_id || '选择节点'}</h2>
+                                <h2>
+                                    {selectedNode?.nickname ||
+                                        selectedNode?.node_id ||
+                                        '选择节点'}
+                                </h2>
                                 <p>
                                     {selectedNode?.node_id || '-'} · 最近心跳{' '}
                                     {formatTs(selectedNode?.last_seen_at)}
@@ -758,11 +838,19 @@ const IRifyScanObservabilityPage: FC = () => {
                                 <div className="detail-metric-grid">
                                     <div className="detail-metric">
                                         <span>网络上传</span>
-                                        <strong>{kbText(selectedNode.network_upload)}</strong>
+                                        <strong>
+                                            {kbText(
+                                                selectedNode.network_upload,
+                                            )}
+                                        </strong>
                                     </div>
                                     <div className="detail-metric">
                                         <span>网络下载</span>
-                                        <strong>{kbText(selectedNode.network_download)}</strong>
+                                        <strong>
+                                            {kbText(
+                                                selectedNode.network_download,
+                                            )}
+                                        </strong>
                                     </div>
                                     <div className="detail-metric">
                                         <span>当前执行</span>
@@ -773,7 +861,9 @@ const IRifyScanObservabilityPage: FC = () => {
                                     </div>
                                     <div className="detail-metric">
                                         <span>当前排队</span>
-                                        <strong>{selectedNode.queue_count}</strong>
+                                        <strong>
+                                            {selectedNode.queue_count}
+                                        </strong>
                                     </div>
                                 </div>
 
@@ -781,7 +871,8 @@ const IRifyScanObservabilityPage: FC = () => {
                                     <div className="history-title">
                                         <h3>节点健康趋势</h3>
                                         <span>
-                                            最近 {selectedNodeHistory.length} 个心跳点
+                                            最近 {selectedNodeHistory.length}{' '}
+                                            个心跳点
                                         </span>
                                     </div>
                                     <Spin spinning={nodeStatsLoading}>
@@ -793,26 +884,29 @@ const IRifyScanObservabilityPage: FC = () => {
                                                         <strong>
                                                             {percentText(
                                                                 selectedNodeHistory[
-                                                                    selectedNodeHistory.length - 1
+                                                                    selectedNodeHistory.length -
+                                                                        1
                                                                 ]?.cpu_percent,
                                                             )}
                                                         </strong>
                                                     </div>
                                                     <div className="series-bars">
-                                                        {selectedNodeHistory.map((point) => (
-                                                            <div
-                                                                key={`cpu-${point.timestamp}`}
-                                                                className="series-bar cpu"
-                                                                style={{
-                                                                    height: `${Math.max(
-                                                                        8,
-                                                                        percentValue(
-                                                                            point.cpu_percent,
-                                                                        ),
-                                                                    )}%`,
-                                                                }}
-                                                            />
-                                                        ))}
+                                                        {selectedNodeHistory.map(
+                                                            (point) => (
+                                                                <div
+                                                                    key={`cpu-${point.timestamp}`}
+                                                                    className="series-bar cpu"
+                                                                    style={{
+                                                                        height: `${Math.max(
+                                                                            8,
+                                                                            percentValue(
+                                                                                point.cpu_percent,
+                                                                            ),
+                                                                        )}%`,
+                                                                    }}
+                                                                />
+                                                            ),
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="history-series">
@@ -821,26 +915,30 @@ const IRifyScanObservabilityPage: FC = () => {
                                                         <strong>
                                                             {percentText(
                                                                 selectedNodeHistory[
-                                                                    selectedNodeHistory.length - 1
-                                                                ]?.memory_percent,
+                                                                    selectedNodeHistory.length -
+                                                                        1
+                                                                ]
+                                                                    ?.memory_percent,
                                                             )}
                                                         </strong>
                                                     </div>
                                                     <div className="series-bars">
-                                                        {selectedNodeHistory.map((point) => (
-                                                            <div
-                                                                key={`mem-${point.timestamp}`}
-                                                                className="series-bar mem"
-                                                                style={{
-                                                                    height: `${Math.max(
-                                                                        8,
-                                                                        percentValue(
-                                                                            point.memory_percent,
-                                                                        ),
-                                                                    )}%`,
-                                                                }}
-                                                            />
-                                                        ))}
+                                                        {selectedNodeHistory.map(
+                                                            (point) => (
+                                                                <div
+                                                                    key={`mem-${point.timestamp}`}
+                                                                    className="series-bar mem"
+                                                                    style={{
+                                                                        height: `${Math.max(
+                                                                            8,
+                                                                            percentValue(
+                                                                                point.memory_percent,
+                                                                            ),
+                                                                        )}%`,
+                                                                    }}
+                                                                />
+                                                            ),
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -860,7 +958,8 @@ const IRifyScanObservabilityPage: FC = () => {
                             <div>
                                 <h2>正在执行与排队</h2>
                                 <p>
-                                    展示所有节点的真实执行任务与队列中的脚本调用，不再混淆成单个 task_count。
+                                    展示所有节点的真实执行任务与队列中的脚本调用，不再混淆成单个
+                                    task_count。
                                 </p>
                             </div>
                         </div>
@@ -871,7 +970,9 @@ const IRifyScanObservabilityPage: FC = () => {
                             columns={runningTaskColumns}
                             dataSource={overview?.running_tasks || []}
                             pagination={false}
-                            locale={{ emptyText: '当前没有执行中或排队中的扫描任务' }}
+                            locale={{
+                                emptyText: '当前没有执行中或排队中的扫描任务',
+                            }}
                         />
                     </Card>
                 </section>
@@ -891,14 +992,7 @@ const IRifyScanObservabilityPage: FC = () => {
                         dataSource={overview?.recent_tasks || []}
                         pagination={false}
                         expandable={{
-                            expandedRowRender: (record) => (
-                                <div className="recent-task-expand">
-                                    <div>任务 ID: {record.task_id}</div>
-                                    <div>语言: {record.language || '-'}</div>
-                                    <div>来源: {record.source_origin || '-'}</div>
-                                    <div>错误: {record.error_message || '-'}</div>
-                                </div>
-                            ),
+                            expandedRowRender: RecentTaskExpandedRow,
                         }}
                     />
                 </Card>
