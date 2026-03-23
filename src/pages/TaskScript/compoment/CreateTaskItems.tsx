@@ -1006,7 +1006,8 @@ const CreateTaskItems: TCreateTaskItemsProps = (
                                                                 {
                                                                     message:
                                                                         '请输入扫描端口',
-                                                                    required: true,
+                                                                    required:
+                                                                        true,
                                                                 },
                                                             ]}
                                                             className="ml-9"

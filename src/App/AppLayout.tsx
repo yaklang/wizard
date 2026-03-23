@@ -1,8 +1,9 @@
 import type { MenuProps } from 'antd';
-import { Layout, Menu, Spin } from 'antd';
+import { Button, Layout, Menu, Spin } from 'antd';
 import {
     useEffect,
     useMemo,
+    useRef,
     // useRef
 } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -20,6 +21,9 @@ import { UserCard } from './UserCard';
 import { findFullPath, findPathNodes, processMenu } from '@/utils';
 import { LeftOutlined } from '@ant-design/icons';
 import { getLicense } from '@/apis/login';
+import { match } from 'ts-pattern';
+import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { McpModal } from '@/utils/McpModel';
 // import useLoginStore from './store/loginStore';
 
 const { Header, Content, Sider } = Layout;
@@ -29,6 +33,8 @@ const AppLayout = () => {
     const navigate = useNavigate();
     const { status } = useNetworkStatus();
     // const store = useLoginStore.getState();
+
+    const mcpModalRef = useRef<UseModalRefType>(null);
 
     const [collapsed, setCollapsed] = useSafeState(false);
     const [headerTitle, setHeaderTitle] = useSafeState<
@@ -59,8 +65,17 @@ const AppLayout = () => {
         const routerList = processMenu(routesList, navigate);
 
         // 获取 layout Header 面包屑
-        const resultPathNodes = findPathNodes(locations.pathname, routesList);
-        const resultRouteList = resultPathNodes ? resultPathNodes.slice(1) : [];
+        const resultPathNodes =
+            findPathNodes(locations.pathname, routesList) ?? [];
+        const resultRouteList = match(resultPathNodes?.length)
+            .with(1, () => {
+                return [resultPathNodes?.[0]];
+            })
+            .with(2, () => {
+                return resultPathNodes?.slice(1);
+            })
+
+            .otherwise(() => []);
         setHeaderTitle(resultRouteList);
 
         return routerList;
@@ -253,13 +268,16 @@ const AppLayout = () => {
                             </div>
                         ) : (
                             <div
-                                className="text-xl font-normal color-[#31343F] cursor-default flex justify-end"
+                                className="text-xl font-normal color-[#31343F] cursor-default flex justify-between w-full"
                                 key={item.path}
                             >
-                                {headerTitle.length > 1 && (
-                                    <div className="mx-3">/</div>
-                                )}
                                 <div>{item.name}</div>
+                                <Button
+                                    type="primary"
+                                    onClick={() => mcpModalRef.current?.open()}
+                                >
+                                    启用MCP模型
+                                </Button>
                             </div>
                         );
                     })}
@@ -276,6 +294,7 @@ const AppLayout = () => {
                     </Content>
                 )}
             </Layout>
+            <McpModal ref={mcpModalRef} />
         </Layout>
     );
 };
