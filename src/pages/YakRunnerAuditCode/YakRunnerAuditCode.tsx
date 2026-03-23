@@ -25,7 +25,7 @@ import {
     monacaLanguageType,
 } from './utils';
 import styles from './YakRunnerAuditCode.module.scss';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import emiter from '@/utils/eventBus/eventBus';
 import { failed, yakitNotify } from '@/utils/notification';
 import YakRunnerContext, {
@@ -48,7 +48,7 @@ import {
 } from './FileTreeMap/ChildMap';
 import { FileDefault, FileSuffix, FolderDefault } from './FileTree/icon';
 import moment from 'moment';
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
+import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox';
 import {
     type CodeRangeProps,
     type JumpSourceDataProps,
@@ -72,7 +72,7 @@ import type {
     FileNodeMapProps,
     FileTreeListProps,
 } from './FileTree/FileTreeType';
-import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
+import { YakitHint } from '@/compoments/yakitUI/YakitHint/YakitHint';
 import type { Selection } from './RunnerTabs/RunnerTabsType';
 import type { LeftSideType } from './LeftSideBar/LeftSideBarType';
 import { LeftSideBar } from './LeftSideBar/LeftSideBar';

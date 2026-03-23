@@ -3,7 +3,7 @@ import { useCreation, useSize } from 'ahooks';
 import styles from './LeftSideBar.module.scss';
 import classNames from 'classnames';
 import { AuditCode } from '../AuditCode/AuditCode';
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
+import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox';
 import { RunnerFileTree } from '../RunnerFileTree/RunnerFileTree';
 import useStore from '../hooks/useStore';
 import type { LeftSideBarProps } from './LeftSideBarType';

@@ -6,7 +6,7 @@ import type {
     RunnerFileTreeProps,
     SelectOptionsProps,
 } from './RunnerFileTreeType';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import {
     OutlinePositionIcon,
     OutlineRefreshIcon,
@@ -38,7 +38,7 @@ import type {
 } from '../YakRunnerAuditCodeType';
 import { CollapseList } from '../CollapseList/CollapseList';
 import { FileTree } from '../FileTree/FileTree';
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin';
 import type { FileDetailInfo } from '../RunnerTabs/RunnerTabsType';
 import type {
     FileNodeMapProps,
@@ -48,11 +48,11 @@ import type {
 import { AuditSearchModal } from '../AuditSearchModal/AuditSearch';
 import type { CodeRangeProps } from '../RightAuditDetail/RightAuditDetail';
 import type { JumpToAuditEditorProps } from '../BottomEditorDetails/BottomEditorDetailsType';
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect';
 import { formatTimestamp } from '@/utils/timeUtil';
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
-import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
-import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag';
+import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty';
+import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox';
 
 // const GlobalFilterFunction = React.lazy(
 //     () => import('../GlobalFilterFunction/GlobalFilterFunction'),

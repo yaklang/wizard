@@ -26,7 +26,7 @@ import { Droppable, Draggable } from '@hello-pangea/dnd';
 import classNames from 'classnames';
 import styles from './RunnerTabs.module.scss';
 import { KeyToIcon } from '../FileTree/icon';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton';
 import {
     OutlineChevrondoubleleftIcon,
     OutlineChevrondoublerightIcon,
@@ -34,7 +34,7 @@ import {
     OutlineXIcon,
 } from '@/assets/icon/outline';
 import yakitSSMiniProject from '@/assets/yakitMiniSS.png';
-import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor';
+import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor';
 import {
     useDebounceEffect,
     useDebounceFn,
@@ -55,10 +55,10 @@ import type {
 import cloneDeep from 'lodash/cloneDeep';
 import emiter from '@/utils/eventBus/eventBus';
 import { Result } from 'antd';
-import { YakitDropdownMenu } from '@/compoments/YakitUI/YakitDropdownMenu/YakitDropdownMenu';
+import { YakitDropdownMenu } from '@/compoments/yakitUI/YakitDropdownMenu/YakitDropdownMenu';
 import { v4 as uuidv4 } from 'uuid';
-import { showByRightContext } from '@/compoments/YakitUI/YakitMenu/showByRightContext';
-import type { YakitMenuItemType } from '@/compoments/YakitUI/YakitMenu/YakitMenu';
+import { showByRightContext } from '@/compoments/yakitUI/YakitMenu/showByRightContext';
+import type { YakitMenuItemType } from '@/compoments/yakitUI/YakitMenu/YakitMenu';
 import type { ScrollProps } from '@/compoments/TableVirtualResize/TableVirtualResizeType';
 import type { Position } from 'monaco-editor';
 import {
@@ -77,7 +77,7 @@ import { editor as newEditor } from 'monaco-editor';
 import type {
     YakitIMonacoEditor,
     YakitITextModel,
-} from '@/compoments/YakitUI/YakitEditor/YakitEditorType';
+} from '@/compoments/yakitUI/YakitEditor/YakitEditorType';
 import { createRoot } from 'react-dom/client';
 import { monaco } from 'react-monaco-editor';
 import type { JumpToAuditEditorProps } from '../BottomEditorDetails/BottomEditorDetailsType';
@@ -90,7 +90,7 @@ import {
     type JumpSourceDataProps,
     onJumpRunnerFile,
 } from '../RightAuditDetail/RightAuditDetail';
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect';
 
 import { onSetSelectedSearchVal } from '../AuditSearchModal/AuditSearch';
 import {
