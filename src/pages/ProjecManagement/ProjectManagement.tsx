@@ -44,6 +44,7 @@ import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
 import { dedupeSSAProjects, mergeSSAProjects } from './projectManagementUtils';
+import { useUrlState } from '@/hooks/useUrlState';
 import dayjs from 'dayjs';
 import './ProjectManagement.scss';
 
@@ -100,12 +101,13 @@ const ProjectManagement: React.FC = () => {
     >();
 
     // 筛选条件
-    const [searchName, setSearchName] = useState<string>('');
-    const [filterLanguage, setFilterLanguage] = useState<string | undefined>();
-    const [filterSourceKind, setFilterSourceKind] = useState<
-        string | undefined
-    >();
-    const [filterTags, setFilterTags] = useState<string | undefined>();
+    const [searchName, setSearchName] = useUrlState('project_name', '');
+    const [filterLanguage, setFilterLanguage] = useUrlState('language', '');
+    const [filterSourceKind, setFilterSourceKind] = useUrlState(
+        'source_kind',
+        '',
+    );
+    const [filterTags, setFilterTags] = useUrlState('tags', '');
     const [filterDateRange, setFilterDateRange] = useState<
         [number, number] | undefined
     >();
@@ -936,6 +938,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="搜索项目名称"
                         allowClear
                         style={{ width: 220 }}
+                        defaultValue={searchName}
                         onSearch={handleSearch}
                         onChange={(e) => {
                             if (!e.target.value) {
@@ -947,6 +950,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="选择语言"
                         allowClear
                         style={{ width: 140 }}
+                        value={filterLanguage || undefined}
                         onChange={handleLanguageFilter}
                         options={languageOptions}
                     />
@@ -954,6 +958,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="代码源类型"
                         allowClear
                         style={{ width: 140 }}
+                        value={filterSourceKind || undefined}
                         onChange={(value) => {
                             setFilterSourceKind(value || undefined);
                             setPage(1);
@@ -964,6 +969,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="标签筛选"
                         allowClear
                         style={{ width: 140 }}
+                        defaultValue={filterTags}
                         onChange={(e) => {
                             const value = e.target.value;
                             setFilterTags(value || undefined);
