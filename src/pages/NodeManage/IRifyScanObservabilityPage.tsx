@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import dayjs from 'dayjs';
+import { useTheme } from '@/theme';
 import type { Palm } from '@/gen/schema';
 import type { ResponseData } from '@/utils/commonTypes';
 import axios from '@/utils/axios';
@@ -316,6 +317,7 @@ const RecentTaskExpandedRow = (record: ScannerObservabilityRecentTask) => (
 );
 
 const IRifyScanObservabilityPage: FC = () => {
+    const { isDark } = useTheme();
     const [selectedNodeId, setSelectedNodeId] = useSafeState<string>('');
     const [usingMockData, setUsingMockData] = useSafeState(false);
     const [showOfflineNodes, setShowOfflineNodes] = useSafeState(false);
@@ -554,7 +556,9 @@ const IRifyScanObservabilityPage: FC = () => {
     );
 
     return (
-        <div className="irify-scan-observability-page">
+        <div
+            className={`irify-scan-observability-page ${isDark ? 'dark' : 'light'}`}
+        >
             <section className="observability-hero">
                 <div className="hero-copy">
                     <span className="hero-kicker">Scanner Observability</span>
