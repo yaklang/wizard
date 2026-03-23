@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Card,
@@ -43,6 +43,7 @@ import type {
 import type { TSSAProject } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
+import { dedupeSSAProjects, mergeSSAProjects } from './projectManagementUtils';
 import dayjs from 'dayjs';
 import './ProjectManagement.scss';
 
@@ -114,12 +115,32 @@ const ProjectManagement: React.FC = () => {
         number | null
     >(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [scanningProjectId, setScanningProjectId] = useState<number | null>(
+        null,
+    );
     const [showMemoryScanOverride, setShowMemoryScanOverride] =
         useState<boolean>(resolveMemoryScanOverrideVisible);
+    const dataRef = useRef<TSSAProject[]>([]);
+    const loadingRef = useRef(false);
+    const requestedPageKeysRef = useRef<Set<string>>(new Set());
 
     const selectedProjects = data.filter(
         (item) => item.id && selectedRowKeys.includes(item.id),
     );
+
+    useEffect(() => {
+        dataRef.current = data;
+    }, [data]);
+
+    const resetListState = useCallback(() => {
+        dataRef.current = [];
+        requestedPageKeysRef.current = new Set();
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        setSelectedRowKeys([]);
+        setScanPopoverProjectId(null);
+    }, []);
 
     const fetchList = useCallback(
         async (options: {
@@ -142,6 +163,22 @@ const ProjectManagement: React.FC = () => {
                 dateRange,
                 append = false,
             } = options;
+            const requestKey = JSON.stringify({
+                p,
+                l,
+                projectName: projectName?.trim() || '',
+                language: language || '',
+                sourceKind: sourceKind || '',
+                tags: tags || '',
+                dateRange: dateRange ?? null,
+            });
+            if (append && requestedPageKeysRef.current.has(requestKey)) {
+                return;
+            }
+            if (append) {
+                requestedPageKeysRef.current.add(requestKey);
+            }
+            loadingRef.current = true;
             setLoading(true);
             try {
                 const res = await getSSAProjects({
@@ -161,7 +198,7 @@ const ProjectManagement: React.FC = () => {
                     message.error('获取项目列表失败');
                     return;
                 }
-                let list = res.data?.list ?? [];
+                let list = dedupeSSAProjects(res.data?.list ?? []);
 
                 // 前端过滤（如果后端不支持这些筛选）
                 if (sourceKind) {
@@ -179,22 +216,27 @@ const ProjectManagement: React.FC = () => {
                     });
                 }
 
-                if (append) {
-                    setData((prevData) => [...prevData, ...list]);
-                } else {
-                    setData(list);
-                }
-                setPage(res.data?.pagemeta?.page ?? p);
-                setLimit(res.data?.pagemeta?.limit ?? l);
+                list = dedupeSSAProjects(list);
+                const nextData = append
+                    ? mergeSSAProjects(dataRef.current, list)
+                    : list;
+                dataRef.current = nextData;
+                setData(nextData);
 
-                // 检查是否还有更多数据
-                const currentTotal = append
-                    ? data.length + list.length
-                    : list.length;
-                setHasMore(currentTotal < (res.data?.pagemeta?.total ?? 0));
+                const pageMeta = res.data?.pagemeta;
+                const currentPage = pageMeta?.page ?? p;
+                const totalPage = pageMeta?.total_page ?? currentPage;
+
+                setPage(currentPage);
+                setLimit(pageMeta?.limit ?? l);
+                setHasMore(currentPage < totalPage);
             } catch (err) {
+                if (append) {
+                    requestedPageKeysRef.current.delete(requestKey);
+                }
                 message.error('获取项目列表出错');
             } finally {
+                loadingRef.current = false;
                 setLoading(false);
             }
         },
@@ -202,10 +244,7 @@ const ProjectManagement: React.FC = () => {
     );
 
     const reloadFirstPage = useCallback(() => {
-        setPage(1);
-        setData([]);
-        setHasMore(true);
-        setSelectedRowKeys([]);
+        resetListState();
         fetchList({
             p: 1,
             l: limit,
@@ -218,6 +257,7 @@ const ProjectManagement: React.FC = () => {
     }, [
         fetchList,
         limit,
+        resetListState,
         searchName,
         filterLanguage,
         filterSourceKind,
@@ -227,10 +267,7 @@ const ProjectManagement: React.FC = () => {
 
     useEffect(() => {
         // 筛选条件改变时，重置到第一页
-        setPage(1);
-        setData([]);
-        setHasMore(true);
-        setSelectedRowKeys([]);
+        resetListState();
         fetchList({
             p: 1,
             l: limit,
@@ -246,10 +283,13 @@ const ProjectManagement: React.FC = () => {
         filterSourceKind,
         filterTags,
         filterDateRange,
+        limit,
+        resetListState,
+        fetchList,
     ]);
 
     const handleLoadMore = useCallback(() => {
-        if (loading || !hasMore) return;
+        if (loadingRef.current || !hasMore) return;
 
         fetchList({
             p: page + 1,
@@ -262,7 +302,6 @@ const ProjectManagement: React.FC = () => {
             append: true,
         });
     }, [
-        loading,
         hasMore,
         page,
         limit,
@@ -378,7 +417,15 @@ const ProjectManagement: React.FC = () => {
         auditCarryEnabled = true,
         scanMode: TSSAScanModeOverride = 'auto',
     ) => {
-        if (!record.id) return;
+        if (!record.id || scanningProjectId === record.id) return;
+        const projectId = record.id;
+        const messageKey = `ssa-project-scan-${projectId}`;
+        setScanningProjectId(projectId);
+        message.loading({
+            key: messageKey,
+            content: '正在创建扫描任务...',
+            duration: 0,
+        });
         try {
             const scanRequest: TSSAScanRequest = {
                 audit_carry_enabled: auditCarryEnabled,
@@ -421,6 +468,7 @@ const ProjectManagement: React.FC = () => {
             });
             const taskId = res.data?.task_id;
             message.success({
+                key: messageKey,
                 content: (
                     <span>
                         扫描任务已创建{taskId ? ` (#${taskId})` : ''}，
@@ -444,7 +492,19 @@ const ProjectManagement: React.FC = () => {
                 duration: 6,
             });
         } catch (err: any) {
-            message.error(`创建扫描失败: ${err.msg || err.message}`);
+            message.error({
+                key: messageKey,
+                content: `创建扫描失败: ${
+                    err?.reason ||
+                    err?.msg ||
+                    err?.message ||
+                    '请检查网络后重试'
+                }`,
+            });
+        } finally {
+            setScanningProjectId((current) =>
+                current === projectId ? null : current,
+            );
         }
     };
 
@@ -731,6 +791,7 @@ const ProjectManagement: React.FC = () => {
                 const hasSchedule = Boolean(
                     record.config?.ScanSchedule?.enabled,
                 );
+                const isScanning = scanningProjectId === record.id;
 
                 return (
                     <Space size="small">
@@ -781,6 +842,7 @@ const ProjectManagement: React.FC = () => {
                                             <Button
                                                 type="primary"
                                                 size="small"
+                                                loading={isScanning}
                                                 onClick={async () => {
                                                     setScanPopoverProjectId(
                                                         null,
@@ -795,6 +857,7 @@ const ProjectManagement: React.FC = () => {
                                             {showMemoryScanOverride && (
                                                 <Button
                                                     size="small"
+                                                    loading={isScanning}
                                                     onClick={async () => {
                                                         setScanPopoverProjectId(
                                                             null,
@@ -818,6 +881,7 @@ const ProjectManagement: React.FC = () => {
                                 type="primary"
                                 size="small"
                                 icon={<PlayCircleOutlined />}
+                                loading={isScanning}
                             >
                                 发起扫描
                             </Button>
