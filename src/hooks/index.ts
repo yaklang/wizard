@@ -5,3 +5,4 @@ export { default as usePermissionsSlice } from './usePermissionsSlice';
 export { default as useNetworkStatus } from './useNetwork';
 export { default as useEventSource } from './useEventSource';
 export { default as usePreviousDeep } from './usePreviousDeep';
+export { useUrlState, serializers } from './useUrlState';
