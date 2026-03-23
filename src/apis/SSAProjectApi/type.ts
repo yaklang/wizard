@@ -83,6 +83,8 @@ interface TSSAProjectRequest {
 // SSA 项目列表响应类型
 type TSSAProjectListResponse = TableResponseData<TSSAProject>;
 
+export type TSSAProjectDeleteMode = 'config-only' | 'cascade';
+
 // 扫描策略配置类型
 export interface TScanPolicyConfig {
     version?: string;
