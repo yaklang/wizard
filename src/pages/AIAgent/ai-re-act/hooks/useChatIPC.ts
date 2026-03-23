@@ -600,15 +600,6 @@ function useChatIPC(params?: UseChatIPCParams) {
         setExecute(true);
         chatID.current = token;
 
-        // 确保后端存在该会话（新建会话幂等；已有会话则恢复）
-        try {
-            await postCreateSession({ run_id: token });
-        } catch (error) {
-            yakitNotify('error', '创建/恢复会话失败，请稍后重试');
-            setExecute(false);
-            return;
-        }
-
         aiRequest.current = params.Params;
         sseEvents.connect(`run/${token}/events`);
 
@@ -627,6 +618,7 @@ function useChatIPC(params?: UseChatIPCParams) {
 
     const handleMessage = useMemoizedFn((res: AIOutputEvent) => {
         try {
+            console.log('onMessage-res', res);
             // 会话SSE已建立成功并准备发送信息
             if (res.Type === 'listener_ready') {
                 sendFirstMessage();

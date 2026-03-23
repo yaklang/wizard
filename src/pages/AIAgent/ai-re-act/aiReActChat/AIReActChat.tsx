@@ -31,11 +31,11 @@ import {
     formatAIAgentSetting,
     getAIReActRequestParams,
 } from '@/pages/AIAgent/ai-agent/utils';
-import { v4 as uuidv4 } from 'uuid';
 import type { AIChatInfo } from '@/pages/AIAgent/ai-agent/type/aiChat';
 import useAIAgentDispatcher from '@/pages/AIAgent/ai-agent/useContext/useDispatcher';
 import { randomString } from '@/utils/randomUtil';
 import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
+import { postCreateSession } from '@/apis/AiEventApi';
 
 export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
     forwardRef((props, ref) => {
@@ -105,7 +105,7 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
             onSetQuestion('');
         });
 
-        const handleStart = useMemoizedFn((value: HandleStartParams) => {
+        const handleStart = useMemoizedFn(async (value: HandleStartParams) => {
             const { qs, sessionId } = value;
             const sessionID = activeChat?.run_id || ''; // 判断历史还是新建
             const request: AIStartParams = {
@@ -123,7 +123,13 @@ export const AIReActChat: React.FC<AIReActChatProps> = React.memo(
             } else if (setting.TimelineSessionID) {
                 session = setting.TimelineSessionID;
             } else {
-                session = uuidv4().replace(/-/g, '').substring(0, 16);
+                try {
+                    const { run_id } = await postCreateSession({});
+                    session = run_id;
+                } catch (error) {
+                    yakitNotify('error', '创建会话失败，请稍后重试');
+                    return;
+                }
             }
             request.TimelineSessionID = session;
             const { extra, attachedResourceInfo } =

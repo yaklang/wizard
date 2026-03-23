@@ -284,12 +284,14 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
         });
         const handleTriageSubmit = useMemoizedFn(
             async (value: AIChatTextareaSubmit) => {
-                try {
-                    const { run_id } = await postCreateSession({});
-                    onTriageSubmit({ ...value, sessionId: run_id });
-                } catch (error) {
-                    yakitNotify('error', '创建会话失败，请稍后重试');
-                }
+                //     try {
+                //         const { run_id } = await postCreateSession({});
+                //         onTriageSubmit({ ...value, sessionId: run_id });
+                //     } catch (error) {
+                //         yakitNotify('error', '创建会话失败，请稍后重试');
+                //     }
+                //     onSetQuestion('');
+                onTriageSubmit(value);
                 onSetQuestion('');
             },
         );
