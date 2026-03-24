@@ -66,7 +66,7 @@ export interface ProjectDetailNodes {
 // AI数据返回封装
 export interface AIResponseData<T> {
     code: number;
-    data: T;
+    Data: T;
     message: string;
     error?: string;
 }

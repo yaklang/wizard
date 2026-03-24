@@ -280,18 +280,18 @@ export const grpcExportAILogs: APIFunc<
     });
 };
 
-export const grpcQueryAIFocus: APIOptionalFunc<
-    QueryAIFocusRequest,
-    QueryAIFocusResponse
-> = (param, hiddenError) => {
-    return new Promise(async (resolve, reject) => {
-        ipcRenderer
-            .invoke('QueryAIFocus', param)
-            .then(resolve)
-            .catch((e) => {
-                if (!hiddenError)
-                    yakitNotify('error', 'QueryAIFocus 查询详情失败:' + e);
-                reject(e);
-            });
-    });
-};
+// export const grpcQueryAIFocus: APIOptionalFunc<
+//     QueryAIFocusRequest,
+//     QueryAIFocusResponse
+// > = (param, hiddenError) => {
+//     return new Promise(async (resolve, reject) => {
+//         ipcRenderer
+//             .invoke('QueryAIFocus', param)
+//             .then(resolve)
+//             .catch((e) => {
+//                 if (!hiddenError)
+//                     yakitNotify('error', 'QueryAIFocus 查询详情失败:' + e);
+//                 reject(e);
+//             });
+//     });
+// };

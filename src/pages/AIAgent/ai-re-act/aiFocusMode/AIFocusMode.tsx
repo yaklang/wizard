@@ -6,10 +6,11 @@ import classNames from 'classnames';
 import { AIChatSelect } from '../aiReviewRuleSelect/AIReviewRuleSelect';
 import type { AIInputEvent } from '../hooks/grpcApi';
 import styles from './AIFocusMode.module.scss';
-import { grpcQueryAIFocus } from '@/pages/AIAgent/ai-agent/grpc';
-import type { AIFocus } from '@/pages/AIAgent/ai-agent/type/forge';
 import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
 import type { YakitSelectProps } from '@/compoments/YakitUI/YakitSelect/YakitSelectType';
+import { postSettingAifocusGet } from '@/apis/AiEventApi';
+import { Tooltip } from 'antd';
+import type { TPostSettingAifocusGetResponse } from '@/apis/AiEventApi/type';
 
 export const AIFocusMode: React.FC<AIFocusModeProps> = React.memo((props) => {
     const { value, onChange, className } = props;
@@ -26,12 +27,14 @@ export const AIFocusMode: React.FC<AIFocusModeProps> = React.memo((props) => {
         if (inViewPort) getFocusMode();
     }, [inViewPort]);
     const getFocusMode = useMemoizedFn(async () => {
-        const res = await grpcQueryAIFocus();
-        const list = (res?.Data || []).map((item: AIFocus) => ({
-            label: item.Name,
-            value: item.Name,
-            describe: item.Description,
-        }));
+        const res = await postSettingAifocusGet();
+        const list = (res.Data || []).map(
+            (item: TPostSettingAifocusGetResponse) => ({
+                label: item.VerboseNameZh || item.Name,
+                value: item.Name,
+                describe: item.Description,
+            }),
+        );
         setFocusModeList(list);
     });
     const onSelectModel = useMemoizedFn(
@@ -105,21 +108,22 @@ export const AIFocusMode: React.FC<AIFocusModeProps> = React.memo((props) => {
                             </div>
                         }
                     >
-                        <div
-                            className={classNames(
-                                styles['select-option-wrapper'],
-                                {
-                                    [styles['select-option-active-wrapper']]:
-                                        item.value === value,
-                                },
-                            )}
-                        >
-                            <div className={styles['text']}>{item.label}</div>
-                            <div className={styles['describe']}>
-                                {' '}
-                                {item.describe}
+                        <Tooltip title={item.describe} placement="right">
+                            <div
+                                className={classNames(
+                                    styles['select-option-wrapper'],
+                                    {
+                                        [styles[
+                                            'select-option-active-wrapper'
+                                        ]]: item.value === value,
+                                    },
+                                )}
+                            >
+                                <div className={styles['text']}>
+                                    {item.label}
+                                </div>
                             </div>
-                        </div>
+                        </Tooltip>
                     </YakitSelect.Option>
                 ))}
             </AIChatSelect>

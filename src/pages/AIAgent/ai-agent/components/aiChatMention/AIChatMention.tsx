@@ -35,7 +35,7 @@ import type {
     QueryAIForgeRequest,
     QueryAIForgeResponse,
 } from '../../type/forge';
-import { grpcQueryAIFocus, grpcQueryAIForge } from '../../grpc';
+import { grpcQueryAIForge } from '../../grpc';
 import type {
     AITool,
     GetAIToolListRequest,
@@ -52,6 +52,7 @@ import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
 import { useGetSetState } from '@/hooks';
 import type { RollingLoadListRef } from '@/compoments/RollingLoadList/RollingLoadList';
 import { RollingLoadList } from '@/compoments/RollingLoadList/RollingLoadList';
+import { postSettingAifocusGet } from '@/apis/AiEventApi';
 
 const defaultRef: AIChatMentionListRefProps = {
     onRefresh: () => {},
@@ -691,7 +692,7 @@ const FocusModeOfMention: React.FC<FocusModeOfMentionProps> = React.memo(
         const getList = useMemoizedFn(async () => {
             setSpinning(true);
             try {
-                const res = await grpcQueryAIFocus();
+                const res = await postSettingAifocusGet();
                 let newRes: QueryAIFocusResponse = {
                     Data: (res?.Data || []).filter((it) =>
                         it?.Name?.toLowerCase().includes(keyWord.toLowerCase()),
