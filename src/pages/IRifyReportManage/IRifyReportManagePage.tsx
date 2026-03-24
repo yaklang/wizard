@@ -20,6 +20,7 @@ import {
     message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { SorterResult } from 'antd/es/table/interface';
 import { useRequest } from 'ahooks';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -41,6 +42,7 @@ import {
 import type {
     TSSAReportRecord,
     TSSAReportRecordDetail,
+    TSSAReportRecordQueryParams,
 } from '@/apis/SSAReportRecordApi/type';
 import type { TSSAReportRecordFile } from '@/apis/SSAReportRecordFileApi/type';
 import ReportTemplate from '@/compoments/ReportTemplate';
@@ -129,6 +131,11 @@ const IRifyReportManagePage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(12);
     const [filters, setFilters] = useState<TAppliedFilters>({});
+    const [orderBy, setOrderBy] =
+        useState<NonNullable<TSSAReportRecordQueryParams['order_by']>>(
+            'published_at',
+        );
+    const [orderDir, setOrderDir] = useState<'asc' | 'desc'>('desc');
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewTitle, setPreviewTitle] = useState('报告预览');
     const [previewBlocks, setPreviewBlocks] = useState<any[]>([]);
@@ -150,8 +157,8 @@ const IRifyReportManagePage: React.FC = () => {
             const res = await querySSAReportRecords({
                 page,
                 limit,
-                order_by: 'published_at',
-                order: 'desc',
+                order_by: orderBy,
+                order: orderDir,
                 keyword: filters.keyword,
                 project_name: filters.project_name,
                 start: filters.start,
@@ -163,6 +170,8 @@ const IRifyReportManagePage: React.FC = () => {
             refreshDeps: [
                 page,
                 limit,
+                orderBy,
+                orderDir,
                 filters.keyword,
                 filters.project_name,
                 filters.start,
@@ -359,8 +368,9 @@ const IRifyReportManagePage: React.FC = () => {
             {
                 title: '安全风险',
                 dataIndex: 'risk_total',
-                key: 'risks',
+                key: 'risk_total',
                 width: 300,
+                sorter: true,
                 render: (_, record) => {
                     const totalRiskCount = Number(record.risk_total || 0);
                     const toneClass =
@@ -399,8 +409,10 @@ const IRifyReportManagePage: React.FC = () => {
             {
                 title: '时间',
                 dataIndex: 'published_at',
-                key: 'time',
+                key: 'published_at',
                 width: 240,
+                sorter: true,
+                defaultSortOrder: 'descend',
                 render: (_, record) => (
                     <div className="report-time-cell">
                         <div className="report-time-primary">
@@ -532,6 +544,18 @@ const IRifyReportManagePage: React.FC = () => {
                     dataSource={records}
                     columns={columns}
                     scroll={{ x: 1160 }}
+                    onChange={(_pagination, _filters, sorter) => {
+                        const s = sorter as SorterResult<TSSAReportRecord>;
+                        if (s.columnKey) {
+                            setOrderBy(
+                                s.columnKey as NonNullable<
+                                    TSSAReportRecordQueryParams['order_by']
+                                >,
+                            );
+                            setOrderDir(s.order === 'ascend' ? 'asc' : 'desc');
+                            setPage(1);
+                        }
+                    }}
                     pagination={{
                         current: page,
                         pageSize: limit,
