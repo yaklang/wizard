@@ -1,32 +1,34 @@
 import { WizardModal } from '@/compoments';
-import { Button, Collapse, Form, message } from 'antd';
+import { Button, Collapse, Form, message, Tooltip } from 'antd';
 import { showErrorMessage } from '@/utils/showErrorMessage';
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { useRequest, useSafeState } from 'ahooks';
-import { randomString, toBoolean } from '@/utils';
 import dayjs from 'dayjs';
 import {
     getNodeList,
+    getStroageDetail,
     getTaskRun,
     getTaskStream,
     postEditScriptTask,
     postTaskStart,
+    postThreatAnalysisScriptInformation,
 } from '@/apis/task';
 import type {
     StopOnRunTaskRequest,
     TaskListRequest,
+    ThreatAnalysisScriptInformationRequest,
     YakScriptParamFull,
 } from '@/apis/task/types';
 import { CreateTaskItems } from './CreateTaskItems';
 import type { UsePageRef } from '@/hooks/usePage';
-import { transformFormData } from '../data';
+import { buildInitialFormData, transformFormData } from '../data';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import {
     buildParamFormItem,
-    getValueByType,
     ParamsToGroupByGroupName,
 } from '../taskScript/helpers';
 import type { ScriptGroupOption, TaskScriptListItem } from '../types';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export type TScannerDataList = {
     name?: string;
@@ -43,8 +45,9 @@ const StartUpScriptModal = forwardRef<
         localRefrech?: UsePageRef['localRefrech'];
         record?: TaskListRequest;
         refreshAsync?: () => Promise<any>;
+        isEdit?: boolean;
     }
->(({ title, pageLoad, localRefrech, record, refreshAsync }, ref) => {
+>(({ title, pageLoad, localRefrech, record, refreshAsync, isEdit }, ref) => {
     const [model] = WizardModal.useModal();
     const [form] = Form.useForm();
     const scriptTypeValue = Form.useWatch('script_type', form);
@@ -61,6 +64,7 @@ const StartUpScriptModal = forwardRef<
     const [scriptParameters, setScriptParameters] = useSafeState<
         YakScriptParamFull[]
     >([]);
+    const [legacy, setLegacy] = useSafeState(false);
 
     const status = useMemo(() => {
         if (localRefrech) {
@@ -185,103 +189,86 @@ const StartUpScriptModal = forwardRef<
         resetFormState();
     };
 
+    // 获取脚本详情
+    const { runAsync: detailRunAsync } = useRequest(
+        async (script_name: string) => {
+            const result = await getStroageDetail({ script_name });
+            const { data } = result;
+            return data;
+        },
+        {
+            manual: true,
+        },
+    );
+
+    // request to parse yaklang script info（runAsync 才返回 service 结果，run 不返回）
+    const { runAsync: runFetch } = useRequest(
+        async (params: ThreatAnalysisScriptInformationRequest) => {
+            const result = await postThreatAnalysisScriptInformation(params);
+            const { data } = result;
+            return data;
+        },
+        {
+            manual: true,
+            onSuccess: (data) => {
+                return data;
+            },
+        },
+    );
+
     useImperativeHandle(ref, () => ({
         async open(
             items: TaskScriptListItem,
             groupOptions: ScriptGroupOption[],
         ) {
-            await runAsync()
-                .then(() => {
-                    const parameterList = Array.isArray(items?.parameter)
+            try {
+                await runAsync();
+
+                let parameterList =
+                    Array.isArray(items?.parameter) && items.parameter
                         ? items.parameter
                         : [];
-                    const parameterDefaults = parameterList.reduce<
-                        Record<string, any>
-                    >((acc, param) => {
-                        const key = param.paramName;
-                        if (!key) return acc;
-                        acc[key] = getValueByType(
-                            param.paramValue,
-                            (param.typeVerbose || '').toLowerCase(),
+
+                // 仅当 items.legacy 为 false 且有 script_name 时才请求解析，用返回的 cli_parameter 覆盖
+                if (items?.legacy && items?.script_name && !isEdit) {
+                    try {
+                        const detail = await detailRunAsync(
+                            items.script_name || '',
                         );
-                        return acc;
-                    }, {});
-                    const mergedParams: Record<string, any> = {
-                        ...parameterDefaults,
-                        ...(items.params ?? {}),
-                    };
+                        const yakScriptInfo = await runFetch({
+                            script_name: items?.script_name,
+                            script_content: detail?.script,
+                        });
+                        if (Array.isArray(yakScriptInfo?.cli_parameter)) {
+                            parameterList = yakScriptInfo.cli_parameter;
+                        }
+                    } catch (err) {
+                        console.error('获取或解析 legacy 脚本信息失败:', err);
+                    }
+                }
+                const targetSetFormData = buildInitialFormData(items);
 
-                    const normalizedPlugins = Array.isArray(
-                        mergedParams.plugins,
-                    )
-                        ? mergedParams.plugins
-                        : typeof mergedParams.plugins === 'string'
-                          ? mergedParams.plugins
-                                .split(',')
-                                .map((it: string) => it.trim())
-                                .filter(Boolean)
-                          : undefined;
+                form.setFieldsValue(targetSetFormData);
 
-                    const hasIpList = Array.isArray(items?.ip_list)
-                        ? items.ip_list.length > 0
-                        : false;
+                setKeywordPlaceholder(items?.description ?? '');
+                setScriptGroupList(groupOptions);
+                setEditObj({
+                    task_id: items?.id ?? 0,
+                    task_type: items?.task_type ?? 0,
+                });
+                setScriptParameters(parameterList);
+                setLegacy(items?.legacy ?? false);
 
-                    const normalizedParams = {
-                        ...mergedParams,
-                        target: hasIpList
-                            ? (items?.ip_list ?? []).join(',')
-                            : mergedParams.target || mergedParams.keyword,
-                        'enable-cve-baseline':
-                            typeof mergedParams['enable-cve-baseline'] ===
-                            'boolean'
-                                ? mergedParams['enable-cve-baseline']
-                                : true,
-                        'enable-brute': toBoolean(mergedParams['enable-brute']),
-                        'enable-web-login-brute':
-                            typeof mergedParams['enable-web-login-brute'] ===
-                            'boolean'
-                                ? mergedParams['enable-web-login-brute']
-                                : ['company_scan', 'login_brute_scan'].includes(
-                                      items?.script_type ?? '',
-                                  ),
-                        plugins: normalizedPlugins,
-                    };
-
-                    const targetSetFormData = {
-                        task_id: `[${items?.script_name}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
-                        ...items,
-                        execution_date:
-                            items?.sched_type === 2 && items?.start_timestamp
-                                ? dayjs.unix(items.start_timestamp)
-                                : undefined,
-                        timestamp:
-                            items?.sched_type === 3 &&
-                            items?.start_timestamp &&
-                            items?.end_timestamp
-                                ? [
-                                      dayjs.unix(items?.start_timestamp),
-                                      dayjs.unix(items?.end_timestamp),
-                                  ]
-                                : undefined,
-                        params: normalizedParams,
-                    };
-
-                    form.setFieldsValue(targetSetFormData);
-                    setKeywordPlaceholder(items?.description ?? '');
-                    setScriptGroupList(groupOptions);
-                    setEditObj({
-                        task_id: items?.id ?? 0,
-                        task_type: items?.task_type ?? 0,
-                    });
-                    setScriptParameters(parameterList);
-                    model.open();
-                })
-                .catch((err) => console.error(err));
+                model.open();
+            } catch (error) {
+                console.error(error);
+            }
         },
     }));
 
     const baseCollapseItems = CreateTaskItems(
         title,
+        legacy,
         scriptTypeValue,
         scriptGroupList,
         status,
@@ -290,7 +277,10 @@ const StartUpScriptModal = forwardRef<
     );
 
     const parameterCollapseItems = useMemo(() => {
-        if (!scriptParameters?.length) {
+        if (
+            Array.isArray(scriptParameters?.length) &&
+            !scriptParameters?.length
+        ) {
             return [];
         }
         const groupedParams = ParamsToGroupByGroupName(scriptParameters);
@@ -338,7 +328,9 @@ const StartUpScriptModal = forwardRef<
         ];
     }, [scriptParameters]);
 
-    const collapseItems = [...baseCollapseItems, ...parameterCollapseItems];
+    const collapseItems = useMemo(() => {
+        return [...baseCollapseItems, ...parameterCollapseItems];
+    }, [baseCollapseItems, parameterCollapseItems]);
 
     const onOk = async () => {
         try {
@@ -380,11 +372,22 @@ const StartUpScriptModal = forwardRef<
             }
             width={750}
             modal={model}
-            title={title}
+            title={
+                <div>
+                    <span>{title}</span>
+                    <span className="ml-2">
+                        {!isEdit && legacy && (
+                            <Tooltip title="自定义参数编辑时，脚本参数会根据脚本内容自动解析，无法展示回显">
+                                <QuestionCircleOutlined />
+                            </Tooltip>
+                        )}
+                    </span>
+                </div>
+            }
             onClose={resetFormState}
         >
             <div className="pb-2 px-6 overflow-auto max-h-[65vh]">
-                <Form form={form} layout="horizontal">
+                <Form form={form} layout="horizontal" labelWrap>
                     <Collapse
                         key={
                             scriptParameters?.length

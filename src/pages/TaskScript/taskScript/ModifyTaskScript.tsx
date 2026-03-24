@@ -32,7 +32,6 @@ import {
     postThreatAnalysisScriptInformation,
 } from '@/apis/task';
 import type {
-    ThreatAnalysisScriptInformationResponse,
     ThreatAnalysisScriptInformationRequest,
     YakScriptParamFull,
 } from '@/apis/task/types';
@@ -62,6 +61,7 @@ const ModifyTaskScript: FC = () => {
         null,
     );
     const debounceTimer = useRef<number | null>(null);
+    const legacyValue = Form.useWatch('legacy', form);
 
     /** helpers imported from ./helpers.tsx */
 
@@ -71,7 +71,7 @@ const ModifyTaskScript: FC = () => {
         manual: true,
         onSuccess: async () => {
             message.success(state.type === 'add' ? '创建成功' : '编辑成功');
-            navigate('/task/create-task');
+            navigate('/task/new-create-task');
         },
         onError: (err) => {
             console.error(err);
@@ -80,15 +80,13 @@ const ModifyTaskScript: FC = () => {
 
     // request to parse yaklang script info
     const { loading: parseLoading, run: runFetch } = useRequest(
-        // cast to any to align with project's ResponseData wrapper
-        postThreatAnalysisScriptInformation as any,
+        postThreatAnalysisScriptInformation,
         {
             manual: true,
-            onSuccess: (res: any) => {
+            onSuccess: (res) => {
                 try {
                     // console.log('Threat analysis response:', res);
-                    const info =
-                        res?.data as ThreatAnalysisScriptInformationResponse;
+                    const info = res?.data;
                     setCliParams(info?.cli_parameter || []);
                 } catch (e) {
                     console.error(e);
@@ -175,6 +173,18 @@ const ModifyTaskScript: FC = () => {
         form.setFieldsValue({ prompt_args: { ...existing, ...newVals } });
     }, [cliParams, scriptTypeValue]);
 
+    const runFetchParams = () => {
+        if (!scriptValue?.trim()) {
+            message.warning('请先输入脚本内容');
+            return;
+        }
+        const payload = {
+            script_name: form.getFieldValue('name') || undefined,
+            script_content: scriptValue,
+        };
+        runFetch(payload as any);
+    };
+
     return (
         <Form form={form} layout="vertical" className="h-full">
             <div className="flex justify-between items-center p-4">
@@ -240,39 +250,28 @@ const ModifyTaskScript: FC = () => {
                 <div className="w-1/5 pt-4 overflow-y-auto h-full">
                     {/* If Yaklang script is selected, keep the right-side parameters blank
                         for backend-driven dynamic form rendering. */}
-                    {scriptTypeValue === 'yaklang' ? (
+                    {scriptTypeValue === 'yaklang' || legacyValue ? (
                         <div className="h-full flex flex-col">
                             <div className="mb-2">
                                 <div className="flex items-center justify-between">
-                                    <div>
-                                        <Button
-                                            size="small"
-                                            type="primary"
-                                            onClick={() => {
-                                                if (!scriptValue?.trim()) {
-                                                    message.warning(
-                                                        '请先输入脚本内容',
-                                                    );
-                                                    return;
-                                                }
-                                                const payload = {
-                                                    script_name:
-                                                        form.getFieldValue(
-                                                            'name',
-                                                        ) || undefined,
-                                                    script_content: scriptValue,
-                                                };
-                                                runFetch(payload as any);
-                                            }}
-                                            loading={parseLoading}
-                                        >
-                                            获取参数
-                                        </Button>
-                                        {/* <Button size="small" type="default">执行</Button> */}
-                                    </div>
+                                    <Button
+                                        size="small"
+                                        type="primary"
+                                        onClick={runFetchParams}
+                                        loading={parseLoading}
+                                    >
+                                        获取参数
+                                    </Button>
+                                    <Item
+                                        name="legacy"
+                                        label="动态获取参数"
+                                        layout="horizontal"
+                                        style={{ marginBottom: '0px' }}
+                                    >
+                                        <Switch />
+                                    </Item>
                                 </div>
                             </div>
-
                             <div className="overflow-auto p-2 text-sm h-full">
                                 <Collapse
                                     ghost
@@ -293,8 +292,13 @@ const ModifyTaskScript: FC = () => {
                                             children:
                                                 group.data &&
                                                 group.data.length > 0 ? (
-                                                    group.data.map((p: any) =>
-                                                        buildParamFormItem(p),
+                                                    group.data.map((p) =>
+                                                        buildParamFormItem(
+                                                            p,
+                                                            [],
+                                                            undefined,
+                                                            24,
+                                                        ),
                                                     )
                                                 ) : (
                                                     <div className="color-[#85899E]">
@@ -308,6 +312,16 @@ const ModifyTaskScript: FC = () => {
                         </div>
                     ) : (
                         <>
+                            <Item
+                                name="legacy"
+                                label="动态获取参数"
+                                layout="horizontal"
+                                style={{ marginBottom: '0px' }}
+                            >
+                                <Switch
+                                    onChange={(e) => e && runFetchParams()}
+                                />
+                            </Item>
                             <Item noStyle name="param_files" />
                             <Item noStyle dependencies={['script_type']}>
                                 {({ setFieldValue, getFieldValue }) => {

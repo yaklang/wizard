@@ -25,7 +25,6 @@ const TaskScript: FC = () => {
         refreshAsync,
     } = useRequest(async (script_name: string) => {
         const result = await getAnalysisScript({ script_name });
-        console.log('result', result);
         const {
             data: { list },
         } = result;
@@ -70,11 +69,14 @@ const TaskScript: FC = () => {
                     <Button
                         type="primary"
                         onClick={() =>
-                            navigate(getRoutePath(RouteKey.TASK_SCRIPT_MODIFY), {
-                                state: {
-                                    type: 'add',
+                            navigate(
+                                getRoutePath(RouteKey.TASK_SCRIPT_MODIFY),
+                                {
+                                    state: {
+                                        type: 'add',
+                                    },
                                 },
-                            })
+                            )
                         }
                     >
                         <PlusOutlined />

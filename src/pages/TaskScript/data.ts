@@ -1,8 +1,15 @@
-import type { TPostTaskStartRequest } from '@/apis/task/types';
+import type {
+    GetAnalysisScriptResponse,
+    TPostTaskStartRequest,
+    YakScriptParamFull,
+} from '@/apis/task/types';
+import { toBoolean, randomString } from '@/utils';
 import { PresetColors } from 'antd/es/theme/internal';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { Key } from 'react';
+import { getValueByType } from './taskScript/helpers';
+import type { TaskScriptListItem } from './types';
 
 // 创建任务脚本 modal
 // 新设置参数
@@ -143,6 +150,154 @@ const routeList = [
     'login_brute_scan',
 ];
 
+type ParamDefaultValue = ReturnType<typeof getValueByType>;
+
+/** 接口下发的脚本 params，统一为 unknown 再收窄 */
+type ScriptParamsRecord = Record<string, unknown>;
+
+type StartupScriptNormalizedParams = ScriptParamsRecord & {
+    target: string | undefined;
+    'enable-cve-baseline': boolean;
+    'enable-brute': boolean;
+    'enable-web-login-brute': boolean;
+    plugins: string[] | undefined;
+};
+
+export type StartupModalOpenFormData = Omit<TaskScriptListItem, 'params'> & {
+    task_id: string;
+    execution_date?: Dayjs;
+    timestamp?: [Dayjs, Dayjs];
+    params: StartupScriptNormalizedParams;
+};
+
+function isScriptParamsRecord(
+    value: GetAnalysisScriptResponse['params'],
+): value is ScriptParamsRecord {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function getParameterDefaults(
+    parameterList: YakScriptParamFull[] = [],
+): Record<string, ParamDefaultValue> {
+    return parameterList.reduce<Record<string, ParamDefaultValue>>(
+        (acc, param) => {
+            const key = param.paramName;
+            if (key) {
+                return {
+                    ...acc,
+                    [key]: getValueByType(
+                        param.paramValue,
+                        (param.typeVerbose ?? '').toLowerCase(),
+                    ),
+                };
+            }
+            return acc;
+        },
+        {},
+    );
+}
+
+function normalizePlugins(plugins: unknown): string[] | undefined {
+    if (Array.isArray(plugins)) {
+        return plugins.map((it) => String(it));
+    }
+    if (typeof plugins === 'string') {
+        return plugins
+            .split(',')
+            .map((it) => it.trim())
+            .filter(Boolean);
+    }
+    return undefined;
+}
+
+function normalizeTarget(
+    items: Pick<TaskScriptListItem, 'ip_list'>,
+    mergedParams: ScriptParamsRecord,
+): string | undefined {
+    const hasIpList = Array.isArray(items.ip_list) && items.ip_list.length > 0;
+    if (hasIpList) {
+        return items.ip_list!.join(',');
+    }
+    const target = mergedParams.target;
+    if (target !== undefined && target !== null && target !== '') {
+        return typeof target === 'string' ? target : String(target);
+    }
+    const keyword = mergedParams.keyword;
+    if (keyword !== undefined && keyword !== null && keyword !== '') {
+        return typeof keyword === 'string' ? keyword : String(keyword);
+    }
+    return undefined;
+}
+
+function getNormalizedParams(
+    parameterDefaults: Record<string, ParamDefaultValue>,
+    paramsFromItems: ScriptParamsRecord,
+    items: TaskScriptListItem,
+): StartupScriptNormalizedParams {
+    const mergedParams: ScriptParamsRecord = {
+        ...parameterDefaults,
+        ...paramsFromItems,
+    };
+    const scriptType = items.script_type ?? '';
+    return {
+        ...mergedParams,
+        target: normalizeTarget(items, mergedParams),
+        'enable-cve-baseline':
+            typeof mergedParams['enable-cve-baseline'] === 'boolean'
+                ? mergedParams['enable-cve-baseline']
+                : true,
+        'enable-brute': toBoolean(mergedParams['enable-brute']),
+        'enable-web-login-brute':
+            typeof mergedParams['enable-web-login-brute'] === 'boolean'
+                ? mergedParams['enable-web-login-brute']
+                : ['company_scan', 'login_brute_scan'].includes(scriptType),
+        plugins: normalizePlugins(mergedParams.plugins),
+    };
+}
+
+function buildInitialFormData(
+    items: TaskScriptListItem,
+): StartupModalOpenFormData {
+    const parameterList =
+        Array.isArray(items.parameter) && items.parameter
+            ? items.parameter
+            : [];
+    const parameterDefaults = getParameterDefaults(parameterList);
+    const paramsFromItems: ScriptParamsRecord = isScriptParamsRecord(
+        items.params,
+    )
+        ? items.params
+        : {};
+
+    const mergedParams = getNormalizedParams(
+        parameterDefaults,
+        paramsFromItems,
+        items,
+    );
+
+    const execution_date =
+        items.sched_type === 2 && typeof items.start_timestamp === 'number'
+            ? dayjs.unix(items.start_timestamp)
+            : undefined;
+    const timestamp =
+        items.sched_type === 3 &&
+        typeof items.start_timestamp === 'number' &&
+        typeof items.end_timestamp === 'number'
+            ? ([
+                  dayjs.unix(items.start_timestamp),
+                  dayjs.unix(items.end_timestamp),
+              ] as [Dayjs, Dayjs])
+            : undefined;
+
+    return {
+        ...items,
+        task_id: `[${items.script_name ?? ''}]-[${dayjs().format('M月DD日')}]-[${randomString(6)}]-`,
+        execution_date,
+        timestamp,
+        params: mergedParams,
+    };
+}
+
 export {
     PresetPorts,
     presetProtsGroupOptions,
@@ -152,4 +307,9 @@ export {
     transformFormData,
     disabledDate,
     disabledTime,
+    buildInitialFormData,
+    getParameterDefaults,
+    normalizePlugins,
+    normalizeTarget,
+    getNormalizedParams,
 };

@@ -40,6 +40,7 @@ export type TScriptGrounpList = Array<{ value: string; label: string }>;
 
 type TCreateTaskItemsProps = (
     title: string,
+    legacy: boolean,
     scriptTypeValue?: string,
     scriptGroupList?: TScriptGrounpList,
     status?: 'edit' | 'add',
@@ -54,6 +55,7 @@ const { Compact } = Space;
 // 设置调度 下拉选项 对应渲染dom
 const CreateTaskItems: TCreateTaskItemsProps = (
     title,
+    legacy,
     scriptTypeValue,
     scriptGroupList = [],
     status,
@@ -1109,10 +1111,16 @@ const CreateTaskItems: TCreateTaskItemsProps = (
 
     const resultCollapseChildren = useMemo(() => {
         const taskType = scriptTypeValue === 'weakinfo';
+        if (legacy) {
+            const filterCollapseChildren = collapseChildren.filter(
+                (_, index) => index === 0 || index === 2,
+            );
+            return filterCollapseChildren;
+        }
         return taskType
             ? collapseChildren.slice(0, collapseChildren.length - 1)
             : collapseChildren;
-    }, [scriptTypeValue]);
+    }, [scriptTypeValue, legacy]);
 
     return resultCollapseChildren;
 };

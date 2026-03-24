@@ -187,7 +187,8 @@ const IRifyLayout: React.FC = () => {
         if (path.startsWith('/scans')) return ['扫描历史'];
 
         if (path.startsWith('/rules')) {
-            if (path.startsWith('/rules/create')) return ['规则管理', '规则编辑'];
+            if (path.startsWith('/rules/create'))
+                return ['规则管理', '规则编辑'];
             return ['规则管理'];
         }
 

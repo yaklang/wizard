@@ -921,6 +921,7 @@ const ExecutionOperateRender: FC<TCommonTasksColumnsRenderProps> = ({
                 title="编辑任务"
                 localRefrech={localRefrech}
                 record={record}
+                isEdit={true}
             />
         </>
     );

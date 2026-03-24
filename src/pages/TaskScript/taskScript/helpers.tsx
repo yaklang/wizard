@@ -186,6 +186,7 @@ export const buildParamFormItem = (
     p: YakScriptParamFull,
     namePrefix: Array<string | number> = ['prompt_args'],
     keyPrefix?: string,
+    labelColSpan = 5,
 ) => {
     const fieldKey = p.paramName || '';
     const label = p.fieldVerbose || p.paramName || '';
@@ -199,8 +200,13 @@ export const buildParamFormItem = (
 
     return (
         <Form.Item
+            labelCol={{ span: labelColSpan }}
             key={itemKey}
-            label={label}
+            label={
+                <span style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                    {label}
+                </span>
+            }
             name={[...namePrefix, fieldKey]}
             valuePropName={type === 'boolean' ? 'checked' : 'value'}
         >

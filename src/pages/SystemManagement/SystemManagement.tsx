@@ -29,6 +29,7 @@ const SystemManagement: FC = () => {
         {
             title: '用户名',
             dataIndex: 'username',
+            width: 120,
         },
         {
             title: '邮箱',
@@ -37,6 +38,7 @@ const SystemManagement: FC = () => {
         {
             title: '过期时间',
             dataIndex: 'expire',
+            width: 120,
             render: (text, record) => {
                 if (record.username === 'root') {
                     return '-';
@@ -51,7 +53,7 @@ const SystemManagement: FC = () => {
             title: '操作',
             dataIndex: 'report_id',
             fixed: 'right',
-            width: 180,
+            width: 170,
             render: (_, record) => {
                 return record.username === 'root' ? null : (
                     <div className="flex items-center justify-center gap-2">

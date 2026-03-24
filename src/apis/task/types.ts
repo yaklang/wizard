@@ -69,6 +69,7 @@ type GetAnalysisScriptResponse = Partial<{
     prompt_args: Record<string, any>;
     ip_list: string[];
     parameter: YakScriptParamFull[];
+    legacy: boolean;
 }>;
 
 type TNodeListRequest = Partial<{
