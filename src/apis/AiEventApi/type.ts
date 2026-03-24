@@ -1,3 +1,5 @@
+import type { AIAgentSetting } from '@/pages/AIAgent/ai-agent/aiAgentType';
+
 interface AIParams {
     forge_name?: string;
     review_policy?: 'manual' | 'auto' | 'ai' | 'ai-auto';
@@ -68,11 +70,10 @@ interface TPostSendContinueMessageResponse {
     status: string;
 }
 
-interface TGetSettingResponse {
+interface TGetSettingResponse extends AIAgentSetting {
     UseDefaultAIConfig: boolean;
     AIService: string;
     AIModelName: string;
-    ReviewPolicy: string;
     SelectedProviderID: number;
     SelectedModelName: string;
     SelectedModelTier: string;

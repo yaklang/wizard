@@ -32,7 +32,7 @@ import classNames from 'classnames';
 import styles from './AIAgent.module.scss';
 // import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
-import { getSessionAll } from '@/apis/AiEventApi';
+import { getSessionAll, getSetting as getSettingData } from '@/apis/AiEventApi';
 
 export const AIAgentCacheClearValue = '20260113';
 
@@ -151,13 +151,13 @@ export const AIAgent = () => {
                 //     })
                 //     .catch(() => {});
                 // 获取缓存的全局配置数据
-                getRemoteValue(RemoteAIAgentGV.AIAgentChatSetting)
+                getSettingData()
                     .then((res) => {
                         if (!res) return;
                         try {
-                            const cache = JSON.parse(res) as AIAgentSetting;
-                            if (typeof cache !== 'object') return;
-                            setSetting(cache);
+                            // const cache = JSON.parse(res) as AIAgentSetting;
+                            if (typeof res !== 'object') return;
+                            setSetting(res);
                         } catch (error) {}
                     })
                     .catch(() => {});

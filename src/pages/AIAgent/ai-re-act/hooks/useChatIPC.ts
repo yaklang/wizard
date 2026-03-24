@@ -43,10 +43,10 @@ import type { AIChatData } from '../../ai-agent/type/aiChat';
 import type { DeepPartial } from '../../ai-agent/store/ChatDataStore';
 import {
     postCancelMessage,
-    postCreateSession,
     postSendContinueMessage,
     postSendFirstMessage,
 } from '@/apis/AiEventApi';
+import { omit } from 'lodash';
 
 function useChatIPC(
     params?: UseChatIPCParams,
@@ -600,7 +600,11 @@ function useChatIPC(params?: UseChatIPCParams) {
         setExecute(true);
         chatID.current = token;
 
-        aiRequest.current = params.Params;
+        aiRequest.current = omit(params.Params, [
+            'SelectedProviderID',
+            'SelectedModelName',
+            'SelectedModelTier',
+        ]);
         sseEvents.connect(`run/${token}/events`);
 
         console.log('start-ai-re-act', token, params);

@@ -36,11 +36,7 @@ import {
 } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
 import emiter from '@/utils/eventBus/eventBus';
 import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm';
-import { getRemoteValue } from '@/utils/kv';
-import type {
-    AIAgentSetting,
-    AIAgentTriggerEventInfo,
-} from '../../aiAgentType';
+import type { AIAgentTriggerEventInfo } from '../../aiAgentType';
 // import type {
 //     GlobalNetworkConfig,
 //     ThirdPartyApplicationConfig,
@@ -48,8 +44,8 @@ import type {
 import type { YakitSelectProps } from '@/compoments/YakitUI/YakitSelect/YakitSelectType';
 import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import { LoadingOutlined } from '@ant-design/icons';
-import { RemoteAIAgentGV } from '@/pages/AIAgent/enums/aiAgent';
 import type { ModalProps } from 'antd';
+import { getSetting } from '@/apis/AiEventApi';
 
 export const onOpenConfigModal = (
     mountContainer: ModalProps['getContainer'],
@@ -116,16 +112,16 @@ export const AIModelSelect: React.FC<AIModelSelectProps> = React.memo(
 
         useEffect(() => {
             if (!inViewport) return;
-            getRemoteValue(RemoteAIAgentGV.AIAgentChatSetting)
+            getSetting()
                 .then((res) => {
                     if (!res) {
                         getAIModelListOption(true);
                         return;
                     }
                     try {
-                        const cache = JSON.parse(res) as AIAgentSetting;
-                        if (typeof cache !== 'object') return;
-                        getAIModelListOption(!cache.AIModelName); // false
+                        // const cache = JSON.parse(res) as AIAgentSetting;
+                        if (typeof res !== 'object') return;
+                        getAIModelListOption(!res.AIModelName); // false
                     } catch (error) {}
                 })
                 .catch(() => {});
