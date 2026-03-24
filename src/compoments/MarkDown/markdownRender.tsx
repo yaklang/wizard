@@ -1,4 +1,4 @@
-import { code } from '@uiw/react-md-editor';
+import { code } from '@streamdown/code';
 import { theme } from 'antd';
 import classNames from 'classnames';
 import React, { useMemo } from 'react';

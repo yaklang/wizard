@@ -21,7 +21,7 @@ export interface AIOnlineModelListProps {
 }
 
 export interface AIOnlineModelListRefProps {
-    onRefresh: () => void;
+    onRefresh: (isShowLoading?: boolean) => void;
     onRemoveAll: () => void;
 }
 
@@ -42,6 +42,7 @@ export interface AIOnlineModelListItemProps {
     item: ThirdPartyApplicationConfig;
     onRemove: (item: ThirdPartyApplicationConfig) => void;
     onEdit: (item: ThirdPartyApplicationConfig) => void;
+    checked: boolean;
 }
 export interface OutlineAtomIconByStatusProps {
     isReady?: boolean;
@@ -61,4 +62,22 @@ export interface AILocalModelListWrapperProps {
     list: LocalModelConfig[];
     onRefresh: () => void;
     currentPageTabRouteKey: string;
+}
+
+export interface AIOnlineModelProps {
+    title?: ReactNode;
+    subTitle?: ReactNode;
+    list: AIModelConfig[];
+    onRemove: (i: number) => void;
+    onEdit: (i: number) => void;
+    onSelect: (v: AIModelConfig, i: number) => void;
+}
+
+export interface AIOnlineModeSettingProps {
+    onRefresh: () => void;
+}
+
+export interface AIModelActionProps {
+    fileName: AIModelTypeFileName;
+    index: number;
 }
