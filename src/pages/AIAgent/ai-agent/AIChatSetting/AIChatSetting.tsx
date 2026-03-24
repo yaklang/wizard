@@ -10,7 +10,7 @@ import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import { YakitInputNumber } from '@/compoments/YakitUI/YakitInputNumber/YakitInputNumber';
 import { AIAgentSettingDefault, AIReviewRuleOptions } from '../defaultConstant';
 // /YakitUI/YakitRadioButtons/YakitRadioButtonsType
-import type { YakitRadioButtonsProps } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtonsType.d';
+import type { YakitRadioButtonsProps } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtonsType.d';
 import useAIAgentStore from '../useContext/useStore';
 import useAIAgentDispatcher from '../useContext/useDispatcher';
 import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput';

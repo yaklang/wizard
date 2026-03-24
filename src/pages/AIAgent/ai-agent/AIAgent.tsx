@@ -32,7 +32,11 @@ import classNames from 'classnames';
 import styles from './AIAgent.module.scss';
 // import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
-import { getSessionAll, getSetting as getSettingData } from '@/apis/AiEventApi';
+import {
+    getSessionAll,
+    getSetting as getSettingData,
+    postSetting,
+} from '@/apis/AiEventApi';
 
 export const AIAgentCacheClearValue = '20260113';
 
@@ -61,7 +65,7 @@ export const AIAgent = () => {
     const handleDelCache = useMemoizedFn(async () => {
         setDelCacheLoading(true);
         // 清空无效的用户缓存数据-全局配置数据
-        setRemoteValue(RemoteAIAgentGV.AIAgentChatSetting, '');
+        // setRemoteValue(RemoteAIAgentGV.AIAgentChatSetting, '');
         // 清空无效的用户缓存数据-taskChat历史对话数据
         // setRemoteValue(RemoteAIAgentGV.AIAgentChatHistory, '');
         // 设置清空标志位
@@ -86,10 +90,13 @@ export const AIAgent = () => {
 
     // 缓存全局配置数据
     useUpdateEffect(() => {
-        setRemoteValue(
-            RemoteAIAgentGV.AIAgentChatSetting,
-            JSON.stringify(getSetting()),
-        );
+        postSetting({
+            ai_service: '',
+            selected_provider_id: 0,
+            selected_model_name: '',
+            review_policy: '',
+            ...getSetting(),
+        });
     }, [setting]);
 
     const getSessionAllData = useMemoizedFn(async () => {
