@@ -44,6 +44,7 @@ const postSSAProject = (
 // DELETE /ssa/project - 删除项目
 const deleteSSAProject = (params: {
     id: number;
+    delete_mode?: 'config-only' | 'cascade';
 }): Promise<ResponseData<boolean>> =>
     axios.delete<never, ResponseData<boolean>>(`/ssa/project`, { params });
 
@@ -69,9 +70,12 @@ const testGitConnection = (data: {
 const getScanPolicyConfig = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TScanPolicyConfig>> =>
-    axios.get<never, ResponseData<TScanPolicyConfig>>(`/ssa/scan-policy-config`, {
-        signal,
-    });
+    axios.get<never, ResponseData<TScanPolicyConfig>>(
+        `/ssa/scan-policy-config`,
+        {
+            signal,
+        },
+    );
 
 export {
     getSSAProjects,

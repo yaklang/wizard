@@ -1,0 +1,490 @@
+// IRify Scan Observability Page - Matches Dashboard flat/clean aesthetic
+
+.irify-scan-observability-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: calc(100vh - 140px);
+    padding: 24px;
+    background: var(--irify-bg-base);
+    color: var(--irify-text);
+    transition: background 0.3s ease;
+
+    .ant-card {
+        border: 1px solid var(--irify-border);
+        box-shadow: 0 2px 8px var(--irify-glass-shadow);
+        background: var(--irify-bg-container);
+        border-radius: 16px !important;
+    }
+
+    // ── Page Header (matches dashboard-header) ──
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+
+        .header-content {
+            .header-title {
+                font-size: 32px;
+                font-weight: 700;
+                margin: 0;
+                font-family: 'JetBrains Mono', monospace;
+                color: var(--irify-text);
+            }
+
+            .header-subtitle {
+                font-size: 14px;
+                margin-top: 4px;
+                color: var(--irify-text-secondary);
+            }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    }
+
+    // ── Fallback Alert ──
+    .fallback-alert {
+        margin-bottom: 0;
+        border-radius: 16px;
+
+        .ant-alert-message {
+            font-weight: 600;
+        }
+    }
+
+    // ── Stats Cards (matches Dashboard stats-card) ──
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+
+    .stats-card {
+        border-radius: 16px !important;
+        position: relative;
+        overflow: hidden;
+        background: var(--irify-bg-container) !important;
+        border: 1px solid var(--irify-border) !important;
+        box-shadow: 0 2px 8px var(--irify-glass-shadow);
+        transition: all 0.3s ease;
+
+        &:hover {
+            border-color: var(--irify-accent) !important;
+            box-shadow: 0 4px 24px rgba(0, 217, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--irify-accent-secondary), var(--irify-accent));
+        }
+
+        .ant-card-body {
+            height: 100%;
+        }
+
+        .stats-card-content {
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .stats-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stats-title {
+            font-size: 14px;
+            color: var(--irify-text-secondary);
+        }
+
+        .stats-icon {
+            font-size: 20px;
+            color: var(--irify-text-secondary);
+            opacity: 0.5;
+        }
+
+        .stats-value {
+            font-size: 36px;
+            line-height: 1;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--irify-text);
+            letter-spacing: -0.04em;
+        }
+
+        .stats-meta {
+            color: var(--irify-text-secondary);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+    }
+
+    // ── Content Cards (matches Dashboard activity-card) ──
+    .content-card {
+        border-radius: 16px !important;
+        background: var(--irify-bg-container) !important;
+        border: 1px solid var(--irify-border) !important;
+        box-shadow: 0 2px 8px var(--irify-glass-shadow);
+
+        .ant-card-head {
+            border-bottom: 1px solid var(--irify-border);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            color: var(--irify-text);
+        }
+    }
+
+    // ── Node Card Grid ──
+    .node-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .node-ob-card {
+        padding: 18px;
+        text-align: left;
+        border: 1px solid var(--irify-border);
+        border-radius: 16px;
+        background: var(--irify-bg-container);
+        box-shadow: 0 2px 8px var(--irify-glass-shadow);
+        transition: all 0.2s ease;
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--irify-accent);
+            box-shadow: 0 4px 16px rgba(0, 217, 255, 0.12);
+        }
+
+        &.is-selected {
+            border-color: var(--irify-accent);
+            box-shadow: 0 4px 16px rgba(0, 217, 255, 0.15);
+        }
+    }
+
+    .node-card-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+
+    .node-card-title {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.3;
+        color: var(--irify-text);
+    }
+
+    .node-card-subtitle {
+        margin-top: 4px;
+        color: var(--irify-text-secondary);
+        font-size: 12px;
+        line-height: 1.5;
+        word-break: break-all;
+    }
+
+    // ── Node Metrics ──
+    .node-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .metric-pill {
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--irify-bg-elevated);
+        border: 1px solid var(--irify-border);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        span {
+            color: var(--irify-text-secondary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        strong {
+            color: var(--irify-text);
+            font-size: 16px;
+            font-weight: 700;
+        }
+    }
+
+    // ── Load Bars ──
+    .load-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .load-row {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) 48px;
+        align-items: center;
+        gap: 8px;
+        color: var(--irify-text-secondary);
+        font-size: 12px;
+    }
+
+    .load-track {
+        height: 7px;
+        border-radius: 999px;
+        background: var(--irify-bg-elevated);
+        overflow: hidden;
+    }
+
+    .load-fill {
+        height: 100%;
+        border-radius: 999px;
+
+        &.cpu {
+            background: linear-gradient(90deg, var(--irify-accent) 0%, var(--irify-accent-secondary) 100%);
+        }
+
+        &.mem {
+            background: linear-gradient(90deg, var(--irify-accent-secondary) 0%, var(--irify-accent) 100%);
+        }
+    }
+
+    .node-card-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--irify-border);
+        color: var(--irify-text-secondary);
+        font-size: 12px;
+    }
+
+    // ── Detail Layout ──
+    .detail-layout {
+        display: grid;
+        grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+        align-items: start;
+        gap: 16px;
+    }
+
+    .detail-card {
+        .ant-card-head {
+            border-bottom: 1px solid var(--irify-border);
+        }
+
+        .ant-card-body {
+            padding: 22px;
+        }
+    }
+
+    .detail-metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .detail-metric {
+        padding: 14px;
+        border-radius: 12px;
+        background: var(--irify-bg-elevated);
+        border: 1px solid var(--irify-border);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        span {
+            color: var(--irify-text-secondary);
+            font-size: 12px;
+        }
+
+        strong {
+            color: var(--irify-text);
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+    }
+
+    // ── Health History ──
+    .history-section {
+        padding: 18px;
+        border-radius: 16px;
+        background: var(--irify-bg-elevated);
+        border: 1px solid var(--irify-border);
+    }
+
+    .history-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+
+        h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        span {
+            color: var(--irify-text-secondary);
+            font-size: 12px;
+        }
+    }
+
+    .history-chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .history-series {
+        padding: 16px;
+        border-radius: 12px;
+        background: var(--irify-bg-container);
+        border: 1px solid var(--irify-border);
+    }
+
+    .series-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        color: var(--irify-text-secondary);
+        font-size: 12px;
+
+        strong {
+            color: var(--irify-text);
+            font-size: 16px;
+        }
+    }
+
+    .series-bars {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        align-items: end;
+        gap: 8px;
+        height: 140px;
+    }
+
+    .series-bar {
+        border-radius: 999px 999px 8px 8px;
+
+        &.cpu {
+            background: linear-gradient(180deg, var(--irify-accent) 0%, var(--irify-accent-secondary) 100%);
+        }
+
+        &.mem {
+            background: linear-gradient(180deg, var(--irify-accent-secondary) 0%, var(--irify-accent) 100%);
+        }
+    }
+
+    // ── Table Cells ──
+    .task-main-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .task-primary {
+        color: var(--irify-text);
+        font-size: 13px;
+        font-weight: 600;
+        word-break: break-all;
+    }
+
+    .task-secondary {
+        color: var(--irify-text-secondary);
+        font-size: 12px;
+        word-break: break-all;
+    }
+
+    .status-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        color: var(--irify-text-secondary);
+        font-size: 12px;
+    }
+
+    .recent-task-card .ant-table-row-expand-icon-cell {
+        vertical-align: top;
+    }
+
+    .recent-task-expand {
+        display: grid;
+        gap: 6px;
+        color: var(--irify-text-secondary);
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    // ── Table Theme ──
+    .ant-table-wrapper .ant-table-thead > tr > th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        background: var(--irify-bg-elevated);
+        color: var(--irify-text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .ant-table-wrapper .ant-table-tbody > tr > td {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        color: var(--irify-text-secondary);
+        font-size: 13px;
+        vertical-align: top;
+    }
+
+    // ── Responsive ──
+    @media (max-width: 1280px) {
+        .detail-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 880px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .header-actions {
+            justify-content: flex-start;
+        }
+
+        .summary-grid,
+        .node-card-grid,
+        .detail-metric-grid,
+        .history-chart-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+}

@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Card,
     Table,
     Space,
     Button,
-    Popconfirm,
     Popover,
     Modal,
     message,
@@ -16,6 +15,7 @@ import {
     Dropdown,
     Tooltip,
     Typography,
+    Radio,
 } from 'antd';
 import {
     PlusOutlined,
@@ -36,12 +36,18 @@ import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
-import type { TSSAScanRequest } from '@/apis/SSAScanTaskApi/type';
-import { scanSSAIR } from '@/apis/SSAIRApi';
-import type { TSSAIRScanRequest } from '@/apis/SSAIRApi/type';
-import type { TSSAProject } from '@/apis/SSAProjectApi/type';
+import type {
+    TSSAScanModeOverride,
+    TSSAScanRequest,
+} from '@/apis/SSAScanTaskApi/type';
+import type {
+    TSSAProject,
+    TSSAProjectDeleteMode,
+} from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
+import { dedupeSSAProjects, mergeSSAProjects } from './projectManagementUtils';
+import { useUrlState } from '@/hooks/useUrlState';
 import dayjs from 'dayjs';
 import './ProjectManagement.scss';
 
@@ -72,6 +78,17 @@ const languageLabelMap: Record<string, string> = {
     yak: 'Yak',
 };
 
+const resolveMemoryScanOverrideVisible = (): boolean => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    const query = new URLSearchParams(window.location.search);
+    if (query.get('ssa_memory_scan') === '1') {
+        return true;
+    }
+    return window.localStorage.getItem('irify:ssa-memory-scan') === '1';
+};
+
 const ProjectManagement: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -87,12 +104,13 @@ const ProjectManagement: React.FC = () => {
     >();
 
     // 筛选条件
-    const [searchName, setSearchName] = useState<string>('');
-    const [filterLanguage, setFilterLanguage] = useState<string | undefined>();
-    const [filterSourceKind, setFilterSourceKind] = useState<
-        string | undefined
-    >();
-    const [filterTags, setFilterTags] = useState<string | undefined>();
+    const [searchName, setSearchName] = useUrlState('project_name', '');
+    const [filterLanguage, setFilterLanguage] = useUrlState('language', '');
+    const [filterSourceKind, setFilterSourceKind] = useUrlState(
+        'source_kind',
+        '',
+    );
+    const [filterTags, setFilterTags] = useUrlState('tags', '');
     const [filterDateRange, setFilterDateRange] = useState<
         [number, number] | undefined
     >();
@@ -102,10 +120,32 @@ const ProjectManagement: React.FC = () => {
         number | null
     >(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [scanningProjectId, setScanningProjectId] = useState<number | null>(
+        null,
+    );
+    const [showMemoryScanOverride, setShowMemoryScanOverride] =
+        useState<boolean>(resolveMemoryScanOverrideVisible);
+    const dataRef = useRef<TSSAProject[]>([]);
+    const loadingRef = useRef(false);
+    const requestedPageKeysRef = useRef<Set<string>>(new Set());
 
     const selectedProjects = data.filter(
         (item) => item.id && selectedRowKeys.includes(item.id),
     );
+
+    useEffect(() => {
+        dataRef.current = data;
+    }, [data]);
+
+    const resetListState = useCallback(() => {
+        dataRef.current = [];
+        requestedPageKeysRef.current = new Set();
+        setPage(1);
+        setData([]);
+        setHasMore(true);
+        setSelectedRowKeys([]);
+        setScanPopoverProjectId(null);
+    }, []);
 
     const fetchList = useCallback(
         async (options: {
@@ -128,6 +168,22 @@ const ProjectManagement: React.FC = () => {
                 dateRange,
                 append = false,
             } = options;
+            const requestKey = JSON.stringify({
+                p,
+                l,
+                projectName: projectName?.trim() || '',
+                language: language || '',
+                sourceKind: sourceKind || '',
+                tags: tags || '',
+                dateRange: dateRange ?? null,
+            });
+            if (append && requestedPageKeysRef.current.has(requestKey)) {
+                return;
+            }
+            if (append) {
+                requestedPageKeysRef.current.add(requestKey);
+            }
+            loadingRef.current = true;
             setLoading(true);
             try {
                 const res = await getSSAProjects({
@@ -147,7 +203,7 @@ const ProjectManagement: React.FC = () => {
                     message.error('获取项目列表失败');
                     return;
                 }
-                let list = res.data?.list ?? [];
+                let list = dedupeSSAProjects(res.data?.list ?? []);
 
                 // 前端过滤（如果后端不支持这些筛选）
                 if (sourceKind) {
@@ -165,22 +221,27 @@ const ProjectManagement: React.FC = () => {
                     });
                 }
 
-                if (append) {
-                    setData((prevData) => [...prevData, ...list]);
-                } else {
-                    setData(list);
-                }
-                setPage(res.data?.pagemeta?.page ?? p);
-                setLimit(res.data?.pagemeta?.limit ?? l);
+                list = dedupeSSAProjects(list);
+                const nextData = append
+                    ? mergeSSAProjects(dataRef.current, list)
+                    : list;
+                dataRef.current = nextData;
+                setData(nextData);
 
-                // 检查是否还有更多数据
-                const currentTotal = append
-                    ? data.length + list.length
-                    : list.length;
-                setHasMore(currentTotal < (res.data?.pagemeta?.total ?? 0));
+                const pageMeta = res.data?.pagemeta;
+                const currentPage = pageMeta?.page ?? p;
+                const totalPage = pageMeta?.total_page ?? currentPage;
+
+                setPage(currentPage);
+                setLimit(pageMeta?.limit ?? l);
+                setHasMore(currentPage < totalPage);
             } catch (err) {
+                if (append) {
+                    requestedPageKeysRef.current.delete(requestKey);
+                }
                 message.error('获取项目列表出错');
             } finally {
+                loadingRef.current = false;
                 setLoading(false);
             }
         },
@@ -188,10 +249,7 @@ const ProjectManagement: React.FC = () => {
     );
 
     const reloadFirstPage = useCallback(() => {
-        setPage(1);
-        setData([]);
-        setHasMore(true);
-        setSelectedRowKeys([]);
+        resetListState();
         fetchList({
             p: 1,
             l: limit,
@@ -204,6 +262,7 @@ const ProjectManagement: React.FC = () => {
     }, [
         fetchList,
         limit,
+        resetListState,
         searchName,
         filterLanguage,
         filterSourceKind,
@@ -213,10 +272,7 @@ const ProjectManagement: React.FC = () => {
 
     useEffect(() => {
         // 筛选条件改变时，重置到第一页
-        setPage(1);
-        setData([]);
-        setHasMore(true);
-        setSelectedRowKeys([]);
+        resetListState();
         fetchList({
             p: 1,
             l: limit,
@@ -232,10 +288,13 @@ const ProjectManagement: React.FC = () => {
         filterSourceKind,
         filterTags,
         filterDateRange,
+        limit,
+        resetListState,
+        fetchList,
     ]);
 
     const handleLoadMore = useCallback(() => {
-        if (loading || !hasMore) return;
+        if (loadingRef.current || !hasMore) return;
 
         fetchList({
             p: page + 1,
@@ -248,7 +307,6 @@ const ProjectManagement: React.FC = () => {
             append: true,
         });
     }, [
-        loading,
         hasMore,
         page,
         limit,
@@ -278,21 +336,121 @@ const ProjectManagement: React.FC = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [handleLoadMore]);
 
-    const handleDelete = async (record: TSSAProject) => {
-        if (!record.id) return;
-        try {
-            const res = await deleteSSAProject({ id: record.id });
-            if (res) {
-                message.success('删除成功');
-                setSelectedRowKeys((prev) =>
-                    prev.filter((id) => id !== record.id),
-                );
-                reloadFirstPage();
+    const executeDeleteProjects = useCallback(
+        async (projects: TSSAProject[], deleteMode: TSSAProjectDeleteMode) => {
+            const validProjects = projects.filter(
+                (project): project is TSSAProject & { id: number } =>
+                    typeof project.id === 'number',
+            );
+            if (!validProjects.length) {
+                return;
             }
-        } catch (err) {
-            message.error('删除失败');
-        }
-    };
+
+            const results = await Promise.allSettled(
+                validProjects.map((project) =>
+                    deleteSSAProject({
+                        id: project.id,
+                        delete_mode: deleteMode,
+                    }),
+                ),
+            );
+            const success = results.filter(
+                (result) => result.status === 'fulfilled',
+            ).length;
+            const failed = results.length - success;
+
+            if (failed === 0) {
+                message.success(
+                    deleteMode === 'cascade'
+                        ? `级联删除成功，共 ${success} 个项目`
+                        : `项目已删除，共 ${success} 个`,
+                );
+            } else if (success > 0) {
+                message.warning(
+                    `项目删除部分成功：成功 ${success}，失败 ${failed}`,
+                );
+            } else {
+                const rejected: any = results.find(
+                    (result) => result.status === 'rejected',
+                );
+                message.error(
+                    rejected?.reason?.reason ||
+                        rejected?.reason?.msg ||
+                        rejected?.reason?.message ||
+                        '删除失败',
+                );
+            }
+
+            const deletedIDSet = new Set(
+                validProjects.map((project) => project.id),
+            );
+            setSelectedRowKeys((prev) =>
+                prev.filter((id) => !deletedIDSet.has(Number(id))),
+            );
+            reloadFirstPage();
+        },
+        [reloadFirstPage],
+    );
+
+    const openDeleteProjectsDialog = useCallback(
+        (projects: TSSAProject[]) => {
+            const validProjects = projects.filter(
+                (project): project is TSSAProject & { id: number } =>
+                    typeof project.id === 'number',
+            );
+            if (!validProjects.length) {
+                return;
+            }
+
+            let deleteMode: TSSAProjectDeleteMode = 'config-only';
+            const isBatch = validProjects.length > 1;
+
+            Modal.confirm({
+                title: isBatch ? '批量删除项目' : '删除项目',
+                width: 560,
+                okText: '确认删除',
+                okButtonProps: { danger: true },
+                cancelText: '取消',
+                content: (
+                    <div style={{ marginTop: 8 }}>
+                        <div style={{ marginBottom: 12 }}>
+                            {isBatch
+                                ? `确认处理已选中的 ${validProjects.length} 个项目？`
+                                : `确认处理项目 ${validProjects[0].project_name}？`}
+                        </div>
+                        <Radio.Group
+                            defaultValue={deleteMode}
+                            onChange={(e) => {
+                                deleteMode = e.target.value;
+                            }}
+                        >
+                            <Space direction="vertical">
+                                <Radio value="config-only">
+                                    仅移除项目配置
+                                </Radio>
+                                <Text type="secondary">
+                                    项目将从项目管理中消失，但历史任务、漏洞、报告和编译产物会保留。
+                                </Text>
+                                <Radio value="cascade">
+                                    级联删除项目相关数据
+                                </Radio>
+                                <Text type="secondary">
+                                    将同时清理项目主库侧的扫描任务、SSA
+                                    漏洞、处置记录、artifact events、报告记录和
+                                    IR
+                                    series。若项目仍绑定自动化策略，后端会拒绝此次删除。
+                                </Text>
+                            </Space>
+                        </Radio.Group>
+                    </div>
+                ),
+                onOk: async () => {
+                    await executeDeleteProjects(validProjects, deleteMode);
+                },
+            });
+        },
+        [executeDeleteProjects],
+    );
 
     const handleEdit = (record: TSSAProject) => {
         setEditingProjectId(record.id);
@@ -325,28 +483,7 @@ const ProjectManagement: React.FC = () => {
 
     const handleBatchDelete = () => {
         if (!selectedProjects.length) return;
-        Modal.confirm({
-            title: '批量删除项目',
-            content: `确认删除已选中的 ${selectedProjects.length} 个项目？删除后不可恢复。`,
-            okText: '删除',
-            okButtonProps: { danger: true },
-            cancelText: '取消',
-            async onOk() {
-                const ids = selectedProjects
-                    .map((item) => item.id)
-                    .filter((id): id is number => Boolean(id));
-                try {
-                    await Promise.all(
-                        ids.map((id) => deleteSSAProject({ id })),
-                    );
-                    message.success('批量删除成功');
-                    reloadFirstPage();
-                } catch (err: any) {
-                    message.error(err?.message || '批量删除失败');
-                    throw err;
-                }
-            },
-        });
+        openDeleteProjectsDialog(selectedProjects);
     };
 
     // 格式化时间戳
@@ -355,11 +492,24 @@ const ProjectManagement: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleString();
     };
 
+    useEffect(() => {
+        setShowMemoryScanOverride(resolveMemoryScanOverrideVisible());
+    }, []);
+
     const handleScan = async (
         record: TSSAProject,
         auditCarryEnabled = true,
+        scanMode: TSSAScanModeOverride = 'auto',
     ) => {
-        if (!record.id) return;
+        if (!record.id || scanningProjectId === record.id) return;
+        const projectId = record.id;
+        const messageKey = `ssa-project-scan-${projectId}`;
+        setScanningProjectId(projectId);
+        message.loading({
+            key: messageKey,
+            content: '正在创建扫描任务...',
+            duration: 0,
+        });
         try {
             const scanRequest: TSSAScanRequest = {
                 audit_carry_enabled: auditCarryEnabled,
@@ -397,9 +547,12 @@ const ProjectManagement: React.FC = () => {
                 );
             }
 
-            const res = await scanSSAProject(record.id, scanRequest);
+            const res = await scanSSAProject(record.id, scanRequest, {
+                scan_mode: scanMode,
+            });
             const taskId = res.data?.task_id;
             message.success({
+                key: messageKey,
                 content: (
                     <span>
                         扫描任务已创建{taskId ? ` (#${taskId})` : ''}，
@@ -423,70 +576,19 @@ const ProjectManagement: React.FC = () => {
                 duration: 6,
             });
         } catch (err: any) {
-            message.error(`创建扫描失败: ${err.msg || err.message}`);
-        }
-    };
-
-    const handleScanWithIRDB = async (
-        record: TSSAProject,
-        auditCarryEnabled = true,
-    ) => {
-        if (!record.id) return;
-
-        const msgKey = `ssa-ir-scan-${record.id}-${Date.now()}`;
-        try {
-            message.loading({
-                content: '数据库扫描：正在创建任务...',
-                key: msgKey,
-                duration: 0,
-            });
-
-            const scanReq: TSSAIRScanRequest = {
-                prepare_ir: true,
-                incremental: true,
-                force_full: false,
-                snapshot_id: String(Date.now()),
-                audit_carry_enabled: auditCarryEnabled,
-            };
-            const scanNode = record.config?.ScanNode;
-            if (scanNode?.mode === 'manual' && scanNode.node_id) {
-                scanReq.node_id = scanNode.node_id;
-            }
-            const scanRes = await scanSSAIR(record.id, scanReq);
-            const scanData = scanRes?.data || {};
-            const taskId = scanData?.task_id;
-
-            message.success({
-                content: (
-                    <span>
-                        数据库扫描任务已创建{taskId ? ` (#${taskId})` : ''}
-                        ，编译与扫描进度可在任务历史中查看。
-                        <Button
-                            type="link"
-                            size="small"
-                            onClick={() => {
-                                message.destroy();
-                                navigate(
-                                    `${getRoutePath(
-                                        RouteKey.TASK_LIST,
-                                    )}?project_id=${record.id}`,
-                                );
-                            }}
-                            style={{ padding: 0, height: 'auto' }}
-                        >
-                            查看任务列表 →
-                        </Button>
-                    </span>
-                ),
-                key: msgKey,
-                duration: 6,
-            });
-        } catch (err: any) {
             message.error({
-                content: `数据库扫描失败: ${err?.msg || err?.message || '未知错误'}`,
-                key: msgKey,
-                duration: 6,
+                key: messageKey,
+                content: `创建扫描失败: ${
+                    err?.reason ||
+                    err?.msg ||
+                    err?.message ||
+                    '请检查网络后重试'
+                }`,
             });
+        } finally {
+            setScanningProjectId((current) =>
+                current === projectId ? null : current,
+            );
         }
     };
 
@@ -748,17 +850,8 @@ const ProjectManagement: React.FC = () => {
                     {
                         key: 'delete',
                         icon: <CloseCircleOutlined />,
-                        label: (
-                            <Popconfirm
-                                title="确认删除该项目吗？"
-                                description="删除后不可恢复，关联的漏洞数据不会被删除。"
-                                onConfirm={() => handleDelete(record)}
-                                okText="确认"
-                                cancelText="取消"
-                            >
-                                <span>删除</span>
-                            </Popconfirm>
-                        ),
+                        label: <span>删除</span>,
+                        onClick: () => openDeleteProjectsDialog([record]),
                         danger: true,
                     },
                 ];
@@ -770,6 +863,10 @@ const ProjectManagement: React.FC = () => {
                         .split('/')
                         .pop()
                         ?.replace(/\.git$/, '') || '代码仓库';
+                const hasSchedule = Boolean(
+                    record.config?.ScanSchedule?.enabled,
+                );
+                const isScanning = scanningProjectId === record.id;
 
                 return (
                     <Space size="small">
@@ -812,13 +909,15 @@ const ProjectManagement: React.FC = () => {
                                             marginTop: 8,
                                         }}
                                     >
-                                        扫描将在后台执行。数据库扫描会自动复用/更新
-                                        IR（黑盒）。
+                                        扫描将在后台执行。系统默认会优先复用/更新编译产物；
+                                        当前项目若启用了调度，则仍会走兼容的调度链路。
                                     </div>
                                     <div style={{ marginTop: 12 }}>
-                                        <Space>
+                                        <Space wrap>
                                             <Button
+                                                type="primary"
                                                 size="small"
+                                                loading={isScanning}
                                                 onClick={async () => {
                                                     setScanPopoverProjectId(
                                                         null,
@@ -826,22 +925,28 @@ const ProjectManagement: React.FC = () => {
                                                     await handleScan(record);
                                                 }}
                                             >
-                                                内存扫描
+                                                {hasSchedule
+                                                    ? '开始扫描（含调度）'
+                                                    : '开始扫描'}
                                             </Button>
-                                            <Button
-                                                type="primary"
-                                                size="small"
-                                                onClick={async () => {
-                                                    setScanPopoverProjectId(
-                                                        null,
-                                                    );
-                                                    await handleScanWithIRDB(
-                                                        record,
-                                                    );
-                                                }}
-                                            >
-                                                数据库扫描
-                                            </Button>
+                                            {showMemoryScanOverride && (
+                                                <Button
+                                                    size="small"
+                                                    loading={isScanning}
+                                                    onClick={async () => {
+                                                        setScanPopoverProjectId(
+                                                            null,
+                                                        );
+                                                        await handleScan(
+                                                            record,
+                                                            true,
+                                                            'memory',
+                                                        );
+                                                    }}
+                                                >
+                                                    内存扫描（隐藏兜底）
+                                                </Button>
+                                            )}
                                         </Space>
                                     </div>
                                 </div>
@@ -851,6 +956,7 @@ const ProjectManagement: React.FC = () => {
                                 type="primary"
                                 size="small"
                                 icon={<PlayCircleOutlined />}
+                                loading={isScanning}
                             >
                                 发起扫描
                             </Button>
@@ -905,6 +1011,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="搜索项目名称"
                         allowClear
                         style={{ width: 220 }}
+                        defaultValue={searchName}
                         onSearch={handleSearch}
                         onChange={(e) => {
                             if (!e.target.value) {
@@ -916,6 +1023,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="选择语言"
                         allowClear
                         style={{ width: 140 }}
+                        value={filterLanguage || undefined}
                         onChange={handleLanguageFilter}
                         options={languageOptions}
                     />
@@ -923,6 +1031,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="代码源类型"
                         allowClear
                         style={{ width: 140 }}
+                        value={filterSourceKind || undefined}
                         onChange={(value) => {
                             setFilterSourceKind(value || undefined);
                             setPage(1);
@@ -933,6 +1042,7 @@ const ProjectManagement: React.FC = () => {
                         placeholder="标签筛选"
                         allowClear
                         style={{ width: 140 }}
+                        defaultValue={filterTags}
                         onChange={(e) => {
                             const value = e.target.value;
                             setFilterTags(value || undefined);

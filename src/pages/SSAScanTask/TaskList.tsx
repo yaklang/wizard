@@ -45,12 +45,18 @@ import {
     querySSAArtifactSummary,
     querySSAArtifactEvents,
     cancelSSATask,
+    deleteSSATaskRecord,
 } from '@/apis/SSAScanTaskApi';
 import {
     exportSSARiskReportDocx,
     exportSSARiskReportPDF,
     getSSARiskFilterOptions,
 } from '@/apis/SSARiskApi';
+import { createSSAReportRecord } from '@/apis/SSAReportRecordApi';
+import {
+    createSSAReportRecordFile,
+    downloadSSAReportRecordFile,
+} from '@/apis/SSAReportRecordFileApi';
 import type {
     TSSATask,
     TSSATaskQueryParams,
@@ -629,6 +635,19 @@ const TaskList: React.FC = () => {
                 message.warning('导出范围为空，无法导出');
                 return;
             }
+            const params: TSSARiskExportParams = {
+                report_name: values.report_name,
+                severity: values.severity?.join(',') || undefined,
+                risk_type: values.risk_type?.join(',') || undefined,
+                audited_state: values.audited_state || 'all',
+                latest_disposal_status:
+                    values.latest_disposal_status?.join(',') || undefined,
+            };
+            if (exportTaskIDs.length === 1) {
+                params.task_id = exportTaskIDs[0];
+            } else {
+                params.task_ids = exportTaskIDs.join(',');
+            }
             try {
                 setExportSubmitting(true);
                 openExportProgress(
@@ -637,28 +656,43 @@ const TaskList: React.FC = () => {
                         ? '正在请求 Word 报告数据...'
                         : '正在请求 PDF 报告数据...',
                 );
-                const params: TSSARiskExportParams = {
+                const record = await createSSAReportRecord({
+                    task_id: params.task_id,
+                    task_ids: params.task_ids,
                     report_name: values.report_name,
-                    severity: values.severity?.join(',') || undefined,
-                    risk_type: values.risk_type?.join(',') || undefined,
-                    audited_state: values.audited_state || 'all',
-                    latest_disposal_status:
-                        values.latest_disposal_status?.join(',') || undefined,
-                };
-                if (exportTaskIDs.length === 1) {
-                    params.task_id = exportTaskIDs[0];
-                } else {
-                    params.task_ids = exportTaskIDs.join(',');
+                    severity: params.severity,
+                    risk_type: params.risk_type,
+                    latest_disposal_status: params.latest_disposal_status,
+                    audited_state: params.audited_state,
+                });
+                const recordId = record.data?.id;
+                if (!recordId) {
+                    throw new Error('empty report record id');
+                }
+                updateExportProgress(
+                    42,
+                    values.format === 'word'
+                        ? '报告快照已保存，正在生成 Word 文件...'
+                        : '报告快照已保存，正在生成 PDF 文件...',
+                );
+                const file = await createSSAReportRecordFile(recordId, {
+                    format: values.format === 'word' ? 'docx' : 'pdf',
+                });
+                const fileId = file.data?.id;
+                if (!fileId) {
+                    throw new Error('empty report file id');
+                }
+                updateExportProgress(
+                    78,
+                    values.format === 'word'
+                        ? '文件已入库，正在下载 Word 文件...'
+                        : '文件已入库，正在下载 PDF 文件...',
+                );
+                const res = await downloadSSAReportRecordFile(fileId);
+                if (!res.data) {
+                    throw new Error('empty report file');
                 }
                 if (values.format === 'word') {
-                    const res = await exportSSARiskReportDocx(params);
-                    if (!res.data) {
-                        throw new Error('empty report docx');
-                    }
-                    updateExportProgress(
-                        78,
-                        '报告数据已返回，正在写入 Word 文件...',
-                    );
                     saveSSAReportDocx(
                         res.data,
                         values.report_name,
@@ -670,14 +704,6 @@ const TaskList: React.FC = () => {
                         },
                     );
                 } else {
-                    const res = await exportSSARiskReportPDF(params);
-                    if (!res.data) {
-                        throw new Error('empty report pdf');
-                    }
-                    updateExportProgress(
-                        78,
-                        '报告数据已返回，正在写入 PDF 文件...',
-                    );
                     saveSSAReportPdf(
                         res.data,
                         values.report_name,
@@ -692,9 +718,59 @@ const TaskList: React.FC = () => {
                 updateExportProgress(100, '导出完成');
                 setExportModalOpen(false);
                 message.success('导出成功');
-            } catch {
+            } catch (error: any) {
+                const errorMessage = error?.message || '';
+                if (errorMessage.includes('object storage')) {
+                    try {
+                        updateExportProgress(
+                            78,
+                            values.format === 'word'
+                                ? '对象存储未启用，回退为直接下载 Word 文件...'
+                                : '对象存储未启用，回退为直接下载 PDF 文件...',
+                        );
+                        if (values.format === 'word') {
+                            const res = await exportSSARiskReportDocx(params);
+                            if (!res.data) {
+                                throw new Error('empty report docx');
+                            }
+                            saveSSAReportDocx(
+                                res.data,
+                                values.report_name,
+                                (progress) => {
+                                    updateExportProgress(
+                                        progress.percent,
+                                        progress.message,
+                                    );
+                                },
+                            );
+                        } else {
+                            const res = await exportSSARiskReportPDF(params);
+                            if (!res.data) {
+                                throw new Error('empty report pdf');
+                            }
+                            saveSSAReportPdf(
+                                res.data,
+                                values.report_name,
+                                (progress) => {
+                                    updateExportProgress(
+                                        progress.percent,
+                                        progress.message,
+                                    );
+                                },
+                            );
+                        }
+                        updateExportProgress(100, '导出完成');
+                        setExportModalOpen(false);
+                        message.success('导出成功（未写入文件资产）');
+                        return;
+                    } catch (fallbackError: any) {
+                        setExportProgress(defaultExportProgressState);
+                        message.error(fallbackError?.message || '导出失败');
+                        return;
+                    }
+                }
                 setExportProgress(defaultExportProgressState);
-                message.error('导出失败');
+                message.error(errorMessage || '导出失败');
             } finally {
                 window.setTimeout(() => {
                     setExportProgress(defaultExportProgressState);
@@ -705,7 +781,7 @@ const TaskList: React.FC = () => {
         [exportTaskIDs, openExportProgress, updateExportProgress],
     );
 
-    const deleteTasksByIDs = useCallback(
+    const cancelTasksByIDs = useCallback(
         async (taskIDs: string[]) => {
             const uniqueIDs = Array.from(
                 new Set(taskIDs.filter((id) => !!id && id.trim() !== '')),
@@ -723,13 +799,44 @@ const TaskList: React.FC = () => {
             const failed = results.length - success;
 
             if (failed === 0) {
-                message.success(`任务删除成功，共 ${success} 条`);
+                message.success(`任务已取消，共 ${success} 条`);
             } else if (success > 0) {
                 message.warning(
-                    `任务删除部分成功：成功 ${success}，失败 ${failed}`,
+                    `任务取消部分成功：成功 ${success}，失败 ${failed}`,
                 );
             } else {
-                message.error('任务删除失败');
+                message.error('任务取消失败');
+            }
+            refreshList();
+        },
+        [refreshList],
+    );
+
+    const deleteTaskRecordsByIDs = useCallback(
+        async (taskIDs: string[]) => {
+            const uniqueIDs = Array.from(
+                new Set(taskIDs.filter((id) => !!id && id.trim() !== '')),
+            );
+            if (uniqueIDs.length === 0) {
+                return;
+            }
+
+            const results = await Promise.allSettled(
+                uniqueIDs.map((id) => deleteSSATaskRecord(id)),
+            );
+            const success = results.filter(
+                (r) => r.status === 'fulfilled',
+            ).length;
+            const failed = results.length - success;
+
+            if (failed === 0) {
+                message.success(`任务记录删除成功，共 ${success} 条`);
+            } else if (success > 0) {
+                message.warning(
+                    `任务记录删除部分成功：成功 ${success}，失败 ${failed}`,
+                );
+            } else {
+                message.error('任务记录删除失败');
             }
             refreshList();
         },
@@ -739,21 +846,30 @@ const TaskList: React.FC = () => {
     const handleTaskDelete = useCallback(
         (task: TSSATask) => {
             if (isTaskRunningStatus(task.status)) {
-                message.warning('运行中的任务暂不支持删除');
+                Modal.confirm({
+                    title: '取消任务',
+                    content: `确定取消任务 ${task.project_name || task.task_id.substring(0, 8)} 吗？任务会停止执行，但历史记录会保留。`,
+                    okText: '确认取消',
+                    cancelText: '返回',
+                    okButtonProps: { danger: true },
+                    onOk: async () => {
+                        await cancelTasksByIDs([task.task_id]);
+                    },
+                });
                 return;
             }
             Modal.confirm({
-                title: '删除任务',
-                content: `确定删除任务 ${task.project_name || task.task_id.substring(0, 8)} 吗？此操作不可恢复。`,
-                okText: '删除',
+                title: '删除任务记录',
+                content: `确定删除任务记录 ${task.project_name || task.task_id.substring(0, 8)} 吗？这会清理该任务关联的 SSA 风险、artifact events 和报告记录，且不可恢复。`,
+                okText: '删除记录',
                 cancelText: '取消',
                 okButtonProps: { danger: true },
                 onOk: async () => {
-                    await deleteTasksByIDs([task.task_id]);
+                    await deleteTaskRecordsByIDs([task.task_id]);
                 },
             });
         },
-        [deleteTasksByIDs, isTaskRunningStatus],
+        [cancelTasksByIDs, deleteTaskRecordsByIDs, isTaskRunningStatus],
     );
 
     const handleTaskMoreAction = useCallback(
@@ -842,7 +958,7 @@ const TaskList: React.FC = () => {
 
     const handleBatchDelete = useCallback(() => {
         if (selectedTaskIds.size === 0) {
-            message.warning('请先选择要删除的任务');
+            message.warning('请先选择要处理的任务');
             return;
         }
         const selectedTasks = data.filter((task) =>
@@ -856,19 +972,21 @@ const TaskList: React.FC = () => {
         );
 
         if (deletableTasks.length === 0) {
-            message.warning('选中的任务均在运行中，当前无法删除');
+            message.warning(
+                '当前批量操作仅支持删除已结束任务记录；运行中的任务请逐条取消',
+            );
             return;
         }
 
         if (runningTasks.length > 0) {
             Modal.confirm({
                 title: '包含运行中任务',
-                content: `已选择 ${selectedTasks.length} 条任务，其中 ${runningTasks.length} 条正在运行中，无法删除。是否仅删除其余 ${deletableTasks.length} 条任务？`,
-                okText: '仅删除可删除项',
+                content: `已选择 ${selectedTasks.length} 条任务，其中 ${runningTasks.length} 条正在运行中，当前不会删除它们。是否仅删除其余 ${deletableTasks.length} 条已结束任务记录？`,
+                okText: '仅删除记录',
                 cancelText: '取消',
                 okButtonProps: { danger: true },
                 onOk: async () => {
-                    await deleteTasksByIDs(
+                    await deleteTaskRecordsByIDs(
                         deletableTasks.map((task) => task.task_id),
                     );
                 },
@@ -877,16 +995,16 @@ const TaskList: React.FC = () => {
         }
 
         Modal.confirm({
-            title: '批量删除任务',
-            content: `确定删除选中的 ${selectedTaskIds.size} 条任务吗？此操作不可恢复。`,
-            okText: '删除',
+            title: '批量删除任务记录',
+            content: `确定删除选中的 ${selectedTaskIds.size} 条任务记录吗？这会清理对应的 SSA 风险、artifact events 和报告记录，且不可恢复。`,
+            okText: '删除记录',
             cancelText: '取消',
             okButtonProps: { danger: true },
             onOk: async () => {
-                await deleteTasksByIDs(Array.from(selectedTaskIds));
+                await deleteTaskRecordsByIDs(Array.from(selectedTaskIds));
             },
         });
-    }, [data, deleteTasksByIDs, isTaskRunningStatus, selectedTaskIds]);
+    }, [data, deleteTaskRecordsByIDs, isTaskRunningStatus, selectedTaskIds]);
 
     async function toggleTaskDetail(taskId: string, projectId?: number) {
         const newExpandedId = expandedTaskId === taskId ? null : taskId;
@@ -1083,7 +1201,9 @@ const TaskList: React.FC = () => {
             {
                 key: 'delete',
                 icon: <DeleteOutlined />,
-                label: '删除任务',
+                label: isTaskRunningStatus(task.status)
+                    ? '取消任务'
+                    : '删除记录',
                 danger: true,
             },
         ];

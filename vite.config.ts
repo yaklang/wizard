@@ -7,6 +7,20 @@ import path from 'path';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
     const isIRify = mode.includes('irify');
+    const basicAuthUser = env.VITE_BASIC_AUTH_USER || '';
+    const basicAuthPassword = env.VITE_BASIC_AUTH_PASSWORD || '';
+    const proxyTarget = (() => {
+        if (!env.VITE_BASE_URL) return env.VITE_BASE_URL;
+        if (!basicAuthUser || !basicAuthPassword) return env.VITE_BASE_URL;
+        try {
+            const url = new URL(env.VITE_BASE_URL);
+            url.username = basicAuthUser;
+            url.password = basicAuthPassword;
+            return url.toString();
+        } catch {
+            return env.VITE_BASE_URL;
+        }
+    })();
 
     return {
         base: './',
@@ -47,7 +61,7 @@ export default defineConfig(({ mode }) => {
             // port: 8082,
             proxy: {
                 '/api': {
-                    target: env.VITE_BASE_URL,
+                    target: proxyTarget,
                     changeOrigin: true,
                     rewrite: (path) => path,
                 },
