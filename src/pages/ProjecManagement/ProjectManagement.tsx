@@ -33,6 +33,7 @@ import {
 import { SiPhp, SiJavascript, SiPython, SiGo } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
 import type { ColumnsType } from 'antd/es/table';
+import type { SorterResult } from 'antd/es/table/interface';
 import type { MenuProps } from 'antd';
 import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
@@ -97,6 +98,9 @@ const ProjectManagement: React.FC = () => {
     const [limit, setLimit] = useState(20);
     const [hasMore, setHasMore] = useState(true);
 
+    const [orderBy, setOrderBy] = useState<string>('updated_at');
+    const [orderDir, setOrderDir] = useState<'asc' | 'desc'>('desc');
+
     // 抽屉状态
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [editingProjectId, setEditingProjectId] = useState<
@@ -157,6 +161,8 @@ const ProjectManagement: React.FC = () => {
             tags?: string;
             dateRange?: [number, number];
             append?: boolean;
+            order_by?: string;
+            order?: 'asc' | 'desc';
         }) => {
             const {
                 p,
@@ -167,6 +173,8 @@ const ProjectManagement: React.FC = () => {
                 tags,
                 dateRange,
                 append = false,
+                order_by = 'updated_at',
+                order = 'desc',
             } = options;
             const requestKey = JSON.stringify({
                 p,
@@ -176,6 +184,8 @@ const ProjectManagement: React.FC = () => {
                 sourceKind: sourceKind || '',
                 tags: tags || '',
                 dateRange: dateRange ?? null,
+                order_by,
+                order,
             });
             if (append && requestedPageKeysRef.current.has(requestKey)) {
                 return;
@@ -191,13 +201,9 @@ const ProjectManagement: React.FC = () => {
                     limit: l,
                     project_name: projectName || undefined,
                     language: language || undefined,
-                    // 注意：这些参数需要后端API支持，如果后端还没实现，可以在前端过滤
-                    // source_kind: sourceKind || undefined,
                     tags: tags || undefined,
-                    // created_at_start: dateRange?.[0],
-                    // created_at_end: dateRange?.[1],
-                    order_by: 'updated_at',
-                    order: 'desc',
+                    order_by,
+                    order,
                 });
                 if (!res) {
                     message.error('获取项目列表失败');
@@ -258,6 +264,8 @@ const ProjectManagement: React.FC = () => {
             sourceKind: filterSourceKind,
             tags: filterTags,
             dateRange: filterDateRange,
+            order_by: orderBy,
+            order: orderDir,
         });
     }, [
         fetchList,
@@ -268,10 +276,11 @@ const ProjectManagement: React.FC = () => {
         filterSourceKind,
         filterTags,
         filterDateRange,
+        orderBy,
+        orderDir,
     ]);
 
     useEffect(() => {
-        // 筛选条件改变时，重置到第一页
         resetListState();
         fetchList({
             p: 1,
@@ -281,6 +290,8 @@ const ProjectManagement: React.FC = () => {
             sourceKind: filterSourceKind,
             tags: filterTags,
             dateRange: filterDateRange,
+            order_by: orderBy,
+            order: orderDir,
         });
     }, [
         searchName,
@@ -289,6 +300,8 @@ const ProjectManagement: React.FC = () => {
         filterTags,
         filterDateRange,
         limit,
+        orderBy,
+        orderDir,
         resetListState,
         fetchList,
     ]);
@@ -305,6 +318,8 @@ const ProjectManagement: React.FC = () => {
             tags: filterTags,
             dateRange: filterDateRange,
             append: true,
+            order_by: orderBy,
+            order: orderDir,
         });
     }, [
         hasMore,
@@ -316,6 +331,8 @@ const ProjectManagement: React.FC = () => {
         filterTags,
         filterDateRange,
         fetchList,
+        orderBy,
+        orderDir,
     ]);
 
     // 监听滚动事件
@@ -642,8 +659,9 @@ const ProjectManagement: React.FC = () => {
     const columns: ColumnsType<TSSAProject> = [
         {
             title: '项目信息',
-            key: 'project_info',
+            key: 'project_name',
             width: 280,
+            sorter: true,
             render: (_, record) => {
                 const language = record.language || '';
                 const color =
@@ -812,8 +830,10 @@ const ProjectManagement: React.FC = () => {
         },
         {
             title: '更新信息',
-            key: 'update_info',
+            key: 'updated_at',
             width: 160,
+            sorter: true,
+            defaultSortOrder: 'descend',
             render: (_, record) => (
                 <div style={{ fontSize: 12 }}>
                     <div style={{ color: '#666' }}>
@@ -1078,6 +1098,27 @@ const ProjectManagement: React.FC = () => {
                     loading={loading && page === 1}
                     scroll={{ x: 1200 }}
                     pagination={false}
+                    onChange={(_pagination, _filters, sorter) => {
+                        const s = sorter as SorterResult<TSSAProject>;
+                        const newOrderBy =
+                            (s.columnKey as string) || 'updated_at';
+                        const newOrderDir =
+                            s.order === 'ascend' ? 'asc' : 'desc';
+                        setOrderBy(newOrderBy);
+                        setOrderDir(newOrderDir);
+                        resetListState();
+                        fetchList({
+                            p: 1,
+                            l: limit,
+                            projectName: searchName,
+                            language: filterLanguage,
+                            sourceKind: filterSourceKind,
+                            tags: filterTags,
+                            dateRange: filterDateRange,
+                            order_by: newOrderBy,
+                            order: newOrderDir,
+                        });
+                    }}
                 />
 
                 {/* 加载更多提示 */}

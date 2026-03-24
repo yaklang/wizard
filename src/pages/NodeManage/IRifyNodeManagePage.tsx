@@ -32,6 +32,7 @@ import {
     Table,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { SorterResult } from 'antd/es/table/interface';
 import type { MenuProps } from 'antd';
 import dayjs from 'dayjs';
 import { useLocation } from 'react-router-dom';
@@ -142,6 +143,8 @@ const IRifyNodeManagePage: FC = () => {
 
     const [keyword, setKeyword] = useSafeState('');
     const [statusFilter, setStatusFilter] = useSafeState<StatusFilter>('all');
+    const [sortBy, setSortBy] = useSafeState<string>('updated_at');
+    const [sortDir, setSortDir] = useSafeState<'asc' | 'desc'>('desc');
 
     const [selectedRowKeys, setSelectedRowKeys] = useSafeState<React.Key[]>([]);
 
@@ -159,8 +162,8 @@ const IRifyNodeManagePage: FC = () => {
         const params: Record<string, any> = {
             page: p,
             limit: PAGE_SIZE,
-            order_by: 'updated_at',
-            order: 'desc',
+            order_by: sortBy,
+            order: sortDir,
         };
 
         const q = keyword.trim();
@@ -181,12 +184,20 @@ const IRifyNodeManagePage: FC = () => {
     };
 
     const fetchList = useCallback(
-        async (p: number, append: boolean) => {
+        async (
+            p: number,
+            append: boolean,
+            orderByOverride?: string,
+            orderDirOverride?: 'asc' | 'desc',
+        ) => {
             if (loadingMoreRef.current) return;
             loadingMoreRef.current = true;
             setLoading(true);
             try {
-                const { data } = await getNodeManage(buildQueryParams(p));
+                const params = buildQueryParams(p);
+                if (orderByOverride) params.order_by = orderByOverride;
+                if (orderDirOverride) params.order = orderDirOverride;
+                const { data } = await getNodeManage(params);
                 const records = data?.list ?? [];
                 const filtered =
                     statusFilter === 'offline'
@@ -360,9 +371,10 @@ const IRifyNodeManagePage: FC = () => {
     const columns: ColumnsType<Palm.Node> = [
         {
             title: '节点身份',
-            key: 'identity',
+            key: 'node_id',
             width: '30%',
             className: 'col-identity',
+            sorter: true,
             render: (_, record) => {
                 const online = isOnlineNode(record);
                 const ip = nodeIpText(record);
@@ -453,9 +465,11 @@ const IRifyNodeManagePage: FC = () => {
         },
         {
             title: '健康状态',
-            key: 'health_status',
+            key: 'updated_at',
             width: '25%',
             className: 'col-health',
+            sorter: true,
+            defaultSortOrder: 'descend',
             render: (_, record) => {
                 const online = isOnlineNode(record);
                 const lastSeen = getNodeLastSeen(record);
@@ -594,6 +608,19 @@ const IRifyNodeManagePage: FC = () => {
                     tableLayout="fixed"
                     scroll={{ x: 980 }}
                     locale={{ emptyText: '暂无节点数据' }}
+                    onChange={(_pagination, _filters, sorter) => {
+                        const s = sorter as SorterResult<Palm.Node>;
+                        const newSortBy =
+                            (s.columnKey as string) || 'updated_at';
+                        const newSortDir =
+                            s.order === 'ascend' ? 'asc' : 'desc';
+                        setSortBy(newSortBy);
+                        setSortDir(newSortDir);
+                        setSelectedRowKeys([]);
+                        fetchList(1, false, newSortBy, newSortDir).catch(
+                            () => {},
+                        );
+                    }}
                 />
 
                 <div className="load-state">
