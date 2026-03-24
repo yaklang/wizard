@@ -1,4 +1,4 @@
-@use '../../../../../styles/mixin.scss' as mixin;
+@use "../../../../../styles/mixin.scss" as mixin;
 
 .wrapper {
     width: 100%;
@@ -33,7 +33,7 @@
                     display: flex;
                     cursor: pointer;
                     align-items: center;
-                    &:hover p {
+                    &:hover p{
                         color: var(--Colors-Use-Main-Primary);
                     }
                     p {
@@ -47,9 +47,9 @@
                         height: 14px;
                     }
                 }
-                .content-item-left {
+                .content-item-left{
                     cursor: default;
-                    &:hover p {
+                    &:hover p{
                         color: var(--Colors-Use-Neutral-Text-2-Primary);
                     }
                 }

@@ -1,4 +1,4 @@
-@use '../../../../../styles/mixin.scss' as mixin;
+@use "../../../../../styles/mixin.scss" as mixin;
 
 .container {
     width: 100%;
@@ -40,7 +40,7 @@
         overflow: hidden;
 
         &:not(.noMask)::before {
-            content: '';
+            content: "";
             position: absolute;
             top: 0;
             left: 0;
@@ -57,7 +57,7 @@
         }
 
         &:not(.noMask)::after {
-            content: '';
+            content: "";
             position: absolute;
             bottom: 0;
             left: 0;
@@ -102,7 +102,7 @@
     position: relative;
 
     &::before {
-        content: '';
+        content: "";
         width: 100%;
         height: 100%;
         position: absolute;

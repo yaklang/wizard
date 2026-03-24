@@ -16,7 +16,7 @@
     z-index: 99;
 }
 
-.ai-mention[data-show='false'] {
+.ai-mention[data-show="false"] {
     display: none;
     opacity: 0;
     visibility: hidden;
@@ -48,7 +48,7 @@
     span {
         overflow: hidden;
     }
-    span[data-node-view-content='true'] {
+    span[data-node-view-content="true"] {
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;

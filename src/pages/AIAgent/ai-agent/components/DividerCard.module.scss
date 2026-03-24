@@ -1,4 +1,4 @@
-@use '../../../../styles/mixin.scss' as mixin;
+@use "../../../../styles/mixin.scss" as mixin;
 
 .divider {
     width: 100%;
@@ -7,11 +7,7 @@
     gap: 4px;
     > div:first-child {
         border-top: 1px solid transparent;
-        border-image: repeating-linear-gradient(
-                to right,
-                var(--Colors-Use-Neutral-Border) 0 6px,
-                transparent 5px 10px
-            )
+        border-image: repeating-linear-gradient(to right, var(--Colors-Use-Neutral-Border) 0 6px, transparent 5px 10px)
             1;
         margin: 8px 0;
     }

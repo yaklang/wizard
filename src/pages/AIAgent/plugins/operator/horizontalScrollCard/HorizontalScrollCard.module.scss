@@ -1,4 +1,4 @@
-@use 'sass:color';
+@use "sass:color";
 
 %display-flex-center {
     display: flex;
@@ -29,50 +29,50 @@
 $CardStatusColor: (
     purple: (
         bgColor: rgba(136, 99, 247, 0.1),
-        borderColor: rgba(136, 99, 247, 0.2),
+        borderColor: rgba(136, 99, 247, 0.2)
     ),
     bluePurple: (
         bgColor: rgba(218, 95, 221, 0.1),
-        borderColor: rgba(218, 95, 221, 0.2),
+        borderColor: rgba(218, 95, 221, 0.2)
     ),
     blue: (
         bgColor: rgba(74, 148, 248, 0.1),
-        borderColor: rgba(74, 148, 248, 0.2),
+        borderColor: rgba(74, 148, 248, 0.2)
     ),
     lakeBlue: (
         bgColor: rgba(41, 188, 208, 0.1),
-        borderColor: rgba(41, 188, 208, 0.2),
+        borderColor: rgba(41, 188, 208, 0.2)
     ),
     cyan: (
         bgColor: rgba(53, 216, 238, 0.1),
-        borderColor: rgba(53, 216, 238, 0.2),
+        borderColor: rgba(53, 216, 238, 0.2)
     ),
     green: (
         bgColor: rgba(86, 201, 145, 0.1),
-        borderColor: rgba(86, 201, 145, 0.2),
+        borderColor: rgba(86, 201, 145, 0.2)
     ),
     red: (
         bgColor: rgba(244, 115, 107, 0.1),
-        borderColor: rgba(244, 115, 107, 0.2),
+        borderColor: rgba(244, 115, 107, 0.2)
     ),
     orange: (
         bgColor: rgba(255, 182, 96, 0.1),
-        borderColor: rgba(255, 182, 96, 0.2),
+        borderColor: rgba(255, 182, 96, 0.2)
     ),
     yellow: (
         bgColor: rgba(255, 213, 131, 0.1),
-        borderColor: rgba(255, 213, 131, 0.2),
-    ),
+        borderColor: rgba(255, 213, 131, 0.2)
+    )
 );
 $keyColor: map-keys($CardStatusColor);
 @for $c from 1 through length($keyColor) {
     $name: nth($keyColor, $c);
     $currentColor: map-get($CardStatusColor, $name);
-    .card-item-bg-#{'' + $name} {
-        background-color: map-get($currentColor, 'bgColor');
+    .card-item-bg-#{"" + $name} {
+        background-color: map-get($currentColor, "bgColor");
     }
-    .card-item-border-left-#{'' + $name} {
-        border-left: 2px solid map-get($currentColor, 'borderColor');
+    .card-item-border-left-#{"" + $name} {
+        border-left: 2px solid map-get($currentColor, "borderColor");
     }
 }
 .text-error {

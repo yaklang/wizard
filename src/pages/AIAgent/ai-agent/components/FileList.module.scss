@@ -36,7 +36,7 @@
                 opacity: 1;
             }
         }
-        &-tag {
+        &-tag{
             margin-right: 0;
         }
         &-main {
@@ -75,12 +75,12 @@
             }
         }
         &-name {
-            max-width: 20%;
+            max-width: 20%;            
             color: var(--Colors-Use-Neutral-Text-2-Primary);
             @include mixin.text-ellipsis();
         }
         &-desc {
-            max-width: 20%;
+            max-width: 20%;  
             border-radius: var(--Radius-System-Extra-small-2, 2px);
             border: 1px solid var(--Colors-Use-Neutral-Border, #e6e8ed);
             color: var(--Colors-Use-Neutral-Text-3-Secondary);
@@ -103,7 +103,7 @@
                 font-weight: 400;
                 line-height: 16px;
             }
-            svg {
+            svg{
                 width: 16px;
                 height: 16px;
                 color: var(--Colors-Use-Neutral-Text-4-Help-text);

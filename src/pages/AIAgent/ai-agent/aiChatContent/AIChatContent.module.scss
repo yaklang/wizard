@@ -55,7 +55,7 @@
                     color: var(--Colors-Use-Neutral-Disable);
                 }
             }
-            .chat-title {
+            .chat-title{
                 max-width: 250px;
                 @include mixin.text-ellipsis();
             }

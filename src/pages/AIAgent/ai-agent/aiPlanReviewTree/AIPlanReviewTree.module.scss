@@ -1,4 +1,4 @@
-@use 'sass:math';
+@use "sass:math";
 %display-flex {
     display: flex;
     align-items: center;
@@ -8,7 +8,7 @@
     border-radius: 4px;
     background: var(--Colors-Use-Neutral-Bg-Hover);
     &::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 13px;
         left: -3px;
@@ -25,7 +25,7 @@
     }
 }
 @mixin right-line {
-    content: '';
+    content: "";
     position: absolute;
     width: 2px;
     background-color: var(--Colors-Use-Neutral-Disable);
@@ -36,7 +36,7 @@
     @content;
 }
 @mixin left-line {
-    content: '';
+    content: "";
     position: absolute;
     width: 2px;
     background-color: var(--Colors-Use-Neutral-Disable);
@@ -81,7 +81,7 @@
         height: 16px;
         position: absolute;
         &::after {
-            content: '';
+            content: "";
             position: absolute;
             left: 0;
             width: 16px;
@@ -108,7 +108,7 @@
         border-radius: 50%;
         background-color: var(--Colors-Use-Neutral-Disable);
         &::after {
-            content: '';
+            content: "";
             position: absolute;
             top: 6px;
             left: 3px;
@@ -214,9 +214,7 @@
                 border-radius: 4px;
                 background: var(--Colors-Use-Neutral-Bg);
                 :global {
-                    .ant-select-disabled.ant-select:not(
-                            .ant-select-customize-input
-                        ) {
+                    .ant-select-disabled.ant-select:not(.ant-select-customize-input) {
                         .ant-select-selector {
                             cursor: default;
                             input {
@@ -312,7 +310,7 @@
                 --height: 18px;
                 --rotate: 18px;
                 &::after {
-                    content: '';
+                    content: "";
                     position: absolute;
                     bottom: -22px;
                     right: 22px;

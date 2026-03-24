@@ -1,4 +1,4 @@
-@use '../../../../styles/mixin.scss' as mixin;
+@use "../../../../styles/mixin.scss" as mixin;
 
 .chat-card {
     width: 100%;
@@ -44,7 +44,7 @@
             font-size: 12px;
             font-style: normal;
             font-weight: 500;
-            line-height: 16px;
+            line-height: 16px; 
             letter-spacing: 0.5px;
             color: var(--Colors-Use-Neutral-Text-4-Help-text);
             @include mixin.text-ellipsis(1, false, false, true);

@@ -1,4 +1,4 @@
-@use '../../../../styles/mixin.scss' as mixin;
+@use "../../../../styles/mixin.scss" as mixin;
 %display-flex-center {
     display: flex;
     align-items: center;
@@ -18,11 +18,7 @@
     @extend %display-column-center;
     flex: 1 0 0;
     position: relative;
-    background: linear-gradient(
-        180deg,
-        var(--Colors-Use-Main-Bg) 0.11%,
-        var(--Colors-Use-Neutral-Bg) 50%
-    );
+    background: linear-gradient(180deg, var(--Colors-Use-Main-Bg) 0.11%, var(--Colors-Use-Neutral-Bg) 50%);
     overflow: auto;
 
     .drawer {
@@ -123,7 +119,7 @@
         .input-body {
             position: relative;
             &::after {
-                content: '';
+                content: "";
                 position: absolute;
                 width: 7px;
                 height: 3px;
@@ -177,15 +173,14 @@
                 cursor: pointer;
                 position: relative;
                 &::before {
-                    content: '';
+                    content: "";
                     position: absolute;
                     inset: 0;
                     padding: 1px;
                     border-radius: inherit;
                     background: var(--Colors-Use-Neutral-Bg-Hover);
                     -webkit-mask:
-                        linear-gradient(var(--Colors-Use-Basic-Background) 0 0)
-                            content-box,
+                        linear-gradient(var(--Colors-Use-Basic-Background) 0 0) content-box,
                         linear-gradient(var(--Colors-Use-Basic-Background) 0 0);
                     -webkit-mask-composite: xor;
                     mask-composite: exclude;
@@ -450,15 +445,14 @@
                 pointer-events: none;
 
                 &::before {
-                    content: '';
+                    content: "";
                     position: absolute;
                     inset: 0;
                     padding: 1px;
                     border-radius: inherit;
                     background: var(--Colors-Use-Neutral-Border);
                     -webkit-mask:
-                        linear-gradient(var(--Colors-Use-Neutral-Bg) 0 0)
-                            content-box,
+                        linear-gradient(var(--Colors-Use-Neutral-Bg) 0 0) content-box,
                         linear-gradient(var(--Colors-Use-Neutral-Bg) 0 0);
                     -webkit-mask-composite: xor;
                     mask-composite: exclude;

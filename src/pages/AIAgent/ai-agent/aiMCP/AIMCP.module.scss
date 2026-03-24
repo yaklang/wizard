@@ -241,7 +241,7 @@
             .ai-mcp-tool-param-item-heard-required {
                 &::before {
                     @extend %display-flex-center;
-                    content: '*';
+                    content: "*";
                     color: var(--Colors-Use-Error-Primary);
                     font-size: 14px;
                 }
