@@ -1,3 +1,5 @@
+export type TSSAScanModeOverride = 'auto' | 'memory' | 'ir-db';
+
 // SSA 扫描请求参数
 export interface TSSAScanRequest {
     rule_groups?: string[];
@@ -44,6 +46,8 @@ export interface TSSATask {
     language?: string;
     source_origin?: string;
     scan_mode?: string;
+    compile_action?: string;
+    reuse_reason?: string;
     error_message?: string;
     started_at?: number; // Unix 时间戳（秒）
     finished_at?: number; // Unix 时间戳（秒）

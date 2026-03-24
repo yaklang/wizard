@@ -3,6 +3,7 @@ import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
 import type {
     PostHostAliveDetectionRunRequest,
     QueryPalmNodeParams,
+    ScannerObservabilityOverview,
     TPostNodesDownloadDataRunRequest,
 } from './type';
 import type { Palm } from '@/gen/schema';
@@ -53,10 +54,40 @@ const postHostAliveDetectionRun = (data: {
         ResponseData<TableResponseData<PostHostAliveDetectionRunRequest>>
     >('/task/start/host-alive-detection/run', data);
 
+const getScannerObservabilityOverview = (params?: {
+    task_limit?: number;
+}): Promise<ResponseData<ScannerObservabilityOverview>> =>
+    axios.get<never, ResponseData<ScannerObservabilityOverview>>(
+        '/ssa/observability/scanner/overview',
+        {
+            params,
+        },
+    );
+
+const exportScannerObservabilityDiagnostics = (params?: {
+    task_limit?: number;
+    log_limit?: number;
+    node_id?: string;
+    task_id?: string;
+}): Promise<ResponseData<Blob>> =>
+    axios.get('/ssa/observability/scanner/diagnostics/export', {
+        params,
+        responseType: 'blob',
+        transformResponse: [
+            (data) => ({
+                data,
+                code: 200,
+                msg: '',
+            }),
+        ],
+    });
+
 export {
     getNodeManage,
     postUpdateLocation,
     postNodesDownloadDataRun,
     deleteNodeManage,
     postHostAliveDetectionRun,
+    getScannerObservabilityOverview,
+    exportScannerObservabilityDiagnostics,
 };

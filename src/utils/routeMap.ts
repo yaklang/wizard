@@ -81,7 +81,7 @@ const wizardRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_SETTINGS_RULES]: '/settings/rules',
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
-    [RouteKey.IRIFY_SETTINGS_REPORTS]: '/settings/reports',
+    [RouteKey.IRIFY_SETTINGS_REPORTS]: '/reports',
     [RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS]:
         '/system-management/compile-artifacts',
 };
@@ -107,7 +107,7 @@ const irifyRoutes: Partial<Record<RouteKey, string>> = {
     [RouteKey.IRIFY_SETTINGS_RULES]: '/settings/rules',
     [RouteKey.IRIFY_SETTINGS_NODES]: '/settings/nodes',
     [RouteKey.IRIFY_SETTINGS_USERS]: '/settings/users',
-    [RouteKey.IRIFY_SETTINGS_REPORTS]: '/settings/reports',
+    [RouteKey.IRIFY_SETTINGS_REPORTS]: '/reports',
     [RouteKey.IRIFY_SETTINGS_COMPILE_ARTIFACTS]:
         '/system-management/compile-artifacts',
 };

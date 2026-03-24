@@ -12,7 +12,7 @@ import {
     ArrowRightOutlined,
     RocketOutlined,
 } from '@ant-design/icons';
-import { useRequest } from 'ahooks';
+import { useQuery } from '@tanstack/react-query';
 import { getSSAProjects } from '@/apis/SSAProjectApi';
 import { getSSARisks } from '@/apis/SSARiskApi';
 import { querySSATasks } from '@/apis/SSAScanTaskApi';
@@ -47,10 +47,7 @@ const statusLabels: Record<string, string> = {
     cancelled: '已取消',
 };
 
-const formatProjectBatchLabel = (
-    projectName?: string,
-    scanBatch?: number,
-) => {
+const formatProjectBatchLabel = (projectName?: string, scanBatch?: number) => {
     const name = (projectName || '').trim();
     if (!name) return '未知项目';
     if (scanBatch && scanBatch > 0) {
@@ -59,132 +56,96 @@ const formatProjectBatchLabel = (
     return name;
 };
 
-const getTotalFromRiskResp = (res: any) => Number(res?.data?.pagemeta?.total) || 0;
+const getTotalFromRiskResp = (res: any) =>
+    Number(res?.data?.pagemeta?.total) || 0;
 const severityOrder = ['critical', 'high', 'middle', 'low', 'info'] as const;
 type SeverityKey = (typeof severityOrder)[number];
-type TrendDirection = 'up' | 'down' | 'flat';
-
-const getTrendTone = (
-    metricKind: 'normal' | 'vuln',
-    direction: TrendDirection,
-): 'good' | 'bad' | 'neutral' => {
-    if (direction === 'flat') return 'neutral';
-    if (metricKind === 'vuln') {
-        return direction === 'down' ? 'good' : 'bad';
-    }
-    return direction === 'up' ? 'good' : 'bad';
-};
-
-const getTrendArrow = (direction: TrendDirection) => {
-    if (direction === 'up') return '↑';
-    if (direction === 'down') return '↓';
-    return '→';
-};
 
 const IRifyDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isDark } = useTheme();
     const [workflowStep, setWorkflowStep] = useState(0);
 
-    // Fetch projects count
-    const { data: projectsData } = useRequest(async () => {
-        const res = await getSSAProjects({ page: 1, limit: 1 });
-        return res.data;
-    });
-
-    // Fetch top 3 high-risk projects
-    const { data: topProjectsData } = useRequest(async () => {
-        const res = await getSSAProjects({ 
-            page: 1, 
-            limit: 3, 
-            order: 'desc', 
-            order_by: 'risk_count' 
-        });
-        return res.data;
-    });
-
-    // Fetch risks summary
-    const { data: risksData } = useRequest(async () => {
-        const res = await getSSARisks({ page: 1, limit: 1 });
-        return res.data;
-    });
-
-    // Fetch severity counts using backend total for each severity.
-    // Do not use a small page list for stats; that causes obvious undercount.
-    const { data: severitySummary } = useRequest(async () => {
-        const [criticalRes, highRes, middleRes, warningRes, lowRes, infoRes] =
-            await Promise.all([
+    const { data: dashboardData } = useQuery({
+        queryKey: ['dashboard'],
+        queryFn: async () => {
+            const [
+                projectsRes,
+                topProjectsRes,
+                risksRes,
+                criticalRes,
+                highRes,
+                middleRes,
+                warningRes,
+                lowRes,
+                infoRes,
+                scansRes,
+            ] = await Promise.all([
+                getSSAProjects({ page: 1, limit: 1 }),
+                getSSAProjects({
+                    page: 1,
+                    limit: 3,
+                    order: 'desc',
+                    order_by: 'risk_count',
+                }),
+                getSSARisks({ page: 1, limit: 1 }),
                 getSSARisks({ page: 1, limit: 1, severity: 'critical' }),
                 getSSARisks({ page: 1, limit: 1, severity: 'high' }),
                 getSSARisks({ page: 1, limit: 1, severity: 'middle' }),
                 getSSARisks({ page: 1, limit: 1, severity: 'warning' }),
                 getSSARisks({ page: 1, limit: 1, severity: 'low' }),
                 getSSARisks({ page: 1, limit: 1, severity: 'info' }),
+                querySSATasks({ page: 1, limit: 5 }),
             ]);
 
-        return {
-            critical: getTotalFromRiskResp(criticalRes),
-            high: getTotalFromRiskResp(highRes),
-            // warning 视为中危展示
-            middle:
-                getTotalFromRiskResp(middleRes) +
-                getTotalFromRiskResp(warningRes),
-            low: getTotalFromRiskResp(lowRes),
-            info: getTotalFromRiskResp(infoRes),
-        };
+            return {
+                projects: projectsRes.data,
+                topProjects: topProjectsRes.data,
+                risks: risksRes.data,
+                severitySummary: {
+                    critical: getTotalFromRiskResp(criticalRes),
+                    high: getTotalFromRiskResp(highRes),
+                    // warning 视为中危展示
+                    middle:
+                        getTotalFromRiskResp(middleRes) +
+                        getTotalFromRiskResp(warningRes),
+                    low: getTotalFromRiskResp(lowRes),
+                    info: getTotalFromRiskResp(infoRes),
+                },
+                scans: scansRes.data,
+            };
+        },
     });
 
-    // Fetch recent scans
-    const { data: scansData } = useRequest(async () => {
-        const res = await querySSATasks({ page: 1, limit: 5 });
-        return res.data;
-    });
+    const projectCount = dashboardData?.projects?.pagemeta?.total || 0;
+    const riskCount = dashboardData?.risks?.pagemeta?.total || 0;
+    const scanCount = dashboardData?.scans?.pagemeta?.total || 0;
+    const topProjects = (dashboardData?.topProjects?.list || [])
+        .filter((project: any) => Number(project?.risk_count || 0) > 0)
+        .slice(0, 3);
+
+    const severityCounts: Record<SeverityKey, number> = {
+        critical: dashboardData?.severitySummary?.critical || 0,
+        high: dashboardData?.severitySummary?.high || 0,
+        middle: dashboardData?.severitySummary?.middle || 0,
+        low: dashboardData?.severitySummary?.low || 0,
+        info: dashboardData?.severitySummary?.info || 0,
+    };
+
+    const recentScans = dashboardData?.scans?.list || [];
 
     // Calculate workflow step based on data
     useEffect(() => {
-        if ((projectsData?.pagemeta?.total || 0) > 0) {
+        if (projectCount > 0) {
             setWorkflowStep(1);
-            if ((scansData?.pagemeta?.total || 0) > 0) {
+            if (scanCount > 0) {
                 setWorkflowStep(2);
-                if ((risksData?.pagemeta?.total || 0) > 0) {
+                if (riskCount > 0) {
                     setWorkflowStep(3);
                 }
             }
         }
-    }, [projectsData, risksData, scansData]);
-
-    const projectCount = projectsData?.pagemeta?.total || 0;
-    const riskCount = risksData?.pagemeta?.total || 0;
-    const scanCount = scansData?.pagemeta?.total || 0;
-    const topProjects = (topProjectsData?.list || [])
-        .filter((project: any) => Number(project?.risk_count || 0) > 0)
-        .slice(0, 3);
-
-    const metricTrends = {
-        projects: {
-            direction: 'up' as TrendDirection,
-            text: '较上周增加 2个',
-        },
-        scans: {
-            direction: 'up' as TrendDirection,
-            text: '较上周增加 12次',
-        },
-        vulns: {
-            direction: 'down' as TrendDirection,
-            text: '较上周减少 2.4%',
-        },
-    };
-
-    // Severity breakdown should reflect global totals, not only the first page list.
-    const severityCounts: Record<SeverityKey, number> = {
-        critical: severitySummary?.critical || 0,
-        high: severitySummary?.high || 0,
-        middle: severitySummary?.middle || 0,
-        low: severitySummary?.low || 0,
-        info: severitySummary?.info || 0,
-    };
-
-    const recentScans = scansData?.list || [];
+    }, [projectCount, scanCount, riskCount]);
 
     // Dynamic text color based on theme
     const textColor = isDark ? '#E6EDF3' : '#1E293B';
@@ -214,7 +175,9 @@ const IRifyDashboard: React.FC = () => {
             </div>
 
             {/* Workflow Stepper */}
-            <div className={`workflow-section ${projectCount > 0 ? 'compact' : ''}`}>
+            <div
+                className={`workflow-section ${projectCount > 0 ? 'compact' : ''}`}
+            >
                 <div className="workflow-stepper">
                     <div
                         className={`step ${workflowStep >= 1 ? 'completed' : ''} ${workflowStep === 0 ? 'active' : ''}`}
@@ -281,19 +244,6 @@ const IRifyDashboard: React.FC = () => {
                                 >
                                     {projectCount}
                                 </div>
-                                <div
-                                    className={`trend-indicator ${getTrendTone(
-                                        'normal',
-                                        metricTrends.projects.direction,
-                                    )}`}
-                                >
-                                    <span className="trend-arrow">
-                                        {getTrendArrow(
-                                            metricTrends.projects.direction,
-                                        )}
-                                    </span>
-                                    <span>{metricTrends.projects.text}</span>
-                                </div>
                             </div>
                             <div className="stats-action">
                                 查看全部 <ArrowRightOutlined />
@@ -322,19 +272,6 @@ const IRifyDashboard: React.FC = () => {
                                 >
                                     {scanCount}
                                 </div>
-                                <div
-                                    className={`trend-indicator ${getTrendTone(
-                                        'normal',
-                                        metricTrends.scans.direction,
-                                    )}`}
-                                >
-                                    <span className="trend-arrow">
-                                        {getTrendArrow(
-                                            metricTrends.scans.direction,
-                                        )}
-                                    </span>
-                                    <span>{metricTrends.scans.text}</span>
-                                </div>
                             </div>
                             <div className="stats-action">
                                 查看全部 <ArrowRightOutlined />
@@ -346,7 +283,9 @@ const IRifyDashboard: React.FC = () => {
                     <Card
                         className="stats-card vulns-card"
                         onClick={() =>
-                            navigate(getRoutePath(RouteKey.IRIFY_VULNERABILITIES))
+                            navigate(
+                                getRoutePath(RouteKey.IRIFY_VULNERABILITIES),
+                            )
                         }
                     >
                         <div className="stats-card-content">
@@ -362,17 +301,6 @@ const IRifyDashboard: React.FC = () => {
                                     style={{ color: textColor }}
                                 >
                                     {riskCount}
-                                </div>
-                                <div
-                                    className={`trend-indicator ${getTrendTone(
-                                        'vuln',
-                                        metricTrends.vulns.direction,
-                                    )}`}
-                                >
-                                    <span className="trend-arrow">
-                                        {getTrendArrow(metricTrends.vulns.direction)}
-                                    </span>
-                                    <span>{metricTrends.vulns.text}</span>
                                 </div>
                             </div>
                             <div className="stats-action">
@@ -481,17 +409,29 @@ const IRifyDashboard: React.FC = () => {
                                                 />
                                             ) : (
                                                 <div className="activity-actions">
-                                                    <Button 
-                                                        size="small" 
-                                                        type="primary" 
+                                                    <Button
+                                                        size="small"
+                                                        type="primary"
                                                         ghost
-                                                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_VULNERABILITIES))}
+                                                        onClick={() =>
+                                                            navigate(
+                                                                getRoutePath(
+                                                                    RouteKey.IRIFY_VULNERABILITIES,
+                                                                ),
+                                                            )
+                                                        }
                                                     >
                                                         🔍 审计
                                                     </Button>
-                                                    <Button 
+                                                    <Button
                                                         size="small"
-                                                        onClick={() => navigate(getRoutePath(RouteKey.IRIFY_SETTINGS_REPORTS))}
+                                                        onClick={() =>
+                                                            navigate(
+                                                                getRoutePath(
+                                                                    RouteKey.IRIFY_SETTINGS_REPORTS,
+                                                                ),
+                                                            )
+                                                        }
                                                     >
                                                         📄 报告
                                                     </Button>
@@ -536,7 +476,11 @@ const IRifyDashboard: React.FC = () => {
                             <Button
                                 type="link"
                                 onClick={() =>
-                                    navigate(getRoutePath(RouteKey.IRIFY_VULNERABILITIES))
+                                    navigate(
+                                        getRoutePath(
+                                            RouteKey.IRIFY_VULNERABILITIES,
+                                        ),
+                                    )
                                 }
                             >
                                 查看全部
@@ -556,8 +500,9 @@ const IRifyDashboard: React.FC = () => {
                                                     className="severity-dot"
                                                     style={{
                                                         background:
-                                                            severityConfig[severity]
-                                                                .color,
+                                                            severityConfig[
+                                                                severity
+                                                            ].color,
                                                     }}
                                                 />
                                                 {severityConfig[severity].label}
@@ -568,8 +513,9 @@ const IRifyDashboard: React.FC = () => {
                                                     style={{
                                                         width: `${((severityCounts[severity] || 0) / riskCount) * 100}%`,
                                                         background:
-                                                            severityConfig[severity]
-                                                                .color,
+                                                            severityConfig[
+                                                                severity
+                                                            ].color,
                                                     }}
                                                 />
                                             </div>
@@ -586,28 +532,35 @@ const IRifyDashboard: React.FC = () => {
                                             Top 3 高危项目排行
                                         </div>
                                         <div className="top-projects-list">
-                                            {topProjects.map((project: any, idx: number) => (
-                                                <div
-                                                    key={project.id || idx}
-                                                    className="top-project-item"
-                                                    onClick={() =>
-                                                        navigate(
-                                                            getRoutePath(
-                                                                RouteKey.IRIFY_VULNERABILITIES,
-                                                            ),
-                                                        )
-                                                    }
-                                                >
-                                                    <span className="rank">{idx + 1}</span>
-                                                    <span className="name">
-                                                        {project.project_name}
-                                                    </span>
-                                                    <span className="count">
-                                                        <BugOutlined />{' '}
-                                                        {project.risk_count || 0}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            {topProjects.map(
+                                                (project: any, idx: number) => (
+                                                    <div
+                                                        key={project.id || idx}
+                                                        className="top-project-item"
+                                                        onClick={() =>
+                                                            navigate(
+                                                                getRoutePath(
+                                                                    RouteKey.IRIFY_VULNERABILITIES,
+                                                                ),
+                                                            )
+                                                        }
+                                                    >
+                                                        <span className="rank">
+                                                            {idx + 1}
+                                                        </span>
+                                                        <span className="name">
+                                                            {
+                                                                project.project_name
+                                                            }
+                                                        </span>
+                                                        <span className="count">
+                                                            <BugOutlined />{' '}
+                                                            {project.risk_count ||
+                                                                0}
+                                                        </span>
+                                                    </div>
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                 )}
