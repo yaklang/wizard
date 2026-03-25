@@ -22,6 +22,7 @@ import {
     getSettingAiconfig,
     postSettingAiconfig,
     postSettingAppconfigsTemplateGet,
+    postSettingProvidersQuery,
 } from '@/apis/AiEventApi';
 
 export const AI_API_TYPE_OPTIONS = ['chat_completions', 'responses'] as const;
@@ -231,16 +232,13 @@ const grpcQueryAIProvider: APIFunc<
     QueryAIProvidersResponse
 > = (params, hiddenError) => {
     return new Promise((resolve, reject) => {
-        console.log('grpcQueryAIProvider', params, hiddenError);
-        reject(new Error('grpcQueryAIProvider 失败'));
-        // ipcRenderer
-        //     .invoke('QueryAIProvider', params)
-        //     .then(resolve)
-        //     .catch((err: any) => {
-        //         if (!hiddenError)
-        //             yakitNotify('error', 'grpcQueryAIProvider 失败:' + err);
-        //         reject(err);
-        //     });
+        postSettingProvidersQuery(params)
+            .then(resolve)
+            .catch((err: any) => {
+                if (!hiddenError)
+                    yakitNotify('error', 'grpcQueryAIProvider 失败:' + err);
+                reject(err);
+            });
     });
 };
 export const grpcQueryAIProviderAll: APIFunc<

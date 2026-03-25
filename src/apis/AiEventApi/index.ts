@@ -18,7 +18,7 @@ import type {
     TPostSessionTitle,
 } from './type';
 import type { AIInputEvent } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
-import type { AIGlobalConfig } from '@/pages/AIAgent/ai-agent/aiModelList/utils';
+import type { AIGlobalConfig, QueryAIProvidersRequest, QueryAIProvidersResponse } from '@/pages/AIAgent/ai-agent/aiModelList/utils';
 import type { GetThirdPartyAppConfigTemplateResponse } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig';
 
 // #region 会话Session相关接口
@@ -147,6 +147,14 @@ const postSettingAppconfigsTemplateGet =
             {},
         );
 
+// 分页查询 AI Provider
+const postSettingProvidersQuery =
+    (data: QueryAIProvidersRequest): Promise<QueryAIProvidersResponse> =>
+        axios.post<QueryAIProvidersRequest, QueryAIProvidersResponse>(
+            `/agent/setting/providers/query`,
+            data,
+        );
+
 export {
     postCreateSession,
     postSendFirstMessage,
@@ -164,4 +172,5 @@ export {
     getSettingAiconfig,
     postSettingAiconfig,
     postSettingAppconfigsTemplateGet,
+    postSettingProvidersQuery
 };
