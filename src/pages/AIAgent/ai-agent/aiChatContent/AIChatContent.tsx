@@ -245,7 +245,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
         const yakitTabs = useCreation(() => {
             let tab: YakitSideTabProps['yakitTabs'] = [
                 AITabs[AITabsEnum.Task_Content],
-                AITabs[AITabsEnum.File_System],
+                // AITabs[AITabsEnum.File_System],
             ];
             if (tempHTTPTotal) {
                 tab.push(AITabs[AITabsEnum.HTTP]);
@@ -264,7 +264,7 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
             taskChat?.elements?.length,
         ]);
 
-        const [showHot, setShowHot] = useState(false);
+        // const [showHot, setShowHot] = useState(false);
         const prevRef = useRef<{
             chatId?: string;
             foldersLen: number;
@@ -274,20 +274,20 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
         });
 
         useEffect(() => {
-            const prev = prevRef.current;
+            // const prev = prevRef.current;
             const currentChatId = activeChat?.run_id;
             const currentLen = grpcFolders.length;
-            let nextShowHot = false;
+            // let nextShowHot = false;
 
-            if (activeKey === AITabsEnum.File_System) {
-                nextShowHot = false;
-            } else if (
-                prev.chatId === currentChatId &&
-                currentLen > prev.foldersLen
-            ) {
-                nextShowHot = true;
-            }
-            setShowHot(nextShowHot);
+            // if (activeKey === AITabsEnum.File_System) {
+            //     nextShowHot = false;
+            // } else if (
+            //     prev.chatId === currentChatId &&
+            //     currentLen > prev.foldersLen
+            // ) {
+            //     nextShowHot = true;
+            // }
+            // setShowHot(nextShowHot);
             prevRef.current = {
                 chatId: currentChatId,
                 foldersLen: currentLen,
@@ -302,16 +302,6 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                     (typeof tab.label === 'function' ? tab.label() : tab.label);
                 if (tab.value === AITabsEnum.Risk) {
                     return finalLabel;
-                }
-                if (tab.value === AITabsEnum.File_System) {
-                    const isShow =
-                        activeKey !== AITabsEnum.File_System && showHot;
-                    return (
-                        <div className={styles['file-system-label']}>
-                            文件系统
-                            <span hidden={!isShow} />
-                        </div>
-                    );
                 }
 
                 return finalLabel;
@@ -333,9 +323,9 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                             setShowFreeChat={setShowFreeChat}
                         />
                     );
-                case AITabsEnum.File_System:
-                    // return <AIFileSystemList />;
-                    return null;
+                // case AITabsEnum.File_System:
+                // return <AIFileSystemList />;
+                // return null;
                 case AITabsEnum.Risk:
                     return runTimeIDs.length ? (
                         <VulnerabilitiesRisksTable

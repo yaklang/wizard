@@ -1,10 +1,8 @@
 import { DocumentDuplicateSvgIcon } from '@/assets/newIcon';
-import { OutlinCompileThreeIcon, OutlineLogIcon } from '@/assets/icon/outline';
+import { OutlineLogIcon } from '@/assets/icon/outline';
 import { setClipboardText } from '@/utils/clipboard';
 import { useMemoizedFn } from 'ahooks';
 import { AIChatToolDrawerContent } from '../../chatTemplate/AIAgentChatTemplate';
-import emiter from '@/utils/eventBus/eventBus';
-import { AITabsEnum } from '../../defaultConstant';
 import { Tooltip } from 'antd';
 import { showYakitDrawer } from '@/compoments/YakitUI/YakitDrawer/YakitDrawer';
 import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
@@ -37,17 +35,17 @@ export const OperationCardFooter: React.FC<OperationCardFooterProps> = ({
     });
 
     // 跳转并查看文件
-    const handleViewFile = useMemoizedFn(() => {
-        if (!aiFilePath) return;
+    // const handleViewFile = useMemoizedFn(() => {
+    //     if (!aiFilePath) return;
 
-        emiter.emit(
-            'switchAIActTab',
-            JSON.stringify({ key: AITabsEnum.File_System }),
-        );
-        setTimeout(() => {
-            emiter.emit('fileSystemDefaultExpand', aiFilePath);
-        }, 800);
-    });
+    //     emiter.emit(
+    //         'switchAIActTab',
+    //         JSON.stringify({ key: AITabsEnum.File_System }),
+    //     );
+    //     setTimeout(() => {
+    //         emiter.emit('fileSystemDefaultExpand', aiFilePath);
+    //     }, 800);
+    // });
 
     return (
         <div
@@ -67,7 +65,7 @@ export const OperationCardFooter: React.FC<OperationCardFooterProps> = ({
                     />
                 </Tooltip>
             )}
-            {aiFilePath && (
+            {/* {aiFilePath && (
                 <Tooltip placement="top" title="查看文件">
                     <YakitButton
                         type="text2"
@@ -76,7 +74,7 @@ export const OperationCardFooter: React.FC<OperationCardFooterProps> = ({
                         onClick={handleViewFile}
                     />
                 </Tooltip>
-            )}
+            )} */}
             {callToolId && (
                 <Tooltip placement="top" title="查看详情">
                     <YakitButton

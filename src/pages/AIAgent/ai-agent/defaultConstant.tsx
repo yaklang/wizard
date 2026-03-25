@@ -3,7 +3,6 @@ import type { AIAgentSetting } from './aiAgentType';
 import {
     OutlineChipIcon,
     OutlineCogIcon,
-    OutlineMCPIcon,
     OutlineSparklesIcon,
     OutlineWrenchIcon,
     OutlineBookOpenTextIcon,
@@ -79,7 +78,7 @@ export const AiAgentTabList: YakitTabsProps[] = [
         label: 'AI模型',
         icon: <OutlineChipIcon />,
     },
-    { value: AIAgentTabListEnum.MCP, label: 'MCP', icon: <OutlineMCPIcon /> },
+    // { value: AIAgentTabListEnum.MCP, label: 'MCP', icon: <OutlineMCPIcon /> },
 ];
 export enum AIMentionTabsEnum {
     /** forge 智能体 */
@@ -176,7 +175,6 @@ export enum SwitchAIAgentTabEventEnum {
 }
 export enum AITabsEnum {
     Task_Content = 'task-content',
-    File_System = 'file-system',
     HTTP = 'http',
     Risk = 'risk',
     Operation_Log = 'operation-log',
@@ -184,7 +182,6 @@ export enum AITabsEnum {
 /** @name AI 默认展示的tab集合 */
 export const AITabs = {
     'task-content': { label: '任务内容', value: AITabsEnum.Task_Content },
-    'file-system': { label: '文件系统', value: AITabsEnum.File_System },
     http: { label: 'HTTP 流量', value: AITabsEnum.HTTP },
     risk: { label: '漏洞与风险', value: AITabsEnum.Risk },
     'operation-log': { label: '读写日志', value: AITabsEnum.Operation_Log },
