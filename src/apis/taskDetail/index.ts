@@ -18,12 +18,12 @@ const getTaskDetail = (
     form_runtime_id: string,
 ): Promise<ResponseData<TTaskDetail>> =>
     axios.get<never, ResponseData<TTaskDetail>>(
-        `/task/detail?task_id=${form_runtime_id}`,
+        `/api/task/detail?task_id=${form_runtime_id}`,
     );
 
 const getTaskDetailTop = (id: number): Promise<ResponseData<any>> =>
     axios.get<never, ResponseData<TTaskDetail>>(
-        `/task/start/batch-invoking-script-task/fetch?id=${id}`,
+        `/api/task/start/batch-invoking-script-task/fetch?id=${id}`,
     );
 
 // 获取端口资产 表格数据
@@ -31,7 +31,7 @@ const postAssetsProts = (
     data: TGetAssetsProtsRequest,
 ): Promise<ResponseData<TableResponseData<TGetAssetsProtsResponse>>> =>
     axios.post<never, ResponseData<TableResponseData<TGetAssetsProtsResponse>>>(
-        `/assets/ports`,
+        `/api/assets/ports`,
         data,
     );
 
@@ -39,22 +39,25 @@ const postAssetsProts = (
 const getAssetsProtsFilter = (params?: {
     task_id?: string;
 }): Promise<ResponseData<TGetAssetsProtsFilterResponse>> =>
-    axios.get(`/assets/ports`, { params });
+    axios.get(`/api/assets/ports`, { params });
 
 // 获取漏洞与风险 高级筛选信息
 const getAssetsValueFilter = (params?: {
     task_id?: string;
 }): Promise<ResponseData<TGetAssetsValueFilterResponse>> =>
-    axios<never, ResponseData<TGetAssetsValueFilterResponse>>(`/assets/vulns`, {
-        params,
-    });
+    axios<never, ResponseData<TGetAssetsValueFilterResponse>>(
+        `/api/assets/vulns`,
+        {
+            params,
+        },
+    );
 
 // 获取漏洞与风险 表格数据
 const postAssetsVulns = (
     data: TGetAssetsVulnsRequest,
 ): Promise<ResponseData<TableResponseData<TGetAssetsVulnsResponse>>> =>
     axios.post<never, ResponseData<TableResponseData<TGetAssetsVulnsResponse>>>(
-        `/assets/vulns`,
+        `/api/assets/vulns`,
         data,
     );
 
@@ -64,7 +67,7 @@ const getBatchInvokingScript = (params: {
     page: number;
 }): Promise<ResponseData<TableResponseData<TReportTableResponse>>> =>
     axios.get<never, ResponseData<TableResponseData<TReportTableResponse>>>(
-        `/task/start/batch-invoking-script/runtimes`,
+        `/api/task/start/batch-invoking-script/runtimes`,
         { params },
     );
 
@@ -83,14 +86,14 @@ const getTimelinRuntimeId = (
             type: string;
             data: { data: { id: string; blocks: any[] } };
         }>
-    >(`/timeline/fetch?runtime_id=${runtime_id}`);
+    >(`/api/timeline/fetch?runtime_id=${runtime_id}`);
 
 // 资产数据 表格数据
 const postAssertsData = (
     params: TGetAssetsVulnsRequest,
 ): Promise<ResponseData<TableResponseData<TGetAssertsDataResponse>>> =>
     axios.post<never, ResponseData<TableResponseData<TGetAssertsDataResponse>>>(
-        `/assets/data`,
+        `/api/assets/data`,
         params,
     );
 
@@ -105,7 +108,7 @@ const getAssertsDataRiskInfo = (params: {
         ResponseData<
             TGetAssertsDataResponse & { count: TGetAssertsDataResponse }
         >
-    >(`/assets/data/riskInfo`, { params });
+    >(`/api/assets/data/riskInfo`, { params });
 
 const getAssertsDataStateInfo = (params: {
     task_id: string;
@@ -119,21 +122,24 @@ const getAssertsDataStateInfo = (params: {
         ResponseData<
             Omit<TGetAssertsDataResponse, 'state'> & { state: { open: number } }
         >
-    >(`/assets/data/stateInfo`, { params });
+    >(`/api/assets/data/stateInfo`, { params });
 
 // 获取资产数据 高级筛选存活状态
 const getAssertsDataStateTable = (
     task_id: string,
 ): Promise<ResponseData<TableResponseData<TReportTableResponse>>> =>
     axios.get<never, ResponseData<TableResponseData<TReportTableResponse>>>(
-        `/asserts/data/state_table?task_id=${task_id}`,
+        `/api/asserts/data/state_table?task_id=${task_id}`,
     );
 
 // 发送邮箱
 const PostSendEmailReportData = (
     data: Palm.SendSmtp,
 ): Promise<ResponseData<Palm.ActionSucceeded>> =>
-    axios.post<never, ResponseData<Palm.ActionSucceeded>>('/send/smtp', data);
+    axios.post<never, ResponseData<Palm.ActionSucceeded>>(
+        '/api/send/smtp',
+        data,
+    );
 
 export {
     postAssetsProts,

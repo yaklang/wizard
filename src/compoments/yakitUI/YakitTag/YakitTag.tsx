@@ -1,5 +1,5 @@
 import { Tag } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import type { CopyComponentsProps, YakitTagProps } from './YakitTagType';
 import styles from './YakitTag.module.scss';
 import classNames from 'classnames';
@@ -8,7 +8,7 @@ import { useMemoizedFn } from 'ahooks';
 import { CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { success } from '@/utils/notification';
 import { OutlineXIcon } from '@/assets/icon/outline';
-import { match } from 'ts-pattern';
+import { setClipboardText } from '@/utils/clipboard';
 
 /**
  * 更新说明
@@ -34,6 +34,8 @@ export const YakitTag: React.FC<YakitTagProps> = (props) => {
         enableCopy,
         iconColor,
         copyText,
+        border,
+        fullRadius,
         ...restProps
     } = props;
     const onAfterCopy = useMemoizedFn((e) => {
@@ -58,18 +60,23 @@ export const YakitTag: React.FC<YakitTagProps> = (props) => {
                 {
                     [styles['yakit-tag-small']]: size === 'small',
                     [styles['yakit-tag-large']]: size === 'large',
+                    [styles['yakit-tag-default-color']]: !color,
                     [styles['yakit-tag-danger']]: color === 'danger',
                     [styles['yakit-tag-info']]: color === 'info',
-                    [styles['yakit-tag-success']]: color === 'success',
+                    [styles['yakit-tag-success']]:
+                        color === 'success' || color === 'green',
                     [styles['yakit-tag-warning']]: color === 'warning',
-                    [styles['yakit-tag-serious']]: color === 'serious',
+                    [styles['yakit-tag-serious']]:
+                        color === 'serious' || color === 'red',
                     [styles['yakit-tag-yellow']]: color === 'yellow',
                     [styles['yakit-tag-purple']]: color === 'purple',
                     [styles['yakit-tag-blue']]: color === 'blue',
                     [styles['yakit-tag-cyan']]: color === 'cyan',
                     [styles['yakit-tag-bluePurple']]: color === 'bluePurple',
                     [styles['yakit-tag-white']]: color === 'white',
-                    [styles['yakit-tag-disable']]: !!disable,
+                    [styles['yakit-tag-lakeBlue']]: color === 'lakeBlue',
+                    [styles['yakit-tag-border']]: border !== false,
+                    [styles['yakit-tag-fullRadius']]: !!fullRadius,
                 },
                 className,
             )}
@@ -78,7 +85,13 @@ export const YakitTag: React.FC<YakitTagProps> = (props) => {
                 if (props.onClose) props.onClose(e);
             }}
         >
-            {(enableCopy && copyText) || props.children}
+            {enableCopy && copyText ? (
+                <span className="content-ellipsis" title={copyText}>
+                    {copyText}
+                </span>
+            ) : (
+                props.children
+            )}
         </Tag>
     );
 };
@@ -91,43 +104,45 @@ export const CopyComponents: React.FC<CopyComponentsProps> = (props) => {
         e.stopPropagation();
         if (!props.copyText) return;
         setLoading(true);
-        // ipcRenderer.invoke("set-copy-clipboard", props.copyText)
-        setTimeout(() => {
-            setLoading(false);
-            setIsShowSure(true);
-            setTimeout(() => {
-                setIsShowSure(false);
-            }, 2000);
-            success('复制成功');
-        }, 1000);
+        setClipboardText(props.copyText, {
+            hiddenHint: true,
+            finalCallback: () => {
+                setTimeout(() => {
+                    setLoading(false);
+                    setIsShowSure(true);
+                    setTimeout(() => {
+                        setIsShowSure(false);
+                    }, 2000);
+                    success('复制成功');
+                }, 1000);
+            },
+        });
         if (props.onAfterCopy) props.onAfterCopy(e);
     });
-
-    const targetRender = useMemo(() => {
-        return match({ loading, isShowSure })
-            .with({ loading: true }, () => (
-                <LoadingOutlined
-                    style={{ color: 'var(--Colors-Use-Main-Primary)' }}
-                />
-            ))
-            .with({ loading: false, isShowSure: true }, () => (
-                <CheckOutlined style={{ color: 'var(--yakit-success-5)' }} />
-            ))
-            .with({ loading: false, isShowSure: false }, () => (
-                <DocumentDuplicateSvgIcon
-                    style={{
-                        color: iconColor || 'var(--Colors-Use-Main-Primary)',
-                    }}
-                />
-            ))
-            .exhaustive();
-    }, [loading, isShowSure, iconColor]);
     return (
         <div
             className={classNames(styles['yakit-copy'], className || '')}
             onClick={onCopy}
         >
-            {targetRender}
+            {(loading && (
+                <LoadingOutlined
+                    style={{ color: 'var(--Colors-Use-Main-Primary)' }}
+                />
+            )) ||
+                (isShowSure && (
+                    <CheckOutlined
+                        style={{
+                            color: 'var(--Colors-Use-Success-Primary)',
+                        }}
+                    />
+                )) || (
+                    <DocumentDuplicateSvgIcon
+                        style={{
+                            color:
+                                iconColor || 'var(--Colors-Use-Main-Primary)',
+                        }}
+                    />
+                )}
         </div>
     );
 };

@@ -40,7 +40,7 @@ export const createSSAReportRecord = (
     data: TSSAReportRecordCreateRequest,
 ): Promise<ResponseData<TSSAReportRecord>> =>
     axios.post<never, ResponseData<TSSAReportRecord>>(
-        '/ssa/report-records',
+        '/api/ssa/report-records',
         data,
     );
 
@@ -48,10 +48,10 @@ export const fetchSSAReportRecord = (
     id: number,
 ): Promise<ResponseData<TSSAReportRecordDetail>> =>
     axios.get<never, ResponseData<TSSAReportRecordDetail>>(
-        `/ssa/report-records/${id}`,
+        `/api/ssa/report-records/${id}`,
     );
 
 export const deleteSSAReportRecord = (
     id: number,
 ): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(`/ssa/report-records/${id}`);
+    axios.delete<never, ResponseData<boolean>>(`/api/ssa/report-records/${id}`);

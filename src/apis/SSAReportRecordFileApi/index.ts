@@ -13,7 +13,7 @@ export const querySSAReportRecordFiles = async (
     const res = await axios.get<
         never,
         ResponseData<TSSAReportRecordFileListPayload>
-    >(`/ssa/report-records/${reportRecordId}/files`);
+    >(`/api/ssa/report-records/${reportRecordId}/files`);
     return {
         ...res,
         data: {
@@ -27,7 +27,7 @@ export const createSSAReportRecordFile = (
     data: TSSAReportRecordFileCreateRequest,
 ): Promise<ResponseData<TSSAReportRecordFile>> =>
     axios.post<never, ResponseData<TSSAReportRecordFile>>(
-        `/ssa/report-records/${reportRecordId}/files`,
+        `/api/ssa/report-records/${reportRecordId}/files`,
         data,
     );
 
@@ -35,14 +35,14 @@ export const deleteSSAReportRecordFile = (
     fileId: number,
 ): Promise<ResponseData<boolean>> =>
     axios.delete<never, ResponseData<boolean>>(
-        `/ssa/report-record-files/${fileId}`,
+        `/api/ssa/report-record-files/${fileId}`,
     );
 
 export const downloadSSAReportRecordFile = (
     fileId: number,
 ): Promise<ResponseData<Blob>> =>
     axios.get<never, ResponseData<Blob>>(
-        `/ssa/report-record-files/${fileId}/download`,
+        `/api/ssa/report-record-files/${fileId}/download`,
         {
             responseType: 'blob',
             transformResponse: [

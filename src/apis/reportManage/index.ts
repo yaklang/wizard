@@ -12,11 +12,13 @@ import type {
 const getssetsProts = (
     data: TReportRequest,
 ): Promise<ResponseData<TReportResonse>> =>
-    axios.post<never, ResponseData<TReportResonse>>(`/report/items`, data);
+    axios.post<never, ResponseData<TReportResonse>>(`/api/report/items`, data);
 
 // 删除报告管理
 const deleteProts = (params: any): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(`/timeline/items`, { params });
+    axios.delete<never, ResponseData<boolean>>(`/api/timeline/items`, {
+        params,
+    });
 
 const getTimelinId = (
     id: number,
@@ -30,14 +32,14 @@ const getTimelinId = (
         ResponseData<{
             data: { type: string; data: { id: string; blocks: any[] } };
         }>
-    >(`/timeline/fetch?id=${id}`);
+    >(`/api/timeline/fetch?id=${id}`);
 
 // 获取 报告管理 任务组
 const getReportTaskGroups = (): Promise<
     ResponseData<{ list: Array<string> }>
 > =>
     axios.get<never, ResponseData<{ list: Array<string> }>>(
-        '/report/task-groups',
+        '/api/report/task-groups',
     );
 
 const getSensitiveMessagePage = (
@@ -46,7 +48,7 @@ const getSensitiveMessagePage = (
     axios.post<
         never,
         ResponseData<TableResponseData<TSensitiveMessageResponse[]>>
-    >('/assets/sensitive-info', data);
+    >('/api/assets/sensitive-info', data);
 
 // 更改敏感信息状态
 const postupdateStatus = (data: {
@@ -54,7 +56,7 @@ const postupdateStatus = (data: {
     status: number;
 }): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(
-        '/assets/sensitive-info/update-status',
+        '/api/assets/sensitive-info/update-status',
         data,
     );
 

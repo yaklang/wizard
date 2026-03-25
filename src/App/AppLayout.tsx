@@ -24,6 +24,7 @@ import { getLicense } from '@/apis/login';
 import { match } from 'ts-pattern';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { McpModal } from '@/utils/McpModel';
+import { resolveLicenseGateValue, shouldBypassLicense } from '@/utils/license';
 // import useLoginStore from './store/loginStore';
 
 const { Header, Content, Sider } = Layout;
@@ -40,14 +41,15 @@ const AppLayout = () => {
     const [headerTitle, setHeaderTitle] = useSafeState<
         Array<Record<'name' | 'path', string>> | undefined
     >([]);
+    const bypassLicense = shouldBypassLicense();
 
     const { permissionsSlice } = usePermissionsSlice();
 
     const { data: license, loading } = useRequest(async () => {
         const { data } = await getLicense();
         const { license } = data;
-        return license?.length > 0 ? license : undefined;
-    });
+        return resolveLicenseGateValue(license);
+    }, { manual: bypassLicense });
 
     // 路由重定向
     useEffect(() => {

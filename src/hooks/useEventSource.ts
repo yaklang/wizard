@@ -1,10 +1,12 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useLoginStore from '@/App/store/loginStore';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { noAuthCode } from '@/utils/axios';
 import { message } from 'antd';
 import { showErrorMessage } from '@/utils/showErrorMessage';
 import { getLoginOut } from '@/apis/login';
+import { useCreation, useMemoizedFn, useUpdateEffect } from 'ahooks';
+import useGetSetState from './useGetSetState';
 
 interface SSEHooksError {
     msg: string;
@@ -15,30 +17,68 @@ interface SSEHooksError {
 export interface SSEHookOptions<T> {
     onsuccess?: (data: T) => void;
     onerror?: (e: SSEHooksError) => void;
-    manual?: boolean; // 控制是否手动连接
-    maxRetries?: number; // 最大重试次数
+    onend?: () => void;
+    /** 控制是否手动连接(默认: false 自动连接) */
+    manual?: boolean;
+    /** 最大失败重试次数(默认: 5) */
+    maxRetries?: number;
+    /** 是否为AI Agent请求(AI请求头为agent, 默认为api) */
+    isAIAgent?: boolean;
 }
 
-const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
-    const store = useLoginStore.getState();
-    const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
-    const [loading, setLoading] = useState(true); // 新增 loading 状态
-    const [retryCount, setRetryCount] = useState(0); // 记录连接失败的次数
+type SSEConnStatusType = 'unlink' | 'link' | 'retry' | 'error';
+interface useEventSourceEvents {
+    /** 连接SSE中的加载状态 */
+    loading: boolean;
+    /** SSE的连接状态 */
+    connStatus: SSEConnStatusType;
+    /** 连接SSE(可指定目标地址, 如果url不为空, 则target参数不生效) */
+    connect: (target?: string) => void;
+    /** 断开SSE */
+    disconnect: () => void;
+}
 
-    // 中断标志位
-    const interruptedRef = useRef(false);
+/**
+ * @param url 连接的目标地址(可传空字符，通过释放的events里connect方法传入指定目标地址)
+ */
+function useEventSource<T>(
+    url: string,
+    options?: SSEHookOptions<T>,
+): useEventSourceEvents;
+
+function useEventSource<T>(url: string, options?: SSEHookOptions<T>) {
+    const store = useLoginStore.getState();
+
+    const retryCountMax = useCreation(() => {
+        return options?.maxRetries ?? 5;
+    }, [options?.maxRetries]);
+
+    // SSE加载中状态
+    const [loading, setLoading] = useState(true);
+    // SSE的连接状态
+    const [connStatus, setConnStatus, getConnStatus] = useGetSetState<
+        'unlink' | 'link' | 'retry' | 'error'
+    >('unlink');
+    /** SSE实例 */
+    const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
+
+    /** 已重试的连接次数 */
+    const retryCountRef = useRef(0);
 
     // 连接方法
-    const connect = useCallback(async () => {
-        if (
-            eventSourceRef.current ||
-            interruptedRef.current ||
-            (options?.maxRetries && retryCount >= options.maxRetries)
-        ) {
+    const connect = useMemoizedFn(async (target?: string) => {
+        if (!url && !target) {
+            showErrorMessage('连接地址不能为空');
             return;
         }
 
+        if (eventSourceRef.current || connStatus === 'link') {
+            return;
+        }
+
+        const targetUrl = url || target;
         setLoading(true); // 设置为加载中
+        retryCountRef.current = 0;
         const headers = {
             Authorization: store.token!,
             'Content-Type': 'text/event-stream',
@@ -46,18 +86,22 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
             Connection: 'keep-alive',
         };
 
-        const es = new EventSourcePolyfill(`api/${url}`, {
-            heartbeatTimeout: 60 * 1000 * 1.5,
-            withCredentials: true,
-            headers,
-        });
+        const es = new EventSourcePolyfill(
+            `${options?.isAIAgent ? 'agent' : 'api'}/${targetUrl}`,
+            {
+                heartbeatTimeout: 60 * 1000 * 1.5,
+                withCredentials: true,
+                headers,
+            },
+        );
 
         es.onopen = () => {
             setLoading(false); // 连接成功后停止加载
-            setRetryCount(0); // 重置失败次数
+            setConnStatus('link');
         };
 
         es.onmessage = (e) => {
+            if (!eventSourceRef.current) return;
             const data = JSON.parse(e.data);
             options?.onsuccess?.(data);
         };
@@ -68,65 +112,88 @@ const useEventSource = <T>(url: string, options?: SSEHookOptions<T>) => {
             if (code === noAuthCode) {
                 message.destroy();
                 showErrorMessage('登录已过期');
+                setConnStatus('error');
                 es.close();
                 await getLoginOut();
                 store.outLogin();
-            } else if (code === 500) {
+                options?.onend?.();
+            } else if (
+                code === 500 ||
+                code === 501 ||
+                code === 505 ||
+                (code >= 400 && code <= 499) ||
+                (code >= 300 && code <= 399)
+            ) {
                 message.destroy();
                 showErrorMessage('连接异常，请刷新页面后重试');
+                setConnStatus('error');
                 es.close();
+                options?.onend?.();
             } else {
-                setRetryCount((prevCount) => prevCount + 1); // 增加失败次数
-                if (
-                    options?.maxRetries &&
-                    retryCount + 1 >= options.maxRetries
-                ) {
+                if (retryCountRef.current >= retryCountMax) {
                     showErrorMessage('最大重试次数已达到，停止尝试连接');
+                    setConnStatus('retry');
                     es.close();
+                    options?.onend?.();
                 } else {
                     options?.onerror?.({
                         msg: statusText,
                         code,
                         type: e.type,
                     });
+                    // yakitNotify(
+                    //     'error',
+                    //     `连接失败: ${statusText}\n准备重试(当前重试次数: ${retryCountRef.current}/${retryCountMax})`,
+                    // );
                 }
+                retryCountRef.current += 1;
             }
             eventSourceRef.current = null;
             setLoading(false); // 连接失败后停止加载
         };
 
         eventSourceRef.current = es;
-    }, [url, store.token, retryCount, options?.maxRetries]);
+    });
 
     // 断开连接方法
-    const disconnect = useCallback(() => {
+    const disconnect = useMemoizedFn(() => {
         setLoading(false); // 停止加载
+        setConnStatus('unlink');
         if (eventSourceRef.current) {
-            interruptedRef.current = false; // 设置中断标志
             eventSourceRef.current.close();
             eventSourceRef.current = null;
+            options?.onend?.();
         }
-    }, []);
+    });
+
+    useUpdateEffect(() => {
+        if (getConnStatus() === 'link') {
+            // token变化后，SSE自动断开连接
+            disconnect();
+        }
+    }, [store?.token]);
 
     // 自动连接或者手动控制连接
     useEffect(() => {
-        if (!options?.manual && !interruptedRef.current) {
+        if (!options?.manual) {
             connect(); // 自动连接
         }
 
         return () => {
             disconnect(); // 组件卸载时断开
         };
-    }, [connect, disconnect, options?.manual]);
+    }, [options?.manual]);
 
-    // 重新连接方法
-    const reconnect = useCallback(() => {
-        interruptedRef.current = false; // 清除中断标志
-        setRetryCount(0); // 重置重试次数
-        connect(); // 重新尝试连接
-    }, [connect]);
+    const events: useEventSourceEvents = useCreation(() => {
+        return {
+            loading,
+            connStatus,
+            connect,
+            disconnect,
+        };
+    }, [loading, connStatus]);
 
-    return { loading, connect, disconnect, reconnect, retryCount }; // 返回 retryCount 供外部使用
-};
+    return events;
+}
 
 export default useEventSource;

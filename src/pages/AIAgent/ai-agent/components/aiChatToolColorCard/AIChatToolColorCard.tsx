@@ -1,0 +1,89 @@
+import { useCreation, useMemoizedFn } from 'ahooks';
+import type { AIChatToolColorCardProps } from './type';
+import type { ReactNode } from 'react';
+import React from 'react';
+import useChatIPCDispatcher from '../../useContext/ChatIPCContent/useDispatcher';
+import type { AIChatIPCSendParams } from '../../useContext/ChatIPCContent/ChatIPCContent';
+import styles from './AIChatToolColorCard.module.scss';
+import { OutlineSparklesColorsIcon } from '@/assets/icon/colors';
+import { OutlineArrownarrowrightIcon } from '@/assets/icon/outline';
+import { PreWrapper } from '../ToolInvokerCard';
+import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm';
+import type { AIAgentGrpcApi } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
+import { isToolStdoutStream } from '@/pages/AIAgent/ai-re-act/hooks/utils';
+
+/**
+ * @deprecated
+ * @name AI工具按钮对应图标 */
+const AIToolToIconMap: Record<string, ReactNode> = {
+    'enough-cancel': <OutlineArrownarrowrightIcon />,
+};
+/** @deprecated */
+export const AIChatToolColorCard: React.FC<AIChatToolColorCardProps> =
+    React.memo((props) => {
+        const { handleSend } = useChatIPCDispatcher();
+        const { toolCall, referenceNode } = props;
+        const { NodeId, content, selectors } = toolCall;
+        const title = useCreation(() => {
+            if (NodeId === 'call-tools') return 'Call-tools：参数生成中...';
+            if (isToolStdoutStream(NodeId)) return `${NodeId}：调用工具中...`;
+        }, [NodeId]);
+        const onToolExtra = useMemoizedFn(
+            (item: AIAgentGrpcApi.ReviewSelector) => {
+                switch (item.value) {
+                    case 'enough-cancel':
+                        onSkip(item);
+                        break;
+                    default:
+                        break;
+                }
+            },
+        );
+        const onSkip = useMemoizedFn((item: AIAgentGrpcApi.ReviewSelector) => {
+            if (!selectors?.InteractiveId) return;
+            const jsonInput = {
+                suggestion: item.value,
+            };
+            const params: AIChatIPCSendParams = {
+                value: JSON.stringify(jsonInput),
+                id: selectors.InteractiveId,
+            };
+            handleSend(params);
+        });
+        return (
+            <div className={styles['ai-chat-tool-card']}>
+                <div className={styles['card-header']}>
+                    <div className={styles['card-title']}>
+                        <OutlineSparklesColorsIcon />
+                        <div className="content-ellipsis">{title}</div>
+                    </div>
+                    {isToolStdoutStream(NodeId) && selectors?.selectors && (
+                        <div className={styles['card-extra']}>
+                            {selectors.selectors.map((item: any) => {
+                                return (
+                                    <YakitPopconfirm
+                                        title="跳过会取消工具调用，使用当前输出结果进行后续工作决策，是否确认跳过"
+                                        key={item.value}
+                                        onConfirm={() => onToolExtra(item)}
+                                    >
+                                        <div
+                                            key={item.value}
+                                            className={styles['extra-btn']}
+                                        >
+                                            <span>{item.prompt}</span>
+                                            {AIToolToIconMap[item.value]}
+                                        </div>
+                                    </YakitPopconfirm>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+                <div className={styles['card-content']}>
+                    {/* 工具紫色卡片所有nodeId都显示代码格式 */}
+                    <PreWrapper code={content} autoScrollBottom />
+                </div>
+                {referenceNode}
+            </div>
+        );
+    });

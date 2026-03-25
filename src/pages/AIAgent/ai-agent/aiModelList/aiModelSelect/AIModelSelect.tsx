@@ -1,0 +1,626 @@
+import React, { useEffect, useRef, useState } from 'react';
+import type {
+    AIModelItemProps,
+    AIModelSelectListProps,
+    AIModelSelectProps,
+    AISelectType,
+} from './AIModelSelectType';
+import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
+import {
+    useCreation,
+    useDebounceFn,
+    useInViewport,
+    useMemoizedFn,
+} from 'ahooks';
+import {
+    type AIGlobalConfig,
+    type AIModelConfig,
+    type AIModelTypeFileName,
+    grpcSetAIGlobalConfig,
+    isForcedSetAIModal,
+} from '../utils';
+import styles from './AIModelSelect.module.scss';
+import classNames from 'classnames';
+import type { GetAIModelAvailableTotalResponse } from '../../type/aiModel';
+import {
+    type AIModelPolicyEnum,
+    AIOnlineModelIconMap,
+    AIModelPolicyOptions,
+    AIAgentTabListEnum,
+    AIModelTypeInterFileNameEnum,
+    SwitchAIAgentTabEventEnum,
+} from '../../defaultConstant';
+import { defaultAIGlobalConfig } from '../../defaultConstant';
+import {
+    getTipByType,
+    OutlineAtomIconByStatus,
+    setAIModal,
+} from '../AIModelList';
+import { AIChatSelect } from '@/pages/AIAgent/ai-re-act/aiReviewRuleSelect/AIReviewRuleSelect';
+import useChatIPCDispatcher from '../../useContext/ChatIPCContent/useDispatcher';
+import useChatIPCStore from '../../useContext/ChatIPCContent/useStore';
+import {
+    OutlineCheckIcon,
+    OutlineCogIcon,
+    OutlineInformationcircleIcon,
+    OutlineRefreshIcon,
+} from '@/assets/icon/outline';
+// import {
+//     apiGetGlobalNetworkConfig,
+//     apiGetThirdPartyAppConfigTemplate,
+//     apiSetGlobalNetworkConfig,
+//     handleAIConfig,
+// } from '@/pages/spaceEngine/utils';
+import { cloneDeep, isEqual } from 'lodash';
+import { AIInputEventHotPatchTypeEnum } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
+import emiter from '@/utils/eventBus/eventBus';
+import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm';
+import type { AIAgentTriggerEventInfo } from '../../aiAgentType';
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
+import { Avatar, Tooltip } from 'antd';
+import { yakitNotify } from '@/utils/notification';
+import { getSetting } from '@/apis/AiEventApi';
+
+export const onOpenConfigModal = (mountContainer: any) => {
+    const m = YakitModalConfirm({
+        title: 'AI 模型未配置',
+        width: 420,
+        onOkText: '去配置',
+        content: <div>无可使用AI模型，请配置后使用</div>,
+        closable: false,
+        maskClosable: false,
+        keyboard: false,
+        cancelButtonProps: { style: { display: 'none' } },
+        getContainer: mountContainer,
+        onOk: () => {
+            setAIModal({
+                mountContainer,
+                onSuccess: () => {
+                    setTimeout(() => {
+                        emiter.emit('onRefreshAIModelList');
+                    }, 200);
+                },
+            });
+            m.destroy();
+        },
+    });
+};
+
+const modelType = ['高质模型', '轻量模型', '视觉模型'];
+export const AIModelSelect: React.FC<AIModelSelectProps> = React.memo(
+    (props) => {
+        const { isOpen = true, mountContainer } = props;
+        // #region AI model
+        const { chatIPCData } = useChatIPCStore();
+        const { handleSendConfigHotpatch } = useChatIPCDispatcher();
+
+        const [aiType, setAIType] = useState<AISelectType>('online'); // 暂时只有online，后续会加"local"
+
+        const [aiModelOptions, setAIModelOptions] =
+            useState<GetAIModelAvailableTotalResponse>({
+                onlineModelsTotal: 0,
+                localModelsTotal: 0,
+                onlineModels: cloneDeep(defaultAIGlobalConfig),
+                localModels: [],
+            });
+        const [onlineLoading, setOnlineLoading] = useState<boolean>(false);
+        const [open, setOpen] = useState<boolean>(false);
+
+        const refRef = useRef<HTMLDivElement>(null);
+        const aiGlobalConfigRef = useRef<AIGlobalConfig>();
+        const [inViewport = true] = useInViewport(refRef);
+
+        useEffect(() => {
+            if (!inViewport) return;
+            getSetting()
+                .then((res) => {
+                    if (!res) {
+                        getAIModelListOption();
+                        return;
+                    }
+                    try {
+                        // const cache = JSON.parse(res) as AIAgentSetting;
+                        if (typeof res !== 'object') return;
+                        getAIModelListOption(); // false
+                    } catch (error) {}
+                })
+                .catch(() => {});
+            emiter.on(
+                'onRefreshAvailableAIModelList',
+                onRefreshAvailableAIModelList,
+            );
+            emiter.on('aiModelSelectChange', onAIModelSelectChange);
+            return () => {
+                emiter.off(
+                    'onRefreshAvailableAIModelList',
+                    onRefreshAvailableAIModelList,
+                );
+                emiter.off('aiModelSelectChange', onAIModelSelectChange);
+            };
+        }, [inViewport]);
+
+        const onRefreshAvailableAIModelList = useMemoizedFn(() => {
+            setOnlineLoading(true);
+            getAIModelListOption();
+        });
+
+        /** 外界ai模型的执行变化,触发里面的热更新 */
+        const onAIModelSelectChange = useMemoizedFn((res: string) => {
+            try {
+                const data: AIAgentTriggerEventInfo = JSON.parse(res);
+                const { type, params } = data;
+                setAIType(type as AISelectType);
+                const fileName = params?.fileName as AIModelTypeFileName;
+                if (execute) {
+                    if (
+                        fileName ===
+                        AIModelTypeInterFileNameEnum.IntelligentModels
+                    ) {
+                        handleSendConfigHotpatch({
+                            hotpatchType:
+                                AIInputEventHotPatchTypeEnum.HotPatchType_AIService,
+                            params: {
+                                AIService: params?.AIService || '',
+                                AIModelName: params?.AIModelName || '',
+                            },
+                        });
+                    }
+                } else {
+                    onRefreshAvailableAIModelList();
+                }
+            } catch (error) {}
+        });
+
+        const getAIModelListOption = useDebounceFn(
+            () => {
+                isForcedSetAIModal({
+                    haveDataCall: (res) => {
+                        setAIModelOptions(res);
+                        aiGlobalConfigRef.current = cloneDeep(res.onlineModels);
+                    },
+                    pageKey: 'ai-agent',
+                    isOpen: isOpen,
+                    mountContainer: document.getElementById(
+                        'main-operator-page-body-ai-agent',
+                    ),
+                }).finally(() => {
+                    setTimeout(() => {
+                        setOnlineLoading(false);
+                    }, 200);
+                });
+            },
+            { wait: 200, leading: true },
+        ).run;
+
+        const onSetGlobalConfig = useMemoizedFn(() => {
+            grpcSetAIGlobalConfig(aiModelOptions.onlineModels).then(() => {
+                setAIModelOptions((v: any) => ({
+                    ...v,
+                    onlineModels: cloneDeep(aiModelOptions.onlineModels),
+                }));
+                aiGlobalConfigRef.current = cloneDeep(
+                    aiModelOptions.onlineModels,
+                );
+                emiter.emit('onRefreshAIModelList');
+            });
+        });
+        const onSetOpen = useMemoizedFn((v: boolean) => {
+            setOpen(v);
+
+            switch (aiType) {
+                case 'online':
+                    if (!v) {
+                        if (
+                            isEqual(
+                                aiGlobalConfigRef.current,
+                                aiModelOptions.onlineModels,
+                            )
+                        )
+                            break;
+                        if (execute) {
+                            onHotpatchAI();
+                        } else {
+                            onSetGlobalConfig();
+                        }
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        });
+        /** 热更新ai配置,热更新只支持 intelligentModels */
+        const onHotpatchAI = useMemoizedFn(() => {
+            if (intelligentModels.length === 0) return;
+            if (execute) {
+                handleSendConfigHotpatch({
+                    hotpatchType:
+                        AIInputEventHotPatchTypeEnum.HotPatchType_AIService,
+                    params: {
+                        AIService: intelligentModels[0]?.Provider.Type || '',
+                        AIModelName: intelligentModels[0]?.ModelName || '',
+                    },
+                });
+                setTimeout(() => {
+                    getAIModelListOption();
+                    emiter.emit('onRefreshAIModelList');
+                }, 500);
+            }
+        });
+
+        const isHaveData = useCreation(() => {
+            return (
+                aiModelOptions.onlineModelsTotal > 0 ||
+                aiModelOptions.localModels.length > 0
+            );
+        }, [
+            aiModelOptions.onlineModelsTotal,
+            aiModelOptions.localModels.length,
+        ]);
+
+        // #endregion
+
+        const renderContent = useMemoizedFn(() => {
+            switch (aiType) {
+                case 'online':
+                    return (
+                        <YakitSelect.Option
+                            value="select"
+                            label={
+                                <div className={styles['select-option']}>
+                                    {selectList.length > 1 ? (
+                                        <Avatar.Group>
+                                            {selectList.map((item, index) => (
+                                                <Tooltip
+                                                    key={index}
+                                                    title={`${modelType[index]}:${item.ModelName}`}
+                                                >
+                                                    <Avatar
+                                                        className={
+                                                            styles['model-item']
+                                                        }
+                                                        icon={getIconByAI(
+                                                            item.Provider.Type,
+                                                        )}
+                                                        size="small"
+                                                    />
+                                                </Tooltip>
+                                            ))}
+                                        </Avatar.Group>
+                                    ) : (
+                                        <>
+                                            {getIconByAI(
+                                                selectList[0]?.Provider.Type,
+                                            )}
+                                            <span
+                                                className={
+                                                    styles['select-option-text']
+                                                }
+                                                title={`${selectList[0]?.ModelName}`}
+                                            >
+                                                {selectList[0]?.ModelName}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            }
+                        >
+                            {selectList.length}
+                        </YakitSelect.Option>
+                    );
+                // TODO -
+                // case "local":
+                //     return (
+                //         <>
+                //             {aiModelOptions.localModels.map((nodeItem) => (
+                //                 <YakitSelect.Option key={nodeItem.Name} value={nodeItem.Name}>
+                //                     <AIModelItem value={nodeItem.Name} />
+                //                 </YakitSelect.Option>
+                //             ))}
+                //         </>
+                //     )
+                default:
+                    // eslint-disable-next-line react/jsx-no-useless-fragment
+                    return <></>;
+            }
+        });
+        const intelligentModels = useCreation(() => {
+            return aiModelOptions?.onlineModels?.IntelligentModels || [];
+        }, [aiModelOptions?.onlineModels?.IntelligentModels]);
+        const lightweightModels = useCreation(() => {
+            return aiModelOptions?.onlineModels?.LightweightModels || [];
+        }, [aiModelOptions?.onlineModels?.LightweightModels]);
+        const visionModels = useCreation(() => {
+            return aiModelOptions?.onlineModels?.VisionModels || [];
+        }, [aiModelOptions?.onlineModels?.VisionModels]);
+        const policy: AIModelPolicyEnum = useCreation(() => {
+            return aiModelOptions?.onlineModels
+                ?.RoutingPolicy as AIModelPolicyEnum;
+        }, [aiModelOptions?.onlineModels?.RoutingPolicy]);
+
+        const selectList = useCreation(() => {
+            const intelligentItem = intelligentModels[0];
+            const lightweightItem = lightweightModels[0];
+            const visionItem = visionModels[0];
+            const list: AIModelConfig[] = [];
+            // 顺序按照高质、轻量、视觉的优先级展示
+            intelligentItem && list.push(intelligentItem);
+            lightweightItem && list.push(lightweightItem);
+            visionItem && list.push(visionItem);
+            return list;
+        }, [intelligentModels, lightweightModels, visionModels]);
+        const execute = useCreation(() => {
+            return chatIPCData.execute;
+        }, [chatIPCData.execute]);
+        const onSelectPolicy = useMemoizedFn((value) => {
+            setAIModelOptions((old: any) => {
+                return {
+                    ...old,
+                    onlineModels: {
+                        ...old.onlineModels,
+                        RoutingPolicy: value,
+                    },
+                };
+            });
+        });
+        const onAddModel = useMemoizedFn(() => {
+            setAIModal({
+                mountContainer,
+                onSuccess: () => {
+                    emiter.emit('onRefreshAIModelList');
+                },
+            });
+        });
+        const onSelect = useMemoizedFn(
+            (
+                item: AIModelConfig,
+                options: {
+                    fileName: AIModelTypeFileName;
+                    index: number;
+                },
+            ) => {
+                const { fileName, index } = options;
+                setAIModelOptions((old: any) => {
+                    const newList = [...old.onlineModels[fileName]];
+                    newList.splice(index, 1);
+                    newList.unshift(item);
+                    return {
+                        ...old,
+                        onlineModels: {
+                            ...old.onlineModels,
+                            [fileName]: newList,
+                        },
+                    };
+                });
+            },
+        );
+        const openModelTab = useMemoizedFn(() => {
+            // if (currentRouteKey !== YakitRoute.AI_Agent) {
+            //     emiter.emit(
+            //         'openPage',
+            //         JSON.stringify({
+            //             route: YakitRoute.AI_Agent,
+            //         }),
+            //     );
+            //     setTimeout(() => {
+            //         onSwitchAIAgentTab();
+            //     }, 100);
+            // } else {
+            onSwitchAIAgentTab();
+            // }
+
+            yakitNotify('success', '已打开AI侧边栏模型配置');
+        });
+        const onSwitchAIAgentTab = useMemoizedFn(() => {
+            emiter.emit(
+                'switchAIAgentTab',
+                JSON.stringify({
+                    type: SwitchAIAgentTabEventEnum.SET_TAB_ACTIVE,
+                    params: {
+                        active: AIAgentTabListEnum.AI_Model,
+                        show: true,
+                    },
+                }),
+            );
+        });
+
+        const dropdownRender = useMemoizedFn(() => {
+            return (
+                <div className={styles['drop-select-wrapper']}>
+                    <div className={styles['select-title']}>
+                        <div className={styles['select-title-left']}>
+                            <span>AI 模型选择</span>
+                            {!execute && (
+                                <YakitSelect
+                                    size="small"
+                                    disabled={execute}
+                                    options={AIModelPolicyOptions}
+                                    value={policy}
+                                    onSelect={onSelectPolicy}
+                                    wrapperClassName={
+                                        styles['select-policy-wrapper']
+                                    }
+                                    dropdownClassName={
+                                        styles['select-policy-dropdown']
+                                    }
+                                    wrapperStyle={{
+                                        width: 80,
+                                        marginRight: 4,
+                                    }}
+                                    dropdownMatchSelectWidth={false}
+                                />
+                            )}
+                            <Tooltip title={getTipByType(policy)}>
+                                <OutlineInformationcircleIcon
+                                    className={styles['icon-info']}
+                                />
+                            </Tooltip>
+                        </div>
+                        <div className={styles['select-title-right']}>
+                            <Tooltip title="打开ai侧边栏模型配置">
+                                <YakitButton
+                                    size="small"
+                                    type="text2"
+                                    icon={<OutlineCogIcon />}
+                                    onClick={openModelTab}
+                                />
+                            </Tooltip>
+                            {aiType === 'online' && (
+                                <Tooltip title="刷新">
+                                    <YakitButton
+                                        size="small"
+                                        type="text2"
+                                        icon={<OutlineRefreshIcon />}
+                                        loading={onlineLoading}
+                                        onClick={() =>
+                                            onRefreshAvailableAIModelList()
+                                        }
+                                    />
+                                </Tooltip>
+                            )}
+                        </div>
+                    </div>
+                    <div className={styles['select-content']}>
+                        {!!intelligentModels.length && (
+                            <AIModelSelectList
+                                title="高质模型"
+                                subTitle="用于执行复杂度高的任务,对话框中可切换该模型"
+                                list={intelligentModels}
+                                onSelect={(item, index) =>
+                                    onSelect(item, {
+                                        fileName:
+                                            AIModelTypeInterFileNameEnum.IntelligentModels,
+                                        index,
+                                    })
+                                }
+                            />
+                        )}
+                        {!execute && !!lightweightModels.length && (
+                            <AIModelSelectList
+                                title="轻量模型"
+                                subTitle="用于执行简单任务和会话"
+                                list={lightweightModels}
+                                onSelect={(item, index) =>
+                                    onSelect(item, {
+                                        fileName:
+                                            AIModelTypeInterFileNameEnum.LightweightModels,
+                                        index,
+                                    })
+                                }
+                            />
+                        )}
+                        {!execute && !!visionModels.length && (
+                            <AIModelSelectList
+                                title="视觉模式"
+                                subTitle="用于识别图片等,生成知识库和任务执行都会用到"
+                                list={visionModels}
+                                onSelect={(item, index) =>
+                                    onSelect(item, {
+                                        fileName:
+                                            AIModelTypeInterFileNameEnum.VisionModels,
+                                        index,
+                                    })
+                                }
+                            />
+                        )}
+                    </div>
+                    <YakitButton
+                        type="secondary2"
+                        onClick={onAddModel}
+                        className={styles['add-model-btn']}
+                    >
+                        添加模型
+                    </YakitButton>
+                </div>
+            );
+        });
+        return (
+            <div ref={refRef}>
+                {isHaveData ? (
+                    <AIChatSelect
+                        dropdownRender={dropdownRender}
+                        // getList={() => getAIModelListOption()}
+                        open={open}
+                        setOpen={onSetOpen}
+                        optionLabelProp="label"
+                        value="select"
+                    >
+                        {renderContent()}
+                    </AIChatSelect>
+                ) : (
+                    // eslint-disable-next-line react/jsx-no-useless-fragment
+                    <></>
+                )}
+            </div>
+        );
+    },
+);
+
+const AIModelSelectList: React.FC<AIModelSelectListProps> = React.memo(
+    (props) => {
+        const { title, subTitle, list, onSelect } = props;
+        return (
+            <div className={styles['ai-model-select-list-wrapper']}>
+                <div className={styles['ai-model-select-list-wrapper-header']}>
+                    <div
+                        className={
+                            styles['ai-model-select-list-wrapper-header-title']
+                        }
+                    >
+                        {title}
+                        <Tooltip title={subTitle}>
+                            <OutlineInformationcircleIcon
+                                className={styles['icon-info']}
+                            />
+                        </Tooltip>
+                    </div>
+                </div>
+                <div className={styles['ai-online-model-list']}>
+                    {list.map((item: any, index: number) => (
+                        <div
+                            key={index}
+                            className={classNames(
+                                styles['ai-online-model-list-row'],
+                            )}
+                            onClick={() => onSelect(item, index)}
+                        >
+                            <AIModelItem
+                                value={item.ModelName}
+                                aiService={item.Provider.Type}
+                                checked={index === 0}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    },
+);
+
+const getIconByAI = (value: any) => {
+    return (
+        AIOnlineModelIconMap[value] || (
+            <OutlineAtomIconByStatus isRunning={true} size="small" />
+        )
+    );
+};
+const AIModelItem: React.FC<AIModelItemProps> = React.memo((props) => {
+    const { value, aiService, checked } = props;
+    const icon = useCreation(() => {
+        // eslint-disable-next-line react/jsx-no-useless-fragment
+        if (!aiService) return <></>;
+        return getIconByAI(aiService);
+    }, [aiService]);
+
+    return (
+        <div className={classNames(styles['select-option-wrapper'])}>
+            <div className={styles['select-option-left']}>
+                {icon}
+                <div className={styles['option-text']} title={value}>
+                    {value}
+                </div>
+            </div>
+            {checked && <OutlineCheckIcon className={styles['check-icon']} />}
+        </div>
+    );
+});

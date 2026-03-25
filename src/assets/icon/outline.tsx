@@ -8409,3 +8409,108 @@ const OutlineEarOff = () => (
 export const OutlineEarOffIcon = (props: Partial<IconProps>) => {
     return <Icon component={OutlineEarOff} {...props} />;
 };
+
+const OutlineAI = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+    >
+        <path
+            d="M18 10.5V20M4 20L5.38889 15M5.38889 15L8.03648 5.46868C8.30772 4.49221 9.69228 4.49221 9.96352 5.46868L12.6111 15M5.38889 15H12.6111M14 20L12.6111 15"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M22 7L22.1249 7.46386C22.3102 8.15215 22.8479 8.68979 23.5361 8.87511L24 9L23.5361 9.12489C22.8479 9.31021 22.3102 9.84785 22.1249 10.5361L22 11L21.8751 10.5361C21.6898 9.84785 21.1521 9.31021 20.4639 9.12489L20 9L20.4639 8.87511C21.1521 8.68979 21.6898 8.15215 21.8751 7.46386L22 7Z"
+            fill="currentColor"
+        />
+        <path
+            d="M18 0L18.2498 0.927722C18.6204 2.3043 19.6957 3.37957 21.0723 3.75021L22 4L21.0723 4.24979C19.6957 4.62043 18.6204 5.6957 18.2498 7.07228L18 8L17.7502 7.07228C17.3796 5.6957 16.3043 4.62043 14.9277 4.24979L14 4L14.9277 3.75021C16.3043 3.37957 17.3796 2.3043 17.7502 0.927723L18 0Z"
+            fill="currentColor"
+        />
+    </svg>
+);
+/*
+ * @description Outline/AI
+ */
+export const OutlineAIIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineAI} {...props} />;
+};
+
+const OutlineChevronsUpDown = () => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path
+            d="M7 15L12 20L17 15M7 9L12 4L17 9"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+/*
+ * @description Outline/ChevronsUpDown
+ */
+export const OutlineChevronsUpDownIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineChevronsUpDown} {...props} />;
+};
+
+const OutlineChevronsDownUp = () => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path
+            d="M7 20L12 15L17 20M7 4L12 9L17 4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+/*
+ * @description Outline/ChevronsDownUp
+ */
+export const OutlineChevronsDownUpIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineChevronsDownUp} {...props} />;
+};
+
+const OutlineMessageCirclePlus = () => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+    >
+        <path
+            d="M8 12H16M12 8V16M7.9 20C9.80858 20.9791 12.0041 21.2443 14.0909 20.7478C16.1777 20.2514 18.0186 19.0259 19.2818 17.2922C20.545 15.5586 21.1474 13.4308 20.9806 11.2922C20.8137 9.15366 19.8886 7.14502 18.3718 5.62824C16.855 4.11146 14.8464 3.1863 12.7078 3.01946C10.5693 2.85263 8.44147 3.45509 6.70782 4.71829C4.97417 5.98149 3.74869 7.82236 3.25222 9.90916C2.75575 11.996 3.02094 14.1915 4 16.1L2 22L7.9 20Z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+/**
+ * @description Outline/MessageCirclePlus
+ */
+export const OutlineMessageCirclePlusIcon = (props: Partial<IconProps>) => {
+    return <Icon component={OutlineMessageCirclePlus} {...props} />;
+};

@@ -14,7 +14,7 @@ const compileSSAIR = (
     data: TSSAIRCompileRequest,
 ): Promise<ResponseData<TSSAIRCompileResponse>> =>
     axios.post<never, ResponseData<TSSAIRCompileResponse>>(
-        `/ssa/project/${projectId}/ir/compile`,
+        `/api/ssa/project/${projectId}/ir/compile`,
         data,
     );
 
@@ -24,7 +24,7 @@ const getSSAIRHead = (
     params?: { series_key?: string },
 ): Promise<ResponseData<TSSAIRHeadResponse>> =>
     axios.get<never, ResponseData<TSSAIRHeadResponse>>(
-        `/ssa/project/${projectId}/ir/head`,
+        `/api/ssa/project/${projectId}/ir/head`,
         { params },
     );
 
@@ -34,7 +34,7 @@ const scanSSAIR = (
     data?: TSSAIRScanRequest,
 ): Promise<ResponseData<TSSATaskResponse>> =>
     axios.post<never, ResponseData<TSSATaskResponse>>(
-        `/ssa/project/${projectId}/ir/scan`,
+        `/api/ssa/project/${projectId}/ir/scan`,
         data || {},
     );
 

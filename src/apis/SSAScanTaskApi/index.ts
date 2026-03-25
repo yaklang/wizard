@@ -17,7 +17,7 @@ const scanSSAProject = (
     opts?: { scan_mode?: TSSAScanModeOverride },
 ): Promise<ResponseData<TSSATaskResponse>> =>
     axios.post<never, ResponseData<TSSATaskResponse>>(
-        `/ssa/project/${projectId}/scan`,
+        `/api/ssa/project/${projectId}/scan`,
         data || {},
         opts?.scan_mode && opts.scan_mode !== 'auto'
             ? { params: { scan_mode: opts.scan_mode } }
@@ -28,17 +28,17 @@ const scanSSAProject = (
 const querySSATasks = (
     params?: TSSATaskQueryParams,
 ): Promise<ResponseData<TSSATaskListResponse>> =>
-    axios.get<never, ResponseData<TSSATaskListResponse>>('/ssa/task', {
+    axios.get<never, ResponseData<TSSATaskListResponse>>('/api/ssa/task', {
         params,
     });
 
 // DELETE /ssa/task/{task_id} - 取消任务
 const cancelSSATask = (taskId: string): Promise<ResponseData<void>> =>
-    axios.delete<never, ResponseData<void>>(`/ssa/task/${taskId}`);
+    axios.delete<never, ResponseData<void>>(`/api/ssa/task/${taskId}`);
 
 // DELETE /ssa/task/{task_id}?delete_mode=record - 删除任务记录
 const deleteSSATaskRecord = (taskId: string): Promise<ResponseData<void>> =>
-    axios.delete<never, ResponseData<void>>(`/ssa/task/${taskId}`, {
+    axios.delete<never, ResponseData<void>>(`/api/ssa/task/${taskId}`, {
         params: { delete_mode: 'record' },
     });
 
@@ -46,7 +46,7 @@ const querySSAArtifactSummary = (
     taskId: string,
 ): Promise<ResponseData<TSSAArtifactMetricsSummary>> =>
     axios.get<never, ResponseData<TSSAArtifactMetricsSummary>>(
-        `/ssa/task/${taskId}/artifact/summary`,
+        `/api/ssa/task/${taskId}/artifact/summary`,
     );
 
 const querySSAArtifactEvents = (
@@ -54,7 +54,7 @@ const querySSAArtifactEvents = (
     params?: { stage?: string; limit?: number },
 ): Promise<ResponseData<TSSAArtifactEventsResponse>> =>
     axios.get<never, ResponseData<TSSAArtifactEventsResponse>>(
-        `/ssa/task/${taskId}/artifact/events`,
+        `/api/ssa/task/${taskId}/artifact/events`,
         { params },
     );
 

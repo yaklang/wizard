@@ -4,11 +4,11 @@ import Draggable from 'react-draggable';
 import type { DraggableEvent, DraggableData } from 'react-draggable';
 import type { HintModalProps, YakitHintModalProps } from './YakitHintType';
 import { ShieldExclamationSvgIcon } from '@/assets/newIcon';
-import { YakitButton } from '../YakitButton/YakitButton';
 
 import classNames from 'classnames';
 import styles from './YakitHint.module.scss';
 import { Resizable } from 're-resizable';
+import { YakitButton } from '../YakitButton/YakitButton';
 
 export const YakitHintModal: React.FC<YakitHintModalProps> = memo((props) => {
     const {

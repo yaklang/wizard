@@ -31,14 +31,14 @@ const queryCompileArtifactSummary = (): Promise<
     ResponseData<TCompileArtifactSummary>
 > =>
     axios.get<never, ResponseData<TCompileArtifactSummary>>(
-        '/ssa/compile-artifacts/summary',
+        '/api/ssa/compile-artifacts/summary',
     ).then((response) => unwrapNestedResponse<TCompileArtifactSummary>(response));
 
 const queryCompileArtifacts = (
     params?: TCompileArtifactListParams,
 ): Promise<ResponseData<TCompileArtifactListResponse>> =>
     axios.get<never, ResponseData<TCompileArtifactListResponse>>(
-        '/ssa/compile-artifacts',
+        '/api/ssa/compile-artifacts',
         { params },
     ).then((response) =>
         unwrapNestedResponse<TCompileArtifactListResponse>(response),
@@ -48,7 +48,7 @@ const fetchCompileArtifactDetail = (
     seriesKey: string,
 ): Promise<ResponseData<TCompileArtifactDetail>> =>
     axios.get<never, ResponseData<TCompileArtifactDetail>>(
-        '/ssa/compile-artifacts/detail',
+        '/api/ssa/compile-artifacts/detail',
         { params: { series_key: seriesKey } },
     ).then((response) => unwrapNestedResponse<TCompileArtifactDetail>(response));
 
@@ -56,7 +56,7 @@ const forceRebuildCompileArtifact = (
     data: TCompileArtifactRebuildRequest,
 ): Promise<ResponseData<TCompileArtifactRebuildResponse>> =>
     axios.post<never, ResponseData<TCompileArtifactRebuildResponse>>(
-        '/ssa/compile-artifacts/rebuild',
+        '/api/ssa/compile-artifacts/rebuild',
         data,
     ).then((response) =>
         unwrapNestedResponse<TCompileArtifactRebuildResponse>(response),

@@ -20,17 +20,20 @@ const getSSAProjects = (
     },
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSAProjectListResponse>> =>
-    axios.get<never, ResponseData<TSSAProjectListResponse>>(`/ssa/project`, {
-        params,
-        signal,
-    });
+    axios.get<never, ResponseData<TSSAProjectListResponse>>(
+        `/api/ssa/project`,
+        {
+            params,
+            signal,
+        },
+    );
 
 // GET /ssa/project/fetch - 获取项目详情
 const fetchSSAProject = (
     params: { id: number },
     signal?: AbortSignal,
 ): Promise<ResponseData<TSSAProject>> =>
-    axios.get<never, ResponseData<TSSAProject>>(`/ssa/project/fetch`, {
+    axios.get<never, ResponseData<TSSAProject>>(`/api/ssa/project/fetch`, {
         params,
         signal,
     });
@@ -39,14 +42,14 @@ const fetchSSAProject = (
 const postSSAProject = (
     data: TSSAProjectRequest,
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>(`/ssa/project`, data);
+    axios.post<never, ResponseData<boolean>>(`/api/ssa/project`, data);
 
 // DELETE /ssa/project - 删除项目
 const deleteSSAProject = (params: {
     id: number;
     delete_mode?: 'config-only' | 'cascade';
 }): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(`/ssa/project`, { params });
+    axios.delete<never, ResponseData<boolean>>(`/api/ssa/project`, { params });
 
 // POST /ssa/project/test-connection - 测试Git连接
 const testGitConnection = (data: {
@@ -62,7 +65,7 @@ const testGitConnection = (data: {
     };
 }): Promise<ResponseData<{ success: boolean; message: string }>> =>
     axios.post<never, ResponseData<{ success: boolean; message: string }>>(
-        `/ssa/project/test-connection`,
+        `/api/ssa/project/test-connection`,
         data,
     );
 
@@ -71,7 +74,7 @@ const getScanPolicyConfig = (
     signal?: AbortSignal,
 ): Promise<ResponseData<TScanPolicyConfig>> =>
     axios.get<never, ResponseData<TScanPolicyConfig>>(
-        `/ssa/scan-policy-config`,
+        `/api/ssa/scan-policy-config`,
         {
             signal,
         },

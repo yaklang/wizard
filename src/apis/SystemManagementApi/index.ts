@@ -12,7 +12,7 @@ import type {
 const getUserList = (
     params: UserRequest,
 ): Promise<ResponseData<TableResponseData<User>>> =>
-    axios.get<never, ResponseData<TableResponseData<User>>>(`/user`, {
+    axios.get<never, ResponseData<TableResponseData<User>>>(`/api/user`, {
         params,
     });
 
@@ -20,30 +20,32 @@ const getUserList = (
 const postAddUser = (
     data: TAddUserRequest,
 ): Promise<ResponseData<TAddUserResponse>> =>
-    axios.post<never, ResponseData<TAddUserResponse>>('/user', data);
+    axios.post<never, ResponseData<TAddUserResponse>>('/api/user', data);
 
 const putEditUser = (
     data: TAddUserRequest,
 ): Promise<ResponseData<TAddUserResponse>> =>
-    axios.put<never, ResponseData<TAddUserResponse>>('/user', data);
+    axios.put<never, ResponseData<TAddUserResponse>>('/api/user', data);
 
 // 重置密码
 const postUserReset = (data: {
     username: string;
 }): Promise<ResponseData<{ password: string; username: string }>> =>
     axios.post<never, ResponseData<{ password: string; username: string }>>(
-        `/user/reset?username=${data.username}`,
+        `/api/user/reset?username=${data.username}`,
     );
 
 // 添加用户
 const deleteUser = (username: string): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(`/user?username=${username}`);
+    axios.delete<never, ResponseData<boolean>>(
+        `/api/user?username=${username}`,
+    );
 
 // 操作用户权限 /user/operate
 const postUserOperate = (
     data: PostUserOperateRequest,
 ): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/user/operate', data);
+    axios.post<never, ResponseData<boolean>>('/api/user/operate', data);
 
 export {
     getUserList,

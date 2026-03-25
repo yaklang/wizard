@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router-dom';
+import { Navigate, type RouteObject } from 'react-router-dom';
 import AppLayout from '../AppLayout';
 import type { ReactNode } from 'react';
 import AuthRoute from './AuthRoute';
@@ -44,6 +44,9 @@ import { RuleEditor } from '@/pages/RuleManagement/RuleEditor';
 // SSARisk pages removed - now using SSARiskAudit
 import SSARiskAudit from '@/pages/SSARiskAudit';
 import TaskList from '@/pages/SSAScanTask/TaskList';
+import { AIAgent } from '@/pages/AIAgent/ai-agent/AIAgent';
+import AIAgentLog from '@/pages/AIAgent/ai-agent-log/AIAgentLog';
+import { TestAi } from '@/apis/AiEventApi/test';
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -159,7 +162,7 @@ const routers: RouteObjectRootMy[] = [
                 name: 'Codec',
                 key: 'codec',
                 icon: <PublicCodec />,
-                element: <CodecEntry />,
+                element: <TestAi />,
             },
             {
                 path: 'acti-chain',
@@ -343,11 +346,18 @@ const routers: RouteObjectRootMy[] = [
                     },
                 ],
             },
+            {
+                name: 'ai',
+                path: 'ai-aigent',
+                key: 'ai-agent',
+                element: <AIAgent />,
+            },
         ],
     },
     {
         path: '/login',
         element: <Login />,
+        // element: <Navigate to="/" replace />,
     },
     {
         path: '/license',
@@ -357,6 +367,10 @@ const routers: RouteObjectRootMy[] = [
     {
         path: '/network-err',
         element: <NetworkError />,
+    },
+    {
+        path: '/agent-log',
+        element: <AIAgentLog />,
     },
 ];
 

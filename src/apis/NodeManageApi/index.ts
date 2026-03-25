@@ -11,18 +11,24 @@ import type { Palm } from '@/gen/schema';
 // 获取节点管理 表格数据
 const getNodeManage = (
     params: QueryPalmNodeParams,
-): Promise<ResponseData<TableResponseData<Palm.Node>>> =>
-    axios.get<never, ResponseData<TableResponseData<Palm.Node>>>(`/node`, {
-        params,
-    });
+): Promise<ResponseData<TableResponseData<Palm.Node[]>>> =>
+    axios.get<never, ResponseData<TableResponseData<Palm.Node[]>>>(
+        `/api/node`,
+        {
+            params,
+        },
+    );
 
 // 删除节点
 const deleteNodeManage = (
     params: QueryPalmNodeParams & { node_ids?: string },
-): Promise<ResponseData<TableResponseData<Palm.Node>>> =>
-    axios.delete<never, ResponseData<TableResponseData<Palm.Node>>>(`/node`, {
-        params,
-    });
+): Promise<ResponseData<TableResponseData<Palm.Node[]>>> =>
+    axios.delete<never, ResponseData<TableResponseData<Palm.Node[]>>>(
+        `/api/node`,
+        {
+            params,
+        },
+    );
 
 // 编辑节点
 const postUpdateLocation = (data: {
@@ -30,14 +36,14 @@ const postUpdateLocation = (data: {
     nickname: string;
     node_id: string;
 }): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/node/update-location', data);
+    axios.post<never, ResponseData<boolean>>('/api/node/update-location', data);
 
 //  更新节点数据
 const postNodesDownloadDataRun = (
     data: TPostNodesDownloadDataRunRequest,
 ): Promise<ResponseData<boolean>> =>
     axios.post<never, ResponseData<boolean>>(
-        '/task/start/nodes-download-data/run',
+        '/api/task/start/nodes-download-data/run',
         data,
     );
 
@@ -51,14 +57,14 @@ const postHostAliveDetectionRun = (data: {
 > =>
     axios.post<
         never,
-        ResponseData<TableResponseData<PostHostAliveDetectionRunRequest>>
-    >('/task/start/host-alive-detection/run', data);
+        ResponseData<TableResponseData<PostHostAliveDetectionRunRequest[]>>
+    >('/api/task/start/host-alive-detection/run', data);
 
 const getScannerObservabilityOverview = (params?: {
     task_limit?: number;
 }): Promise<ResponseData<ScannerObservabilityOverview>> =>
     axios.get<never, ResponseData<ScannerObservabilityOverview>>(
-        '/ssa/observability/scanner/overview',
+        '/api/ssa/observability/scanner/overview',
         {
             params,
         },
@@ -70,7 +76,7 @@ const exportScannerObservabilityDiagnostics = (params?: {
     node_id?: string;
     task_id?: string;
 }): Promise<ResponseData<Blob>> =>
-    axios.get('/ssa/observability/scanner/diagnostics/export', {
+    axios.get('/api/ssa/observability/scanner/diagnostics/export', {
         params,
         responseType: 'blob',
         transformResponse: [

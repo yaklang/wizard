@@ -1,22 +1,25 @@
-import React, { type CSSProperties, type ReactNode, useMemo } from 'react';
-import { Modal, type ModalProps } from 'antd';
-import { YakitButton, type YakitButtonProp } from '../YakitButton/YakitButton';
+import type { CSSProperties, ReactNode } from 'react';
+import React, { useMemo } from 'react';
+import type { ModalProps } from 'antd';
+import { Modal } from 'antd';
+import { useMemoizedFn } from 'ahooks';
+import type { YakitButtonProp } from '../YakitButton/YakitButton';
+import { YakitButton } from '../YakitButton/YakitButton';
 import { OutlineXIcon } from '@/assets/icon/outline';
 import classNames from 'classnames';
 
 import styles from './yakitModal.module.scss';
 
 export interface YakitModalProp
-    extends Omit<
-        ModalProps,
-        'style' | 'cancelButtonProps' | 'okButtonProps' | 'okType'
-    > {
+    extends Omit<ModalProps, 'cancelButtonProps' | 'okButtonProps' | 'okType'> {
     headerStyle?: CSSProperties;
     footerStyle?: CSSProperties;
 
     cancelButtonProps?: YakitButtonProp;
     okButtonProps?: YakitButtonProp;
     okType?: YakitButtonProp['type'];
+
+    onCloseX?: ModalProps['onCancel'];
 
     /** @name 副标题 */
     subTitle?: ReactNode;
@@ -48,11 +51,12 @@ export const YakitModal: React.FC<YakitModalProp> = (props) => {
         title,
         footer,
         cancelButtonProps,
-        cancelText = '取消',
+        cancelText,
         okButtonProps,
         confirmLoading,
-        okText = '确认',
+        okText,
         okType,
+        onCloseX,
         onCancel,
         onOk,
         /** 自定义新增属性 ↓↓↓ */
@@ -73,9 +77,32 @@ export const YakitModal: React.FC<YakitModalProp> = (props) => {
         return styles['yakit-modal-small'];
     }, [size]);
 
-    const noFooterRender = useMemo(() => {
+    const onCancelX: YakitModalProp['onCancel'] = useMemoizedFn((e) => {
+        if (onCloseX) {
+            onCloseX(e);
+        } else {
+            onCancel?.(e);
+        }
+    });
+
+    const resultFooter = useMemo(() => {
+        if (footer === null) return null;
+        if (footer)
+            return (
+                <div
+                    style={footerStyle || undefined}
+                    className={styles['footer-body']}
+                >
+                    {footer as any}
+                </div>
+            );
+
         return (
-            <>
+            <div
+                style={footerStyle || undefined}
+                className={styles['footer-body']}
+            >
+                (
                 <div className={styles['footer-extra']}>
                     {footerExtra || null}
                 </div>
@@ -98,32 +125,36 @@ export const YakitModal: React.FC<YakitModalProp> = (props) => {
                         {okText}
                     </YakitButton>
                 </div>
-            </>
-        );
+                )
+            </div>
+        ) as React.ReactNode;
     }, [
-        footerExtra,
-        size,
-        onCancel,
         cancelButtonProps,
         cancelText,
-        confirmLoading,
-        okType,
-        onOk,
+        footer,
+        footerExtra,
         okButtonProps,
         okText,
+        okType,
+        onCancel,
+        onOk,
+        confirmLoading,
+        size,
     ]);
+
     return (
         <Modal
             {...resetProps}
             wrapClassName={classNames(
                 styles['yakit-modal-wrapper'],
+                'yakit-modal-wrapper-progress',
                 typeClass,
                 sizeClass,
                 wrapClassName,
             )}
             closable={false}
             footer={null}
-            onCancel={onCancel}
+            onCancel={onCancelX}
         >
             <div className={styles['yakit-modal-body']}>
                 {!hiddenHeader && (
@@ -141,10 +172,10 @@ export const YakitModal: React.FC<YakitModalProp> = (props) => {
                         )}
                         {closable && (
                             <YakitButton
-                                type="text2"
+                                type="text"
                                 size={size === 'large' ? 'large' : 'middle'}
-                                icon={!closeIcon ? <OutlineXIcon /> : closeIcon}
-                                onClick={onCancel}
+                                icon={closeIcon ? closeIcon : <OutlineXIcon />}
+                                onClick={onCancelX}
                             />
                         )}
                     </div>
@@ -156,19 +187,7 @@ export const YakitModal: React.FC<YakitModalProp> = (props) => {
                 >
                     {children}
                 </div>
-
-                {footer === null ? null : (
-                    <div
-                        style={footerStyle || undefined}
-                        className={styles['footer-body']}
-                    >
-                        {!footer
-                            ? noFooterRender
-                            : typeof footer === 'function'
-                              ? null
-                              : footer}
-                    </div>
-                )}
+                {resultFooter}
             </div>
         </Modal>
     );
