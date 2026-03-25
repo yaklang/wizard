@@ -33,6 +33,8 @@ import { YakitAutoComplete } from '../YakitUI/YakitAutoComplete/YakitAutoComplet
 import { YakitSpin } from '../YakitUI/YakitSpin/YakitSpin';
 import { AIConfigAPIKeyFormItem } from '@/pages/AIAgent/ai-agent/aiModelList/aiModelForm/AIModelForm';
 import type { YakitSelectProps } from '../YakitUI/YakitSelect/YakitSelectType';
+import { postSettingAimodelsGet } from '@/apis/AiEventApi';
+import { yakitNotify } from '@/utils/notification';
 
 export interface ThirdPartyAppConfigItemTemplate {
     Required: boolean;
@@ -214,20 +216,22 @@ export const NewThirdPartyApplicationConfigBase: React.FC<NewThirdPartyApplicati
                         },
                     );
                 } else {
-                    // ipcRenderer
-                    //     .invoke('GetThirdPartyAppConfigTemplate')
-                    //     .then((res: GetThirdPartyAppConfigTemplateResponse) => {
-                    //         const templates = res.Templates;
-                    //         let newOptions: SelectOptionsProps[] = [];
-                    //         setTemplates(templates);
-                    //         newOptions = templates
-                    //             .filter((item) => item.Type !== 'ai')
-                    //             .map((item) => ({
-                    //                 label: item.Verbose,
-                    //                 value: item.Name,
-                    //             }));
-                    //         setOptions(newOptions);
-                    //     });
+                    grpcGetAIThirdPartyAppConfigTemplate().then(
+                        (res: GetThirdPartyAppConfigTemplateResponse) => {
+                            const templates = res.Templates;
+                            let newOptions: SelectOptionsProps[] = [];
+                            setTemplates(templates);
+                            newOptions = templates
+                                // eslint-disable-next-line max-nested-callbacks
+                                .filter((item) => item.Type !== 'ai')
+                                // eslint-disable-next-line max-nested-callbacks
+                                .map((item) => ({
+                                    label: item.Verbose,
+                                    value: item.Name,
+                                }));
+                            setOptions(newOptions);
+                        },
+                    );
                 }
             }, [isOnlyShowAiType]);
 
@@ -249,42 +253,44 @@ export const NewThirdPartyApplicationConfigBase: React.FC<NewThirdPartyApplicati
                     useMemoizedFn(() => {
                         if (!execModelNameOption.current) return;
                         setModelOptionLoading(true);
-                        // const v = form.getFieldsValue();
-                        // ipcRenderer
-                        //     .invoke('ListAiModel', {
-                        //         Config: JSON.stringify(v),
-                        //     })
-                        //     .then((res) => {
-                        //         if (!execModelNameOption.current) return;
-                        //         const modalNamelist: SelectOptionsProps[] =
-                        //             res.ModelName.map((modelName: string) => ({
-                        //                 label: modelName,
-                        //                 value: modelName,
-                        //             }));
-                        //         const name = getModelNameDefaultName();
-                        //         // 确保默认值在选项里
-                        //         const hasDefault = modalNamelist.some(
-                        //             (item) => item.value === name,
-                        //         );
-                        //         const newOptions = hasDefault
-                        //             ? modalNamelist
-                        //             : name
-                        //               ? [
-                        //                     { label: name, value: name },
-                        //                     ...modalNamelist,
-                        //                 ]
-                        //               : modalNamelist;
-                        //         setModelNameAllOptions(newOptions);
-                        //         yakitNotify('success', '获取成功');
-                        //     })
-                        //     .catch((error) => {
-                        //         if (!execModelNameOption.current) return;
-                        //         yakitNotify('error', error + '');
-                        //         handleDefaultModalNameOption();
-                        //     })
-                        //     .finally(() => {
-                        //         setModelOptionLoading(false);
-                        //     });
+
+                        const v = form.getFieldsValue();
+                        postSettingAimodelsGet({
+                            Config: JSON.stringify(v),
+                        })
+                            .then((res) => {
+                                if (!execModelNameOption.current) return;
+                                const modalNamelist: SelectOptionsProps[] =
+                                    // eslint-disable-next-line max-nested-callbacks
+                                    res.ModelName.map((modelName: string) => ({
+                                        label: modelName,
+                                        value: modelName,
+                                    }));
+                                const name = getModelNameDefaultName();
+                                // 确保默认值在选项里
+                                const hasDefault = modalNamelist.some(
+                                    // eslint-disable-next-line max-nested-callbacks
+                                    (item) => item.value === name,
+                                );
+                                const newOptions = hasDefault
+                                    ? modalNamelist
+                                    : name
+                                      ? [
+                                            { label: name, value: name },
+                                            ...modalNamelist,
+                                        ]
+                                      : modalNamelist;
+                                setModelNameAllOptions(newOptions);
+                                yakitNotify('success', '获取成功');
+                            })
+                            .catch((error) => {
+                                if (!execModelNameOption.current) return;
+                                yakitNotify('error', error);
+                                handleDefaultModalNameOption();
+                            })
+                            .finally(() => {
+                                setModelOptionLoading(false);
+                            });
                     }),
                     { wait: 500 },
                 );

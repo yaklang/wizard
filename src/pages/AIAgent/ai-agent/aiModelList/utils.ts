@@ -1,16 +1,10 @@
 import type { APIFunc, APINoRequestFunc } from '@/apiUtils/type';
 import { yakitNotify } from '@/utils/notification';
 import type {
-    ClearAllModelsRequest,
-    InstallLlamaServerRequest,
-    GeneralResponse,
-    StartLocalModelRequest,
     StartedLocalModelInfo,
     IsForcedSetAIModalRequest,
     GetAIModelAvailableTotalResponse,
 } from '../type/aiModel';
-import omit from 'lodash/omit';
-
 import { onOpenConfigModal } from './aiModelSelect/AIModelSelect';
 
 import {
@@ -24,6 +18,11 @@ import {
 import type { KVPair } from '../../enums/external';
 import type { ThirdPartyApplicationConfig } from '@/compoments/configNetwork/ConfigNetworkPage';
 import type { GetThirdPartyAppConfigTemplateResponse } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig';
+import {
+    getSettingAiconfig,
+    postSettingAiconfig,
+    postSettingAppconfigsTemplateGet,
+} from '@/apis/AiEventApi';
 
 export const AI_API_TYPE_OPTIONS = ['chat_completions', 'responses'] as const;
 export type AIAPIType = (typeof AI_API_TYPE_OPTIONS)[number];
@@ -32,67 +31,6 @@ export const normalizeAIAPIType = (value?: string): AIAPIType => {
     return AI_API_TYPE_OPTIONS.includes(value as AIAPIType)
         ? (value as AIAPIType)
         : DEFAULT_AI_API_TYPE;
-};
-
-export const grpcInstallLlamaServer: APIFunc<
-    InstallLlamaServerRequest,
-    null
-> = (params, hiddenError) => {
-    return new Promise((resolve, reject) => {
-        const token = params.token;
-        const value = omit(params, 'token');
-        console.log('grpcInstallLlamaServer', value, token, hiddenError);
-        reject(new Error('grpcInstallLlamaServer 失败'));
-        // ipcRenderer
-        //     .invoke('InstallLlamaServer', value, token)
-        //     .then(resolve)
-        //     .catch((err: any) => {
-        //         if (!hiddenError)
-        //             yakitNotify('error', 'grpcInstallLlamaServer 失败:' + err);
-        //         reject(err);
-        //     });
-    });
-};
-
-export const grpcCancelInstallLlamaServer: APIFunc<string, null> = (
-    token,
-    hiddenError,
-) => {
-    return new Promise((resolve, reject) => {
-        console.log('grpcCancelInstallLlamaServer', token, hiddenError);
-        reject(new Error('grpcCancelInstallLlamaServer 失败'));
-        // ipcRenderer
-        //     .invoke('cancel-InstallLlamaServer', token)
-        //     .then(resolve)
-        //     .catch((err: any) => {
-        //         if (!hiddenError)
-        //             yakitNotify(
-        //                 'error',
-        //                 'grpcCancelInstallLlamaServer 失败:' + err,
-        //             );
-        //         reject(err);
-        //     });
-    });
-};
-
-export const grpcStartLocalModel: APIFunc<StartLocalModelRequest, null> = (
-    params,
-    hiddenError,
-) => {
-    return new Promise((resolve, reject) => {
-        console.log('grpcStartLocalModel', params, hiddenError);
-        reject(new Error('grpcStartLocalModel 失败'));
-        // const token = params.token;
-        // const value = omit(params, 'token');
-        // ipcRenderer
-        //     .invoke('StartLocalModel', value, token)
-        //     .then(resolve)
-        //     .catch((err: any) => {
-        //         if (!hiddenError)
-        //             yakitNotify('error', 'grpcStartLocalModel 失败:' + err);
-        //         reject(err);
-        //     });
-    });
 };
 
 /** 获取线上和本地已启动的AI模型 */
@@ -157,26 +95,6 @@ export const getAIModelAvailableInfo: APINoRequestFunc<
 //             });
 //     });
 // };
-
-/** 清空本地ai model */
-export const grpcClearAllModels: APIFunc<
-    ClearAllModelsRequest,
-    GeneralResponse
-> = (params, hiddenError) => {
-    return new Promise((resolve, reject) => {
-        console.log('grpcClearAllModels', params, hiddenError);
-
-        reject(new Error('grpcClearAllModels 失败'));
-        // ipcRenderer
-        //     .invoke('ClearAllModels', params)
-        //     .then(resolve)
-        //     .catch((err: any) => {
-        //         if (!hiddenError)
-        //             yakitNotify('error', 'grpcClearAllModels 失败:' + err);
-        //         reject(err);
-        //     });
-    });
-};
 
 const openedAIModalMap = new Map<string, boolean>();
 
@@ -265,16 +183,13 @@ export const grpcGetAIGlobalConfig: APINoRequestFunc<AIGlobalConfig> = (
     hiddenError,
 ) => {
     return new Promise((resolve, reject) => {
-        console.log('grpcGetAIGlobalConfig', hiddenError);
-        reject(new Error('grpcGetAIGlobalConfig 失败'));
-        // ipcRenderer
-        //     .invoke('GetAIGlobalConfig')
-        //     .then(resolve)
-        //     .catch((err: any) => {
-        //         if (!hiddenError)
-        //             yakitNotify('error', 'grpcGetAIGlobalConfig 失败:' + err);
-        //         reject(err);
-        //     });
+        getSettingAiconfig()
+            .then(resolve)
+            .catch((err: any) => {
+                if (!hiddenError)
+                    yakitNotify('error', 'grpcGetAIGlobalConfig 失败:' + err);
+                reject(err);
+            });
     });
 };
 
@@ -284,16 +199,13 @@ export const grpcSetAIGlobalConfig: APIFunc<AIGlobalConfig, null> = (
     hiddenError,
 ) => {
     return new Promise((resolve, reject) => {
-        console.log('grpcSetAIGlobalConfig', params, hiddenError);
-        reject(new Error('grpcSetAIGlobalConfig 失败'));
-        // ipcRenderer
-        //     .invoke('SetAIGlobalConfig', params)
-        //     .then(resolve)
-        //     .catch((err: any) => {
-        //         if (!hiddenError)
-        //             yakitNotify('error', 'grpcSetAIGlobalConfig 失败:' + err);
-        //         reject(err);
-        //     });
+        postSettingAiconfig(params)
+            .then(resolve)
+            .catch((err: any) => {
+                if (!hiddenError)
+                    yakitNotify('error', 'grpcSetAIGlobalConfig 失败:' + err);
+                reject(err);
+            });
     });
 };
 
@@ -362,18 +274,15 @@ export const grpcGetAIThirdPartyAppConfigTemplate: APINoRequestFunc<
     GetThirdPartyAppConfigTemplateResponse
 > = (hiddenError) => {
     return new Promise((resolve, reject) => {
-        console.log('grpcGetAIThirdPartyAppConfigTemplate', hiddenError);
-        reject(new Error('grpcGetAIThirdPartyAppConfigTemplate 失败'));
-        // ipcRenderer
-        //     .invoke('GetAIThirdPartyAppConfigTemplate')
-        //     .then(resolve)
-        //     .catch((err) => {
-        //         if (!hiddenError)
-        //             yakitNotify(
-        //                 'error',
-        //                 'grpcGetAIThirdPartyAppConfigTemplate 失败:' + err,
-        //             );
-        //         reject(err);
-        //     });
+        postSettingAppconfigsTemplateGet()
+            .then(resolve)
+            .catch((err) => {
+                if (!hiddenError)
+                    yakitNotify(
+                        'error',
+                        'grpcGetAIThirdPartyAppConfigTemplate 失败:' + err,
+                    );
+                reject(err);
+            });
     });
 };

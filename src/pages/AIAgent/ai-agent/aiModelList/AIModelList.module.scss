@@ -340,5 +340,8 @@
         .ant-form-item {
             margin-bottom: 0;
         }
+        .ant-form-item-label > label {
+            height: 22px;
+        }
     }
 }

@@ -115,17 +115,16 @@ export const AIModelSelect: React.FC<AIModelSelectProps> = React.memo(
             getSetting()
                 .then((res) => {
                     if (!res) {
-                        getAIModelListOption(true);
+                        getAIModelListOption();
                         return;
                     }
                     try {
                         // const cache = JSON.parse(res) as AIAgentSetting;
                         if (typeof res !== 'object') return;
-                        getAIModelListOption(!res.AIModelName); // false
+                        getAIModelListOption(); // false
                     } catch (error) {}
                 })
                 .catch(() => {});
-            getAIModelListOption();
             emiter.on(
                 'onRefreshAvailableAIModelList',
                 onRefreshAvailableAIModelList,

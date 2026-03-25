@@ -6,14 +6,13 @@ import React, {
     useState,
 } from 'react';
 import type {
-    AILocalModelListItemPromptHintProps,
-    AILocalModelListRefProps,
     AIModelActionProps,
     AIModelListProps,
     AIOnlineModelListItemProps,
     AIOnlineModelListProps,
     AIOnlineModelListRefProps,
     AIOnlineModelProps,
+    AIOnlineModeSettingProps,
     OutlineAtomIconByStatusProps,
 } from './AIModelListType';
 import styles from './AIModelList.module.scss';
@@ -27,12 +26,11 @@ import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin';
 import {
     type AIGlobalConfig,
     type AIModelConfig,
-    grpcClearAllModels,
     grpcGetAIGlobalConfig,
     grpcSetAIGlobalConfig,
     resetForcedAIModalFlag,
 } from './utils';
-import { Divider, Tooltip } from 'antd';
+import { Divider, Form, Tooltip } from 'antd';
 import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
 import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
 import {
@@ -43,23 +41,26 @@ import {
     OutlineRefreshIcon,
     OutlineTrashIcon,
     OutlineCheckIcon,
+    OutlineCogIcon,
 } from '@/assets/icon/outline';
 import { showYakitModal } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm';
 import {
     AIModelPolicyEnum,
+    AIModelPolicyOptions,
     AIModelTypeEnum,
     AIModelTypeInterFileNameEnum,
     AIOnlineModelIconMap,
 } from '../defaultConstant';
 import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm';
 import classNames from 'classnames';
-import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint';
-import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox';
 // import { onOpenLocalFileByPath } from '@/pages/notepadManage/notepadManage/utils';
 import emiter from '@/utils/eventBus/eventBus';
 import type { AIModelFormProps } from './aiModelForm/AIModelFormType';
 import { AIModelForm, getModelTypeByFileName } from './aiModelForm/AIModelForm';
 import { yakitNotify } from '@/utils/notification';
+import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover';
+import { YakitRadioButtons } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtons';
+import { YakitSwitch } from '@/compoments/YakitUI/YakitSwitch/YakitSwitch';
 
 interface ThirdPartyApplicationConfig {
     [key: string]: any;
@@ -190,10 +191,7 @@ export const onSelectAIModel = (data: {
 const AIModelList: React.FC<AIModelListProps> = React.memo((props) => {
     const { mountContainer } = props;
     const [onlineTotal, setOnlineTotal] = useState<number>(0);
-    const [removeVisible, setRemoveVisible] = useState<boolean>(false);
-
     const onlineRef = useRef<AIOnlineModelListRefProps>(null);
-    const localRef = useRef<AILocalModelListRefProps>(null);
     const onlineListRef = useRef<HTMLDivElement>(null);
     const [inViewport = true] = useInViewport(onlineListRef);
 
@@ -235,16 +233,6 @@ const AIModelList: React.FC<AIModelListProps> = React.memo((props) => {
     const onClearOnline = useMemoizedFn(() => {
         onlineRef.current?.onRemoveAll();
     });
-    const onClearLocal = useMemoizedFn(() => {
-        return grpcClearAllModels({ DeleteSourceFile: false }).then(() => {
-            localRef.current?.onRefresh();
-            setRemoveVisible(false);
-        });
-    });
-    const onCancelRemove = useMemoizedFn(() => {
-        setRemoveVisible(false);
-        localRef.current?.onRefresh();
-    });
     return (
         <div className={styles['ai-model-list-wrapper']} ref={onlineListRef}>
             <div className={styles['ai-model-list-header']}>
@@ -255,6 +243,7 @@ const AIModelList: React.FC<AIModelListProps> = React.memo((props) => {
                     <div className={styles['ai-model-list-total']}>{total}</div>
                 </div>
                 <div className={styles['ai-model-list-header-right']}>
+                    <AIOnlineModeSetting onRefresh={onRefresh} />
                     <Tooltip title="添加">
                         <YakitButton
                             type="text2"
@@ -287,14 +276,6 @@ const AIModelList: React.FC<AIModelListProps> = React.memo((props) => {
                 onAdd={onAdd}
                 mountContainer={mountContainer}
             />
-            {removeVisible && (
-                <AILocalModelListItemPromptHint
-                    title="清空模型"
-                    content="确认要删除所有下载和添加的模型吗？确认删除源文件则自定义添加的模型文件会被一起删除"
-                    onOk={onClearLocal}
-                    onCancel={onCancelRemove}
-                />
-            )}
         </div>
     );
 });
@@ -316,6 +297,91 @@ export const getTipByType = (routingPolicy: AIModelPolicyEnum) => {
             return null;
     }
 };
+
+const AIOnlineModeSetting: React.FC<AIOnlineModeSettingProps> = React.memo(
+    (props) => {
+        const { onRefresh } = props;
+        const [visible, setVisible] = useState<boolean>(false);
+        const configRef = useRef<AIGlobalConfig>();
+        const [form] = Form.useForm();
+        const routingPolicy = Form.useWatch('RoutingPolicy', form);
+
+        const getList = useMemoizedFn(() => {
+            grpcGetAIGlobalConfig().then((res) => {
+                configRef.current = res;
+                form.setFieldsValue({
+                    RoutingPolicy:
+                        res.RoutingPolicy || AIModelPolicyEnum.PolicyAuto,
+                    DisableFallback: res.DisableFallback,
+                });
+            });
+        });
+
+        const onSetConfig = useMemoizedFn((visible: boolean) => {
+            setVisible(visible); // 不管是否保存成功,都设置
+            if (visible) {
+                getList();
+                return;
+            }
+
+            const values = form.getFieldsValue();
+            if (!configRef.current) {
+                yakitNotify('error', '配置更新失败,未获取到全局ai配置,请重试');
+                return;
+            }
+            if (
+                configRef.current.RoutingPolicy === values.RoutingPolicy &&
+                configRef.current.DisableFallback === values.DisableFallback
+            ) {
+                return;
+            }
+            const config: AIGlobalConfig = {
+                ...configRef.current,
+                RoutingPolicy: values.RoutingPolicy,
+                DisableFallback: values.DisableFallback,
+            };
+            grpcSetAIGlobalConfig(config).then(() => {
+                onRefresh();
+            });
+        });
+        return (
+            <YakitPopover
+                content={
+                    <div className={styles['ai-online-mode-setting-popover']}>
+                        <Form
+                            form={form}
+                            labelCol={{ span: 8 }}
+                            wrapperCol={{ span: 16 }}
+                        >
+                            <Form.Item
+                                name="RoutingPolicy"
+                                label="调用模式"
+                                extra={<>{getTipByType(routingPolicy)}</>}
+                            >
+                                <YakitRadioButtons
+                                    buttonStyle="solid"
+                                    options={AIModelPolicyOptions}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                name="DisableFallback"
+                                valuePropName="checked"
+                                label="禁用降级到轻量模型"
+                            >
+                                <YakitSwitch size="middle" />
+                            </Form.Item>
+                        </Form>
+                    </div>
+                }
+                visible={visible}
+                onVisibleChange={onSetConfig}
+                placement="bottomRight"
+            >
+                <YakitButton type="text2" icon={<OutlineCogIcon />} />
+            </YakitPopover>
+        );
+    },
+);
 
 const AIOnlineModelList: React.FC<AIOnlineModelListProps> = React.memo(
     forwardRef((props, ref) => {
@@ -656,42 +722,5 @@ export const OutlineAtomIconByStatus: React.FC<OutlineAtomIconByStatusProps> =
             >
                 <OutlineAtomIcon />
             </div>
-        );
-    });
-const AILocalModelListItemPromptHint: React.FC<AILocalModelListItemPromptHintProps> =
-    React.memo((props) => {
-        const { title, content, onOk, onCancel } = props;
-        const [checked, setChecked] = useState<boolean>(false);
-        const [loading, setLoading] = useState<boolean>(false);
-
-        const handleOK = useMemoizedFn(() => {
-            setLoading(true);
-            onOk(checked).finally(() => {
-                // setTimeout(() => {
-                //     setLoading(false);
-                // }, 200);
-            });
-        });
-        const handleCancel = useMemoizedFn(() => {
-            onCancel();
-        });
-
-        return (
-            <YakitHint
-                visible={true}
-                title={title}
-                content={content}
-                okButtonProps={{ loading }}
-                onOk={handleOK}
-                onCancel={handleCancel}
-                footerExtra={
-                    <YakitCheckbox
-                        checked={checked}
-                        onChange={(e) => setChecked(e.target.checked)}
-                    >
-                        是否删除源文件
-                    </YakitCheckbox>
-                }
-            />
         );
     });

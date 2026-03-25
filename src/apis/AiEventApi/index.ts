@@ -18,6 +18,8 @@ import type {
     TPostSessionTitle,
 } from './type';
 import type { AIInputEvent } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi';
+import type { AIGlobalConfig } from '@/pages/AIAgent/ai-agent/aiModelList/utils';
+import type { GetThirdPartyAppConfigTemplateResponse } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig';
 
 // #region 会话Session相关接口
 /** 创建会话通道, 并生成session（也可传 run_id 恢复已有会话） */
@@ -114,8 +116,8 @@ const postSettingProvidersGet = (): Promise<ListAIProvidersResponse> =>
 // 按 provider 配置拉取模型列表
 const postSettingAimodelsGet = (
     data: TPostSettingAimodelsGetRequest,
-): Promise<AIResponseData<TPostSettingAimodelsGetResponse>> =>
-    axios.post<never, AIResponseData<TPostSettingAimodelsGetResponse>>(
+): Promise<TPostSettingAimodelsGetResponse> =>
+    axios.post<never, TPostSettingAimodelsGetResponse>(
         `/agent/setting/aimodels/get`,
         data,
     );
@@ -128,6 +130,22 @@ const postSettingAifocusGet = (
         `/agent/setting/aifocus/get`,
         data || {},
     );
+
+// 获取 AI 全局配置
+const getSettingAiconfig = (): Promise<AIGlobalConfig> =>
+    axios.get<never, AIGlobalConfig>(`/agent/setting/aiconfig`);
+
+// 更新 AI 全局配置
+const postSettingAiconfig = (data: AIGlobalConfig): Promise<null> =>
+    axios.post<AIGlobalConfig, null>(`/agent/setting/aiconfig`, data);
+
+// 获取 AI 第三方应用配置模板
+const postSettingAppconfigsTemplateGet =
+    (): Promise<GetThirdPartyAppConfigTemplateResponse> =>
+        axios.post<never, GetThirdPartyAppConfigTemplateResponse>(
+            `/agent/setting/appconfigs/template/get`,
+            {},
+        );
 
 export {
     postCreateSession,
@@ -143,4 +161,7 @@ export {
     postSettingAifocusGet,
     getSessionAll,
     postSessionTitle,
+    getSettingAiconfig,
+    postSettingAiconfig,
+    postSettingAppconfigsTemplateGet,
 };
