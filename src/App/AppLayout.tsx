@@ -46,9 +46,10 @@ const AppLayout = () => {
     const { permissionsSlice } = usePermissionsSlice();
 
     const { data: license, loading } = useRequest(async () => {
-        const { data } = await getLicense();
-        const { license } = data;
-        return resolveLicenseGateValue(license);
+        return undefined;
+        // const { data } = await getLicense();
+        // const { license } = data;
+        // return resolveLicenseGateValue(license);
     }, { manual: bypassLicense });
 
     // 路由重定向
@@ -99,9 +100,9 @@ const AppLayout = () => {
         !status && navigate(ROUTES.NETWORK_ERROR, { replace: true });
     }, [status]);
 
-    useEffect(() => {
-        license && navigate(ROUTES.LICENSE, { state: { license } });
-    }, [license]);
+    // useEffect(() => {
+    //     license && navigate(ROUTES.LICENSE, { state: { license } });
+    // }, [license]);
 
     // const timeoutRef = useRef<number | null>(null);
     // const STORAGE_KEY = 'lastActiveTime'; // 存储时间的 key

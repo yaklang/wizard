@@ -356,8 +356,8 @@ const routers: RouteObjectRootMy[] = [
     },
     {
         path: '/login',
-        element: <Login />,
-        // element: <Navigate to="/" replace />,
+        // element: <Login />,
+        element: <Navigate to="/" replace />,
     },
     {
         path: '/license',

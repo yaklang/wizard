@@ -1,10 +1,8 @@
 import type { APIFunc, APIOptionalFunc } from '@/apiUtils/type';
 import { yakitNotify } from '@/utils/notification';
 import type {
-    AIEventDeleteRequest,
     AIEventQueryRequest,
     AIEventQueryResponse,
-    AITaskDeleteRequest,
     ExportAILogsRequest,
     ExportAILogsResponse,
     GetRandomAIMaterialsRequest,
@@ -114,37 +112,37 @@ export const grpcQueryAIToolDetails: APIFunc<
 };
 
 /** @name 删除 AI 事件（支持 ClearAll） */
-export const grpcDeleteAIEvent: APIFunc<
-    AIEventDeleteRequest,
-    DbOperateMessage
-> = (param, hiddenError) => {
-    return new Promise(async (resolve, reject) => {
-        ipcRenderer
-            .invoke('DeleteAIEvent', param)
-            .then(resolve)
-            .catch((e) => {
-                if (!hiddenError)
-                    yakitNotify('error', '删除DeleteAIEvent失败:' + e);
-                reject(e);
-            });
-    });
-};
+// export const grpcDeleteAIEvent: APIFunc<
+//     AIEventDeleteRequest,
+//     DbOperateMessage
+// > = (param, hiddenError) => {
+//     return new Promise(async (resolve, reject) => {
+//         ipcRenderer
+//             .invoke('DeleteAIEvent', param)
+//             .then(resolve)
+//             .catch((e) => {
+//                 if (!hiddenError)
+//                     yakitNotify('error', '删除DeleteAIEvent失败:' + e);
+//                 reject(e);
+//             });
+//     });
+// };
 /** @name 删除 AI 任务（支持 ClearAll） */
-export const grpcDeleteAITask: APIFunc<
-    AITaskDeleteRequest,
-    DbOperateMessage
-> = (param, hiddenError) => {
-    return new Promise(async (resolve, reject) => {
-        ipcRenderer
-            .invoke('DeleteAITask', param)
-            .then(resolve)
-            .catch((e) => {
-                if (!hiddenError)
-                    yakitNotify('error', '删除DeleteAITask失败:' + e);
-                reject(e);
-            });
-    });
-};
+// export const grpcDeleteAITask: APIFunc<
+//     AITaskDeleteRequest,
+//     DbOperateMessage
+// > = (param, hiddenError) => {
+//     return new Promise(async (resolve, reject) => {
+//         ipcRenderer
+//             .invoke('DeleteAITask', param)
+//             .then(resolve)
+//             .catch((e) => {
+//                 if (!hiddenError)
+//                     yakitNotify('error', '删除DeleteAITask失败:' + e);
+//                 reject(e);
+//             });
+//     });
+// };
 // #endregion
 
 // #region AI-Forge 相关 grpc 接口

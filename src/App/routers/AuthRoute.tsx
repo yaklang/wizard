@@ -15,6 +15,7 @@ const AuthRoute: FC<AuthRouteType> = ({ children }) => {
     //   }
     // }, [token]);
 
-    return token ? children : <NoLoginPermission />;
+    return children
+    // return token ? children : <NoLoginPermission />;
 };
 export default AuthRoute;
