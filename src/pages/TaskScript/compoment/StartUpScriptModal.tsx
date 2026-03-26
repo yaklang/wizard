@@ -231,19 +231,15 @@ const StartUpScriptModal = forwardRef<
 
                 // 仅当 items.legacy 为 false 且有 script_name 时才请求解析，用返回的 cli_parameter 覆盖
                 if (items?.legacy && items?.script_name && !isEdit) {
-                    try {
-                        const detail = await detailRunAsync(
-                            items.script_name || '',
-                        );
-                        const yakScriptInfo = await runFetch({
-                            script_name: items?.script_name,
-                            script_content: detail?.script,
-                        });
-                        if (Array.isArray(yakScriptInfo?.cli_parameter)) {
-                            parameterList = yakScriptInfo.cli_parameter;
-                        }
-                    } catch (err) {
-                        console.error('获取或解析 legacy 脚本信息失败:', err);
+                    const detail = await detailRunAsync(
+                        items.script_name || '',
+                    );
+                    const yakScriptInfo = await runFetch({
+                        script_name: items?.script_name,
+                        script_content: detail?.script,
+                    });
+                    if (Array.isArray(yakScriptInfo?.cli_parameter)) {
+                        parameterList = yakScriptInfo.cli_parameter;
                     }
                 }
                 const targetSetFormData = buildInitialFormData(items);
