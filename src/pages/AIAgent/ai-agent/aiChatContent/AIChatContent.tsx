@@ -1,539 +1,484 @@
-import React, {
-    forwardRef,
-    type ReactNode,
-    useEffect,
-    useImperativeHandle,
-    useMemo,
-    useRef,
-    useState,
-} from 'react';
-import type { AIAgentTabPayload, AIChatContentProps } from './type';
-import styles from './AIChatContent.module.scss';
-import { ExpandAndRetract } from '@/pages/AIAgent/plugins/operator/expandAndRetract/ExpandAndRetract';
-import { useCreation, useInterval, useMemoizedFn } from 'ahooks';
-import { HorizontalScrollCard } from '@/pages/AIAgent/plugins/operator/horizontalScrollCard/HorizontalScrollCard';
-import classNames from 'classnames';
-import { YakitSideTab } from '@/compoments/yakitSideTab/YakitSideTab';
-import { AITabs, AITabsEnum } from '../defaultConstant';
-import type { AITabsEnumType } from '../aiAgentType';
-import type {
-    YakitSideTabProps,
-    YakitTabsProps,
-} from '@/compoments/yakitSideTab/YakitSideTabType';
-import { AIReActChat } from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChat';
+import React, { forwardRef, type ReactNode, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import type { AIAgentTabPayload, AIChatContentProps } from './type'
+import styles from './AIChatContent.module.scss'
+import { ExpandAndRetract } from '@/pages/AIAgent/plugins/operator/expandAndRetract/ExpandAndRetract'
+import { useCreation, useInterval, useMemoizedFn } from 'ahooks'
+import { HorizontalScrollCard } from '@/pages/AIAgent/plugins/operator/horizontalScrollCard/HorizontalScrollCard'
+import classNames from 'classnames'
+import { YakitSideTab } from '@/compoments/yakitSideTab/YakitSideTab'
+import { AITabs, AITabsEnum } from '../defaultConstant'
+import type { AITabsEnumType } from '../aiAgentType'
+import type { YakitSideTabProps, YakitTabsProps } from '@/compoments/yakitSideTab/YakitSideTabType'
+import { AIReActChat } from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChat'
 // import { AIFileSystemList } from '../components/aiFileSystemList/AIFileSystemList';
 import {
-    PluginExecuteHttpFlow,
-    VulnerabilitiesRisksTable,
-} from '@/pages/AIAgent/plugins/operator/pluginExecuteResult/PluginExecuteResult';
-import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty';
+  PluginExecuteHttpFlow,
+  VulnerabilitiesRisksTable,
+} from '@/pages/AIAgent/plugins/operator/pluginExecuteResult/PluginExecuteResult'
+import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty'
 // ipc 获取风险与漏洞的总数
 // import { apiQueryRisksTotalByRuntimeIds } from '@/pages/risks/YakitRiskTable/utils';
-import AIReActTaskChat from '@/pages/AIAgent/ai-re-act/aiReActTaskChat/AIReActTaskChat';
-import emiter from '@/utils/eventBus/eventBus';
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton';
-import {
-    OutlineClouddownloadIcon,
-    OutlineNewspaperIcon,
-    OutlinePlussmIcon,
-} from '@/assets/icon/outline';
-import { SolidChatalt2Icon } from '@/assets/icon/solid';
+import AIReActTaskChat from '@/pages/AIAgent/ai-re-act/aiReActTaskChat/AIReActTaskChat'
+import emiter from '@/utils/eventBus/eventBus'
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { OutlineClouddownloadIcon, OutlineNewspaperIcon, OutlinePlussmIcon } from '@/assets/icon/outline'
+import { SolidChatalt2Icon } from '@/assets/icon/solid'
 // import useAiChatLog from '@/hook/useAiChatLog/useAiChatLog.ts';
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
-import { grpcExportAILogs, grpcQueryHTTPFlows } from '../grpc';
-import useChatIPCStore from '../useContext/ChatIPCContent/useStore';
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag';
-import { onNewChat } from '../historyChat/HistoryChat';
-import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome';
-import { Divider } from 'antd';
-import useAIAgentStore from '../useContext/useStore';
-import { useAIChatResizeBox } from './hooks/useAIChatResizeBox';
-import { ExportAILogsModal } from '../components/ExportAILogsModal/ExportAILogsModal';
-import { failed, yakitNotify } from '@/utils/notification';
+import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
+import { grpcExportAILogs, grpcQueryHTTPFlows } from '../grpc'
+import useChatIPCStore from '../useContext/ChatIPCContent/useStore'
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import { onNewChat } from '../historyChat/HistoryChat'
+import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome'
+import { Divider } from 'antd'
+import useAIAgentStore from '../useContext/useStore'
+import { useAIChatResizeBox } from './hooks/useAIChatResizeBox'
+import { ExportAILogsModal } from '../components/ExportAILogsModal/ExportAILogsModal'
+import { failed, yakitNotify } from '@/utils/notification'
 import type {
-    AIHandleStartParams,
-    AIHandleStartResProps,
-    AIReActChatRefProps,
-} from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChatType';
-import AIContextToken from './AIContextToken/AIContextToken';
+  AIHandleStartParams,
+  AIHandleStartResProps,
+  AIReActChatRefProps,
+} from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChatType'
+import AIContextToken from './AIContextToken/AIContextToken'
+import showErrorMessage from '@/utils/showErrorMessage'
 // import OperationLog from '../components/aiFileSystemList/OperationLog/OperationLog';
 
 export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
-    forwardRef((props, ref) => {
-        const { onChat, onChatFromHistory } = props;
-        const { chatIPCData } = useChatIPCStore();
-        const {
-            runTimeIDs: initRunTimeIDs,
-            yakExecResult,
-            taskChat,
-            grpcFolders,
-            execute,
-        } = chatIPCData;
-        const { activeChat } = useAIAgentStore();
-        const [isExpand, setIsExpand] = useState<boolean>(true);
-        const [activeKey, setActiveKey] = useState<AITabsEnumType | undefined>(
-            AITabsEnum.Task_Content,
-        );
+  forwardRef((props, ref) => {
+    const { onChat, onChatFromHistory } = props
+    const { chatIPCData } = useChatIPCStore()
+    const { runTimeIDs: initRunTimeIDs, yakExecResult, taskChat, grpcFolders, execute } = chatIPCData
+    const { activeChat } = useAIAgentStore()
+    const [isExpand, setIsExpand] = useState<boolean>(true)
+    const [activeKey, setActiveKey] = useState<AITabsEnumType | undefined>(AITabsEnum.Task_Content)
 
-        const [tempRiskTotal, setTempRiskTotal] = useState<number>(0); // 在risk表没有展示之前得临时显示在tab上得小红点计数,现在不显示具体数量了
-        const [tempHTTPTotal, setTempHTTPTotal] = useState<number>(0); // HTTP流量表tab是否显示，大于0就显示
-        const [intervalRisk, setIntervalRisk] = useState<number | undefined>(
-            undefined,
-        );
-        const [intervalHTTP, setIntervalHTTP] = useState<number | undefined>(
-            undefined,
-        );
+    const [tempRiskTotal, setTempRiskTotal] = useState<number>(0) // 在risk表没有展示之前得临时显示在tab上得小红点计数,现在不显示具体数量了
+    const [tempHTTPTotal, setTempHTTPTotal] = useState<number>(0) // HTTP流量表tab是否显示，大于0就显示
+    const [intervalRisk, setIntervalRisk] = useState<number | undefined>(undefined)
+    const [intervalHTTP, setIntervalHTTP] = useState<number | undefined>(undefined)
 
-        const [showFreeChat, setShowFreeChat] = useState<boolean>(true); // 自由对话展开收起
-        const [timeLine, setTimeLine] = useState<boolean>(true);
-        const [runTimeIDs, setRunTimeIDs] = useState<string[]>(initRunTimeIDs);
+    const [showFreeChat, setShowFreeChat] = useState<boolean>(true) // 自由对话展开收起
+    const [timeLine, setTimeLine] = useState<boolean>(true)
+    const [runTimeIDs, setRunTimeIDs] = useState<string[]>(initRunTimeIDs)
 
-        const [exportModalVisible, setExportModalVisible] = useState(false);
-        const [exportLoading, setExportLoading] = useState(false);
+    const [exportModalVisible, setExportModalVisible] = useState(false)
+    const [exportLoading, setExportLoading] = useState(false)
 
-        const aiReActChatRef = useRef<AIReActChatRefProps>({
-            handleStart: () => {},
-            setMention: () => {},
-            setValue: () => {},
-            getValue: () => {},
-        });
+    const aiReActChatRef = useRef<AIReActChatRefProps>({
+      handleStart: () => {},
+      setMention: () => {},
+      setValue: () => {},
+      getValue: () => {},
+    })
 
-        useImperativeHandle(ref, () => {
-            return {
-                ...aiReActChatRef.current,
-            };
-        }, []);
+    useImperativeHandle(ref, () => {
+      return {
+        ...aiReActChatRef.current,
+      }
+    }, [])
 
-        // #region 问题相关逻辑
+    // #region 问题相关逻辑
 
-        const onOpenExportModal = useMemoizedFn((e) => {
-            e.stopPropagation();
-            setExportModalVisible(true);
-        });
+    const onOpenExportModal = useMemoizedFn((e) => {
+      e.stopPropagation()
+      setExportModalVisible(true)
+    })
 
-        const onExportCancel = useMemoizedFn(() => {
-            setExportModalVisible(false);
-        });
+    const onExportCancel = useMemoizedFn(() => {
+      setExportModalVisible(false)
+    })
 
-        const onExportOk = useMemoizedFn(
-            async (data: { types: string[]; outputPath: string }) => {
-                if (!activeChat?.run_id) {
-                    failed('当前没有活跃的会话');
-                    return;
-                }
-                setExportLoading(true);
-                //
-                try {
-                    // const ids =
-                    //     aiChatDataStore.get(
-                    //         activeChat.request.TimelineSessionID || 'default',
-                    //     )?.coordinatorIDs || [];
-                    await grpcExportAILogs(
-                        {
-                            // CoordinatorIDs: ids,
-                            SessionID: activeChat.run_id,
-                            ExportDataTypes: data.types,
-                            OutputPath: data.outputPath,
-                        },
-                        true,
-                    );
-                    yakitNotify('success', '导出成功');
-                    setExportModalVisible(false);
-                } catch (error) {
-                    failed(`导出失败: ${error}`);
-                } finally {
-                    setExportLoading(false);
-                }
-            },
-        );
+    const onExportOk = useMemoizedFn(async (data: { types: string[]; outputPath: string }) => {
+      if (!activeChat?.run_id) {
+        failed('当前没有活跃的会话')
+        return
+      }
+      setExportLoading(true)
+      //
+      try {
+        // const ids =
+        //     aiChatDataStore.get(
+        //         activeChat.request.TimelineSessionID || 'default',
+        //     )?.coordinatorIDs || [];
+        await grpcExportAILogs(
+          {
+            // CoordinatorIDs: ids,
+            SessionID: activeChat.run_id,
+            ExportDataTypes: data.types,
+            OutputPath: data.outputPath,
+          },
+          true,
+        )
+        yakitNotify('success', '导出成功')
+        setExportModalVisible(false)
+      } catch (error) {
+        failed(`导出失败: ${error}`)
+      } finally {
+        setExportLoading(false)
+      }
+    })
 
-        const handleTabStateChange = useMemoizedFn(
-            (key: AITabsEnumType, value: AIAgentTabPayload['value']) => {
-                setActiveKey(key);
-                if (!value) {
-                    setRunTimeIDs(initRunTimeIDs);
-                    return;
-                }
-                setRunTimeIDs([value]);
-            },
-        );
+    const handleTabStateChange = useMemoizedFn((key: AITabsEnumType, value: AIAgentTabPayload['value']) => {
+      setActiveKey(key)
+      if (!value) {
+        setRunTimeIDs(initRunTimeIDs)
+        return
+      }
+      setRunTimeIDs([value])
+    })
 
-        const onSwitchAIAgentTab = useMemoizedFn((data) => {
-            if (data === undefined) return setActiveKey(data);
-            let payload: AIAgentTabPayload;
-            try {
-                payload = JSON.parse(data);
-            } catch (error) {
-                setActiveKey(undefined);
-                return;
-            }
-            const { key, value } = payload;
+    const onSwitchAIAgentTab = useMemoizedFn((data) => {
+      if (data === undefined) return setActiveKey(data)
+      let payload: AIAgentTabPayload
+      try {
+        payload = JSON.parse(data)
+      } catch (error) {
+        setActiveKey(undefined)
+        return
+      }
+      const { key, value } = payload
 
-            if (key === AITabsEnum.HTTP && !tempHTTPTotal) return;
-            if (key === AITabsEnum.Risk && !tempRiskTotal) return;
-            handleTabStateChange(key, value);
-        });
+      if (key === AITabsEnum.HTTP && !tempHTTPTotal) return
+      if (key === AITabsEnum.Risk && !tempRiskTotal) return
+      handleTabStateChange(key, value)
+    })
 
-        useEffect(() => {
-            emiter.on('switchAIActTab', onSwitchAIAgentTab);
-            return () => {
-                emiter.off('switchAIActTab', onSwitchAIAgentTab);
-            };
-        }, [onSwitchAIAgentTab]);
+    useEffect(() => {
+      emiter.on('switchAIActTab', onSwitchAIAgentTab)
+      return () => {
+        emiter.off('switchAIActTab', onSwitchAIAgentTab)
+      }
+    }, [onSwitchAIAgentTab])
 
-        const filterTagDom = useMemo(() => {
-            if (initRunTimeIDs === runTimeIDs) return null;
-            // 超过20字符截取，显示...
-            const showId = runTimeIDs.at(0)?.slice(0, 30) + '…';
-            return (
-                <YakitTag
-                    color="info"
-                    closable
-                    onClose={() => setRunTimeIDs(initRunTimeIDs)}
-                >
-                    {showId}
-                </YakitTag>
-            );
-        }, [initRunTimeIDs, runTimeIDs]);
+    const filterTagDom = useMemo(() => {
+      if (initRunTimeIDs === runTimeIDs) return null
+      // 超过20字符截取，显示...
+      const showId = runTimeIDs.at(0)?.slice(0, 30) + '…'
+      return (
+        <YakitTag color="info" closable onClose={() => setRunTimeIDs(initRunTimeIDs)}>
+          {showId}
+        </YakitTag>
+      )
+    }, [initRunTimeIDs, runTimeIDs])
 
-        useEffect(() => {
-            if (initRunTimeIDs.length > 0) {
-                if (!tempRiskTotal) setIntervalRisk(1000);
-                if (!tempHTTPTotal) setIntervalHTTP(1000);
-            } else {
-                setTempRiskTotal(0);
-                setTempHTTPTotal(0);
-            }
-        }, [initRunTimeIDs]);
-        useInterval(() => {
-            getRiskTotal();
-        }, intervalRisk);
-        useInterval(() => {
-            getHTTPTotal();
-        }, intervalHTTP);
-        const getRiskTotal = useMemoizedFn(() => {
-            if (!initRunTimeIDs.length) return;
-            // apiQueryRisksTotalByRuntimeIds(initRunTimeIDs).then((allRes) => {
-            //     if (+allRes.Total > 0) {
-            //         setTempRiskTotal(+allRes.Total);
-            //         if (intervalRisk) setIntervalRisk(undefined);
-            //     }
-            //     if (!chatIPCData.execute) {
-            //         if (intervalRisk) setIntervalRisk(undefined);
-            //     }
-            // });
-        });
-        const getHTTPTotal = useMemoizedFn(() => {
-            if (!initRunTimeIDs.length) return;
-            grpcQueryHTTPFlows({ RuntimeIDs: initRunTimeIDs }).then(
-                (allRes) => {
-                    if (Number(allRes.Total) > 0) {
-                        setTempHTTPTotal(Number(allRes.Total));
-                        if (intervalHTTP) setIntervalHTTP(undefined);
-                    }
-                    if (!chatIPCData.execute) {
-                        if (intervalHTTP) setIntervalHTTP(undefined);
-                    }
-                },
-            );
-        });
+    useEffect(() => {
+      if (initRunTimeIDs.length > 0) {
+        if (!tempRiskTotal) setIntervalRisk(1000)
+        if (!tempHTTPTotal) setIntervalHTTP(1000)
+      } else {
+        setTempRiskTotal(0)
+        setTempHTTPTotal(0)
+      }
+    }, [initRunTimeIDs])
+    useInterval(() => {
+      getRiskTotal()
+    }, intervalRisk)
+    useInterval(() => {
+      getHTTPTotal()
+    }, intervalHTTP)
+    const getRiskTotal = useMemoizedFn(() => {
+      if (!initRunTimeIDs.length) return
+      // apiQueryRisksTotalByRuntimeIds(initRunTimeIDs).then((allRes) => {
+      //     if (+allRes.Total > 0) {
+      //         setTempRiskTotal(+allRes.Total);
+      //         if (intervalRisk) setIntervalRisk(undefined);
+      //     }
+      //     if (!chatIPCData.execute) {
+      //         if (intervalRisk) setIntervalRisk(undefined);
+      //     }
+      // });
+    })
+    const getHTTPTotal = useMemoizedFn(() => {
+      if (!initRunTimeIDs.length) return
+      grpcQueryHTTPFlows({ RuntimeIDs: initRunTimeIDs }).then((allRes) => {
+        if (Number(allRes.Total) > 0) {
+          setTempHTTPTotal(Number(allRes.Total))
+          if (intervalHTTP) setIntervalHTTP(undefined)
+        }
+        if (!chatIPCData.execute) {
+          if (intervalHTTP) setIntervalHTTP(undefined)
+        }
+      })
+    })
 
-        const onExpand = useMemoizedFn((e) => {
-            e.stopPropagation();
-            setIsExpand(!isExpand);
-        });
-        const yakitTabs = useCreation(() => {
-            let tab: YakitSideTabProps['yakitTabs'] = [
-                AITabs[AITabsEnum.Task_Content],
-                // AITabs[AITabsEnum.File_System],
-            ];
-            if (tempHTTPTotal) {
-                tab.push(AITabs[AITabsEnum.HTTP]);
-            }
-            if (tempRiskTotal) {
-                tab.push(AITabs[AITabsEnum.Risk]);
-            }
-            if (yakExecResult.execFileRecord.size > 0) {
-                tab.push(AITabs[AITabsEnum.Operation_Log]);
-            }
-            return tab;
-        }, [
-            tempRiskTotal,
-            tempHTTPTotal,
-            yakExecResult.execFileRecord,
-            taskChat?.elements?.length,
-        ]);
+    const onExpand = useMemoizedFn((e) => {
+      e.stopPropagation()
+      setIsExpand(!isExpand)
+    })
+    const yakitTabs = useCreation(() => {
+      let tab: YakitSideTabProps['yakitTabs'] = [
+        AITabs[AITabsEnum.Task_Content],
+        // AITabs[AITabsEnum.File_System],
+      ]
+      if (tempHTTPTotal) {
+        tab.push(AITabs[AITabsEnum.HTTP])
+      }
+      if (tempRiskTotal) {
+        tab.push(AITabs[AITabsEnum.Risk])
+      }
+      if (yakExecResult.execFileRecord.size > 0) {
+        tab.push(AITabs[AITabsEnum.Operation_Log])
+      }
+      return tab
+    }, [tempRiskTotal, tempHTTPTotal, yakExecResult.execFileRecord, taskChat?.elements?.length])
 
-        // const [showHot, setShowHot] = useState(false);
-        const prevRef = useRef<{
-            chatId?: string;
-            foldersLen: number;
-        }>({
-            chatId: activeChat?.run_id,
-            foldersLen: grpcFolders.length,
-        });
+    // const [showHot, setShowHot] = useState(false);
+    const prevRef = useRef<{
+      chatId?: string
+      foldersLen: number
+    }>({
+      chatId: activeChat?.run_id,
+      foldersLen: grpcFolders.length,
+    })
 
-        useEffect(() => {
-            // const prev = prevRef.current;
-            const currentChatId = activeChat?.run_id;
-            const currentLen = grpcFolders.length;
-            // let nextShowHot = false;
+    useEffect(() => {
+      // const prev = prevRef.current;
+      const currentChatId = activeChat?.run_id
+      const currentLen = grpcFolders.length
+      // let nextShowHot = false;
 
-            // if (activeKey === AITabsEnum.File_System) {
-            //     nextShowHot = false;
-            // } else if (
-            //     prev.chatId === currentChatId &&
-            //     currentLen > prev.foldersLen
-            // ) {
-            //     nextShowHot = true;
-            // }
-            // setShowHot(nextShowHot);
-            prevRef.current = {
-                chatId: currentChatId,
-                foldersLen: currentLen,
-            };
-        }, [grpcFolders.length, activeChat?.run_id, activeKey]);
+      // if (activeKey === AITabsEnum.File_System) {
+      //     nextShowHot = false;
+      // } else if (
+      //     prev.chatId === currentChatId &&
+      //     currentLen > prev.foldersLen
+      // ) {
+      //     nextShowHot = true;
+      // }
+      // setShowHot(nextShowHot);
+      prevRef.current = {
+        chatId: currentChatId,
+        foldersLen: currentLen,
+      }
+    }, [grpcFolders.length, activeChat?.run_id, activeKey])
 
-        const tabBarRender = useMemoizedFn(
-            (tab: YakitTabsProps, node: ReactNode[]) => {
-                const [label] = node;
-                const finalLabel =
-                    label ??
-                    (typeof tab.label === 'function' ? tab.label() : tab.label);
-                if (tab.value === AITabsEnum.Risk) {
-                    return finalLabel;
-                }
+    const tabBarRender = useMemoizedFn((tab: YakitTabsProps, node: ReactNode[]) => {
+      const [label] = node
+      const finalLabel = label ?? (typeof tab.label === 'function' ? tab.label() : tab.label)
+      if (tab.value === AITabsEnum.Risk) {
+        return finalLabel
+      }
 
-                return finalLabel;
-            },
-        );
+      return finalLabel
+    })
 
-        // const OperationLogList = useCreation(() => {
-        //     return Array.from(yakExecResult.execFileRecord.values())
-        //         .flat()
-        //         .sort((a: any, b: any) => b.order - a.order);
-        // }, [yakExecResult.execFileRecord]);
+    // const OperationLogList = useCreation(() => {
+    //     return Array.from(yakExecResult.execFileRecord.values())
+    //         .flat()
+    //         .sort((a: any, b: any) => b.order - a.order);
+    // }, [yakExecResult.execFileRecord]);
 
-        const renderTabContent = useMemoizedFn((key: AITabsEnumType) => {
-            switch (key) {
-                case AITabsEnum.Task_Content:
-                    return (
-                        <AIReActTaskChat
-                            setTimeLine={setTimeLine}
-                            setShowFreeChat={setShowFreeChat}
-                        />
-                    );
-                // case AITabsEnum.File_System:
-                // return <AIFileSystemList />;
-                // return null;
-                case AITabsEnum.Risk:
-                    return runTimeIDs.length ? (
-                        <VulnerabilitiesRisksTable
-                            filterTagDom={filterTagDom}
-                            runTimeIDs={runTimeIDs}
-                        />
-                    ) : (
-                        <YakitEmpty style={{ paddingTop: 48 }} />
-                    );
-                case AITabsEnum.HTTP:
-                    return runTimeIDs.length ? (
-                        <PluginExecuteHttpFlow
-                            filterTagDom={filterTagDom}
-                            runtimeId={runTimeIDs.join(',')}
-                            website={true}
-                        />
-                    ) : (
-                        <YakitEmpty style={{ paddingTop: 48 }} />
-                    );
-                case AITabsEnum.Operation_Log:
-                    return (
-                        // <OperationLog
-                        //     loading={false}
-                        //     list={OperationLogList as StreamResult.Log[]}
-                        // />
-                        null
-                    );
-                default:
-                    return null;
-            }
-        });
+    const renderTabContent = useMemoizedFn((key: AITabsEnumType) => {
+      switch (key) {
+        case AITabsEnum.Task_Content:
+          return <AIReActTaskChat setTimeLine={setTimeLine} setShowFreeChat={setShowFreeChat} />
+        // case AITabsEnum.File_System:
+        // return <AIFileSystemList />;
+        // return null;
+        case AITabsEnum.Risk:
+          return runTimeIDs.length ? (
+            <VulnerabilitiesRisksTable filterTagDom={filterTagDom} runTimeIDs={runTimeIDs} />
+          ) : (
+            <YakitEmpty style={{ paddingTop: 48 }} />
+          )
+        case AITabsEnum.HTTP:
+          return runTimeIDs.length ? (
+            <PluginExecuteHttpFlow filterTagDom={filterTagDom} runtimeId={runTimeIDs.join(',')} website={true} />
+          ) : (
+            <YakitEmpty style={{ paddingTop: 48 }} />
+          )
+        case AITabsEnum.Operation_Log:
+          return (
+            // <OperationLog
+            //     loading={false}
+            //     list={OperationLogList as StreamResult.Log[]}
+            // />
+            null
+          )
+        default:
+          return null
+      }
+    })
 
-        // const { onOpenLogWindow } = useAiChatLog();
+    // const { onOpenLogWindow } = useAiChatLog();
 
-        const onActiveKey = useMemoizedFn((key: AITabsEnumType) => {
-            if (activeKey === key) {
-                setShowFreeChat(true);
-                setActiveKey(undefined);
-            } else {
-                setActiveKey(key);
-            }
-            setRunTimeIDs(initRunTimeIDs);
-        });
-        const onOpenLog = useMemoizedFn((e) => {
-            e.stopPropagation();
-            // onOpenLogWindow();
-        });
+    const onActiveKey = useMemoizedFn((key: AITabsEnumType) => {
+      if (activeKey === key) {
+        setShowFreeChat(true)
+        setActiveKey(undefined)
+      } else {
+        setActiveKey(key)
+      }
+      setRunTimeIDs(initRunTimeIDs)
+    })
 
-        const { resizeBoxProps } = useAIChatResizeBox({
-            activeKey,
-            showFreeChat,
-            timeLine,
-            taskChat,
-        });
+    // #region 打开/关闭日志独立页面
+    const logWindowRef = React.useRef<Window | null>(null)
+    const [isLogWindowOpen, setIsLogWindowOpen] = React.useState(false)
 
-        // useMount(() => {
-        //     const onFilePreviewReady = () => {
-        //         emitResizeBox({
-        //             secondRatio: "432px"
-        //         })
-        //     }
-        //     emiter.on("filePreviewReady", onFilePreviewReady)
-        //     return () => {
-        //         emiter.off("filePreviewReady", onFilePreviewReady)
-        //     }
-        // })
-        const startRequest = useMemoizedFn((data: AIHandleStartParams) => {
-            return new Promise<AIHandleStartResProps>((resolve) => {
-                resolve({
-                    params: data.params,
-                    onChat,
-                    onChatFromHistory,
-                });
-            });
-        });
+    const closeLogWindow = useMemoizedFn(() => {
+      const w = logWindowRef.current
+      if (w && !w.closed) w.close()
+      logWindowRef.current = null
+      setIsLogWindowOpen(false)
+    })
 
-        return (
-            <div className={styles['ai-chat-content-wrapper']}>
-                <ExpandAndRetract
-                    isExpand={isExpand}
-                    onExpand={onExpand}
-                    className={classNames(styles['expand-retract-wrapper'], {
-                        [styles['expand-retract-wrapper-collapsed']]:
-                            !yakExecResult.card.length,
-                    })}
-                    animationWrapperClassName={classNames(
-                        styles['expand-retract-animation-wrapper'],
-                        {
-                            [styles['expand-retract-animation-wrapper-hidden']]:
-                                !yakExecResult.card.length,
-                        },
-                    )}
-                    expandText="展开"
-                    retractText="收起"
-                >
-                    <div className={styles['expand-retract-content']}>
-                        <div className={styles['header']}>
-                            <div className={styles['title']}>
-                                <SolidChatalt2Icon
-                                    className={styles['chat-alt-icon']}
-                                />
-                                <div className={styles['chat-title']}>
-                                    {activeChat?.title || '新会话'}
-                                </div>
-                                <Divider type="vertical" />
-                                <YakitButton
-                                    type="secondary2"
-                                    icon={<OutlinePlussmIcon />}
-                                    onClick={() => onNewChat()}
-                                >
-                                    新建会话
-                                </YakitButton>
-                                <SideSettingButton />
-                            </div>
-                            <div className={styles['extra']}>
-                                <AIContextToken
-                                    execute={execute}
-                                    session={activeChat?.run_id}
-                                />
-                                <YakitButton
-                                    type="secondary2"
-                                    icon={<OutlineNewspaperIcon />}
-                                    onClick={onOpenLog}
-                                >
-                                    日志
-                                </YakitButton>
-                                <YakitButton
-                                    type="secondary2"
-                                    icon={<OutlineClouddownloadIcon />}
-                                    onClick={onOpenExportModal}
-                                >
-                                    导出日志
-                                </YakitButton>
-                            </div>
-                        </div>
-                        {yakExecResult.card.length > 0 ? (
-                            <HorizontalScrollCard
-                                hiddenHeard={true}
-                                data={yakExecResult.card}
-                                className={classNames(
-                                    styles['card-list-wrapper'],
-                                    {
-                                        [styles['card-list-wrapper-hidden']]:
-                                            !isExpand,
-                                    },
-                                )}
-                                itemProps={{ size: 'small' }}
-                            />
-                        ) : null}
-                    </div>
-                </ExpandAndRetract>
-                <div className={styles['ai-chat-tab-wrapper']}>
-                    <YakitSideTab
-                        type="horizontal"
-                        yakitTabs={yakitTabs}
-                        activeKey={activeKey}
-                        onActiveKey={(key) =>
-                            onActiveKey(key as AITabsEnumType)
-                        }
-                        onTabPaneRender={(ele, node) => tabBarRender(ele, node)}
-                        className={styles['tab-wrap']}
-                    >
-                        <div className={styles['ai-chat-content']}>
-                            <YakitResizeBox
-                                firstNode={
-                                    activeKey && (
-                                        <div
-                                            className={classNames(
-                                                styles['tab-content'],
-                                                {
-                                                    [styles[
-                                                        'tab-content-right'
-                                                    ]]: !showFreeChat,
-                                                },
-                                            )}
-                                        >
-                                            {renderTabContent(activeKey)}
-                                        </div>
-                                    )
-                                }
-                                secondNode={
-                                    <AIReActChat
-                                        chatContainerHeaderClassName={classNames(
-                                            {
-                                                [styles[
-                                                    're-act-chat-container-header'
-                                                ]]: !activeKey,
-                                            },
-                                        )}
-                                        mode={activeKey ? 'task' : 'welcome'}
-                                        showFreeChat={showFreeChat}
-                                        setShowFreeChat={setShowFreeChat}
-                                        startRequest={startRequest}
-                                        ref={aiReActChatRef}
-                                    />
-                                }
-                                {...resizeBoxProps}
-                            />
-                        </div>
-                    </YakitSideTab>
-                </div>
-                <ExportAILogsModal
-                    visible={exportModalVisible}
-                    onCancel={onExportCancel}
-                    onOk={onExportOk}
-                    loading={exportLoading}
-                />
+    const openLogWindow = useMemoizedFn(() => {
+      // HashRouter 下独立页面路径需要带上 `#/agent-log`
+      const base = import.meta.env.BASE_URL || '/'
+      const url = `${window.location.origin}${base}#/agent-log`
+
+      // 独立页面（新标签页/新窗口由浏览器决定）
+      const w = window.open(url, '_blank')
+      if (!w) {
+        showErrorMessage('打开日志页面失败，请检查浏览器是否拦截了弹窗')
+        return
+      }
+      logWindowRef.current = w
+      setIsLogWindowOpen(true)
+      w.focus?.()
+    })
+    const onOpenLog = useMemoizedFn((e) => {
+      e.stopPropagation()
+      const w = logWindowRef.current
+      if (w && !w.closed) closeLogWindow()
+      else openLogWindow()
+    })
+
+    useEffect(() => {
+      if (!isLogWindowOpen) return
+      const timer = window.setInterval(() => {
+        const w = logWindowRef.current
+        if (!w || w.closed) {
+          logWindowRef.current = null
+          setIsLogWindowOpen(false)
+        }
+      }, 500)
+      return () => window.clearInterval(timer)
+    }, [isLogWindowOpen])
+
+    const { resizeBoxProps } = useAIChatResizeBox({
+      activeKey,
+      showFreeChat,
+      timeLine,
+      taskChat,
+    })
+
+    // useMount(() => {
+    //     const onFilePreviewReady = () => {
+    //         emitResizeBox({
+    //             secondRatio: "432px"
+    //         })
+    //     }
+    //     emiter.on("filePreviewReady", onFilePreviewReady)
+    //     return () => {
+    //         emiter.off("filePreviewReady", onFilePreviewReady)
+    //     }
+    // })
+    const startRequest = useMemoizedFn((data: AIHandleStartParams) => {
+      return new Promise<AIHandleStartResProps>((resolve) => {
+        resolve({
+          params: data.params,
+          onChat,
+          onChatFromHistory,
+        })
+      })
+    })
+
+    return (
+      <div className={styles['ai-chat-content-wrapper']}>
+        <ExpandAndRetract
+          isExpand={isExpand}
+          onExpand={onExpand}
+          className={classNames(styles['expand-retract-wrapper'], {
+            [styles['expand-retract-wrapper-collapsed']]: !yakExecResult.card.length,
+          })}
+          animationWrapperClassName={classNames(styles['expand-retract-animation-wrapper'], {
+            [styles['expand-retract-animation-wrapper-hidden']]: !yakExecResult.card.length,
+          })}
+          expandText="展开"
+          retractText="收起"
+        >
+          <div className={styles['expand-retract-content']}>
+            <div className={styles['header']}>
+              <div className={styles['title']}>
+                <SolidChatalt2Icon className={styles['chat-alt-icon']} />
+                <div className={styles['chat-title']}>{activeChat?.title || '新会话'}</div>
+                <Divider type="vertical" />
+                <YakitButton type="secondary2" icon={<OutlinePlussmIcon />} onClick={() => onNewChat()}>
+                  新建会话
+                </YakitButton>
+                <SideSettingButton />
+              </div>
+              <div className={styles['extra']}>
+                <AIContextToken execute={execute} session={activeChat?.run_id} />
+                <YakitButton type="secondary2" icon={<OutlineNewspaperIcon />} onClick={onOpenLog}>
+                  日志
+                </YakitButton>
+                <YakitButton type="secondary2" icon={<OutlineClouddownloadIcon />} onClick={onOpenExportModal}>
+                  导出日志
+                </YakitButton>
+              </div>
             </div>
-        );
-    }),
-);
+            {yakExecResult.card.length > 0 ? (
+              <HorizontalScrollCard
+                hiddenHeard={true}
+                data={yakExecResult.card}
+                className={classNames(styles['card-list-wrapper'], {
+                  [styles['card-list-wrapper-hidden']]: !isExpand,
+                })}
+                itemProps={{ size: 'small' }}
+              />
+            ) : null}
+          </div>
+        </ExpandAndRetract>
+        <div className={styles['ai-chat-tab-wrapper']}>
+          <YakitSideTab
+            type="horizontal"
+            yakitTabs={yakitTabs}
+            activeKey={activeKey}
+            onActiveKey={(key) => onActiveKey(key as AITabsEnumType)}
+            onTabPaneRender={(ele, node) => tabBarRender(ele, node)}
+            className={styles['tab-wrap']}
+          >
+            <div className={styles['ai-chat-content']}>
+              <YakitResizeBox
+                firstNode={
+                  activeKey && (
+                    <div
+                      className={classNames(styles['tab-content'], {
+                        [styles['tab-content-right']]: !showFreeChat,
+                      })}
+                    >
+                      {renderTabContent(activeKey)}
+                    </div>
+                  )
+                }
+                secondNode={
+                  <AIReActChat
+                    chatContainerHeaderClassName={classNames({
+                      [styles['re-act-chat-container-header']]: !activeKey,
+                    })}
+                    mode={activeKey ? 'task' : 'welcome'}
+                    showFreeChat={showFreeChat}
+                    setShowFreeChat={setShowFreeChat}
+                    startRequest={startRequest}
+                    ref={aiReActChatRef}
+                  />
+                }
+                {...resizeBoxProps}
+              />
+            </div>
+          </YakitSideTab>
+        </div>
+        <ExportAILogsModal
+          visible={exportModalVisible}
+          onCancel={onExportCancel}
+          onOk={onExportOk}
+          loading={exportLoading}
+        />
+      </div>
+    )
+  }),
+)

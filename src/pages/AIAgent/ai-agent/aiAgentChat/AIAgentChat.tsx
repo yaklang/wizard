@@ -63,6 +63,7 @@ import { RemoteAIAgentGV } from '../../enums/aiAgent'
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox'
 import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint'
 import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm'
+import { AIAgentLogChannelName } from '../../defaultConstant'
 
 const AIChatWelcome = React.lazy(() => import('../aiChatWelcome/AIChatWelcome'))
 
@@ -182,6 +183,7 @@ export const AIAgentChat = memo(() => {
     onTaskStart: handleTaskStart,
     setSessionChatName,
     cacheDataStore: aiChatDataStore,
+    channelName: AIAgentLogChannelName,
   })
   const { execute } = chatIPCData
 
