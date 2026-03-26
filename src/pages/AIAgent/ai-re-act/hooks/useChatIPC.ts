@@ -101,7 +101,7 @@ function useChatIPC(params?: UseChatIPCParams) {
   /** 会话中发送消息 */
   const sendMessage = useMemoizedFn((params: AIInputEvent) => {
     if (!chatID.current) return
-    console.log('send-ai-re-act---\n', chatID.current, params)
+    // console.log('send-ai-re-act---\n', chatID.current, params)
     postSendContinueMessage(chatID.current, params)
   })
 
@@ -529,7 +529,7 @@ function useChatIPC(params?: UseChatIPCParams) {
     aiRequest.current = omit(params.Params, ['SelectedProviderID', 'SelectedModelName', 'SelectedModelTier'])
     sseEvents.connect(`run/${token}/events`)
 
-    console.log('start-ai-re-act', token, params)
+    // console.log('start-ai-re-act', token, params)
 
     // 初次用户对话的问题，属于自由对话中的问题
     casualChatEvent.handleSend({
@@ -544,7 +544,7 @@ function useChatIPC(params?: UseChatIPCParams) {
 
   const handleMessage = useMemoizedFn((res: AIOutputEvent) => {
     try {
-      console.log('onMessage-res', res)
+      //   console.log('onMessage-res', res)
       // 会话SSE已建立成功并准备发送信息
       if (res.Type === 'listener_ready') {
         sendFirstMessage()
@@ -562,8 +562,8 @@ function useChatIPC(params?: UseChatIPCParams) {
       })
 
       let ipcContent = base64ToJson(res.Content) || ''
-      let ipcStreamDelta = base64ToJson(res.StreamDelta) || ''
-      console.log('onStart-res', res, ipcContent, ipcStreamDelta)
+      //   let ipcStreamDelta = base64ToJson(res.StreamDelta) || ''
+      //   console.log('onStart-res', res, ipcContent, ipcStreamDelta)
 
       if (res.Type === 'structured' && res.NodeId === 'session_title') {
         // 生成会话的名称

@@ -3,13 +3,31 @@
     flex: 1;
     overflow: auto;
     max-height: 100px;
+
     p {
         margin: 0;
     }
+
     :global {
+        .milkdown {
+            position: relative;
+        }
+
         .milkdown .editor {
             padding: 0;
             outline: none;
+        }
+
+        .milkdown .crepe-placeholder {
+            border-radius: 4px;
+        }
+
+        .milkdown .crepe-placeholder::before {
+            position: absolute;
+            color: var(--Colors-Use-Neutral-Disable);
+            pointer-events: none;
+            height: 0;
+            content: attr(data-placeholder);
         }
     }
 }
