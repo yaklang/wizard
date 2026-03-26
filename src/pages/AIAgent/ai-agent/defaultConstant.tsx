@@ -1,24 +1,21 @@
 import type { ReactNode } from 'react'
 import type { AIAgentSetting } from './aiAgentType'
 import {
-    OutlineChipIcon,
-    OutlineCogIcon,
-    OutlineSparklesIcon,
-    OutlineWrenchIcon,
-    OutlineBookOpenTextIcon,
-    OutlineBotIcon,
-    OutlineDocumenttextIcon,
-    OutlineFolderopenIcon,
-    OutlinePointerIcon,
-    OutlineEarOffIcon,
-    OutlineAIIcon,
-} from '@/assets/icon/outline';
-import type {
-    YakitSideTabProps,
-    YakitTabsProps,
-} from '@/compoments/yakitSideTab/YakitSideTabType';
-import type { PaginationSchema } from '../enums/invoker/schema';
-import { genDefaultPagination } from '../enums/invoker/schema';
+  OutlineChipIcon,
+  OutlineCogIcon,
+  OutlineSparklesIcon,
+  OutlineWrenchIcon,
+  OutlineBookOpenTextIcon,
+  OutlineBotIcon,
+  OutlineDocumenttextIcon,
+  OutlineFolderopenIcon,
+  OutlinePointerIcon,
+  OutlineEarOffIcon,
+  OutlineAIIcon,
+} from '@/assets/icon/outline'
+import type { YakitSideTabProps, YakitTabsProps } from '@/compoments/yakitSideTab/YakitSideTabType'
+import type { PaginationSchema } from '../enums/invoker/schema'
+import { genDefaultPagination } from '../enums/invoker/schema'
 import {
   ChatGLMIcon,
   ComateIcon,
@@ -61,42 +58,42 @@ export enum AIAgentTabListEnum {
   KnowledgeBase = 'knowledgeBase',
 }
 export const AiAgentTabList: YakitTabsProps[] = [
-    {
-        value: AIAgentTabListEnum.History,
-        label: '历史会话',
-        icon: <OutlineSparklesIcon />,
-    },
-    {
-        value: AIAgentTabListEnum.Setting,
-        label: '配置',
-        icon: <OutlineCogIcon />,
-    },
-    // {value: AIAgentTabListEnum.Forge_Name, label: "技能", icon: <OutlineTemplateIcon />},
-    // {value: AIAgentTabListEnum.Tool, label: "工具", icon: <OutlineWrenchIcon />},
-    {
-        value: AIAgentTabListEnum.AI_Model,
-        label: 'AI模型',
-        icon: <OutlineChipIcon />,
-    },
-    // { value: AIAgentTabListEnum.MCP, label: 'MCP', icon: <OutlineMCPIcon /> },
-];
+  {
+    value: AIAgentTabListEnum.History,
+    label: '历史会话',
+    icon: <OutlineSparklesIcon />,
+  },
+  {
+    value: AIAgentTabListEnum.Setting,
+    label: '配置',
+    icon: <OutlineCogIcon />,
+  },
+  // {value: AIAgentTabListEnum.Forge_Name, label: "技能", icon: <OutlineTemplateIcon />},
+  // {value: AIAgentTabListEnum.Tool, label: "工具", icon: <OutlineWrenchIcon />},
+  {
+    value: AIAgentTabListEnum.AI_Model,
+    label: 'AI模型',
+    icon: <OutlineChipIcon />,
+  },
+  // { value: AIAgentTabListEnum.MCP, label: 'MCP', icon: <OutlineMCPIcon /> },
+]
 export enum AIMentionTabsEnum {
-  /** forge 智能体 */
-  Forge_Name = 'forgeName',
-  /** 工具 */
-  Tool = 'tool',
-  /** 知识库 */
-  KnowledgeBase = 'knowledgeBase',
-  /** 文件系统 */
-  File_System = 'fileSystem',
+  // /** forge 智能体 */
+  // Forge_Name = 'forgeName',
+  // /** 工具 */
+  // Tool = 'tool',
+  // /** 知识库 */
+  // KnowledgeBase = 'knowledgeBase',
+  // /** 文件系统 */
+  // File_System = 'fileSystem',
   /** 专注模式 */
   FocusMode = 'focusMode',
 }
 export const AIMentionTabs: YakitSideTabProps['yakitTabs'] = [
-  { value: AIMentionTabsEnum.Forge_Name, label: '技能' },
-  { value: AIMentionTabsEnum.Tool, label: '工具' },
-  { value: AIMentionTabsEnum.KnowledgeBase, label: '知识库' },
-  { value: AIMentionTabsEnum.File_System, label: '文件系统' },
+  // { value: AIMentionTabsEnum.Forge_Name, label: '技能' },
+  // { value: AIMentionTabsEnum.Tool, label: '工具' },
+  // { value: AIMentionTabsEnum.KnowledgeBase, label: '知识库' },
+  // { value: AIMentionTabsEnum.File_System, label: '文件系统' },
   { value: AIMentionTabsEnum.FocusMode, label: '专注模式' },
 ]
 
@@ -173,18 +170,18 @@ export enum SwitchAIAgentTabEventEnum {
   SET_TAB_SHOW = 'setTabShow',
 }
 export enum AITabsEnum {
-    Task_Content = 'task-content',
-    HTTP = 'http',
-    Risk = 'risk',
-    Operation_Log = 'operation-log',
+  Task_Content = 'task-content',
+  HTTP = 'http',
+  Risk = 'risk',
+  Operation_Log = 'operation-log',
 }
 /** @name AI 默认展示的tab集合 */
 export const AITabs = {
-    'task-content': { label: '任务内容', value: AITabsEnum.Task_Content },
-    http: { label: 'HTTP 流量', value: AITabsEnum.HTTP },
-    risk: { label: '漏洞与风险', value: AITabsEnum.Risk },
-    'operation-log': { label: '读写日志', value: AITabsEnum.Operation_Log },
-};
+  'task-content': { label: '任务内容', value: AITabsEnum.Task_Content },
+  http: { label: 'HTTP 流量', value: AITabsEnum.HTTP },
+  risk: { label: '漏洞与风险', value: AITabsEnum.Risk },
+  'operation-log': { label: '读写日志', value: AITabsEnum.Operation_Log },
+}
 
 /** AI-Forge 列表查询条件里的页码默认条件 */
 export const AIForgeListDefaultPagination: PaginationSchema = {
