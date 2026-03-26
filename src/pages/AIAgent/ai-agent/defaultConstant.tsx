@@ -9,9 +9,9 @@ import {
   OutlineBotIcon,
   OutlineDocumenttextIcon,
   OutlineFolderopenIcon,
-  OutlinePointerIcon,
+  // OutlinePointerIcon,
   OutlineEarOffIcon,
-  OutlineAIIcon,
+  // OutlineAIIcon,
 } from '@/assets/icon/outline'
 import type { YakitSideTabProps, YakitTabsProps } from '@/compoments/yakitSideTab/YakitSideTabType'
 import type { PaginationSchema } from '../enums/invoker/schema'
@@ -41,7 +41,7 @@ import {
 } from '@/assets/icon/solid'
 import type { MCPServerType } from './type/aiMCP'
 import { DefaultMemoryList } from '../ai-re-act/hooks/defaultConstant'
-import { ColorsAIIcon } from '@/assets/icon/colors'
+// import { ColorsAIIcon } from '@/assets/icon/colors'
 import type { AIGlobalConfig, AIModelTypeFileName } from './aiModelList/utils'
 import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType'
 
@@ -226,36 +226,36 @@ export enum AILocalModelTypeEnum {
 }
 
 export const AIReviewRuleOptions = [
-  {
-    value: 'manual',
-    label: 'Manual',
-    describe: '所有审阅都由用户自己操作',
-  },
+  // {
+  //   value: 'manual',
+  //   label: 'Manual',
+  //   describe: '所有审阅都由用户自己操作',
+  // },
   {
     value: 'yolo',
     label: 'Yolo',
     describe: '所有审阅默认执行，不进行询问',
   },
-  {
-    value: 'ai',
-    label: 'AI',
-    describe: '由AI判断审阅风险，低风险默认执行，高风险由用户操作',
-  },
+  // {
+  //   value: 'ai',
+  //   label: 'AI',
+  //   describe: '由AI判断审阅风险，低风险默认执行，高风险由用户操作',
+  // },
 ] as const
 export type AIReviewRuleOptionsType = (typeof AIReviewRuleOptions)[number]['value']
 export const AIReviewRuleIconMap: Record<AIReviewRuleOptionsType, { icon: ReactNode; activeIcon: ReactNode }> = {
-  manual: {
-    icon: <OutlinePointerIcon />,
-    activeIcon: <OutlinePointerIcon style={{ color: 'var(--Colors-Use-Neutral-Text-2-Primary)' }} />,
-  },
+  // manual: {
+  //   icon: <OutlinePointerIcon />,
+  //   activeIcon: <OutlinePointerIcon style={{ color: 'var(--Colors-Use-Neutral-Text-2-Primary)' }} />,
+  // },
   yolo: {
     icon: <OutlineEarOffIcon />,
     activeIcon: <OutlineEarOffIcon style={{ color: 'var(--Colors-Use-Error-Primary)' }} />,
   },
-  ai: {
-    icon: <OutlineAIIcon />,
-    activeIcon: <ColorsAIIcon />,
-  },
+  // ai: {
+  //   icon: <OutlineAIIcon />,
+  //   activeIcon: <ColorsAIIcon />,
+  // },
 }
 export enum AIMCPServerTypeEnum {
   SSE = 'sse',
