@@ -105,9 +105,10 @@ const SensitiveMessage: FC<{ task_id?: string }> = ({ task_id }) => {
                 },
                 {
                     title: '匹配关键字',
-                    dataIndex: 'keywords',
+                    dataIndex: 'keyword',
                     columnsHeaderFilterType: 'input',
                     width: 120,
+                    render: (_, render) => render?.keywords ?? '-',
                 },
                 {
                     title: '状态',
