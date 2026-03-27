@@ -2,24 +2,29 @@ import { useMemo, useRef, type FC } from 'react';
 
 import { WizardTable } from '@/compoments';
 
-import { postAssetsProts } from '@/apis/taskDetail';
+import { deleteAssetsPorts, postAssetsProts } from '@/apis/taskDetail';
 import { ProtColumns } from '@/pages/TaskDetail/compoments/Columns';
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import { AssetsProtsFilterDrawer } from '@/pages/TaskDetail/compoments/TableOptionsFilterDrawer/AssetsProtsFilterDrawer';
 import type { CreateTableProps } from '@/compoments/WizardTable/types';
-import type { TGetAssetsProtsResponse } from '@/apis/taskDetail/types';
+import type {
+    TDeleteAssetsPortsBody,
+    TGetAssetsProtsResponse,
+} from '@/apis/taskDetail/types';
 import { getAnalysisScript, getBatchInvokingScriptTaskNode } from '@/apis/task';
 import { useRequest, useSafeState } from 'ahooks';
 import CopyOutlined from '@/pages/TaskDetail/compoments/utils/CopyOutlined';
 import { copyToClipboard } from '@/utils';
-import { Button, message } from 'antd';
+import { Button, message, Modal } from 'antd';
 import type { TDeleteValues } from '@/pages/ReportManage/ReportManage';
 import { CreateTaskScriptModal } from '@/pages/TaskPageList/compoment/CreateTaskScriptModal';
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
+import { buildDeleteAllBody } from '@/pages/DataService/buildDeleteAllBody';
 
 const PortAssets: FC = () => {
     const [page] = WizardTable.usePage();
+    const [modal, contextHolder] = Modal.useModal();
 
     const [tableFilter, setTableFilter] = useSafeState<
         Record<string, any> | undefined
@@ -133,6 +138,56 @@ const PortAssets: FC = () => {
         return isCidr || isService || isAll || isIds;
     }, [page.getParams()]);
 
+    const hasDeleteSelection = useMemo(() => {
+        const sel = checkedValue?.host;
+        const ids = sel?.ids;
+        const isAll = sel?.isAll === true;
+        return isAll || (Array.isArray(ids) && ids.length > 0);
+    }, [checkedValue]);
+
+    const { runAsync: runDeletePorts } = useRequest(deleteAssetsPorts, {
+        manual: true,
+    });
+
+    const handleBatchDeletePorts = () => {
+        const sel = checkedValue?.host;
+        const isAll = sel?.isAll === true;
+        const ids = sel?.ids ?? [];
+        if (!isAll && !ids.length) return;
+        const filter = page.getParams()?.filter as
+            | Record<string, any>
+            | undefined;
+        modal.confirm({
+            title: '批量删除',
+            content: isAll
+                ? '当前为表头全选，将按当前筛选条件删除全部匹配记录（非仅本页）。此操作不可恢复，确定继续？'
+                : '此操作不可恢复，确定删除选中的端口资产？',
+            okText: '确定',
+            cancelText: '取消',
+            okButtonProps: isAll ? { danger: true } : undefined,
+            async onOk() {
+                if (isAll) {
+                    await runDeletePorts(
+                        buildDeleteAllBody({
+                            ...filter,
+                            service_type: filter?.service_type
+                                ? [filter?.service_type]
+                                : undefined,
+                        }) as TDeleteAssetsPortsBody,
+                    );
+                } else {
+                    await runDeletePorts({
+                        ids: ids.map((id) => Number(id)),
+                    });
+                }
+                message.success('删除成功');
+                setCheckedValue({ host: { ids: [], isAll: false } });
+                // 勿 await：WizardTable 内 ahooks useRequest 在并发/防抖下可能返回永不 resolve 的 Promise，确认框会卡 loading
+                Promise.resolve(page.onLoad()).catch(() => {});
+            },
+        });
+    };
+
     // 批量漏洞扫描
     const headVulnerabilityScanning = () => {
         const isAll = checkedValue?.['host'].isAll;
@@ -154,6 +209,7 @@ const PortAssets: FC = () => {
 
     return (
         <>
+            {contextHolder}
             <WizardTable
                 page={page}
                 rowKey="id"
@@ -185,22 +241,35 @@ const PortAssets: FC = () => {
                             layout: 'vertical',
                         },
                         trigger: (
-                            <Button
-                                type="primary"
-                                loading={loading}
-                                onClick={() => headVulnerabilityScanning()}
-                                disabled={!triggerScanBtnDisable}
-                            >
-                                漏洞扫描
-                            </Button>
+                            <div className="flex gap-2 items-center">
+                                <Button
+                                    danger
+                                    disabled={!hasDeleteSelection}
+                                    onClick={handleBatchDeletePorts}
+                                >
+                                    批量删除
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    loading={loading}
+                                    onClick={() => headVulnerabilityScanning()}
+                                    disabled={!triggerScanBtnDisable}
+                                >
+                                    漏洞扫描
+                                </Button>
+                            </div>
                         ),
                     },
                 }}
                 request={async (params, filter) => {
-                    setTableFilter(filter);
+                    const transforFilter = {
+                        ...filter,
+                        service_type: [filter?.service_type],
+                    };
+                    setTableFilter(transforFilter);
                     const { data } = await postAssetsProts({
                         ...params,
-                        ...filter,
+                        ...transforFilter,
                     });
 
                     return {

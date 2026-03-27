@@ -1,11 +1,13 @@
 import axios from '@/utils/axios';
 import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
 
+import type { TDeleteAssetsHandlerResponse } from '@/apis/taskDetail/types';
 import type {
     TReportRequest,
     TReportResonse,
     TSensitiveMessageReqeust,
     TSensitiveMessageResponse,
+    TDeleteSensitiveInfoBody,
 } from './types';
 
 // 获取报告管理 表格数据
@@ -58,6 +60,15 @@ const postupdateStatus = (data: {
         data,
     );
 
+/** 删除敏感信息：传 `ids` 勾选删除，或 `delete_all: true` 加当前表格筛选条件 */
+const deleteSensitiveInfo = (
+    data: TDeleteSensitiveInfoBody,
+): Promise<ResponseData<TDeleteAssetsHandlerResponse>> =>
+    axios.delete<never, ResponseData<TDeleteAssetsHandlerResponse>>(
+        '/assets/sensitive-info',
+        { data },
+    );
+
 export {
     getssetsProts,
     deleteProts,
@@ -65,4 +76,5 @@ export {
     getReportTaskGroups,
     getSensitiveMessagePage,
     postupdateStatus,
+    deleteSensitiveInfo,
 };

@@ -3,7 +3,12 @@ import { useMemo } from 'react';
 
 import { WizardTable } from '@/compoments';
 
-import { getAssetsValueFilter, postAssetsVulns } from '@/apis/taskDetail';
+import {
+    deleteAssetsVulns,
+    getAssetsValueFilter,
+    postAssetsVulns,
+} from '@/apis/taskDetail';
+import type { TDeleteAssetsVulnsBody } from '@/apis/taskDetail/types';
 import { AssetsVulnsColumns } from '@/pages/TaskDetail/compoments/Columns';
 import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
@@ -11,6 +16,9 @@ import { useRequest, useSafeState } from 'ahooks';
 import { SeverityMapTag } from '@/pages/TaskDetail/compoments/utils';
 import { AssetsVulnsFilterDrawer } from '@/pages/TaskDetail/compoments/TableOptionsFilterDrawer/AssetsVulnsFilterDrawer';
 import { getBatchInvokingScriptTaskNode } from '@/apis/task';
+import type { TDeleteValues } from '@/pages/ReportManage/ReportManage';
+import { Button, message, Modal } from 'antd';
+import { buildDeleteAllBody } from '@/pages/DataService/buildDeleteAllBody';
 
 const taskNameColumns: any = [
     {
@@ -23,6 +31,8 @@ const taskNameColumns: any = [
 
 const AssetsVulns: FC = () => {
     const [page] = WizardTable.usePage();
+    const [modal, contextHolder] = Modal.useModal();
+    const [checkedValue, setCheckedValue] = useSafeState<TDeleteValues>();
     const [tableFilter, setTableFilter] = useSafeState<
         Record<string, any> | undefined
     >({});
@@ -74,63 +84,128 @@ const AssetsVulns: FC = () => {
             transformList: data?.transformList ?? [],
             taskNodeData: taskNodeData ?? [],
         };
-        const columns = AssetsVulnsColumns(assetsVulnsColumnsProps);
+        const baseColumns = AssetsVulnsColumns(assetsVulnsColumnsProps);
+        const withRowSelect = [
+            {
+                ...baseColumns[0],
+                rowSelection: 'checkbox' as const,
+                rowSelectKeys: checkedValue,
+                onSelectChange: setCheckedValue,
+            },
+            ...baseColumns.slice(1),
+        ];
 
         const result = [
-            ...columns.slice(0, 1),
+            ...withRowSelect.slice(0, 1),
             ...taskNameColumns,
-            ...columns.slice(1),
+            ...withRowSelect.slice(1),
         ];
         return result;
-    }, [data, taskNodeData]);
+    }, [data, taskNodeData, checkedValue]);
+
+    const hasDeleteSelection = useMemo(() => {
+        const sel = checkedValue?.title;
+        const ids = sel?.ids;
+        const isAll = sel?.isAll === true;
+        return isAll || (Array.isArray(ids) && ids.length > 0);
+    }, [checkedValue]);
+
+    const { runAsync: runDeleteVulns } = useRequest(deleteAssetsVulns, {
+        manual: true,
+    });
+
+    const handleBatchDeleteVulns = () => {
+        const sel = checkedValue?.title;
+        const isAll = sel?.isAll === true;
+        const ids = sel?.ids ?? [];
+        if (!isAll && !ids.length) return;
+        const filter = page.getParams()?.filter as
+            | Record<string, any>
+            | undefined;
+        modal.confirm({
+            title: '批量删除',
+            content: isAll
+                ? '当前为表头全选，将按当前筛选条件删除全部匹配记录（非仅本页）。此操作不可恢复，确定继续？'
+                : '此操作不可恢复，确定删除选中的漏洞与风险记录？',
+            okText: '确定',
+            cancelText: '取消',
+            okButtonProps: isAll ? { danger: true } : undefined,
+            async onOk() {
+                if (isAll) {
+                    await runDeleteVulns(
+                        buildDeleteAllBody(filter) as TDeleteAssetsVulnsBody,
+                    );
+                } else {
+                    await runDeleteVulns({
+                        ids: ids.map((id) => Number(id)),
+                    });
+                }
+                message.success('删除成功');
+                setCheckedValue({ title: { ids: [], isAll: false } });
+                Promise.resolve(page.onLoad()).catch(() => {});
+            },
+        });
+    };
 
     return (
-        <WizardTable
-            page={page}
-            rowKey="id"
-            columns={columns}
-            tableHeader={{
-                title: '漏洞与风险列表',
-                options: {
-                    dowloadFile: {
-                        fileName: '漏洞与风险 (' + dayjs().unix() + ').csv',
-                        params: {
-                            typ: 'vulns',
-                            data: {
-                                ...tableFilter,
-                                limit: -1,
+        <>
+            {contextHolder}
+            <WizardTable
+                page={page}
+                rowKey="id"
+                columns={columns}
+                tableHeader={{
+                    title: '漏洞与风险列表',
+                    options: {
+                        dowloadFile: {
+                            fileName: '漏洞与风险 (' + dayjs().unix() + ').csv',
+                            params: {
+                                typ: 'vulns',
+                                data: {
+                                    ...tableFilter,
+                                    limit: -1,
+                                },
                             },
+                            url: '/assets/export/report',
+                            method: 'post',
+                            type: 'primary',
+                            title: (
+                                <div>
+                                    <UploadOutlined />
+                                    <span className="ml-2">导出 Excel</span>
+                                </div>
+                            ),
                         },
-                        url: '/assets/export/report',
-                        method: 'post',
-                        type: 'primary',
-                        title: (
-                            <div>
-                                <UploadOutlined />
-                                <span className="ml-2">导出 Excel</span>
-                            </div>
+
+                        ProFilterSwitch: {
+                            trigger: <AssetsVulnsFilterDrawer page={page} />,
+                            layout: 'vertical',
+                        },
+                        trigger: (
+                            <Button
+                                danger
+                                disabled={!hasDeleteSelection}
+                                onClick={handleBatchDeleteVulns}
+                            >
+                                批量删除
+                            </Button>
                         ),
                     },
+                }}
+                request={async (params, filter) => {
+                    setTableFilter(filter);
+                    const { data } = await postAssetsVulns({
+                        ...params,
+                        ...filter,
+                    });
 
-                    ProFilterSwitch: {
-                        trigger: <AssetsVulnsFilterDrawer page={page} />,
-                        layout: 'vertical',
-                    },
-                },
-            }}
-            request={async (params, filter) => {
-                setTableFilter(filter);
-                const { data } = await postAssetsVulns({
-                    ...params,
-                    ...filter,
-                });
-
-                return {
-                    list: data?.list ?? [],
-                    pagemeta: data?.pagemeta,
-                };
-            }}
-        />
+                    return {
+                        list: data?.list ?? [],
+                        pagemeta: data?.pagemeta,
+                    };
+                }}
+            />
+        </>
     );
 };
 

@@ -10,6 +10,9 @@ import type {
     TTaskDetail,
     TGetAssetsValueFilterResponse,
     TGetAssetsProtsFilterResponse,
+    TDeleteAssetsHandlerResponse,
+    TDeleteAssetsPortsBody,
+    TDeleteAssetsVulnsBody,
 } from './types';
 import type { Palm } from '@/gen/schema';
 
@@ -56,6 +59,24 @@ const postAssetsVulns = (
     axios.post<never, ResponseData<TableResponseData<TGetAssetsVulnsResponse>>>(
         `/assets/vulns`,
         data,
+    );
+
+/** 删除端口资产：传 `ids` 勾选删除，或 `delete_all: true` 加当前表格筛选条件 */
+const deleteAssetsPorts = (
+    data: TDeleteAssetsPortsBody,
+): Promise<ResponseData<TDeleteAssetsHandlerResponse>> =>
+    axios.delete<never, ResponseData<TDeleteAssetsHandlerResponse>>(
+        `/assets/ports`,
+        { data },
+    );
+
+/** 删除漏洞资产：传 `ids` 勾选删除，或 `delete_all: true` 加当前表格筛选条件 */
+const deleteAssetsVulns = (
+    data: TDeleteAssetsVulnsBody,
+): Promise<ResponseData<TDeleteAssetsHandlerResponse>> =>
+    axios.delete<never, ResponseData<TDeleteAssetsHandlerResponse>>(
+        `/assets/vulns`,
+        { data },
     );
 
 // 获取报告详情
@@ -139,6 +160,8 @@ export {
     postAssetsProts,
     getAssetsProtsFilter,
     postAssetsVulns,
+    deleteAssetsPorts,
+    deleteAssetsVulns,
     getTaskDetail,
     getBatchInvokingScript,
     postAssertsData,

@@ -32,6 +32,24 @@ interface TSensitiveMessageReqeust {
     status?: number;
 }
 
+/** 敏感信息：勾选删除 */
+interface TDeleteSensitiveInfoByIds {
+    ids: number[];
+}
+
+/** 敏感信息：按当前筛选删除（可附带表格其它筛选字段） */
+interface TDeleteSensitiveInfoByFilter extends Record<string, unknown> {
+    delete_all: true;
+    from_task_id?: string;
+    status?: number;
+    keyword?: string;
+    execute_node?: string[];
+}
+
+type TDeleteSensitiveInfoBody =
+    | TDeleteSensitiveInfoByIds
+    | TDeleteSensitiveInfoByFilter;
+
 interface TSensitiveMessageResponse {
     id: number;
     created_at: number;
@@ -52,4 +70,5 @@ export type {
     ReportItem,
     TSensitiveMessageReqeust,
     TSensitiveMessageResponse,
+    TDeleteSensitiveInfoBody,
 };

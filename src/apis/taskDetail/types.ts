@@ -132,6 +132,50 @@ interface TGetAssetsValueFilterResponse {
     severity: TTableFilterList;
 }
 
+/** 资产删除接口成功时 data 字段形态（与后端 Handler 名一致） */
+interface TDeleteAssetsHandlerResponse {
+    from: string;
+    ok: boolean;
+}
+
+/** 端口资产：勾选删除 */
+interface TDeleteAssetsPortsByIds {
+    ids: number[];
+}
+
+/** 端口资产：按当前筛选删除（可附带表格其它筛选字段） */
+interface TDeleteAssetsPortsByFilter extends Record<string, unknown> {
+    delete_all: true;
+    task_id?: string;
+    host?: string;
+    port?: string;
+    service_type?: string[];
+    execute_node?: string[];
+}
+
+type TDeleteAssetsPortsBody =
+    | TDeleteAssetsPortsByIds
+    | TDeleteAssetsPortsByFilter;
+
+/** 漏洞资产：勾选删除 */
+interface TDeleteAssetsVulnsByIds {
+    ids: number[];
+}
+
+/** 漏洞资产：按当前筛选删除（可附带表格其它筛选字段） */
+interface TDeleteAssetsVulnsByFilter extends Record<string, unknown> {
+    delete_all: true;
+    task_id?: string;
+    severity?: string[];
+    keyword?: string;
+    target?: string;
+    execute_node?: string[];
+}
+
+type TDeleteAssetsVulnsBody =
+    | TDeleteAssetsVulnsByIds
+    | TDeleteAssetsVulnsByFilter;
+
 export type {
     TGetAssetsProtsRequest,
     TGetAssetsProtsResponse,
@@ -142,4 +186,7 @@ export type {
     TTaskDetail,
     TGetAssetsValueFilterResponse,
     TGetAssetsProtsFilterResponse,
+    TDeleteAssetsHandlerResponse,
+    TDeleteAssetsPortsBody,
+    TDeleteAssetsVulnsBody,
 };
