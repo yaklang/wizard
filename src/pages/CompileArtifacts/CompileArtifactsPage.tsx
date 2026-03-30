@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
     AppstoreOutlined,
     ClusterOutlined,
@@ -124,8 +124,7 @@ const formatUnixLikeTime = (value?: string) => {
     if (!/^\d{10,13}$/.test(raw)) return '';
     const num = Number(raw);
     if (!Number.isFinite(num) || num <= 0) return '';
-    const parsed =
-        raw.length >= 13 ? dayjs(num) : dayjs.unix(num);
+    const parsed = raw.length >= 13 ? dayjs(num) : dayjs.unix(num);
     return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm') : '';
 };
 
@@ -187,7 +186,8 @@ const formatHeadDisplay = (value?: string) => {
 };
 
 const renderHealthBadge = (healthStatus?: string, reason?: string) => {
-    const config = healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
+    const config =
+        healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
     const tooltipText =
         healthStatus === 'healthy'
             ? '当前 HEAD 的 SSA IR 正常，扫描任务可直接复用'
@@ -203,8 +203,12 @@ const renderHealthBadge = (healthStatus?: string, reason?: string) => {
     );
 };
 
-const renderInlineHealthIndicator = (healthStatus?: string, reason?: string) => {
-    const config = healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
+const renderInlineHealthIndicator = (
+    healthStatus?: string,
+    reason?: string,
+) => {
+    const config =
+        healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
     const tooltipText =
         healthStatus === 'healthy'
             ? '当前 HEAD 的 SSA IR 正常，扫描任务可直接复用'
@@ -274,8 +278,12 @@ const readerColumns: ColumnsType<TCompileArtifactReaderItem> = [
         width: 220,
         render: (_, record) => (
             <div className="reader-task-cell">
-                <div className="reader-task-id">{middleEllipsis(record.task_id, 10)}</div>
-                <div className="reader-task-meta">{record.node_id || '自动调度节点'}</div>
+                <div className="reader-task-id">
+                    {middleEllipsis(record.task_id, 10)}
+                </div>
+                <div className="reader-task-meta">
+                    {record.node_id || '自动调度节点'}
+                </div>
             </div>
         ),
     },
@@ -287,10 +295,17 @@ const readerColumns: ColumnsType<TCompileArtifactReaderItem> = [
             <Space direction="vertical" size={6}>
                 <Space size={6}>
                     {renderStatusTag(record.status)}
-                    <Tag>{phaseLabelMap[record.phase || ''] || record.phase || '-'}</Tag>
+                    <Tag>
+                        {phaseLabelMap[record.phase || ''] ||
+                            record.phase ||
+                            '-'}
+                    </Tag>
                 </Space>
                 <Progress
-                    percent={Math.max(0, Math.min(100, Number(record.progress || 0)))}
+                    percent={Math.max(
+                        0,
+                        Math.min(100, Number(record.progress || 0)),
+                    )}
                     size="small"
                     status={record.status === 'failed' ? 'exception' : 'active'}
                     showInfo={false}
@@ -303,7 +318,9 @@ const readerColumns: ColumnsType<TCompileArtifactReaderItem> = [
         key: 'program',
         render: (_, record) => (
             <div className="reader-task-cell">
-                <div className="reader-task-id">{middleEllipsis(record.program_name, 12)}</div>
+                <div className="reader-task-id">
+                    {middleEllipsis(record.program_name, 12)}
+                </div>
                 <div className="reader-task-meta">
                     {formatTime(record.started_at || record.created_at)}
                 </div>
@@ -328,12 +345,50 @@ const CompileArtifactsPage: React.FC = () => {
     const [query, setQuery] = useSafeState('');
     const [language, setLanguage] = useSafeState<string | undefined>();
     const [healthStatus, setHealthStatus] = useSafeState<string | undefined>();
+    const [sortValue, setSortValue] = useSafeState('storage-desc');
 
     const [detailOpen, setDetailOpen] = useSafeState(false);
     const [detailLoading, setDetailLoading] = useSafeState(false);
     const [detail, setDetail] = useSafeState<TCompileArtifactDetail>();
-    const [selectedRecord, setSelectedRecord] = useSafeState<TCompileArtifactItem>();
+    const [selectedRecord, setSelectedRecord] =
+        useSafeState<TCompileArtifactItem>();
     const [rebuildSeriesKey, setRebuildSeriesKey] = useSafeState<string>('');
+
+    const displayedList = useMemo(() => {
+        const items = [...list];
+        switch (sortValue) {
+            case 'project_name-asc':
+                return items.sort((a, b) =>
+                    String(a.project_name || '').localeCompare(
+                        String(b.project_name || ''),
+                        'zh-CN',
+                    ),
+                );
+            case 'storage-asc':
+                return items.sort(
+                    (a, b) =>
+                        Number(a.total_size_bytes || 0) -
+                        Number(b.total_size_bytes || 0),
+                );
+            case 'activity-desc':
+                return items.sort(
+                    (a, b) =>
+                        dayjs(
+                            b.last_compile_at || b.last_scan_at || 0,
+                        ).valueOf() -
+                        dayjs(
+                            a.last_compile_at || a.last_scan_at || 0,
+                        ).valueOf(),
+                );
+            case 'storage-desc':
+            default:
+                return items.sort(
+                    (a, b) =>
+                        Number(b.total_size_bytes || 0) -
+                        Number(a.total_size_bytes || 0),
+                );
+        }
+    }, [list, sortValue]);
 
     const loadList = useCallback(
         async (nextPage: number, nextLimit: number, append = false) => {
@@ -355,7 +410,8 @@ const CompileArtifactsPage: React.FC = () => {
                     const listRes = await listPromise;
                     const nextList = listRes.data?.list || [];
                     const metaPage = listRes.data?.pagemeta?.page || nextPage;
-                    const metaLimit = listRes.data?.pagemeta?.limit || nextLimit;
+                    const metaLimit =
+                        listRes.data?.pagemeta?.limit || nextLimit;
                     const metaTotal = listRes.data?.pagemeta?.total || 0;
                     setList((prev) => [...prev, ...nextList]);
                     setPage(metaPage);
@@ -380,7 +436,9 @@ const CompileArtifactsPage: React.FC = () => {
                 setTotal(metaTotal);
                 setHasMore(metaPage * metaLimit < metaTotal);
             } catch (err: any) {
-                message.error(`获取编译产物失败: ${err.msg || err.message || '未知错误'}`);
+                message.error(
+                    `获取编译产物失败: ${err.msg || err.message || '未知错误'}`,
+                );
             } finally {
                 if (append) {
                     setLoadingMore(false);
@@ -421,7 +479,9 @@ const CompileArtifactsPage: React.FC = () => {
                 const res = await fetchCompileArtifactDetail(record.series_key);
                 setDetail(res.data);
             } catch (err: any) {
-                message.error(`获取产物详情失败: ${err.msg || err.message || '未知错误'}`);
+                message.error(
+                    `获取产物详情失败: ${err.msg || err.message || '未知错误'}`,
+                );
             } finally {
                 setDetailLoading(false);
             }
@@ -440,7 +500,8 @@ const CompileArtifactsPage: React.FC = () => {
 
     useEffect(() => {
         const handleScroll = () => {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollTop =
+                window.pageYOffset || document.documentElement.scrollTop;
             const scrollHeight = document.documentElement.scrollHeight;
             const clientHeight = document.documentElement.clientHeight;
 
@@ -477,13 +538,20 @@ const CompileArtifactsPage: React.FC = () => {
                     const res = await forceRebuildCompileArtifact({
                         series_key: record.series_key,
                     });
-                    message.success(`已提交重建任务：${res.data?.async_task_id || '-'}`);
+                    message.success(
+                        `已提交重建任务：${res.data?.async_task_id || '-'}`,
+                    );
                     await reloadFirstPage();
-                    if (detailOpen && selectedRecord?.series_key === record.series_key) {
+                    if (
+                        detailOpen &&
+                        selectedRecord?.series_key === record.series_key
+                    ) {
                         await loadDetail(record);
                     }
                 } catch (err: any) {
-                    message.error(`提交重建失败: ${err.msg || err.message || '未知错误'}`);
+                    message.error(
+                        `提交重建失败: ${err.msg || err.message || '未知错误'}`,
+                    );
                 } finally {
                     setRebuildSeriesKey('');
                 }
@@ -500,7 +568,10 @@ const CompileArtifactsPage: React.FC = () => {
             render: (_, record) => (
                 <div className="artifact-project-cell">
                     <div className="artifact-project-head">
-                        {renderInlineHealthIndicator(record.health_status, record.health_reason)}
+                        {renderInlineHealthIndicator(
+                            record.health_status,
+                            record.health_reason,
+                        )}
                         <a
                             className="artifact-project-link"
                             onClick={() => loadDetail(record)}
@@ -555,7 +626,10 @@ const CompileArtifactsPage: React.FC = () => {
                 return (
                     <div className="artifact-structure-cell">
                         <div className="artifact-structure-title">
-                            <Tag color="blue" className="artifact-structure-tag">
+                            <Tag
+                                color="blue"
+                                className="artifact-structure-tag"
+                            >
                                 全量快照
                             </Tag>
                             <span>
@@ -582,9 +656,16 @@ const CompileArtifactsPage: React.FC = () => {
             render: (_, record) => {
                 const tooltip = (
                     <div className="artifact-storage-tooltip">
-                        <div>总占用：{formatBytes(record.total_size_bytes)}</div>
-                        <div>当前链：{formatBytes(record.current_chain_size_bytes)}</div>
-                        <div>可回收：{formatBytes(record.reclaimable_size_bytes)}</div>
+                        <div>
+                            总占用：{formatBytes(record.total_size_bytes)}
+                        </div>
+                        <div>
+                            当前链：
+                            {formatBytes(record.current_chain_size_bytes)}
+                        </div>
+                        <div>
+                            可回收：{formatBytes(record.reclaimable_size_bytes)}
+                        </div>
                     </div>
                 );
 
@@ -596,8 +677,8 @@ const CompileArtifactsPage: React.FC = () => {
                             </div>
                         </Tooltip>
                         <div className="artifact-storage-meta">
-                            链: {formatBytes(record.current_chain_size_bytes)} | 可回收:{' '}
-                            {formatBytes(record.reclaimable_size_bytes)}
+                            链: {formatBytes(record.current_chain_size_bytes)} |
+                            可回收: {formatBytes(record.reclaimable_size_bytes)}
                         </div>
                     </div>
                 );
@@ -628,12 +709,6 @@ const CompileArtifactsPage: React.FC = () => {
             align: 'center',
             render: (_, record) => {
                 const menuItems: MenuProps['items'] = [
-                    {
-                        key: 'detail',
-                        icon: <EyeOutlined />,
-                        label: '详情',
-                        onClick: () => loadDetail(record),
-                    },
                     {
                         key: 'rebuild',
                         icon: <SyncOutlined />,
@@ -698,10 +773,15 @@ const CompileArtifactsPage: React.FC = () => {
                         {item.program_name}
                     </div>
                     <div className="artifact-timeline-meta">
-                        <span>逻辑占用 {formatBytes(item.logical_size_bytes)}</span>
+                        <span>
+                            逻辑占用 {formatBytes(item.logical_size_bytes)}
+                        </span>
                         <span>代码行数 {item.line_count || 0}</span>
                         {item.base_program_name ? (
-                            <span>基座 {middleEllipsis(item.base_program_name, 10)}</span>
+                            <span>
+                                基座{' '}
+                                {middleEllipsis(item.base_program_name, 10)}
+                            </span>
                         ) : null}
                     </div>
                 </div>
@@ -719,7 +799,9 @@ const CompileArtifactsPage: React.FC = () => {
                     <div className="page-eyebrow">System / Asset Control</div>
                     <h1>编译产物</h1>
                     <p>
-                        集中管理各项目的 SSA IR（Static Single Assignment Intermediate Representation）产物。复用 IR 数据可跳过重复编译，实现极速漏洞复测与增量扫描。
+                        集中管理各项目的 SSA IR（Static Single Assignment
+                        Intermediate Representation）产物。复用 IR
+                        数据可跳过重复编译，实现极速漏洞复测与增量扫描。
                     </p>
                 </div>
             </div>
@@ -727,13 +809,23 @@ const CompileArtifactsPage: React.FC = () => {
             <Row gutter={[16, 16]} className="artifact-metrics-row">
                 {buildMetricCards(summary).map((item) => (
                     <Col xs={24} md={12} xl={6} key={item.key}>
-                        <Card className={`artifact-metric-card tone-${item.tone}`}>
+                        <Card
+                            className={`artifact-metric-card tone-${item.tone}`}
+                        >
                             <div className="artifact-metric-head">
-                                <span className="artifact-metric-icon">{item.icon}</span>
-                                <span className="artifact-metric-label">{item.label}</span>
+                                <span className="artifact-metric-icon">
+                                    {item.icon}
+                                </span>
+                                <span className="artifact-metric-label">
+                                    {item.label}
+                                </span>
                             </div>
-                            <div className="artifact-metric-value">{item.value}</div>
-                            <div className="artifact-metric-sub">{item.sub}</div>
+                            <div className="artifact-metric-value">
+                                {item.value}
+                            </div>
+                            <div className="artifact-metric-sub">
+                                {item.sub}
+                            </div>
                         </Card>
                     </Col>
                 ))}
@@ -774,6 +866,19 @@ const CompileArtifactsPage: React.FC = () => {
                             { label: '增长异常', value: 'growth-warning' },
                         ]}
                     />
+                    <Select
+                        value={sortValue}
+                        onChange={setSortValue}
+                        options={[
+                            { label: '存储占用降序', value: 'storage-desc' },
+                            { label: '存储占用升序', value: 'storage-asc' },
+                            {
+                                label: '项目名称 A-Z',
+                                value: 'project_name-asc',
+                            },
+                            { label: '最近活动优先', value: 'activity-desc' },
+                        ]}
+                    />
                     <Space>
                         <Button type="primary" onClick={handleSearch}>
                             查询
@@ -789,28 +894,37 @@ const CompileArtifactsPage: React.FC = () => {
                         <h3>SSA IR 资产列表</h3>
                     </div>
                     <Space size={12}>
-                        <Button icon={<ReloadOutlined />} onClick={() => reloadFirstPage()}>
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={() => reloadFirstPage()}
+                        >
                             刷新数据
                         </Button>
-                        <div className="artifact-table-meta">共 {total} 条资产</div>
+                        <div className="artifact-table-meta">
+                            共 {total} 条资产
+                        </div>
                     </Space>
                 </div>
 
                 <Table<TCompileArtifactItem>
                     rowKey="series_key"
                     loading={loading && list.length === 0}
-                    dataSource={list}
+                    dataSource={displayedList}
                     columns={columns}
                     tableLayout="fixed"
                     pagination={false}
                 />
                 <div className="artifact-list-footer">
                     {loadingMore && <span>加载中...</span>}
-                    {!loadingMore && hasMore && list.length > 0 && <span>向下滚动加载更多</span>}
+                    {!loadingMore && hasMore && list.length > 0 && (
+                        <span>向下滚动加载更多</span>
+                    )}
                     {!loadingMore && !hasMore && list.length > 0 && (
                         <span>已加载全部 {list.length} 条资产</span>
                     )}
-                    {!loading && !loadingMore && list.length === 0 && <span>暂无编译产物</span>}
+                    {!loading && !loadingMore && list.length === 0 && (
+                        <span>暂无编译产物</span>
+                    )}
                 </div>
             </Card>
 
@@ -823,18 +937,25 @@ const CompileArtifactsPage: React.FC = () => {
                 title={
                     <div className="artifact-drawer-title-wrap">
                         <span className="artifact-drawer-title">
-                            {detailOverview?.project_name || selectedRecord?.project_name || '编译产物详情'}
+                            {detailOverview?.project_name ||
+                                selectedRecord?.project_name ||
+                                '编译产物详情'}
                         </span>
-                        {detailOverview ? (
-                            renderHealthBadge(detailOverview.health_status, detailOverview.health_reason)
-                        ) : null}
+                        {detailOverview
+                            ? renderHealthBadge(
+                                  detailOverview.health_status,
+                                  detailOverview.health_reason,
+                              )
+                            : null}
                     </div>
                 }
                 extra={
                     selectedRecord ? (
                         <Button
                             icon={<SyncOutlined />}
-                            loading={rebuildSeriesKey === selectedRecord.series_key}
+                            loading={
+                                rebuildSeriesKey === selectedRecord.series_key
+                            }
                             onClick={() => handleForceRebuild(selectedRecord)}
                         >
                             强制重建 SSA IR
@@ -844,38 +965,62 @@ const CompileArtifactsPage: React.FC = () => {
             >
                 <Spin spinning={detailLoading}>
                     {!detailOverview ? (
-                        <Empty description="暂无产物详情" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                        <Empty
+                            description="暂无产物详情"
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        />
                     ) : (
                         <div className="artifact-detail-body">
-                            <Row gutter={[12, 12]} className="artifact-detail-stats">
+                            <Row
+                                gutter={[12, 12]}
+                                className="artifact-detail-stats"
+                            >
                                 <Col span={8}>
                                     <Card className="detail-stat-card">
-                                        <div className="detail-stat-label">总占用</div>
-                                        <div className="detail-stat-value">
-                                            {formatBytes(detailOverview.total_size_bytes)}
+                                        <div className="detail-stat-label">
+                                            总占用
                                         </div>
-                                        <div className="detail-stat-sub">项目全部版本</div>
-                                    </Card>
-                                </Col>
-                                <Col span={8}>
-                                    <Card className="detail-stat-card">
-                                        <div className="detail-stat-label">当前链占用</div>
                                         <div className="detail-stat-value">
-                                            {formatBytes(detailOverview.current_chain_size_bytes)}
+                                            {formatBytes(
+                                                detailOverview.total_size_bytes,
+                                            )}
                                         </div>
                                         <div className="detail-stat-sub">
-                                            {detailOverview.current_chain_programs} 个当前链 program
+                                            项目全部版本
                                         </div>
                                     </Card>
                                 </Col>
                                 <Col span={8}>
                                     <Card className="detail-stat-card">
-                                        <div className="detail-stat-label">可回收空间</div>
+                                        <div className="detail-stat-label">
+                                            当前链占用
+                                        </div>
+                                        <div className="detail-stat-value">
+                                            {formatBytes(
+                                                detailOverview.current_chain_size_bytes,
+                                            )}
+                                        </div>
+                                        <div className="detail-stat-sub">
+                                            {
+                                                detailOverview.current_chain_programs
+                                            }{' '}
+                                            个当前链 program
+                                        </div>
+                                    </Card>
+                                </Col>
+                                <Col span={8}>
+                                    <Card className="detail-stat-card">
+                                        <div className="detail-stat-label">
+                                            可回收空间
+                                        </div>
                                         <div className="detail-stat-value warning-text">
-                                            {formatBytes(detailOverview.reclaimable_size_bytes)}
+                                            {formatBytes(
+                                                detailOverview.reclaimable_size_bytes,
+                                            )}
                                         </div>
                                         <div className="detail-stat-sub">
-                                            历史版本 {detailOverview.history_programs} 个
+                                            历史版本{' '}
+                                            {detailOverview.history_programs} 个
                                         </div>
                                     </Card>
                                 </Col>
@@ -885,7 +1030,10 @@ const CompileArtifactsPage: React.FC = () => {
                                 <div className="section-head">
                                     <h4>当前 HEAD 概览</h4>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     <Descriptions
                                         column={2}
                                         size="small"
@@ -894,49 +1042,74 @@ const CompileArtifactsPage: React.FC = () => {
                                             {
                                                 key: 'series_key',
                                                 label: 'Series Key',
-                                                children: detailOverview.series_key,
+                                                children:
+                                                    detailOverview.series_key,
                                             },
                                             {
                                                 key: 'language',
                                                 label: '语言',
-                                                children: renderLanguageTag(detailOverview.language),
+                                                children: renderLanguageTag(
+                                                    detailOverview.language,
+                                                ),
                                             },
                                             {
                                                 key: 'head',
                                                 label: '当前 HEAD',
                                                 children: (
-                                                    <Tooltip title={detailOverview.head_program_name || '-'}>
-                                                        {middleEllipsis(detailOverview.head_program_name, 14)}
+                                                    <Tooltip
+                                                        title={
+                                                            detailOverview.head_program_name ||
+                                                            '-'
+                                                        }
+                                                    >
+                                                        {middleEllipsis(
+                                                            detailOverview.head_program_name,
+                                                            14,
+                                                        )}
                                                     </Tooltip>
                                                 ),
                                             },
                                             {
                                                 key: 'kind',
                                                 label: 'HEAD 类型',
-                                                children: renderCompileKindTag(detail.head_program_kind),
+                                                children: renderCompileKindTag(
+                                                    detail.head_program_kind,
+                                                ),
                                             },
                                             {
                                                 key: 'base',
                                                 label: 'Base Program',
-                                                children: detail.head_base_program || '-',
+                                                children:
+                                                    detail.head_base_program ||
+                                                    '-',
                                             },
                                             {
                                                 key: 'line_count',
                                                 label: 'HEAD 行数',
-                                                children: detailOverview.head_line_count || 0,
+                                                children:
+                                                    detailOverview.head_line_count ||
+                                                    0,
                                             },
                                             {
                                                 key: 'updated_at',
                                                 label: 'HEAD 更新时间',
-                                                children: formatTime(detailOverview.head_updated_at),
+                                                children: formatTime(
+                                                    detailOverview.head_updated_at,
+                                                ),
                                             },
                                             {
                                                 key: 'last_compile',
                                                 label: '最近编译',
                                                 children: (
                                                     <Space size={8} wrap>
-                                                        {renderCompileKindTag(detailOverview.last_compile_kind)}
-                                                        <span>{formatTime(detailOverview.last_compile_at)}</span>
+                                                        {renderCompileKindTag(
+                                                            detailOverview.last_compile_kind,
+                                                        )}
+                                                        <span>
+                                                            {formatTime(
+                                                                detailOverview.last_compile_at,
+                                                            )}
+                                                        </span>
                                                     </Space>
                                                 ),
                                             },
@@ -958,16 +1131,24 @@ const CompileArtifactsPage: React.FC = () => {
                             <section className="artifact-detail-section">
                                 <div className="section-head">
                                     <h4>生命周期时间线</h4>
-                                    <span>{detail.timeline.length} 个版本节点</span>
+                                    <span>
+                                        {detail.timeline.length} 个版本节点
+                                    </span>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     {detail.timeline.length === 0 ? (
                                         <Empty
                                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                                             description="暂无编译历史"
                                         />
                                     ) : (
-                                        <Timeline items={timelineItems} className="artifact-timeline" />
+                                        <Timeline
+                                            items={timelineItems}
+                                            className="artifact-timeline"
+                                        />
                                     )}
                                 </Card>
                             </section>
@@ -975,9 +1156,15 @@ const CompileArtifactsPage: React.FC = () => {
                             <section className="artifact-detail-section">
                                 <div className="section-head">
                                     <h4>底层路由探针</h4>
-                                    <span>当前有 {detail.active_readers.length} 个扫描任务在读取该 HEAD</span>
+                                    <span>
+                                        当前有 {detail.active_readers.length}{' '}
+                                        个扫描任务在读取该 HEAD
+                                    </span>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     {detail.active_readers.length === 0 ? (
                                         <Empty
                                             image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -998,9 +1185,14 @@ const CompileArtifactsPage: React.FC = () => {
                             <section className="artifact-detail-section">
                                 <div className="section-head">
                                     <h4>最近扫描记录</h4>
-                                    <span>按数据库扫描任务回放最近使用情况</span>
+                                    <span>
+                                        按数据库扫描任务回放最近使用情况
+                                    </span>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     {detail.recent_scans.length === 0 ? (
                                         <Empty
                                             image={Empty.PRESENTED_IMAGE_SIMPLE}

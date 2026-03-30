@@ -33,11 +33,14 @@ export interface TSSAProjectConfig {
         branch?: string;
         path?: string;
         auth?: {
-            kind?: 'none' | 'basic' | 'ssh';
+            kind?: string;
             user_name?: string;
             password?: string;
             key_path?: string;
             key_content?: string;
+            credential_id?: number;
+            credential_name?: string;
+            secret_set?: boolean;
         };
         proxy?: {
             url?: string;
