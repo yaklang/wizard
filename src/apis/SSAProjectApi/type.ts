@@ -16,6 +16,10 @@ interface TSSAProject {
     config?: TSSAProjectConfig;
 }
 
+interface TSSAProjectFavoriteItem extends TSSAProject {
+    pinned_at?: number;
+}
+
 // SSA 项目配置类型
 // SSA Project Configuration
 export interface TSSAProjectConfig {
@@ -85,6 +89,10 @@ interface TSSAProjectRequest {
 
 // SSA 项目列表响应类型
 type TSSAProjectListResponse = TableResponseData<TSSAProject>;
+type TSSAProjectFavoriteListResponse =
+    TableResponseData<TSSAProjectFavoriteItem> | {
+        list: TSSAProjectFavoriteItem[];
+    };
 
 export type TSSAProjectDeleteMode = 'config-only' | 'cascade';
 
@@ -125,4 +133,10 @@ export interface TRuleGroup {
     display_name: string;
 }
 
-export type { TSSAProject, TSSAProjectRequest, TSSAProjectListResponse };
+export type {
+    TSSAProject,
+    TSSAProjectFavoriteItem,
+    TSSAProjectRequest,
+    TSSAProjectListResponse,
+    TSSAProjectFavoriteListResponse,
+};
