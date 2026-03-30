@@ -2,6 +2,7 @@ import axios from '@/utils/axios';
 import type { ResponseData } from '@/utils/commonTypes';
 import type {
     TSSAProject,
+    TSSAProjectFavoriteListResponse,
     TSSAProjectListResponse,
     TSSAProjectRequest,
     TScanPolicyConfig,
@@ -77,11 +78,36 @@ const getScanPolicyConfig = (
         },
     );
 
+const getSSAProjectFavorites = (params?: {
+    limit?: number;
+}): Promise<ResponseData<TSSAProjectFavoriteListResponse>> =>
+    axios.get<never, ResponseData<TSSAProjectFavoriteListResponse>>(
+        `/ssa/project/favorites`,
+        { params },
+    );
+
+const addSSAProjectFavorite = (
+    projectId: number,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(
+        `/ssa/project/${projectId}/favorite`,
+    );
+
+const removeSSAProjectFavorite = (
+    projectId: number,
+): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>(
+        `/ssa/project/${projectId}/favorite`,
+    );
+
 export {
+    addSSAProjectFavorite,
     getSSAProjects,
+    getSSAProjectFavorites,
     fetchSSAProject,
     postSSAProject,
     deleteSSAProject,
+    removeSSAProjectFavorite,
     testGitConnection,
     getScanPolicyConfig,
 };

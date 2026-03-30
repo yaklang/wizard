@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Card,
@@ -28,6 +28,8 @@ import {
     EditOutlined,
     EyeOutlined,
     CopyOutlined,
+    StarFilled,
+    StarOutlined,
 } from '@ant-design/icons';
 // 语言官方图标
 import { SiPhp, SiJavascript, SiPython, SiGo } from 'react-icons/si';
@@ -35,7 +37,13 @@ import { DiJava } from 'react-icons/di';
 import type { ColumnsType } from 'antd/es/table';
 import type { SorterResult } from 'antd/es/table/interface';
 import type { MenuProps } from 'antd';
-import { getSSAProjects, deleteSSAProject } from '@/apis/SSAProjectApi';
+import {
+    addSSAProjectFavorite,
+    deleteSSAProject,
+    getSSAProjectFavorites,
+    getSSAProjects,
+    removeSSAProjectFavorite,
+} from '@/apis/SSAProjectApi';
 import { scanSSAProject } from '@/apis/SSAScanTaskApi';
 import type {
     TSSAScanModeOverride,
@@ -43,6 +51,7 @@ import type {
 } from '@/apis/SSAScanTaskApi/type';
 import type {
     TSSAProject,
+    TSSAProjectFavoriteItem,
     TSSAProjectDeleteMode,
 } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
@@ -50,6 +59,7 @@ import ProjectDrawer from './ProjectDrawer';
 import { dedupeSSAProjects, mergeSSAProjects } from './projectManagementUtils';
 import { useUrlState } from '@/hooks/useUrlState';
 import dayjs from 'dayjs';
+import { buildFavoriteProjectIDSet } from '../IRifyDashboard/dashboardFavorites';
 import './ProjectManagement.scss';
 
 const { RangePicker } = DatePicker;
@@ -115,9 +125,16 @@ const ProjectManagement: React.FC = () => {
         '',
     );
     const [filterTags, setFilterTags] = useUrlState('tags', '');
+    const [favoriteOnly, setFavoriteOnly] = useUrlState('favorite_only', '');
     const [filterDateRange, setFilterDateRange] = useState<
         [number, number] | undefined
     >();
+    const [favoriteProjects, setFavoriteProjects] = useState<
+        TSSAProjectFavoriteItem[]
+    >([]);
+    const [favoriteUpdatingProjectId, setFavoriteUpdatingProjectId] = useState<
+        number | null
+    >(null);
 
     // 仅允许一个“发起扫描”弹层同时展开
     const [scanPopoverProjectId, setScanPopoverProjectId] = useState<
@@ -133,9 +150,7 @@ const ProjectManagement: React.FC = () => {
     const loadingRef = useRef(false);
     const requestedPageKeysRef = useRef<Set<string>>(new Set());
 
-    const selectedProjects = data.filter(
-        (item) => item.id && selectedRowKeys.includes(item.id),
-    );
+    const favoriteOnlyEnabled = favoriteOnly === '1';
 
     useEffect(() => {
         dataRef.current = data;
@@ -254,6 +269,18 @@ const ProjectManagement: React.FC = () => {
         [],
     );
 
+    const loadFavoriteProjects = useCallback(async () => {
+        try {
+            const response = await getSSAProjectFavorites();
+            const list =
+                (response.data as { list?: TSSAProjectFavoriteItem[] })?.list ||
+                [];
+            setFavoriteProjects(list);
+        } catch (error) {
+            message.error('获取收藏项目失败');
+        }
+    }, []);
+
     const reloadFirstPage = useCallback(() => {
         resetListState();
         fetchList({
@@ -281,6 +308,14 @@ const ProjectManagement: React.FC = () => {
     ]);
 
     useEffect(() => {
+        void loadFavoriteProjects();
+    }, [loadFavoriteProjects]);
+
+    useEffect(() => {
+        if (favoriteOnlyEnabled) {
+            setSelectedRowKeys([]);
+            return;
+        }
         resetListState();
         fetchList({
             p: 1,
@@ -302,12 +337,13 @@ const ProjectManagement: React.FC = () => {
         limit,
         orderBy,
         orderDir,
+        favoriteOnlyEnabled,
         resetListState,
         fetchList,
     ]);
 
     const handleLoadMore = useCallback(() => {
-        if (loadingRef.current || !hasMore) return;
+        if (favoriteOnlyEnabled || loadingRef.current || !hasMore) return;
 
         fetchList({
             p: page + 1,
@@ -333,6 +369,7 @@ const ProjectManagement: React.FC = () => {
         fetchList,
         orderBy,
         orderDir,
+        favoriteOnlyEnabled,
     ]);
 
     // 监听滚动事件
@@ -503,11 +540,132 @@ const ProjectManagement: React.FC = () => {
         openDeleteProjectsDialog(selectedProjects);
     };
 
+    const favoriteProjectIDSet = useMemo(
+        () => buildFavoriteProjectIDSet(favoriteProjects),
+        [favoriteProjects],
+    );
+
+    const favoriteProjectsData = useMemo(() => {
+        const loweredProjectName = searchName.trim().toLowerCase();
+        const filtered = favoriteProjects.filter((project) => {
+            if (
+                loweredProjectName &&
+                !project.project_name
+                    .toLowerCase()
+                    .includes(loweredProjectName)
+            ) {
+                return false;
+            }
+            if (filterLanguage && project.language !== filterLanguage) {
+                return false;
+            }
+            if (
+                filterSourceKind &&
+                project.config?.CodeSource?.kind !== filterSourceKind
+            ) {
+                return false;
+            }
+            if (filterTags) {
+                const tagText = project.tags || '';
+                if (!tagText.toLowerCase().includes(filterTags.toLowerCase())) {
+                    return false;
+                }
+            }
+            if (filterDateRange) {
+                const createdAt = project.created_at || 0;
+                if (
+                    createdAt < filterDateRange[0] ||
+                    createdAt > filterDateRange[1]
+                ) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        const direction = orderDir === 'asc' ? 1 : -1;
+        return [...filtered].sort((left, right) => {
+            switch (orderBy) {
+                case 'project_name':
+                    return (
+                        left.project_name.localeCompare(right.project_name) *
+                        direction
+                    );
+                case 'language':
+                    return (
+                        (left.language || '').localeCompare(
+                            right.language || '',
+                        ) * direction
+                    );
+                case 'created_at':
+                    return (
+                        ((left.created_at || 0) - (right.created_at || 0)) *
+                        direction
+                    );
+                case 'risk_count':
+                    return (
+                        ((left.risk_count || 0) - (right.risk_count || 0)) *
+                        direction
+                    );
+                case 'updated_at':
+                default:
+                    return (
+                        ((left.updated_at || 0) - (right.updated_at || 0)) *
+                        direction
+                    );
+            }
+        });
+    }, [
+        favoriteProjects,
+        searchName,
+        filterLanguage,
+        filterSourceKind,
+        filterTags,
+        filterDateRange,
+        orderBy,
+        orderDir,
+    ]);
+
+    const tableData = favoriteOnlyEnabled ? favoriteProjectsData : data;
+
+    const selectedProjects = tableData.filter(
+        (item) => item.id && selectedRowKeys.includes(item.id),
+    );
+
     // 格式化时间戳
     const formatTimestamp = (timestamp?: number) => {
         if (!timestamp) return '-';
         return new Date(timestamp * 1000).toLocaleString();
     };
+
+    const isFavoriteProject = (record: TSSAProject) =>
+        !!record.id && favoriteProjectIDSet.has(record.id);
+
+    const handleToggleFavorite = useCallback(
+        async (record: TSSAProject) => {
+            if (!record.id) {
+                return;
+            }
+            setFavoriteUpdatingProjectId(record.id);
+            try {
+                if (favoriteProjectIDSet.has(record.id)) {
+                    await removeSSAProjectFavorite(record.id);
+                    message.success(`已取消收藏 ${record.project_name}`);
+                } else {
+                    await addSSAProjectFavorite(record.id);
+                    message.success(`已收藏 ${record.project_name}`);
+                }
+                await loadFavoriteProjects();
+            } catch (error: any) {
+                message.error(
+                    error?.msg || error?.message || '更新收藏状态失败',
+                );
+            } finally {
+                setFavoriteUpdatingProjectId(null);
+            }
+        },
+        [favoriteProjectIDSet, loadFavoriteProjects],
+    );
 
     useEffect(() => {
         setShowMemoryScanOverride(resolveMemoryScanOverrideVisible());
@@ -657,6 +815,35 @@ const ProjectManagement: React.FC = () => {
     };
 
     const columns: ColumnsType<TSSAProject> = [
+        {
+            title: (
+                <Tooltip title="收藏项目">
+                    <span className="favorite-column-header">
+                        <StarOutlined />
+                    </span>
+                </Tooltip>
+            ),
+            key: 'favorite',
+            width: 56,
+            fixed: 'left',
+            render: (_, record) => (
+                <div className="favorite-cell">
+                    <Button
+                        type="text"
+                        className={`favorite-cell-button ${isFavoriteProject(record) ? 'is-active' : ''}`}
+                        icon={
+                            isFavoriteProject(record) ? (
+                                <StarFilled />
+                            ) : (
+                                <StarOutlined />
+                            )
+                        }
+                        loading={favoriteUpdatingProjectId === record.id}
+                        onClick={() => handleToggleFavorite(record)}
+                    />
+                </div>
+            ),
+        },
         {
             title: '项目信息',
             key: 'project_name',
@@ -1069,6 +1256,17 @@ const ProjectManagement: React.FC = () => {
                             setPage(1);
                         }}
                     />
+                    <Radio.Group
+                        value={favoriteOnlyEnabled ? 'favorite' : 'all'}
+                        onChange={(e) =>
+                            setFavoriteOnly(
+                                e.target.value === 'favorite' ? '1' : '',
+                            )
+                        }
+                    >
+                        <Radio.Button value="all">全部项目</Radio.Button>
+                        <Radio.Button value="favorite">收藏项目</Radio.Button>
+                    </Radio.Group>
                     <RangePicker
                         placeholder={['创建开始', '创建结束']}
                         style={{ width: 260 }}
@@ -1088,14 +1286,14 @@ const ProjectManagement: React.FC = () => {
 
                 <Table<TSSAProject>
                     columns={columns}
-                    dataSource={data}
+                    dataSource={tableData}
                     rowKey={(r) => r.id ?? r.project_name}
                     rowSelection={{
                         selectedRowKeys,
                         onChange: setSelectedRowKeys,
-                        columnWidth: 52,
+                        columnWidth: 60,
                     }}
-                    loading={loading && page === 1}
+                    loading={favoriteOnlyEnabled ? false : loading && page === 1}
                     scroll={{ x: 1200 }}
                     pagination={false}
                     onChange={(_pagination, _filters, sorter) => {
@@ -1106,6 +1304,9 @@ const ProjectManagement: React.FC = () => {
                             s.order === 'ascend' ? 'asc' : 'desc';
                         setOrderBy(newOrderBy);
                         setOrderDir(newOrderDir);
+                        if (favoriteOnlyEnabled) {
+                            return;
+                        }
                         resetListState();
                         fetchList({
                             p: 1,
@@ -1130,13 +1331,28 @@ const ProjectManagement: React.FC = () => {
                     }}
                 >
                     {loading && page > 1 && <span>加载中...</span>}
-                    {!loading && hasMore && data.length > 0 && (
+                    {!favoriteOnlyEnabled &&
+                        !loading &&
+                        hasMore &&
+                        tableData.length > 0 && (
                         <span>向下滚动加载更多</span>
                     )}
-                    {!loading && !hasMore && data.length > 0 && (
-                        <span>已加载全部 {data.length} 个项目</span>
+                    {!favoriteOnlyEnabled &&
+                        !loading &&
+                        !hasMore &&
+                        tableData.length > 0 && (
+                        <span>已加载全部 {tableData.length} 个项目</span>
                     )}
-                    {!loading && data.length === 0 && <span>暂无项目</span>}
+                    {favoriteOnlyEnabled && tableData.length > 0 && (
+                        <span>共 {tableData.length} 个收藏项目</span>
+                    )}
+                    {!loading && tableData.length === 0 && (
+                        <span>
+                            {favoriteOnlyEnabled
+                                ? '暂无收藏项目'
+                                : '暂无项目'}
+                        </span>
+                    )}
                 </div>
             </Card>
 

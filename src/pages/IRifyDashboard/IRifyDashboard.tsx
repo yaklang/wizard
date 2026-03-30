@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Row, Col, Progress, Tag, Empty } from 'antd';
+import { Card, Button, Row, Col, Progress, Tag, Empty, message } from 'antd';
 import {
     PlusOutlined,
     FolderOutlined,
@@ -11,16 +11,34 @@ import {
     ExclamationCircleOutlined,
     ArrowRightOutlined,
     RocketOutlined,
+    StarFilled,
+    StarOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { getSSAProjects } from '@/apis/SSAProjectApi';
+import {
+    addSSAProjectFavorite,
+    getSSAProjectFavorites,
+    getSSAProjects,
+    removeSSAProjectFavorite,
+} from '@/apis/SSAProjectApi';
 import { getSSARisks } from '@/apis/SSARiskApi';
 import { querySSATasks } from '@/apis/SSAScanTaskApi';
+import type {
+    TSSAProject,
+    TSSAProjectFavoriteItem,
+} from '@/apis/SSAProjectApi/type';
+import type { TSSATask } from '@/apis/SSAScanTaskApi/type';
 import { useTheme } from '@/theme';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import {
+    buildFavoriteProjectIDSet,
+    DASHBOARD_FAVORITES_LIMIT,
+    makeDashboardProjectKey,
+    normalizeDashboardFavorites,
+} from './dashboardFavorites';
 
 import './IRifyDashboard.scss';
 
@@ -61,16 +79,54 @@ const getTotalFromRiskResp = (res: any) =>
 const severityOrder = ['critical', 'high', 'middle', 'low', 'info'] as const;
 type SeverityKey = (typeof severityOrder)[number];
 
+interface DashboardProjectCandidate {
+    key: string;
+    projectId?: number;
+    projectName: string;
+    riskCount: number;
+    riskCountCritical: number;
+    riskCountHigh: number;
+    riskCountMiddle: number;
+    riskCountLow: number;
+    language?: string;
+    lastScanAt?: number;
+    scanBatch?: number;
+    sourceLabels: string[];
+}
+
+const mergeSourceLabels = (labels: string[], nextLabel: string) => {
+    if (labels.includes(nextLabel)) {
+        return labels;
+    }
+    return [...labels, nextLabel];
+};
+
+const formatRelativeTimestamp = (timestamp?: number) => {
+    if (!timestamp) {
+        return '刚刚更新';
+    }
+    return dayjs(timestamp * 1000).fromNow();
+};
+
+const hasDetailedSeverity = (project: DashboardProjectCandidate) =>
+    project.riskCountCritical > 0 ||
+    project.riskCountHigh > 0 ||
+    project.riskCountMiddle > 0 ||
+    project.riskCountLow > 0;
+
 const IRifyDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isDark } = useTheme();
-    const [workflowStep, setWorkflowStep] = useState(0);
+    const [favoriteLoadingProjectID, setFavoriteLoadingProjectID] = useState<
+        number | null
+    >(null);
 
     const { data: dashboardData } = useQuery({
         queryKey: ['dashboard'],
         queryFn: async () => {
             const [
                 projectsRes,
+                recentProjectsRes,
                 topProjectsRes,
                 risksRes,
                 criticalRes,
@@ -84,7 +140,13 @@ const IRifyDashboard: React.FC = () => {
                 getSSAProjects({ page: 1, limit: 1 }),
                 getSSAProjects({
                     page: 1,
-                    limit: 3,
+                    limit: 8,
+                    order: 'desc',
+                    order_by: 'updated_at',
+                }),
+                getSSAProjects({
+                    page: 1,
+                    limit: 5,
                     order: 'desc',
                     order_by: 'risk_count',
                 }),
@@ -100,6 +162,7 @@ const IRifyDashboard: React.FC = () => {
 
             return {
                 projects: projectsRes.data,
+                recentProjects: recentProjectsRes.data,
                 topProjects: topProjectsRes.data,
                 risks: risksRes.data,
                 severitySummary: {
@@ -120,9 +183,10 @@ const IRifyDashboard: React.FC = () => {
     const projectCount = dashboardData?.projects?.pagemeta?.total || 0;
     const riskCount = dashboardData?.risks?.pagemeta?.total || 0;
     const scanCount = dashboardData?.scans?.pagemeta?.total || 0;
+    const recentProjects = dashboardData?.recentProjects?.list || [];
     const topProjects = (dashboardData?.topProjects?.list || [])
         .filter((project: any) => Number(project?.risk_count || 0) > 0)
-        .slice(0, 3);
+        .slice(0, 5);
 
     const severityCounts: Record<SeverityKey, number> = {
         critical: dashboardData?.severitySummary?.critical || 0,
@@ -133,19 +197,193 @@ const IRifyDashboard: React.FC = () => {
     };
 
     const recentScans = dashboardData?.scans?.list || [];
+    const {
+        data: favoriteProjects = [],
+        refetch: refetchFavoriteProjects,
+    } = useQuery({
+        queryKey: ['dashboard-favorites'],
+        queryFn: async () => {
+            const response = await getSSAProjectFavorites();
+            const rawList =
+                (response.data as { list?: TSSAProjectFavoriteItem[] })?.list ||
+                [];
+            return normalizeDashboardFavorites(rawList);
+        },
+        refetchOnMount: 'always',
+    });
+    const workflowStep =
+        riskCount > 0 ? 3 : scanCount > 0 ? 2 : projectCount > 0 ? 1 : 0;
 
-    // Calculate workflow step based on data
-    useEffect(() => {
-        if (projectCount > 0) {
-            setWorkflowStep(1);
-            if (scanCount > 0) {
-                setWorkflowStep(2);
-                if (riskCount > 0) {
-                    setWorkflowStep(3);
-                }
-            }
+    const projectCandidateMap: Record<string, DashboardProjectCandidate> = {};
+    const upsertProjectCandidate = (
+        projectName?: string,
+        projectId?: number,
+        updater?: (current: DashboardProjectCandidate) => DashboardProjectCandidate,
+    ) => {
+        const trimmedName = (projectName || '').trim();
+        if (!trimmedName) {
+            return;
         }
-    }, [projectCount, scanCount, riskCount]);
+        const key = makeDashboardProjectKey(projectId, trimmedName);
+        const current =
+            projectCandidateMap[key] || {
+                key,
+                projectId,
+                projectName: trimmedName,
+                riskCount: 0,
+                riskCountCritical: 0,
+                riskCountHigh: 0,
+                riskCountMiddle: 0,
+                riskCountLow: 0,
+                sourceLabels: [],
+            };
+        projectCandidateMap[key] = updater ? updater(current) : current;
+    };
+
+    recentProjects.forEach((project: TSSAProject) => {
+        upsertProjectCandidate(project.project_name, project.id, (current) => ({
+            ...current,
+            projectId: project.id || current.projectId,
+            projectName: project.project_name || current.projectName,
+            riskCount: Math.max(
+                current.riskCount,
+                Number(project.risk_count || 0),
+            ),
+            riskCountCritical: current.riskCountCritical,
+            riskCountHigh: current.riskCountHigh,
+            riskCountMiddle: current.riskCountMiddle,
+            riskCountLow: current.riskCountLow,
+            language: project.language || current.language,
+            sourceLabels: mergeSourceLabels(
+                current.sourceLabels,
+                '最近项目',
+            ),
+        }));
+    });
+
+    topProjects.forEach((project: TSSAProject) => {
+        upsertProjectCandidate(project.project_name, project.id, (current) => ({
+            ...current,
+            projectId: project.id || current.projectId,
+            projectName: project.project_name || current.projectName,
+            riskCount: Math.max(
+                current.riskCount,
+                Number(project.risk_count || 0),
+            ),
+            riskCountCritical: current.riskCountCritical,
+            riskCountHigh: current.riskCountHigh,
+            riskCountMiddle: current.riskCountMiddle,
+            riskCountLow: current.riskCountLow,
+            language: project.language || current.language,
+            sourceLabels: mergeSourceLabels(
+                current.sourceLabels,
+                '风险榜',
+            ),
+        }));
+    });
+
+    recentScans.forEach((scan: TSSATask) => {
+        upsertProjectCandidate(scan.project_name, scan.project_id, (current) => ({
+            ...current,
+            projectId: scan.project_id || current.projectId,
+            projectName: scan.project_name || current.projectName,
+            riskCount: Math.max(
+                current.riskCount,
+                Number(scan.risk_count || 0),
+            ),
+            riskCountCritical: Math.max(
+                current.riskCountCritical,
+                Number(scan.risk_count_critical || 0),
+            ),
+            riskCountHigh: Math.max(
+                current.riskCountHigh,
+                Number(scan.risk_count_high || 0),
+            ),
+            riskCountMiddle: Math.max(
+                current.riskCountMiddle,
+                Number(scan.risk_count_medium || 0),
+            ),
+            riskCountLow: Math.max(
+                current.riskCountLow,
+                Number(scan.risk_count_low || 0),
+            ),
+            language: scan.language || current.language,
+            lastScanAt:
+                Number(
+                    scan.updated_at ||
+                        scan.finished_at ||
+                        scan.created_at ||
+                        0,
+                ) || current.lastScanAt,
+            scanBatch: scan.scan_batch || current.scanBatch,
+            sourceLabels: mergeSourceLabels(
+                current.sourceLabels,
+                '最近扫描',
+            ),
+        }));
+    });
+
+    const projectCandidates = Object.values(projectCandidateMap).sort(
+        (left, right) => {
+            const riskGap = right.riskCount - left.riskCount;
+            if (riskGap !== 0) {
+                return riskGap;
+            }
+            return (right.lastScanAt || 0) - (left.lastScanAt || 0);
+        },
+    );
+
+    const topRiskProjects = projectCandidates
+        .filter((project) => project.riskCount > 0)
+        .slice(0, 5);
+    const favoriteProjectIDSet = buildFavoriteProjectIDSet(favoriteProjects);
+
+    const favoriteProjectCards = favoriteProjects
+        .map((favorite) => {
+            const matched = projectCandidates.find(
+                (project) => project.projectId === favorite.id,
+            );
+            if (matched) {
+                return matched;
+            }
+            return {
+                key: makeDashboardProjectKey(favorite.id, favorite.project_name),
+                projectId: favorite.id,
+                projectName: favorite.project_name,
+                riskCount: Number(favorite.risk_count || 0),
+                riskCountCritical: 0,
+                riskCountHigh: 0,
+                riskCountMiddle: 0,
+                riskCountLow: 0,
+                language: favorite.language,
+                sourceLabels: ['账号收藏'],
+            } satisfies DashboardProjectCandidate;
+        })
+        .slice(0, DASHBOARD_FAVORITES_LIMIT);
+
+    const isFavoriteProject = (project: DashboardProjectCandidate) =>
+        !!project.projectId && favoriteProjectIDSet.has(project.projectId);
+
+    const toggleFavoriteProject = async (project: DashboardProjectCandidate) => {
+        if (!project.projectId) {
+            return;
+        }
+        setFavoriteLoadingProjectID(project.projectId);
+        try {
+            if (favoriteProjectIDSet.has(project.projectId)) {
+                await removeSSAProjectFavorite(project.projectId);
+                message.success(`已取消关注 ${project.projectName}`);
+            } else {
+                await addSSAProjectFavorite(project.projectId);
+                message.success(`已关注 ${project.projectName}`);
+            }
+            await refetchFavoriteProjects();
+        } catch (error: any) {
+            message.error(error?.msg || error?.message || '更新收藏状态失败');
+        } finally {
+            setFavoriteLoadingProjectID(null);
+        }
+    };
 
     // Dynamic text color based on theme
     const textColor = isDark ? '#E6EDF3' : '#1E293B';
@@ -526,49 +764,247 @@ const IRifyDashboard: React.FC = () => {
                                     ))}
                                 </div>
 
-                                {topProjects.length > 0 && (
-                                    <div className="top-projects-section">
-                                        <div className="section-title">
-                                            Top 3 高危项目排行
-                                        </div>
-                                        <div className="top-projects-list">
-                                            {topProjects.map(
-                                                (project: any, idx: number) => (
-                                                    <div
-                                                        key={project.id || idx}
-                                                        className="top-project-item"
-                                                        onClick={() =>
-                                                            navigate(
-                                                                getRoutePath(
-                                                                    RouteKey.IRIFY_VULNERABILITIES,
-                                                                ),
-                                                            )
-                                                        }
-                                                    >
-                                                        <span className="rank">
-                                                            {idx + 1}
-                                                        </span>
-                                                        <span className="name">
-                                                            {
-                                                                project.project_name
-                                                            }
-                                                        </span>
-                                                        <span className="count">
-                                                            <BugOutlined />{' '}
-                                                            {project.risk_count ||
-                                                                0}
-                                                        </span>
-                                                    </div>
-                                                ),
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
                             </>
                         ) : (
                             <Empty
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                                 description="暂无漏洞发现"
+                            />
+                        )}
+                    </Card>
+                </Col>
+            </Row>
+
+            <Row gutter={[24, 24]} className="attention-section">
+                <Col xs={24} lg={12}>
+                    <Card
+                        title={
+                            <div className="card-title">
+                                <StarFilled /> 项目关注
+                            </div>
+                        }
+                        className="activity-card"
+                        extra={
+                            <Button
+                                type="link"
+                                onClick={() =>
+                                    navigate(
+                                        `${getRoutePath(RouteKey.IRIFY_PROJECTS)}?favorite_only=1`,
+                                    )
+                                }
+                            >
+                                查看全部
+                            </Button>
+                        }
+                    >
+                        {favoriteProjectCards.length > 0 ? (
+                            <div className="favorite-project-grid inline-grid">
+                                {favoriteProjectCards.map((project) => (
+                                    <div
+                                        key={project.key}
+                                        className="favorite-project-card"
+                                    >
+                                        <div className="favorite-project-head">
+                                            <div className="favorite-project-text">
+                                                <div className="favorite-project-name-row">
+                                                    <div className="favorite-project-name">
+                                                        {project.projectName}
+                                                    </div>
+                                                    {project.scanBatch ? (
+                                                        <Tag className="favorite-batch-tag">
+                                                            第{project.scanBatch}
+                                                            批
+                                                        </Tag>
+                                                    ) : null}
+                                                </div>
+                                                <div className="favorite-project-subtitle">
+                                                    最近扫描{' '}
+                                                    {formatRelativeTimestamp(
+                                                        project.lastScanAt,
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <Button
+                                                type="text"
+                                                className="favorite-toggle"
+                                                icon={<StarFilled />}
+                                                loading={
+                                                    favoriteLoadingProjectID ===
+                                                    project.projectId
+                                                }
+                                                onClick={() =>
+                                                    toggleFavoriteProject(
+                                                        project,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                        <div className="favorite-project-summary">
+                                            <span className="favorite-total-risk">
+                                                总风险 {project.riskCount}
+                                            </span>
+                                            {hasDetailedSeverity(project) ? (
+                                                <div className="favorite-risk-tags">
+                                                    {project.riskCountCritical >
+                                                        0 && (
+                                                        <Tag color="red">
+                                                            严重{' '}
+                                                            {
+                                                                project.riskCountCritical
+                                                            }
+                                                        </Tag>
+                                                    )}
+                                                    {project.riskCountHigh >
+                                                        0 && (
+                                                        <Tag color="volcano">
+                                                            高危{' '}
+                                                            {
+                                                                project.riskCountHigh
+                                                            }
+                                                        </Tag>
+                                                    )}
+                                                    {project.riskCountMiddle >
+                                                        0 && (
+                                                        <Tag color="gold">
+                                                            中危{' '}
+                                                            {
+                                                                project.riskCountMiddle
+                                                            }
+                                                        </Tag>
+                                                    )}
+                                                    {project.riskCountLow >
+                                                        0 && (
+                                                        <Tag color="green">
+                                                            低危{' '}
+                                                            {
+                                                                project.riskCountLow
+                                                            }
+                                                        </Tag>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="favorite-risk-hint">
+                                                    暂无风险等级拆分
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="favorite-project-footer">
+                                            <Button
+                                                type="link"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `${getRoutePath(RouteKey.IRIFY_PROJECTS)}?project_name=${encodeURIComponent(project.projectName)}`,
+                                                    )
+                                                }
+                                            >
+                                                查看详情
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description="暂无关注项目"
+                            >
+                                <Button
+                                    type="primary"
+                                    onClick={() =>
+                                        navigate(
+                                            getRoutePath(
+                                                RouteKey.IRIFY_PROJECTS,
+                                            ),
+                                        )
+                                    }
+                                >
+                                    去选择项目
+                                </Button>
+                            </Empty>
+                        )}
+                    </Card>
+                </Col>
+
+                <Col xs={24} lg={12}>
+                    <Card
+                        title={
+                            <div className="card-title">
+                                <StarOutlined /> 风险 Top 5 快速关注
+                            </div>
+                        }
+                        className="activity-card"
+                        extra={<span className="panel-note">可一键收藏</span>}
+                    >
+                        {topRiskProjects.length > 0 ? (
+                            <div className="focus-rank-list">
+                                {topRiskProjects.map((project, index) => (
+                                    <div
+                                        key={project.key}
+                                        className="focus-rank-item"
+                                    >
+                                        <div className="focus-rank-main">
+                                            <span className="focus-rank-index">
+                                                {index + 1}
+                                            </span>
+                                            <div className="focus-rank-text">
+                                                <div className="focus-rank-name">
+                                                    {project.projectName}
+                                                </div>
+                                                <div className="focus-rank-meta">
+                                                    <span>
+                                                        风险 {project.riskCount}
+                                                    </span>
+                                                    {project.lastScanAt && (
+                                                        <span>
+                                                            {formatRelativeTimestamp(
+                                                                project.lastScanAt,
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="focus-rank-actions">
+                                            <Button
+                                                type="text"
+                                                className="favorite-toggle"
+                                                icon={
+                                                    isFavoriteProject(project) ? (
+                                                        <StarFilled />
+                                                    ) : (
+                                                        <StarOutlined />
+                                                    )
+                                                }
+                                                loading={
+                                                    favoriteLoadingProjectID ===
+                                                    project.projectId
+                                                }
+                                                onClick={() =>
+                                                    toggleFavoriteProject(
+                                                        project,
+                                                    )
+                                                }
+                                            />
+                                            <Button
+                                                type="link"
+                                                onClick={() =>
+                                                    navigate(
+                                                        getRoutePath(
+                                                            RouteKey.IRIFY_PROJECTS,
+                                                        ),
+                                                    )
+                                                }
+                                            >
+                                                查看
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description="暂无风险排行数据"
                             />
                         )}
                     </Card>
