@@ -333,7 +333,7 @@ const ToolResultCard: React.FC<ToolResultCardProps> = memo((props) => {
       }
       // eslint-disable-next-line react/jsx-no-useless-fragment
       titleExtra={<>{modalInfo && <ModalInfo {...modalInfo} />}</>}
-      footer={<OperationCardFooter {...operationInfo} />}
+      // footer={<OperationCardFooter {...operationInfo} />}
     >
       <ToolStatusCard
         status={status}
