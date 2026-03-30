@@ -858,6 +858,7 @@ const ProjectManagement: React.FC = () => {
 
                 return (
                     <div
+                        className="project-name-cell"
                         style={{
                             display: 'flex',
                             alignItems: 'flex-start',
@@ -877,12 +878,8 @@ const ProjectManagement: React.FC = () => {
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div>
                                 <a
+                                    className="project-name-link"
                                     onClick={() => handleEdit(record)}
-                                    style={{
-                                        fontWeight: 600,
-                                        fontSize: 14,
-                                        color: '#1890ff',
-                                    }}
                                 >
                                     {record.project_name}
                                 </a>
@@ -894,10 +891,8 @@ const ProjectManagement: React.FC = () => {
                                 </Tag>
                             </div>
                             <div
+                                className="project-description"
                                 style={{
-                                    color: '#999',
-                                    fontSize: 12,
-                                    marginTop: 4,
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                     whiteSpace: 'nowrap',
@@ -923,7 +918,7 @@ const ProjectManagement: React.FC = () => {
                     record.config?.CodeSource?.auth?.kind !== 'none';
 
                 return (
-                    <div>
+                    <div className="code-source-cell">
                         <div
                             style={{
                                 display: 'flex',
@@ -935,10 +930,9 @@ const ProjectManagement: React.FC = () => {
                             <Tooltip title={url}>
                                 <Text
                                     ellipsis
+                                    className="url-text"
                                     style={{
                                         maxWidth: 200,
-                                        fontSize: 13,
-                                        color: '#1890ff',
                                         cursor: 'pointer',
                                     }}
                                     onClick={() => copyToClipboard(url)}
@@ -961,10 +955,12 @@ const ProjectManagement: React.FC = () => {
                                 alignItems: 'center',
                                 gap: 8,
                                 marginTop: 6,
-                                fontSize: 12,
                             }}
                         >
-                            <Tag style={{ margin: 0, fontSize: 11 }}>
+                            <Tag
+                                className="branch-tag"
+                                style={{ margin: 0 }}
+                            >
                                 分支: {branch}
                             </Tag>
                             {hasAuth ? (
