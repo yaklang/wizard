@@ -35,11 +35,13 @@ import {
     getScanPolicyConfig,
 } from '@/apis/SSAProjectApi';
 import { getNodeList } from '@/apis/task';
-import type { 
-    TSSAProjectRequest, 
+import { normalizeProjectAuthKind } from '@/utils/ssaCredential';
+import type {
+    TSSAProjectRequest,
     TScanPolicyConfig,
-    TRuleGroupCategory 
+    TRuleGroupCategory,
 } from '@/apis/SSAProjectApi/type';
+import CodeSourceAuthSection from './components/CodeSourceAuthSection';
 
 interface ProjectDrawerProps {
     visible: boolean;
@@ -62,21 +64,35 @@ const languageOptions = [
 
 // 扫描策略选项
 const scanPolicyOptions = [
-    { label: '🛡️ OWASP Top 10 合规扫描', value: 'owasp-web', desc: '包含 135 条规则，覆盖常见 Web 风险' },
-    { label: '🚀 高危漏洞快速扫描', value: 'critical-high', desc: '89 条规则，仅扫描严重和高危级别' },
-    { label: '☕ 全栈深度扫描', value: 'fullstack', desc: '~180 条规则，包含语言+框架+SCA' },
+    {
+        label: '🛡️ OWASP Top 10 合规扫描',
+        value: 'owasp-web',
+        desc: '包含 135 条规则，覆盖常见 Web 风险',
+    },
+    {
+        label: '🚀 高危漏洞快速扫描',
+        value: 'critical-high',
+        desc: '89 条规则，仅扫描严重和高危级别',
+    },
+    {
+        label: '☕ 全栈深度扫描',
+        value: 'fullstack',
+        desc: '~180 条规则，包含语言+框架+SCA',
+    },
     { label: '⚙️ 自定义规则', value: 'custom', desc: '手动选择规则集' },
 ];
 
 // 规则树数据（用于自定义策略Modal）
 // 将规则组分类转换为 Tree DataNode 格式
-const convertRuleGroupCategoriesToDataNodes = (categories?: TRuleGroupCategory[]): DataNode[] => {
+const convertRuleGroupCategoriesToDataNodes = (
+    categories?: TRuleGroupCategory[],
+): DataNode[] => {
     if (!categories || categories.length === 0) return [];
-    
-    return categories.map(category => ({
+
+    return categories.map((category) => ({
         title: category.category,
         key: `${category.category}-group`,
-        children: category.groups.map(group => ({
+        children: category.groups.map((group) => ({
             title: group.display_name,
             key: group.name,
         })),
@@ -84,14 +100,16 @@ const convertRuleGroupCategoriesToDataNodes = (categories?: TRuleGroupCategory[]
 };
 
 // 将规则组分类转换为 Checkbox.Group 的 options 格式
-const convertRuleGroupCategoriesToCheckboxOptions = (categories?: TRuleGroupCategory[]): Array<{ label: string; value: string }> => {
+const convertRuleGroupCategoriesToCheckboxOptions = (
+    categories?: TRuleGroupCategory[],
+): Array<{ label: string; value: string }> => {
     if (!categories || categories.length === 0) return [];
-    
-    return categories.flatMap(category => 
-        category.groups.map(group => ({
+
+    return categories.flatMap((category) =>
+        category.groups.map((group) => ({
             label: group.display_name,
             value: group.name,
-        }))
+        })),
     );
 };
 
@@ -113,23 +131,36 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
         'success' | 'error' | 'idle'
     >('idle');
     const [connectionMessage, setConnectionMessage] = useState('');
-    
+
     // 扫描策略相关状态
     const [scanPolicy, setScanPolicy] = useState<string>('owasp-web');
-    const [customRulesModalVisible, setCustomRulesModalVisible] = useState(false);
-    const [selectedComplianceRules, setSelectedComplianceRules] = useState<React.Key[]>([]);
-    const [selectedTechStackRules, setSelectedTechStackRules] = useState<React.Key[]>([]);
-    const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>([]);
-    const [nodeOptions, setNodeOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [customRulesModalVisible, setCustomRulesModalVisible] =
+        useState(false);
+    const [selectedComplianceRules, setSelectedComplianceRules] = useState<
+        React.Key[]
+    >([]);
+    const [selectedTechStackRules, setSelectedTechStackRules] = useState<
+        React.Key[]
+    >([]);
+    const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>(
+        [],
+    );
+    const [nodeOptions, setNodeOptions] = useState<
+        Array<{ label: string; value: string }>
+    >([]);
     const [loadingNodes, setLoadingNodes] = useState(false);
-    
+
     // 策略配置动态数据
-    const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(null);
+    const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(
+        null,
+    );
     const [loadingPolicyConfig, setLoadingPolicyConfig] = useState(false);
 
     const isEdit = !!projectId;
-    const scanNodeMode = Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
-    const scheduleEnabled = Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
+    const scanNodeMode =
+        Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+    const scheduleEnabled =
+        Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
 
     // 加载策略配置
     useEffect(() => {
@@ -152,7 +183,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 setLoadingPolicyConfig(false);
             }
         };
-        
+
         loadPolicyConfig();
 
         const loadNodes = async () => {
@@ -164,10 +195,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                     .filter((item) => item?.node_id)
                     .map((item) => ({
                         value: item.node_id as string,
-                        label:
-                            item.hostname ||
-                            item.node_id ||
-                            '未知节点',
+                        label: item.hostname || item.node_id || '未知节点',
                     }));
                 setNodeOptions(options);
             } catch (error) {
@@ -216,22 +244,33 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 });
 
                 if (res.data.config?.CodeSource?.auth?.kind) {
-                    setAuthType(res.data.config.CodeSource.auth.kind);
+                    setAuthType(
+                        normalizeProjectAuthKind(
+                            res.data.config.CodeSource.auth.kind,
+                        ),
+                    );
                 }
                 if (res.data.config?.CodeSource?.kind) {
                     setSourceKind(res.data.config.CodeSource.kind);
                 }
-                
+
                 // 加载扫描策略配置
                 if (res.data.config?.ScanPolicy) {
                     const policyType = res.data.config.ScanPolicy.policy_type;
                     setScanPolicy(policyType || 'owasp-web');
-                    
+
                     if (res.data.config.ScanPolicy.custom_rules) {
-                        const customRules = res.data.config.ScanPolicy.custom_rules;
-                        setSelectedComplianceRules(customRules.compliance_rules || []);
-                        setSelectedTechStackRules(customRules.tech_stack_rules || []);
-                        setSelectedSpecialRules(customRules.special_rules || []);
+                        const customRules =
+                            res.data.config.ScanPolicy.custom_rules;
+                        setSelectedComplianceRules(
+                            customRules.compliance_rules || [],
+                        );
+                        setSelectedTechStackRules(
+                            customRules.tech_stack_rules || [],
+                        );
+                        setSelectedSpecialRules(
+                            customRules.special_rules || [],
+                        );
                     } else {
                         // 如果没有 custom_rules，重置为空
                         setSelectedComplianceRules([]);
@@ -364,11 +403,16 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             if (!values.config) values.config = {};
             values.config.ScanPolicy = {
                 policy_type: scanPolicy,
-                custom_rules: scanPolicy === 'custom' ? {
-                    compliance_rules: selectedComplianceRules as string[],
-                    tech_stack_rules: selectedTechStackRules as string[],
-                    special_rules: selectedSpecialRules as string[],
-                } : undefined,
+                custom_rules:
+                    scanPolicy === 'custom'
+                        ? {
+                              compliance_rules:
+                                  selectedComplianceRules as string[],
+                              tech_stack_rules:
+                                  selectedTechStackRules as string[],
+                              special_rules: selectedSpecialRules as string[],
+                          }
+                        : undefined,
             };
 
             // 规范化扫描节点配置
@@ -382,14 +426,18 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             // 规范化定时扫描配置
             if (values.config.ScanSchedule) {
                 if (dayjs.isDayjs(values.config.ScanSchedule.time)) {
-                    values.config.ScanSchedule.time = values.config.ScanSchedule.time.format('HH:mm');
+                    values.config.ScanSchedule.time =
+                        values.config.ScanSchedule.time.format('HH:mm');
                 }
                 if (!values.config.ScanSchedule.enabled) {
                     delete values.config.ScanSchedule.time;
                 }
-                values.config.ScanSchedule.interval_type = values.config.ScanSchedule.interval_type || 1;
-                values.config.ScanSchedule.interval_time = values.config.ScanSchedule.interval_time || 1;
-                values.config.ScanSchedule.sched_type = values.config.ScanSchedule.sched_type || 3;
+                values.config.ScanSchedule.interval_type =
+                    values.config.ScanSchedule.interval_type || 1;
+                values.config.ScanSchedule.interval_time =
+                    values.config.ScanSchedule.interval_time || 1;
+                values.config.ScanSchedule.sched_type =
+                    values.config.ScanSchedule.sched_type || 3;
             }
 
             setSaving(true);
@@ -462,7 +510,9 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                     onValuesChange={(changedValues) => {
                         if (changedValues.config?.CodeSource?.auth?.kind) {
                             setAuthType(
-                                changedValues.config.CodeSource.auth.kind,
+                                normalizeProjectAuthKind(
+                                    changedValues.config.CodeSource.auth.kind,
+                                ),
                             );
                         }
                         if (changedValues.config?.CodeSource?.kind) {
@@ -546,7 +596,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                     <Card
                         title="代码仓库配置"
                         size="small"
-                        style={{ 
+                        style={{
                             marginBottom: 16,
                             background: '#fafafa',
                             border: '1px solid #e8e8e8',
@@ -597,7 +647,9 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                         icon={<ThunderboltOutlined />}
                                         style={{ marginBottom: 8 }}
                                     >
-                                        {testingConnection ? '测试中...' : '测试连接'}
+                                        {testingConnection
+                                            ? '测试中...'
+                                            : '测试连接'}
                                     </Button>
                                     {connectionStatus === 'success' && (
                                         <Alert
@@ -606,7 +658,9 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                             icon={<CheckCircleOutlined />}
                                             showIcon
                                             closable
-                                            onClose={() => setConnectionStatus('idle')}
+                                            onClose={() =>
+                                                setConnectionStatus('idle')
+                                            }
                                             style={{ marginTop: 8 }}
                                         />
                                     )}
@@ -617,7 +671,9 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                             icon={<CloseCircleOutlined />}
                                             showIcon
                                             closable
-                                            onClose={() => setConnectionStatus('idle')}
+                                            onClose={() =>
+                                                setConnectionStatus('idle')
+                                            }
                                             style={{ marginTop: 8 }}
                                         />
                                     )}
@@ -625,104 +681,35 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             </>
                         )}
 
-                        <div style={{ 
-                            borderTop: '1px dashed #d9d9d9', 
-                            margin: '16px 0',
-                            paddingTop: 16,
-                        }}>
-                            <div style={{ 
-                                marginBottom: 12, 
-                                fontSize: 14, 
-                                fontWeight: 600, 
-                                color: 'rgba(0,0,0,0.85)' 
-                            }}>
+                        <div
+                            style={{
+                                borderTop: '1px dashed #d9d9d9',
+                                margin: '16px 0',
+                                paddingTop: 16,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    marginBottom: 12,
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    color: 'rgba(0,0,0,0.85)',
+                                }}
+                            >
                                 认证配置
                             </div>
-                        <Form.Item
-                            label="认证方式"
-                            name={['config', 'CodeSource', 'auth', 'kind']}
-                        >
-                            <Select>
-                                <Select.Option value="none">
-                                    无认证
-                                </Select.Option>
-                                <Select.Option value="basic">
-                                    用户名/密码
-                                </Select.Option>
-                                <Select.Option value="ssh">
-                                    SSH 私钥
-                                </Select.Option>
-                            </Select>
-                        </Form.Item>
+                            <CodeSourceAuthSection
+                                form={form}
+                                authType={authType}
+                                onAuthTypeChange={setAuthType}
+                            />
 
-                        {authType === 'basic' && (
-                            <>
-                                <Form.Item
-                                    label="用户名"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'user_name',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入用户名',
-                                        },
-                                    ]}
-                                >
-                                    <Input placeholder="Username" />
-                                </Form.Item>
-                                <Form.Item
-                                    label="密码/Token"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'password',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入密码或Token',
-                                        },
-                                    ]}
-                                >
-                                    <Input.Password placeholder="Password / Token" />
-                                </Form.Item>
-                            </>
-                        )}
-
-                        {authType === 'ssh' && (
                             <Form.Item
-                                label="SSH 私钥"
-                                name={[
-                                    'config',
-                                    'CodeSource',
-                                    'auth',
-                                    'key_content',
-                                ]}
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: '请输入SSH私钥',
-                                    },
-                                ]}
+                                label="代理地址（可选）"
+                                name={['config', 'CodeSource', 'proxy', 'url']}
                             >
-                                <Input.TextArea
-                                    rows={4}
-                                    placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
-                                />
+                                <Input placeholder="http://127.0.0.1:7890" />
                             </Form.Item>
-                        )}
-
-                        <Form.Item
-                            label="代理地址（可选）"
-                            name={['config', 'CodeSource', 'proxy', 'url']}
-                        >
-                            <Input placeholder="http://127.0.0.1:7890" />
-                        </Form.Item>
                         </div>
                     </Card>
 
@@ -730,7 +717,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                     <Card
                         title="扫描策略"
                         size="small"
-                        style={{ 
+                        style={{
                             marginBottom: 16,
                             background: '#fafafa',
                             border: '1px solid #e8e8e8',
@@ -750,15 +737,27 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             />
                         </Form.Item>
 
-                        <div style={{ 
-                            borderTop: '1px dashed #d9d9d9', 
-                            margin: '16px 0',
-                            paddingTop: 16,
-                        }}>
-                            <Form.Item label="扫描节点" name={['config', 'ScanNode', 'mode']}>
-                                <Radio.Group optionType="button" buttonStyle="solid">
-                                    <Radio.Button value="auto">自动检测</Radio.Button>
-                                    <Radio.Button value="manual">指定节点</Radio.Button>
+                        <div
+                            style={{
+                                borderTop: '1px dashed #d9d9d9',
+                                margin: '16px 0',
+                                paddingTop: 16,
+                            }}
+                        >
+                            <Form.Item
+                                label="扫描节点"
+                                name={['config', 'ScanNode', 'mode']}
+                            >
+                                <Radio.Group
+                                    optionType="button"
+                                    buttonStyle="solid"
+                                >
+                                    <Radio.Button value="auto">
+                                        自动检测
+                                    </Radio.Button>
+                                    <Radio.Button value="manual">
+                                        指定节点
+                                    </Radio.Button>
                                 </Radio.Group>
                             </Form.Item>
 
@@ -766,7 +765,12 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 <Form.Item
                                     label="执行节点"
                                     name={['config', 'ScanNode', 'node_id']}
-                                    rules={[{ required: true, message: '请选择扫描节点' }]}
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message: '请选择扫描节点',
+                                        },
+                                    ]}
                                 >
                                     <Select
                                         placeholder="请选择扫描节点"
@@ -789,26 +793,37 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 onChange={setScanPolicy}
                                 placeholder="请选择扫描策略"
                             >
-                                {scanPolicyOptions.map(opt => (
-                                    <Select.Option key={opt.value} value={opt.value}>
+                                {scanPolicyOptions.map((opt) => (
+                                    <Select.Option
+                                        key={opt.value}
+                                        value={opt.value}
+                                    >
                                         {opt.label}
                                     </Select.Option>
                                 ))}
                             </Select>
-                            <div style={{ 
-                                marginTop: 8, 
-                                fontSize: 12, 
-                                color: '#999' 
-                            }}>
-                                {scanPolicyOptions.find(o => o.value === scanPolicy)?.desc}
+                            <div
+                                style={{
+                                    marginTop: 8,
+                                    fontSize: 12,
+                                    color: '#999',
+                                }}
+                            >
+                                {
+                                    scanPolicyOptions.find(
+                                        (o) => o.value === scanPolicy,
+                                    )?.desc
+                                }
                             </div>
                         </Form.Item>
 
                         {scanPolicy === 'custom' && (
                             <Form.Item>
-                                <Button 
+                                <Button
                                     icon={<SettingOutlined />}
-                                    onClick={() => setCustomRulesModalVisible(true)}
+                                    onClick={() =>
+                                        setCustomRulesModalVisible(true)
+                                    }
                                     block
                                 >
                                     配置自定义规则
@@ -816,15 +831,27 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             </Form.Item>
                         )}
 
-                        <div style={{ 
-                            borderTop: '1px dashed #d9d9d9', 
-                            margin: '16px 0',
-                            paddingTop: 16,
-                        }}>
+                        <div
+                            style={{
+                                borderTop: '1px dashed #d9d9d9',
+                                margin: '16px 0',
+                                paddingTop: 16,
+                            }}
+                        >
                             <Form.Item label="定时扫描">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                    }}
+                                >
                                     <Form.Item
-                                        name={['config', 'ScanSchedule', 'enabled']}
+                                        name={[
+                                            'config',
+                                            'ScanSchedule',
+                                            'enabled',
+                                        ]}
                                         valuePropName="checked"
                                         noStyle
                                     >
@@ -839,10 +866,14 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                     label="扫描时间"
                                     name={['config', 'ScanSchedule', 'time']}
                                     getValueProps={(value) => ({
-                                        value: value ? dayjs(value, 'HH:mm') : undefined,
+                                        value: value
+                                            ? dayjs(value, 'HH:mm')
+                                            : undefined,
                                     })}
                                     normalize={(val) =>
-                                        val ? dayjs(val).format('HH:mm') : undefined
+                                        val
+                                            ? dayjs(val).format('HH:mm')
+                                            : undefined
                                     }
                                 >
                                     <TimePicker
@@ -873,9 +904,20 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             key: 'compliance',
                             label: '合规标准',
                             children: (
-                                <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
+                                <div
+                                    style={{
+                                        padding: '16px 0',
+                                        maxHeight: 400,
+                                        overflow: 'auto',
+                                    }}
+                                >
                                     {loadingPolicyConfig ? (
-                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                        <div
+                                            style={{
+                                                textAlign: 'center',
+                                                padding: '40px 0',
+                                            }}
+                                        >
                                             <Spin tip="加载规则组配置..." />
                                         </div>
                                     ) : (
@@ -883,10 +925,17 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                             checkable
                                             defaultExpandAll
                                             treeData={convertRuleGroupCategoriesToDataNodes(
-                                                policyConfig?.custom_rule_groups?.compliance_rules
+                                                policyConfig?.custom_rule_groups
+                                                    ?.compliance_rules,
                                             )}
-                                            checkedKeys={selectedComplianceRules}
-                                            onCheck={(checked) => setSelectedComplianceRules(checked as React.Key[])}
+                                            checkedKeys={
+                                                selectedComplianceRules
+                                            }
+                                            onCheck={(checked) =>
+                                                setSelectedComplianceRules(
+                                                    checked as React.Key[],
+                                                )
+                                            }
                                         />
                                     )}
                                 </div>
@@ -896,9 +945,20 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             key: 'techstack',
                             label: '技术栈',
                             children: (
-                                <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
+                                <div
+                                    style={{
+                                        padding: '16px 0',
+                                        maxHeight: 400,
+                                        overflow: 'auto',
+                                    }}
+                                >
                                     {loadingPolicyConfig ? (
-                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                        <div
+                                            style={{
+                                                textAlign: 'center',
+                                                padding: '40px 0',
+                                            }}
+                                        >
                                             <Spin tip="加载规则组配置..." />
                                         </div>
                                     ) : (
@@ -906,10 +966,15 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                             checkable
                                             defaultExpandAll
                                             treeData={convertRuleGroupCategoriesToDataNodes(
-                                                policyConfig?.custom_rule_groups?.tech_stack_rules
+                                                policyConfig?.custom_rule_groups
+                                                    ?.tech_stack_rules,
                                             )}
                                             checkedKeys={selectedTechStackRules}
-                                            onCheck={(checked) => setSelectedTechStackRules(checked as React.Key[])}
+                                            onCheck={(checked) =>
+                                                setSelectedTechStackRules(
+                                                    checked as React.Key[],
+                                                )
+                                            }
                                         />
                                     )}
                                 </div>
@@ -919,22 +984,38 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             key: 'special',
                             label: '专项/标签',
                             children: (
-                                <div style={{ padding: '16px 0', maxHeight: 400, overflow: 'auto' }}>
+                                <div
+                                    style={{
+                                        padding: '16px 0',
+                                        maxHeight: 400,
+                                        overflow: 'auto',
+                                    }}
+                                >
                                     {loadingPolicyConfig ? (
-                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                        <div
+                                            style={{
+                                                textAlign: 'center',
+                                                padding: '40px 0',
+                                            }}
+                                        >
                                             <Spin tip="加载规则组配置..." />
                                         </div>
                                     ) : (
                                         <Checkbox.Group
                                             options={convertRuleGroupCategoriesToCheckboxOptions(
-                                                policyConfig?.custom_rule_groups?.special_rules
+                                                policyConfig?.custom_rule_groups
+                                                    ?.special_rules,
                                             )}
                                             value={selectedSpecialRules}
-                                            onChange={(checked) => setSelectedSpecialRules(checked as string[])}
-                                            style={{ 
-                                                display: 'flex', 
-                                                flexDirection: 'column', 
-                                                gap: 12 
+                                            onChange={(checked) =>
+                                                setSelectedSpecialRules(
+                                                    checked as string[],
+                                                )
+                                            }
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: 12,
                                             }}
                                         />
                                     )}
@@ -945,32 +1026,42 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                 />
 
                 {/* 已选规则汇总 */}
-                {(selectedComplianceRules.length > 0 || 
-                  selectedTechStackRules.length > 0 || 
-                  selectedSpecialRules.length > 0) && (
-                    <div style={{ 
-                        marginTop: 16, 
-                        padding: 16, 
-                        background: '#fafafa', 
-                        borderRadius: 8 
-                    }}>
-                        <div style={{ 
-                            marginBottom: 8, 
-                            fontSize: 13, 
-                            fontWeight: 600,
-                            color: 'rgba(0,0,0,0.85)' 
-                        }}>
+                {(selectedComplianceRules.length > 0 ||
+                    selectedTechStackRules.length > 0 ||
+                    selectedSpecialRules.length > 0) && (
+                    <div
+                        style={{
+                            marginTop: 16,
+                            padding: 16,
+                            background: '#fafafa',
+                            borderRadius: 8,
+                        }}
+                    >
+                        <div
+                            style={{
+                                marginBottom: 8,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: 'rgba(0,0,0,0.85)',
+                            }}
+                        >
                             已选规则数量：
                         </div>
                         <Space wrap>
                             {selectedComplianceRules.length > 0 && (
-                                <Tag color="blue">合规标准: {selectedComplianceRules.length}</Tag>
+                                <Tag color="blue">
+                                    合规标准: {selectedComplianceRules.length}
+                                </Tag>
                             )}
                             {selectedTechStackRules.length > 0 && (
-                                <Tag color="green">技术栈: {selectedTechStackRules.length}</Tag>
+                                <Tag color="green">
+                                    技术栈: {selectedTechStackRules.length}
+                                </Tag>
                             )}
                             {selectedSpecialRules.length > 0 && (
-                                <Tag color="purple">专项: {selectedSpecialRules.length}</Tag>
+                                <Tag color="purple">
+                                    专项: {selectedSpecialRules.length}
+                                </Tag>
                             )}
                         </Space>
                     </div>

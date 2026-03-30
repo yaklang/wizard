@@ -3,6 +3,7 @@ import {
     DeleteOutlined,
     EyeOutlined,
     FolderOpenOutlined,
+    MoreOutlined,
     ReloadOutlined,
 } from '@ant-design/icons';
 import {
@@ -10,15 +11,18 @@ import {
     Card,
     DatePicker,
     Drawer,
+    Dropdown,
     Empty,
     Form,
     Input,
     Modal,
+    Select,
     Space,
     Table,
     Tag,
     message,
 } from 'antd';
+import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useRequest } from 'ahooks';
 import { useNavigate } from 'react-router-dom';
@@ -128,6 +132,10 @@ const IRifyReportManagePage: React.FC = () => {
     const [filterForm] = Form.useForm<TFilterFormValues>();
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(12);
+    const [orderBy, setOrderBy] = useState<'published_at' | 'risk_total'>(
+        'published_at',
+    );
+    const [order, setOrder] = useState<'asc' | 'desc'>('desc');
     const [filters, setFilters] = useState<TAppliedFilters>({});
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewTitle, setPreviewTitle] = useState('报告预览');
@@ -150,8 +158,8 @@ const IRifyReportManagePage: React.FC = () => {
             const res = await querySSAReportRecords({
                 page,
                 limit,
-                order_by: 'published_at',
-                order: 'desc',
+                order_by: orderBy,
+                order,
                 keyword: filters.keyword,
                 project_name: filters.project_name,
                 start: filters.start,
@@ -163,6 +171,8 @@ const IRifyReportManagePage: React.FC = () => {
             refreshDeps: [
                 page,
                 limit,
+                orderBy,
+                order,
                 filters.keyword,
                 filters.project_name,
                 filters.start,
@@ -423,32 +433,48 @@ const IRifyReportManagePage: React.FC = () => {
                 dataIndex: 'id',
                 key: 'actions',
                 fixed: 'right',
-                width: 300,
-                render: (_, record) => (
-                    <Space wrap size={8} className="report-action-group">
-                        <Button
-                            type="primary"
-                            ghost
-                            icon={<EyeOutlined />}
-                            onClick={() => handlePreview(record)}
-                        >
-                            预览
-                        </Button>
-                        <Button
-                            icon={<FolderOpenOutlined />}
-                            onClick={() => goToScans(record)}
-                        >
-                            来源任务
-                        </Button>
-                        <Button
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDelete(record)}
-                        >
-                            删除
-                        </Button>
-                    </Space>
-                ),
+                width: 180,
+                render: (_, record) => {
+                    const menuItems: MenuProps['items'] = [
+                        {
+                            key: 'source',
+                            icon: <FolderOpenOutlined />,
+                            label: '来源任务',
+                            onClick: () => goToScans(record),
+                        },
+                        { type: 'divider' },
+                        {
+                            key: 'delete',
+                            icon: <DeleteOutlined />,
+                            label: '删除报告',
+                            danger: true,
+                            onClick: () => handleDelete(record),
+                        },
+                    ];
+
+                    return (
+                        <Space size="small" className="report-action-group">
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<EyeOutlined />}
+                                onClick={() => handlePreview(record)}
+                            >
+                                预览
+                            </Button>
+                            <Dropdown
+                                menu={{ items: menuItems }}
+                                trigger={['click']}
+                            >
+                                <Button
+                                    size="small"
+                                    icon={<MoreOutlined />}
+                                    aria-label="更多操作"
+                                />
+                            </Dropdown>
+                        </Space>
+                    );
+                },
             },
         ],
         [goToScans, handleDelete, handlePreview],
@@ -505,6 +531,42 @@ const IRifyReportManagePage: React.FC = () => {
                             name="generated_at"
                         >
                             <RangePicker className="w-full" />
+                        </Form.Item>
+                        <Form.Item className="report-filter-item" label="排序">
+                            <Select
+                                value={`${orderBy}-${order}`}
+                                onChange={(value: string) => {
+                                    const [nextOrderBy, nextOrder] =
+                                        String(value).split('-');
+                                    setOrderBy(
+                                        (nextOrderBy as
+                                            | 'published_at'
+                                            | 'risk_total') || 'published_at',
+                                    );
+                                    setOrder(
+                                        (nextOrder as 'asc' | 'desc') || 'desc',
+                                    );
+                                    setPage(1);
+                                }}
+                                options={[
+                                    {
+                                        label: '最新生成',
+                                        value: 'published_at-desc',
+                                    },
+                                    {
+                                        label: '最早生成',
+                                        value: 'published_at-asc',
+                                    },
+                                    {
+                                        label: '风险总数降序',
+                                        value: 'risk_total-desc',
+                                    },
+                                    {
+                                        label: '风险总数升序',
+                                        value: 'risk_total-asc',
+                                    },
+                                ]}
+                            />
                         </Form.Item>
                         <div className="report-filter-actions">
                             <Button type="primary" htmlType="submit">

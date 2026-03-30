@@ -26,25 +26,21 @@ import {
     CloseCircleOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
-import {
-    SiPhp,
-    SiJavascript,
-    SiPython,
-    SiGo,
-    SiC,
-} from 'react-icons/si';
+import { SiPhp, SiJavascript, SiPython, SiGo, SiC } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
-import { 
+import {
     postSSAProject as createSSAProject,
-    getScanPolicyConfig 
+    getScanPolicyConfig,
 } from '@/apis/SSAProjectApi';
 import { getNodeList } from '@/apis/task';
-import type { 
+import type {
     TSSAProjectRequest,
-    TScanPolicyConfig
+    TScanPolicyConfig,
 } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import { normalizeProjectAuthKind } from '@/utils/ssaCredential';
 import dayjs from 'dayjs';
+import CodeSourceAuthSection from './components/CodeSourceAuthSection';
 import './CreateProject.scss';
 
 const { Step } = Steps;
@@ -62,7 +58,15 @@ const languageOptions = [
 ];
 
 // 前端 UI 配置（标签、推荐等）
-const frontendUIConfig: Record<string, { tags: string[]; recommended?: boolean; expandable?: boolean; smartMatch?: boolean }> = {
+const frontendUIConfig: Record<
+    string,
+    {
+        tags: string[];
+        recommended?: boolean;
+        expandable?: boolean;
+        smartMatch?: boolean;
+    }
+> = {
     'owasp-web': {
         tags: ['Web 合规', '推荐'],
         recommended: true,
@@ -70,14 +74,14 @@ const frontendUIConfig: Record<string, { tags: string[]; recommended?: boolean; 
     'critical-high': {
         tags: ['CI/CD 极速'],
     },
-    'fullstack': {
+    fullstack: {
         tags: ['深度 SCA'],
         smartMatch: true,
     },
     'cwe-top25': {
         tags: ['CWE 标准'],
     },
-    'custom': {
+    custom: {
         tags: ['灵活配置'],
         expandable: true,
     },
@@ -191,19 +195,32 @@ const CreateProject: React.FC = () => {
     const [selectedSourceKind, setSelectedSourceKind] = useState<
         'git' | 'svn' | 'compression' | 'jar'
     >('git');
-    const [selectedStrategy, setSelectedStrategy] = useState<string>('owasp-web');
+    const [selectedStrategy, setSelectedStrategy] =
+        useState<string>('owasp-web');
     const [customRulesExpanded, setCustomRulesExpanded] = useState(false);
-    const [selectedComplianceRules, setSelectedComplianceRules] = useState<React.Key[]>([]);
-    const [selectedTechStackRules, setSelectedTechStackRules] = useState<React.Key[]>([]);
-    const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>([]);
-    const [nodeOptions, setNodeOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [selectedComplianceRules, setSelectedComplianceRules] = useState<
+        React.Key[]
+    >([]);
+    const [selectedTechStackRules, setSelectedTechStackRules] = useState<
+        React.Key[]
+    >([]);
+    const [selectedSpecialRules, setSelectedSpecialRules] = useState<string[]>(
+        [],
+    );
+    const [nodeOptions, setNodeOptions] = useState<
+        Array<{ label: string; value: string }>
+    >([]);
     const [loadingNodes, setLoadingNodes] = useState(false);
-    
+
     // 策略配置动态数据
-    const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(null);
+    const [policyConfig, setPolicyConfig] = useState<TScanPolicyConfig | null>(
+        null,
+    );
     const [loadingPolicyConfig, setLoadingPolicyConfig] = useState(false);
-    const scanNodeMode = Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
-    const scheduleEnabled = Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
+    const scanNodeMode =
+        Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+    const scheduleEnabled =
+        Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
 
     // 加载策略配置
     useEffect(() => {
@@ -223,7 +240,7 @@ const CreateProject: React.FC = () => {
                 setLoadingPolicyConfig(false);
             }
         };
-        
+
         loadPolicyConfig();
     }, []);
 
@@ -237,10 +254,7 @@ const CreateProject: React.FC = () => {
                     .filter((item) => item?.node_id)
                     .map((item) => ({
                         value: item.node_id as string,
-                        label:
-                            item.hostname ||
-                            item.node_id ||
-                            '未知节点',
+                        label: item.hostname || item.node_id || '未知节点',
                     }));
                 setNodeOptions(options);
             } catch (error) {
@@ -266,7 +280,10 @@ const CreateProject: React.FC = () => {
     }, [customRulesExpanded, selectedLanguage]);
 
     // 从树形数据中查找节点标题的辅助函数
-    const findNodeTitle = (nodes: DataNode[], targetKey: string): string | null => {
+    const findNodeTitle = (
+        nodes: DataNode[],
+        targetKey: string,
+    ): string | null => {
         for (const node of nodes) {
             if (node.key === targetKey) {
                 return node.title as string;
@@ -303,7 +320,7 @@ const CreateProject: React.FC = () => {
 
         // 专项标签
         selectedSpecialRules.forEach((value) => {
-            const rule = specialRules.find(r => r.value === value);
+            const rule = specialRules.find((r) => r.value === value);
             if (rule) selected.push(rule.label);
         });
 
@@ -316,7 +333,11 @@ const CreateProject: React.FC = () => {
 
     const onValuesChange = (changedValues: any) => {
         if (changedValues.config?.CodeSource?.auth?.kind) {
-            setAuthType(changedValues.config.CodeSource.auth.kind);
+            setAuthType(
+                normalizeProjectAuthKind(
+                    changedValues.config.CodeSource.auth.kind,
+                ),
+            );
         }
     };
 
@@ -383,7 +404,10 @@ const CreateProject: React.FC = () => {
                     mode="tags"
                     size="large"
                     placeholder="输入或选择标签，如：web, api, backend"
-                    options={commonTags.map(tag => ({ label: tag, value: tag }))}
+                    options={commonTags.map((tag) => ({
+                        label: tag,
+                        value: tag,
+                    }))}
                     tokenSeparators={[',']}
                     maxCount={10}
                 />
@@ -425,9 +449,23 @@ const CreateProject: React.FC = () => {
                             key={kind}
                             className={`source-kind-card ${selectedSourceKind === kind ? 'selected' : ''}`}
                             onClick={() => {
-                                setSelectedSourceKind(kind as 'git' | 'svn' | 'compression' | 'jar');
+                                setSelectedSourceKind(
+                                    kind as
+                                        | 'git'
+                                        | 'svn'
+                                        | 'compression'
+                                        | 'jar',
+                                );
                                 form.setFieldsValue({
-                                    config: { CodeSource: { kind: kind as 'git' | 'svn' | 'compression' | 'jar' } },
+                                    config: {
+                                        CodeSource: {
+                                            kind: kind as
+                                                | 'git'
+                                                | 'svn'
+                                                | 'compression'
+                                                | 'jar',
+                                        },
+                                    },
                                 });
                             }}
                         >
@@ -477,90 +515,11 @@ const CreateProject: React.FC = () => {
                         />
                     </Form.Item>
 
-                    <div className="auth-section">
-                        <h3 className="section-subtitle">认证信息</h3>
-
-                        <Form.Item
-                            label="认证方式"
-                            name={['config', 'CodeSource', 'auth', 'kind']}
-                            initialValue="none"
-                        >
-                            <Radio.Group
-                                onChange={(e) => setAuthType(e.target.value)}
-                            >
-                                <Radio.Button value="none">无需认证</Radio.Button>
-                                <Radio.Button value="basic">
-                                    用户名/密码
-                                </Radio.Button>
-                                <Radio.Button value="ssh">SSH 密钥</Radio.Button>
-                            </Radio.Group>
-                        </Form.Item>
-
-                        {authType === 'basic' && (
-                            <div className="auth-fields">
-                                <Form.Item
-                                    label="用户名"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'username',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入用户名',
-                                        },
-                                    ]}
-                                >
-                                    <Input size="large" placeholder="用户名" />
-                                </Form.Item>
-                                <Form.Item
-                                    label="密码"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'password',
-                                    ]}
-                                    rules={[
-                                        { required: true, message: '请输入密码' },
-                                    ]}
-                                >
-                                    <Input.Password
-                                        size="large"
-                                        placeholder="密码或访问令牌"
-                                    />
-                                </Form.Item>
-                            </div>
-                        )}
-
-                        {authType === 'ssh' && (
-                            <div className="auth-fields">
-                                <Form.Item
-                                    label="SSH 私钥"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'private_key',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入 SSH 私钥',
-                                        },
-                                    ]}
-                                >
-                                    <TextArea
-                                        rows={8}
-                                        placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"
-                                        style={{ fontFamily: 'monospace' }}
-                                    />
-                                </Form.Item>
-                            </div>
-                        )}
-                    </div>
+                    <CodeSourceAuthSection
+                        form={form}
+                        authType={authType}
+                        onAuthTypeChange={setAuthType}
+                    />
 
                     <div className="connection-test">
                         <Button
@@ -661,7 +620,9 @@ const CreateProject: React.FC = () => {
     const renderStep3 = () => {
         // 根据选择的语言生成智能匹配的描述
         const getFullstackDescription = () => {
-            const langName = languageOptions.find(l => l.value === selectedLanguage)?.label || '项目';
+            const langName =
+                languageOptions.find((l) => l.value === selectedLanguage)
+                    ?.label || '项目';
             return `包含 ${langName} 语言特性、常用框架及依赖组件安全检查`;
         };
 
@@ -681,52 +642,66 @@ const CreateProject: React.FC = () => {
                             <div>加载策略配置...</div>
                         </div>
                     ) : (
-                        generatePresetStrategies(policyConfig).map((strategy) => (
-                        <div
-                            key={strategy.key}
-                            className={`strategy-card ${selectedStrategy === strategy.key ? 'selected' : ''} ${strategy.expandable ? 'expandable' : ''}`}
-                            onClick={() => {
-                                if (strategy.expandable) {
-                                    // 自定义规则：切换展开状态
-                                    setCustomRulesExpanded(!customRulesExpanded);
-                                } else {
-                                    // 其他策略：关闭自定义规则面板
-                                    setCustomRulesExpanded(false);
-                                }
-                                setSelectedStrategy(strategy.key);
-                            }}
-                        >
-                            <div className="strategy-icon">{strategy.icon}</div>
-                            <div className="strategy-content">
-                                <div className="strategy-header">
-                                    <div className="strategy-title">
-                                        {strategy.title}
-                                        {strategy.recommended && (
-                                            <span className="recommended-badge">推荐</span>
-                                        )}
+                        generatePresetStrategies(policyConfig).map(
+                            (strategy) => (
+                                <div
+                                    key={strategy.key}
+                                    className={`strategy-card ${selectedStrategy === strategy.key ? 'selected' : ''} ${strategy.expandable ? 'expandable' : ''}`}
+                                    onClick={() => {
+                                        if (strategy.expandable) {
+                                            // 自定义规则：切换展开状态
+                                            setCustomRulesExpanded(
+                                                !customRulesExpanded,
+                                            );
+                                        } else {
+                                            // 其他策略：关闭自定义规则面板
+                                            setCustomRulesExpanded(false);
+                                        }
+                                        setSelectedStrategy(strategy.key);
+                                    }}
+                                >
+                                    <div className="strategy-icon">
+                                        {strategy.icon}
                                     </div>
-                                    <div className="strategy-meta">
-                                        {strategy.tags.map((tag) => (
-                                            <span key={tag} className="strategy-tag">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                        <span className="rule-count">
-                                            {strategy.smartMatch && strategy.key === 'fullstack'
-                                                ? '~180'
-                                                : strategy.ruleCount}{' '}
-                                            {strategy.ruleCount !== '-' && '条规则'}
-                                        </span>
+                                    <div className="strategy-content">
+                                        <div className="strategy-header">
+                                            <div className="strategy-title">
+                                                {strategy.title}
+                                                {strategy.recommended && (
+                                                    <span className="recommended-badge">
+                                                        推荐
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="strategy-meta">
+                                                {strategy.tags.map((tag) => (
+                                                    <span
+                                                        key={tag}
+                                                        className="strategy-tag"
+                                                    >
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                                <span className="rule-count">
+                                                    {strategy.smartMatch &&
+                                                    strategy.key === 'fullstack'
+                                                        ? '~180'
+                                                        : strategy.ruleCount}{' '}
+                                                    {strategy.ruleCount !==
+                                                        '-' && '条规则'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="strategy-description">
+                                            {strategy.smartMatch &&
+                                            strategy.key === 'fullstack'
+                                                ? getFullstackDescription()
+                                                : strategy.description}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="strategy-description">
-                                    {strategy.smartMatch && strategy.key === 'fullstack'
-                                        ? getFullstackDescription()
-                                        : strategy.description}
-                                </div>
-                            </div>
-                        </div>
-                        ))
+                            ),
+                        )
                     )}
                 </div>
 
@@ -745,8 +720,14 @@ const CreateProject: React.FC = () => {
                                                 checkable
                                                 defaultExpandAll
                                                 treeData={complianceRules}
-                                                checkedKeys={selectedComplianceRules}
-                                                onCheck={(checked) => setSelectedComplianceRules(checked as React.Key[])}
+                                                checkedKeys={
+                                                    selectedComplianceRules
+                                                }
+                                                onCheck={(checked) =>
+                                                    setSelectedComplianceRules(
+                                                        checked as React.Key[],
+                                                    )
+                                                }
                                             />
                                         </div>
                                     ),
@@ -758,14 +739,23 @@ const CreateProject: React.FC = () => {
                                         <div className="rules-tab-content">
                                             <div className="lang-filter-hint">
                                                 <Switch size="small" />
-                                                <span>仅显示当前项目语言（已根据 Step 1 自动勾选）</span>
+                                                <span>
+                                                    仅显示当前项目语言（已根据
+                                                    Step 1 自动勾选）
+                                                </span>
                                             </div>
                                             <Tree
                                                 checkable
                                                 defaultExpandAll
                                                 treeData={techStackRules}
-                                                checkedKeys={selectedTechStackRules}
-                                                onCheck={(checked) => setSelectedTechStackRules(checked as React.Key[])}
+                                                checkedKeys={
+                                                    selectedTechStackRules
+                                                }
+                                                onCheck={(checked) =>
+                                                    setSelectedTechStackRules(
+                                                        checked as React.Key[],
+                                                    )
+                                                }
                                             />
                                         </div>
                                     ),
@@ -778,7 +768,11 @@ const CreateProject: React.FC = () => {
                                             <Checkbox.Group
                                                 options={specialRules}
                                                 value={selectedSpecialRules}
-                                                onChange={(checked) => setSelectedSpecialRules(checked as string[])}
+                                                onChange={(checked) =>
+                                                    setSelectedSpecialRules(
+                                                        checked as string[],
+                                                    )
+                                                }
                                                 className="special-rules-group"
                                             />
                                         </div>
@@ -790,13 +784,20 @@ const CreateProject: React.FC = () => {
                         {/* 已选策略篮子 */}
                         {getSelectedRulesDisplay().length > 0 && (
                             <div className="selection-summary">
-                                <div className="summary-label">已包含规则组：</div>
+                                <div className="summary-label">
+                                    已包含规则组：
+                                </div>
                                 <div className="summary-tags">
-                                    {getSelectedRulesDisplay().map((name, index) => (
-                                        <span key={index} className="summary-tag">
-                                            {name}
-                                        </span>
-                                    ))}
+                                    {getSelectedRulesDisplay().map(
+                                        (name, index) => (
+                                            <span
+                                                key={index}
+                                                className="summary-tag"
+                                            >
+                                                {name}
+                                            </span>
+                                        ),
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -833,7 +834,10 @@ const CreateProject: React.FC = () => {
                                         label="扫描节点"
                                         name={['config', 'ScanNode', 'mode']}
                                     >
-                                        <Radio.Group optionType="button" buttonStyle="solid">
+                                        <Radio.Group
+                                            optionType="button"
+                                            buttonStyle="solid"
+                                        >
                                             <Radio.Button value="auto">
                                                 自动检测
                                             </Radio.Button>
@@ -845,8 +849,17 @@ const CreateProject: React.FC = () => {
                                     {scanNodeMode === 'manual' && (
                                         <Form.Item
                                             label="执行节点"
-                                            name={['config', 'ScanNode', 'node_id']}
-                                            rules={[{ required: true, message: '请选择扫描节点' }]}
+                                            name={[
+                                                'config',
+                                                'ScanNode',
+                                                'node_id',
+                                            ]}
+                                            rules={[
+                                                {
+                                                    required: true,
+                                                    message: '请选择扫描节点',
+                                                },
+                                            ]}
                                         >
                                             <Select
                                                 placeholder="请选择扫描节点"
@@ -856,7 +869,9 @@ const CreateProject: React.FC = () => {
                                                 filterOption={(input, option) =>
                                                     (option?.label ?? '')
                                                         .toLowerCase()
-                                                        .includes(input.toLowerCase())
+                                                        .includes(
+                                                            input.toLowerCase(),
+                                                        )
                                                 }
                                             />
                                         </Form.Item>
@@ -879,9 +894,7 @@ const CreateProject: React.FC = () => {
                             >
                                 <Switch />
                             </Form.Item>
-                            <span className="schedule-label">
-                                启用定时扫描
-                            </span>
+                            <span className="schedule-label">启用定时扫描</span>
                         </div>
                     </Form.Item>
 
@@ -891,7 +904,9 @@ const CreateProject: React.FC = () => {
                                 label="扫描时间"
                                 name={['config', 'ScanSchedule', 'time']}
                                 getValueProps={(value) => ({
-                                    value: value ? dayjs(value, 'HH:mm') : undefined,
+                                    value: value
+                                        ? dayjs(value, 'HH:mm')
+                                        : undefined,
                                 })}
                                 normalize={(val) =>
                                     val ? dayjs(val).format('HH:mm') : undefined
@@ -1004,7 +1019,9 @@ const CreateProject: React.FC = () => {
             const tags = tempFormData.config?.BaseInfo?.tags;
             if (tempFormData.config?.BaseInfo && Array.isArray(tags)) {
                 // 过滤空标签
-                tempFormData.config.BaseInfo.tags = tags.filter((t) => t && t.trim());
+                tempFormData.config.BaseInfo.tags = tags.filter(
+                    (t) => t && t.trim(),
+                );
             }
 
             const finalData: TSSAProjectRequest = { ...tempFormData };
@@ -1063,10 +1080,7 @@ const CreateProject: React.FC = () => {
                 <div className="wizard-container">
                     <div className="wizard-header">
                         <h1 className="wizard-title">创建新项目</h1>
-                        <Steps
-                            current={currentStep}
-                            className="wizard-steps"
-                        >
+                        <Steps current={currentStep} className="wizard-steps">
                             <Step title="项目定义" description="基本信息" />
                             <Step title="连接代码" description="代码源" />
                             <Step title="扫描策略" description="规则配置" />
@@ -1121,7 +1135,11 @@ const CreateProject: React.FC = () => {
                                     size="large"
                                     onClick={handleNext}
                                 >
-                                    下一步: {currentStep === 0 ? '配置代码源' : '设置策略'} &gt;
+                                    下一步:{' '}
+                                    {currentStep === 0
+                                        ? '配置代码源'
+                                        : '设置策略'}{' '}
+                                    &gt;
                                 </Button>
                             )}
                             {currentStep === 2 && (
