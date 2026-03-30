@@ -291,6 +291,20 @@
             color: var(--irify-accent);
         }
     }
+
+    .project-name-link {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-weight: 700;
+        color: var(--irify-accent);
+        margin-left: 4px;
+        transition: all 0.2s ease;
+
+        &:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+    }
 }
 
 .irify-page-body {

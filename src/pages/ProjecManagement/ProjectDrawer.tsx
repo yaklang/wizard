@@ -688,14 +688,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 paddingTop: 16,
                             }}
                         >
-                            <div
-                                style={{
-                                    marginBottom: 12,
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    color: 'rgba(0,0,0,0.85)',
-                                }}
-                            >
+                            <div className="drawer-section-title">
                                 认证配置
                             </div>
                             <CodeSourceAuthSection
@@ -802,13 +795,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                     </Select.Option>
                                 ))}
                             </Select>
-                            <div
-                                style={{
-                                    marginTop: 8,
-                                    fontSize: 12,
-                                    color: '#999',
-                                }}
-                            >
+                            <div className="drawer-description">
                                 {
                                     scanPolicyOptions.find(
                                         (o) => o.value === scanPolicy,
@@ -1037,14 +1024,7 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             borderRadius: 8,
                         }}
                     >
-                        <div
-                            style={{
-                                marginBottom: 8,
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: 'rgba(0,0,0,0.85)',
-                            }}
-                        >
+                        <div className="drawer-summary-title">
                             已选规则数量：
                         </div>
                         <Space wrap>

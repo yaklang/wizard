@@ -184,7 +184,7 @@ const CodeSourceAuthSection: React.FC<CodeSourceAuthSectionProps> = ({
 
     return (
         <div className="auth-section">
-            <h3 className="section-subtitle">认证信息</h3>
+            <div className="auth-section-title">认证信息</div>
 
             <Form.Item
                 label="认证方式"
@@ -381,7 +381,7 @@ const CodeSourceAuthSection: React.FC<CodeSourceAuthSectionProps> = ({
                                         normalizedAuthType,
                                         secretSet,
                                     )}
-                                    style={{ fontFamily: 'monospace' }}
+                                    className="monospace-text"
                                 />
                             </Form.Item>
                         </div>
