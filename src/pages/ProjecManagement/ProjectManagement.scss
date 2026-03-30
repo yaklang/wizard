@@ -1,4 +1,42 @@
 .project-management-page {
+    .favorite-column-header {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #bfbfbf;
+        font-size: 14px;
+    }
+
+    .favorite-cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-left: 6px;
+    }
+
+    .favorite-cell-button {
+        width: 34px;
+        min-width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 999px;
+        color: #8c8c8c;
+
+        &:hover {
+            color: #f5a623;
+            background: rgba(245, 166, 35, 0.12);
+        }
+
+        &.is-active {
+            color: #f5a623;
+        }
+    }
+
+    .ant-table-selection-column {
+        padding-right: 10px !important;
+    }
+
     .project-selection-bar {
         position: fixed;
         left: 50%;
