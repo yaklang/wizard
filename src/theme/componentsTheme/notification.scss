@@ -13,7 +13,7 @@
     }
 
     .ant-notification-notice-message {
-        margin-bottom: 0px;
+        margin-bottom: 0px !important;
         margin-left: 28px;
         font-size: 14px;
         color: var(--Colors-Use-Neutral-Text-1-Title);
@@ -26,6 +26,8 @@
         font-size: 20px;
         line-height: 20px;
         height: 20px;
+        display: flex;
+        align-items: center;
     }
 
     .ant-notification-notice-closable .ant-notification-notice-message {
@@ -54,7 +56,7 @@
     }
 
     .ant-notification-notice-message {
-        margin-bottom: 0px;
+        margin-bottom: 0px !important;
         margin-left: 28px;
         font-size: 14px;
         color: var(--Colors-Use-Neutral-Text-1-Title);
@@ -67,6 +69,8 @@
         font-size: 20px;
         line-height: 20px;
         height: 20px;
+        display: flex;
+        align-items: center;
     }
 
     .ant-notification-notice-closable .ant-notification-notice-message {
@@ -95,7 +99,7 @@
     }
 
     .ant-notification-notice-message {
-        margin-bottom: 0px;
+        margin-bottom: 0px !important;
         margin-left: 28px;
         font-size: 14px;
         color: var(--Colors-Use-Neutral-Text-1-Title);
@@ -108,6 +112,8 @@
         font-size: 20px;
         line-height: 20px;
         height: 20px;
+        display: flex;
+        align-items: center;
     }
 
     .ant-notification-notice-closable .ant-notification-notice-message {
@@ -147,6 +153,8 @@
         font-size: 20px;
         line-height: 20px;
         height: 20px;
+        display: flex;
+        align-items: center;
     }
 
     .ant-notification-notice-closable .ant-notification-notice-message {
@@ -170,6 +178,12 @@
         height: 20px;
     }
 }
+.ant-notification-notice-with-icon{
+    svg {
+        width: 20px;
+        height: 20px;
+    } 
+}
 .yakit-notify-error-icon {
     color: var(--Colors-Use-Error-Primary);
 }
@@ -188,11 +202,16 @@
 }
 
 .ant-notification-notice-close {
-    top: 14px !important;
+    top: 10px !important;
     color: var(--Colors-Use-Neutral-Text-3-Secondary) !important;
     &:hover {
         color: var(--Colors-Use-Neutral-Text-1-Title) !important;
         background-color: transparent !important;
     }
+}
+
+.ant-notification-notice-with-icon {
+    display: flex;
+    align-items: center;
 }
 // ========================== notification end ==========================
