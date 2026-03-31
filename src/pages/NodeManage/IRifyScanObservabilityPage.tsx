@@ -1,6 +1,16 @@
 import type { FC } from 'react';
 import { useEffect, useMemo } from 'react';
-import { Alert, Button, Card, Empty, Spin, Table, Tag, message } from 'antd';
+import {
+    Alert,
+    Button,
+    Card,
+    Empty,
+    Space,
+    Spin,
+    Table,
+    Tag,
+    message,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
     AreaChartOutlined,
@@ -13,7 +23,6 @@ import {
 } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import dayjs from 'dayjs';
-import { useTheme } from '@/theme';
 import type { Palm } from '@/gen/schema';
 import type { ResponseData } from '@/utils/commonTypes';
 import axios from '@/utils/axios';
@@ -318,7 +327,6 @@ const RecentTaskExpandedRow = (record: ScannerObservabilityRecentTask) => (
 );
 
 const IRifyScanObservabilityPage: FC = () => {
-    const { isDark } = useTheme();
     const [selectedNodeId, setSelectedNodeId] = useSafeState<string>('');
     const [usingMockData, setUsingMockData] = useSafeState(false);
     const [showOfflineNodes, setShowOfflineNodes] = useSafeState(false);
@@ -557,17 +565,10 @@ const IRifyScanObservabilityPage: FC = () => {
     );
 
     return (
-        <div
-            className={`irify-scan-observability-page ${isDark ? 'dark' : 'light'}`}
-        >
-            <div className="page-header">
-                <div className="header-content">
-                    <h1 className="header-title">扫描观测中心</h1>
-                    <p className="header-subtitle">
-                        节点实时监控与任务调度观测
-                    </p>
-                </div>
-                <div className="header-actions">
+        <div className="p-4 irify-scan-observability-page">
+            <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-bold">扫描观测中心</span>
+                <Space>
                     <Button icon={<ReloadOutlined />} onClick={() => refresh()}>
                         刷新
                     </Button>
@@ -586,7 +587,7 @@ const IRifyScanObservabilityPage: FC = () => {
                     >
                         导出全局诊断包
                     </Button>
-                </div>
+                </Space>
             </div>
 
             <Spin spinning={loading}>

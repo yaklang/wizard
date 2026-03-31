@@ -13,10 +13,8 @@ import {
     Drawer,
     Dropdown,
     Empty,
-    Form,
     Input,
     Modal,
-    Select,
     Space,
     Table,
     Tag,
@@ -24,10 +22,10 @@ import {
 } from 'antd';
 import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { SorterResult } from 'antd/es/table/interface';
 import { useRequest } from 'ahooks';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import type { Dayjs } from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
 
@@ -45,6 +43,7 @@ import {
 import type {
     TSSAReportRecord,
     TSSAReportRecordDetail,
+    TSSAReportRecordQueryParams,
 } from '@/apis/SSAReportRecordApi/type';
 import type { TSSAReportRecordFile } from '@/apis/SSAReportRecordFileApi/type';
 import ReportTemplate from '@/compoments/ReportTemplate';
@@ -57,12 +56,6 @@ dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
 
 const { RangePicker } = DatePicker;
-
-interface TFilterFormValues {
-    keyword?: string;
-    project_name?: string;
-    generated_at?: [Dayjs, Dayjs];
-}
 
 interface TAppliedFilters {
     keyword?: string;
@@ -129,12 +122,10 @@ const getPreviewBlocks = (jsonRaw?: string) => {
 
 const IRifyReportManagePage: React.FC = () => {
     const navigate = useNavigate();
-    const [filterForm] = Form.useForm<TFilterFormValues>();
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(12);
-    const [orderBy, setOrderBy] = useState<'published_at' | 'risk_total'>(
-        'published_at',
-    );
+    const [orderBy, setOrderBy] =
+        useState<TSSAReportRecordQueryParams['order_by']>('published_at');
     const [order, setOrder] = useState<'asc' | 'desc'>('desc');
     const [filters, setFilters] = useState<TAppliedFilters>({});
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -183,23 +174,6 @@ const IRifyReportManagePage: React.FC = () => {
 
     const records = reportResponse?.list || [];
     const total = reportResponse?.pagemeta?.total || 0;
-
-    const handleFilterSubmit = useCallback((values: TFilterFormValues) => {
-        const [start, end] = values.generated_at || [];
-        setPage(1);
-        setFilters({
-            keyword: values.keyword?.trim() || undefined,
-            project_name: values.project_name?.trim() || undefined,
-            start: start ? start.startOf('day').unix() : undefined,
-            end: end ? end.endOf('day').unix() : undefined,
-        });
-    }, []);
-
-    const handleFilterReset = useCallback(() => {
-        filterForm.resetFields();
-        setPage(1);
-        setFilters({});
-    }, [filterForm]);
 
     const handlePreview = useCallback(async (record: TSSAReportRecord) => {
         try {
@@ -369,8 +343,9 @@ const IRifyReportManagePage: React.FC = () => {
             {
                 title: '安全风险',
                 dataIndex: 'risk_total',
-                key: 'risks',
+                key: 'risk_total',
                 width: 300,
+                sorter: true,
                 render: (_, record) => {
                     const totalRiskCount = Number(record.risk_total || 0);
                     const toneClass =
@@ -409,8 +384,10 @@ const IRifyReportManagePage: React.FC = () => {
             {
                 title: '时间',
                 dataIndex: 'published_at',
-                key: 'time',
+                key: 'published_at',
                 width: 240,
+                sorter: true,
+                defaultSortOrder: 'descend',
                 render: (_, record) => (
                     <div className="report-time-cell">
                         <div className="report-time-primary">
@@ -480,112 +457,91 @@ const IRifyReportManagePage: React.FC = () => {
         [goToScans, handleDelete, handlePreview],
     );
 
+    const handleFilterReset = useCallback(() => {
+        setPage(1);
+        setFilters({});
+    }, []);
+
     return (
-        <div className="irify-report-manage-page">
-            <div className="report-toolbar">
-                <Space size={12}>
-                    <Button
-                        icon={<ReloadOutlined />}
-                        onClick={() => refresh()}
-                        loading={loading}
-                    >
-                        刷新数据
-                    </Button>
-                    <Button
-                        type="primary"
-                        icon={<FolderOpenOutlined />}
-                        onClick={() => goToScans()}
-                    >
-                        去扫描历史生成
-                    </Button>
-                </Space>
-            </div>
+        <div className="p-4 irify-report-manage-page">
+            <Card>
+                <div className="flex justify-between items-center mb-4">
+                    <span className="text-lg font-bold">报告管理</span>
+                    <Space>
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={() => refresh()}
+                            loading={loading}
+                        >
+                            刷新
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<FolderOpenOutlined />}
+                            onClick={() => goToScans()}
+                        >
+                            去扫描历史生成
+                        </Button>
+                    </Space>
+                </div>
 
-            <Card className="report-filter-card">
-                <Form<TFilterFormValues>
-                    form={filterForm}
-                    layout="vertical"
-                    onFinish={handleFilterSubmit}
-                >
-                    <div className="report-filter-row">
-                        <Form.Item
-                            className="report-filter-item report-filter-item--keyword"
-                            label="关键词"
-                            name="keyword"
-                        >
-                            <Input
-                                allowClear
-                                placeholder="搜索报告标题 / 范围 / 项目 / Task ID"
-                            />
-                        </Form.Item>
-                        <Form.Item
-                            className="report-filter-item"
-                            label="项目名称"
-                            name="project_name"
-                        >
-                            <Input allowClear placeholder="按项目名称筛选" />
-                        </Form.Item>
-                        <Form.Item
-                            className="report-filter-item"
-                            label="生成时间"
-                            name="generated_at"
-                        >
-                            <RangePicker className="w-full" />
-                        </Form.Item>
-                        <Form.Item className="report-filter-item" label="排序">
-                            <Select
-                                value={`${orderBy}-${order}`}
-                                onChange={(value: string) => {
-                                    const [nextOrderBy, nextOrder] =
-                                        String(value).split('-');
-                                    setOrderBy(
-                                        (nextOrderBy as
-                                            | 'published_at'
-                                            | 'risk_total') || 'published_at',
-                                    );
-                                    setOrder(
-                                        (nextOrder as 'asc' | 'desc') || 'desc',
-                                    );
-                                    setPage(1);
-                                }}
-                                options={[
-                                    {
-                                        label: '最新生成',
-                                        value: 'published_at-desc',
-                                    },
-                                    {
-                                        label: '最早生成',
-                                        value: 'published_at-asc',
-                                    },
-                                    {
-                                        label: '风险总数降序',
-                                        value: 'risk_total-desc',
-                                    },
-                                    {
-                                        label: '风险总数升序',
-                                        value: 'risk_total-asc',
-                                    },
-                                ]}
-                            />
-                        </Form.Item>
-                        <div className="report-filter-actions">
-                            <Button type="primary" htmlType="submit">
-                                应用筛选
-                            </Button>
-                            <Button onClick={handleFilterReset}>重置</Button>
-                        </div>
-                    </div>
-                </Form>
-            </Card>
-
-            <Card className="report-table-card">
-                <div className="report-table-head">
-                    <div>
-                        <h3>报告记录列表</h3>
-                    </div>
-                    <div className="report-table-meta">
-                        当前页 {records.length} 项 / 共 {total} 项
-                    </div>
+                <div className="mb-4 flex gap-3 flex-wrap">
+                    <Input.Search
+                        allowClear
+                        placeholder="搜索报告标题 / 范围 / 项目"
+                        style={{ width: 280 }}
+                        onSearch={(value) => {
+                            setPage(1);
+                            setFilters((prev) => ({
+                                ...prev,
+                                keyword: value.trim() || undefined,
+                            }));
+                        }}
+                    />
+                    <Input
+                        allowClear
+                        placeholder="项目名称"
+                        style={{ width: 180 }}
+                        onPressEnter={(e) => {
+                            const v = (
+                                e.target as HTMLInputElement
+                            ).value.trim();
+                            setPage(1);
+                            setFilters((prev) => ({
+                                ...prev,
+                                project_name: v || undefined,
+                            }));
+                        }}
+                        onChange={(e) => {
+                            if (!e.target.value) {
+                                setPage(1);
+                                setFilters((prev) => ({
+                                    ...prev,
+                                    project_name: undefined,
+                                }));
+                            }
+                        }}
+                    />
+                    <RangePicker
+                        style={{ width: 280 }}
+                        onChange={(dates) => {
+                            setPage(1);
+                            if (dates && dates[0] && dates[1]) {
+                                setFilters((prev) => ({
+                                    ...prev,
+                                    start: dates[0]!.startOf('day').unix(),
+                                    end: dates[1]!.endOf('day').unix(),
+                                }));
+                            } else {
+                                setFilters((prev) => ({
+                                    ...prev,
+                                    start: undefined,
+                                    end: undefined,
+                                }));
+                            }
+                        }}
+                    />
+                    <Button onClick={handleFilterReset}>重置</Button>
                 </div>
 
                 <Table<TSSAReportRecord>
@@ -594,6 +550,16 @@ const IRifyReportManagePage: React.FC = () => {
                     dataSource={records}
                     columns={columns}
                     scroll={{ x: 1160 }}
+                    onChange={(_pagination, _filters, sorter) => {
+                        const s = sorter as SorterResult<TSSAReportRecord>;
+                        const newOrderBy =
+                            (s.columnKey as TSSAReportRecordQueryParams['order_by']) ||
+                            'published_at';
+                        const newOrder = s.order === 'ascend' ? 'asc' : 'desc';
+                        setOrderBy(newOrderBy);
+                        setOrder(newOrder);
+                        setPage(1);
+                    }}
                     pagination={{
                         current: page,
                         pageSize: limit,

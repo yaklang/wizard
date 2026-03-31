@@ -15,7 +15,6 @@ import {
     GlobalOutlined,
     MoreOutlined,
     ReloadOutlined,
-    SearchOutlined,
 } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
 import {
@@ -566,16 +565,22 @@ const IRifyNodeManagePage: FC = () => {
     return (
         <div className="p-4 irify-node-manage-page">
             <Card>
-                <div className="mb-4 text-lg font-bold">节点管理中心</div>
+                <div className="flex justify-between items-center mb-4">
+                    <span className="text-lg font-bold">节点管理中心</span>
+                    <Button
+                        icon={<ReloadOutlined />}
+                        onClick={() => refreshList()}
+                        loading={loading}
+                    />
+                </div>
 
                 <div className="mb-4 flex gap-3 flex-wrap">
-                    <Input
+                    <Input.Search
                         allowClear
                         value={keywordInput}
                         onChange={(e) => setKeywordInput(e.target.value)}
-                        onPressEnter={handleSearch}
+                        onSearch={handleSearch}
                         placeholder="请输入节点IP或名称"
-                        prefix={<SearchOutlined className="text-gray-400" />}
                         style={{ width: 300 }}
                     />
                     <Select<StatusFilter>
@@ -588,9 +593,6 @@ const IRifyNodeManagePage: FC = () => {
                             { label: '离线', value: 'offline' },
                         ]}
                     />
-                    <Button type="primary" onClick={handleSearch}>
-                        查询
-                    </Button>
                     <Button onClick={handleReset}>重置</Button>
                 </div>
 
