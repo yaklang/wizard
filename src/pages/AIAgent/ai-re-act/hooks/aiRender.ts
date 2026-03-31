@@ -1,5 +1,5 @@
 import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType'
-import type { AIAgentGrpcApi, AIInputEvent, AIOutputEvent, AIOutputI18n } from './grpcApi'
+import type { AIAgentGrpcApi, AIInputEvent, AIOutputEvent, AIOutputI18n, AITaskStatus } from './grpcApi'
 import type { AIChatIPCStartParams } from './type'
 
 /** 工具流式输出里的可选操作列表 */
@@ -68,6 +68,8 @@ export interface AIToolResult {
 export interface AITaskStartInfo {
   taskIndex: string
   taskName: string
+  goal: string
+  status?: AITaskStatus
 }
 
 interface ReviewSelectedOption {
@@ -77,9 +79,7 @@ interface ReviewSelectedOption {
 }
 /** 对 review 数据进行操作后的记录, 专用于 UI 上的历史展示 */
 export type UIPlanReview = AIAgentGrpcApi.PlanReviewRequire &
-  ReviewSelectedOption & {
-    taskExtra?: Map<string, AIAgentGrpcApi.PlanReviewRequireExtra>
-  }
+  ReviewSelectedOption & { taskExtra?: Map<string, AIAgentGrpcApi.PlanReviewRequireExtra> }
 export type UITaskReview = AIAgentGrpcApi.TaskReviewRequire & ReviewSelectedOption
 export type UIToolUseReview = AIAgentGrpcApi.ToolUseReviewRequire & ReviewSelectedOption
 export type UIRequireUserInteractive = AIAgentGrpcApi.AIReviewRequire & ReviewSelectedOption
@@ -225,10 +225,7 @@ type ChatFailPlanAndExecution = AIChatQSDataBase<AIChatQSDataTypeEnum.FAIL_PLAN_
 type ChatFailReact = AIChatQSDataBase<AIChatQSDataTypeEnum.FAIL_REACT, FailReactError>
 type ChatReferenceMaterial = AIChatQSDataBase<
   AIChatQSDataTypeEnum.Reference_Material,
-  {
-    NodeId: AIOutputEvent['NodeId']
-    NodeIdVerbose: AIOutputEvent['NodeIdVerbose']
-  }
+  { NodeId: AIOutputEvent['NodeId']; NodeIdVerbose: AIOutputEvent['NodeIdVerbose'] }
 >
 /** 用于渲染State定义使用, 无实际逻辑意义 */
 type ChatStreamGroup = AIChatQSDataBase<AIChatQSDataTypeEnum.STREAM_GROUP, undefined>

@@ -40,10 +40,11 @@ import {
   SolidToolIcon,
 } from '@/assets/icon/solid'
 import type { MCPServerType } from './type/aiMCP'
-import { DefaultMemoryList } from '../ai-re-act/hooks/defaultConstant'
+import { DefaultMemoryList, DefaultPlanHistoryList } from '../ai-re-act/hooks/defaultConstant'
 // import { ColorsAIIcon } from '@/assets/icon/colors'
 import type { AIGlobalConfig, AIModelTypeFileName } from './aiModelList/utils'
 import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType'
+import { cloneDeep } from 'lodash'
 
 /** AI-Agent 页面的唯一 id */
 export const YakitAIAgentPageID = 'yakit-ai-agent'
@@ -289,6 +290,9 @@ export const defaultChatIPCData: UseChatIPCState = {
   systemStream: '',
   focusMode: '',
   switchLoading: false,
+  planHistoryList: cloneDeep(DefaultPlanHistoryList),
+  cancelCasualLoading: false,
+  cancelTaskLoading: false,
 }
 // #endregion
 
@@ -370,6 +374,7 @@ export const AIModelTypeInterFileNameEnum: { [K in AIModelTypeFileName]: K } = {
   /** 视觉模式 */
   VisionModels: 'VisionModels',
 }
+
 export const defaultAIGlobalConfig: AIGlobalConfig = {
   Enabled: false,
   RoutingPolicy: AIModelPolicyEnum.PolicyAuto,

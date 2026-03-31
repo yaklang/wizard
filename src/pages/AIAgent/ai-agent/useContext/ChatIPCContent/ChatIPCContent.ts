@@ -24,6 +24,7 @@ export interface AISendSyncMessageParams {
   syncType: AIInputEvent['SyncType']
   SyncJsonInput?: AIInputEvent['SyncJsonInput']
   params?: MakeOptional<AIStartParams, 'UserQuery'>
+  syncID?: string
 }
 export interface AISendConfigHotpatchParams {
   hotpatchType: AIInputEvent['HotpatchType']
@@ -55,7 +56,7 @@ export const defaultDispatcherOfChatIPC: ChatIPCContextDispatcher = {
   chatIPCEvents: {
     fetchToken: () => '',
     fetchAIRequest: () => undefined,
-    fetchTaskChatID: () => '',
+    fetchTaskChatID: () => undefined,
     onSwitchChat: () => {},
     onStart: () => {},
     onSend: () => {},
@@ -64,6 +65,7 @@ export const defaultDispatcherOfChatIPC: ChatIPCContextDispatcher = {
     handleTaskReviewRelease: () => {},
     fetchChatDataStore: () => undefined,
     onDelChats: () => {},
+    handleCancelLoadingChange: () => {},
   },
   handleSendCasual: () => {},
   handleSendTask: () => {},
