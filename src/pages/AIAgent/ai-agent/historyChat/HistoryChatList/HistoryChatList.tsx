@@ -6,6 +6,7 @@ import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
 import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm'
 import { Tooltip } from 'antd'
 import classNames from 'classnames'
+import dayjs from 'dayjs'
 import { YakitAIAgentPageID } from '../../defaultConstant'
 import { EditChatNameModal } from '../../UtilModals'
 import type { AIChatInfo } from '../../type/aiChat'
@@ -16,6 +17,7 @@ import useAIAgentDispatcher from '../../useContext/useDispatcher'
 import { yakitNotify } from '@/utils/notification'
 import { onNewChat } from '../HistoryChat'
 import emiter from '@/utils/eventBus/eventBus'
+import { deleteSession } from '@/apis/AiEventApi'
 
 export const HOUR_MS = 60 * 60 * 1000
 export const DAY_MS = 24 * HOUR_MS
@@ -34,13 +36,21 @@ type ChatGroupKey = (typeof CHAT_GROUPS)[number]['key']
 
 export const normalizeTimestamp = (timestamp?: number | string) => {
   if (!timestamp) return 0
-  const value = Number(timestamp)
-  if (Number.isNaN(value)) return 0
-  return value < 1e12 ? value * 1000 : value
+  if (typeof timestamp === 'number') {
+    return timestamp < 1e12 ? timestamp * 1000 : timestamp
+  }
+  const trimmed = timestamp.trim()
+  if (!trimmed) return 0
+  if (/^\d+$/.test(trimmed)) {
+    const value = Number(trimmed)
+    return value < 1e12 ? value * 1000 : value
+  }
+  const parsed = dayjs(trimmed)
+  return parsed.isValid() ? parsed.valueOf() : 0
 }
 
 export const getChatTimestamp = (item: AIChatInfo) => {
-  return normalizeTimestamp(item.created_at || item.created_at)
+  return normalizeTimestamp(item.created_at)
 }
 
 const getChatGroupKey = (timestamp?: number | string): ChatGroupKey => {
@@ -168,7 +178,7 @@ const HistoryChatList: FC<{
     }
 
     try {
-      //   grpcDeleteAISession({ Filter: { SessionID: [SessionID] } }, true)
+      deleteSession({ Filter: { SessionID: [run_id] } })
       emiter.emit('onDelChats', JSON.stringify([run_id]))
     } catch (error) {
       yakitNotify('error', '删除会话失败:' + error)

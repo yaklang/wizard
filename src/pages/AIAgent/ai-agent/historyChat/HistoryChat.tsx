@@ -14,10 +14,10 @@ import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
 import styles from './HistoryChat.module.scss'
 import type { AIAgentTriggerEventInfo } from '../aiAgentType'
 import emiter from '@/utils/eventBus/eventBus'
-// import { grpcDeleteAISession } from '../grpc'
 import type { AIChatInfo } from '../type/aiChat'
 import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome'
 import HistoryChatList, { DAY_MS, getChatTimestamp } from './HistoryChatList/HistoryChatList'
+import { deleteSession } from '@/apis/AiEventApi'
 
 const clearLocalChats = (sessions: AIChatInfo[]) =>
   emiter.emit('onDelChats', JSON.stringify(sessions.map((item) => item.run_id)))
@@ -54,7 +54,7 @@ const HistoryChat = memo(() => {
 
     setClearLoading(true)
     try {
-      // await grpcDeleteAISession({ DeleteAll: true }, true)
+      await deleteSession({ DeleteAll: true })
       clearLocalChats(chats)
       onNewChat()
       setActiveChat?.(undefined)
@@ -78,10 +78,9 @@ const HistoryChat = memo(() => {
       yakitNotify('info', `暂无${days}天前的会话`)
       return
     }
-
     setClearLoading(true)
     try {
-      // await grpcDeleteAISession({ Filter: { BeforeTimestamp: beforeTimestamp } }, true)
+      await deleteSession({ Filter: { BeforeTimestamp: beforeTimestamp } })
 
       clearLocalChats(deletedChats)
 
