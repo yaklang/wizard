@@ -182,20 +182,17 @@
     color: var(--Colors-Use-Warning-Primary);
 }
 
-.ant-notification {
-    max-height: 60vh;
-    overflow-y: auto;
-}
 .ant-notification-notice {
     border-radius: 4px;
-    margin-bottom: 5px;
+    padding: 0px !important;
 }
 
 .ant-notification-notice-close {
-    top: 8px;
-    color: var(--Colors-Use-Neutral-Text-3-Secondary);
+    top: 14px !important;
+    color: var(--Colors-Use-Neutral-Text-3-Secondary) !important;
     &:hover {
-        color: var(--Colors-Use-Neutral-Text-1-Title);
+        color: var(--Colors-Use-Neutral-Text-1-Title) !important;
+        background-color: transparent !important;
     }
 }
 // ========================== notification end ==========================

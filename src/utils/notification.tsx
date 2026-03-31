@@ -99,7 +99,7 @@ export const yakitNotify = (
     notification[notifyType]({
         ...newProps,
         icon: getIcon(notifyType),
-        placement: 'bottomRight',
+        placement: 'bottomLeft',
         className: 'yakit-notification-' + notifyType,
     });
 };
