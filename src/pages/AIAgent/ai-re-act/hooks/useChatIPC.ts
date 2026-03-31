@@ -563,7 +563,7 @@ function useChatIPC(params?: UseChatIPCParams) {
 
       let ipcContent = base64ToJson(res.Content) || ''
       //   let ipcStreamDelta = base64ToJson(res.StreamDelta) || ''
-      //   console.log('onStart-res', res, ipcContent, ipcStreamDelta)
+      // console.log('onStart-res', res, ipcContent)
 
       if (res.Type === 'structured' && res.NodeId === 'session_title') {
         // 生成会话的名称
