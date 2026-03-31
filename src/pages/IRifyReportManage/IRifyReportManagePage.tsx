@@ -1,38 +1,48 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import {
     DeleteOutlined,
+    DownloadOutlined,
     EyeOutlined,
     FolderOpenOutlined,
     MoreOutlined,
     ReloadOutlined,
+    SearchOutlined,
 } from '@ant-design/icons';
 import {
     Button,
     Card,
+    Checkbox,
     DatePicker,
+    Descriptions,
     Drawer,
     Dropdown,
     Empty,
+    Form,
     Input,
     Modal,
+    Progress,
+    Select,
     Space,
-    Table,
     Tag,
+    Tooltip,
     message,
 } from 'antd';
 import type { MenuProps } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import type { SorterResult } from 'antd/es/table/interface';
 import { useRequest } from 'ahooks';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
 
 import {
-    deleteSSAReportRecord,
     fetchSSAReportRecord,
-    querySSAReportRecords,
+    deleteSSAReportRecord,
 } from '@/apis/SSAReportRecordApi';
 import {
     createSSAReportRecordFile,
@@ -40,15 +50,22 @@ import {
     downloadSSAReportRecordFile,
     querySSAReportRecordFiles,
 } from '@/apis/SSAReportRecordFileApi';
-import type {
-    TSSAReportRecord,
-    TSSAReportRecordDetail,
-    TSSAReportRecordQueryParams,
-} from '@/apis/SSAReportRecordApi/type';
+import type { TSSAReportRecordDetail } from '@/apis/SSAReportRecordApi/type';
 import type { TSSAReportRecordFile } from '@/apis/SSAReportRecordFileApi/type';
+import {
+    buildSSAReportExportTaskWebSocketURL,
+    mergeAsyncTaskProgress,
+    queryAsyncTasks,
+} from '@/apis/AsyncTaskApi';
+import type {
+    TAsyncTask,
+    TSSAReportExportTaskParams,
+} from '@/apis/AsyncTaskApi/type';
+import useLoginStore from '@/App/store/loginStore';
 import ReportTemplate from '@/compoments/ReportTemplate';
 import { saveFile } from '@/utils';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import { SSA_REPORT_RECORD_CREATED_EVENT } from '@/utils/ssaReportExport';
 
 import './IRifyReportManagePage.scss';
 
@@ -56,13 +73,6 @@ dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
 
 const { RangePicker } = DatePicker;
-
-interface TAppliedFilters {
-    keyword?: string;
-    project_name?: string;
-    start?: number;
-    end?: number;
-}
 
 interface TReportRecordItemJSON {
     type: string;
@@ -82,18 +92,6 @@ const formatRelativeTime = (value?: number) => {
 const getScanBatchText = (scanBatch?: number) => {
     if (!scanBatch || scanBatch <= 0) return '';
     return `第${scanBatch}批`;
-};
-
-const buildScopeDisplayName = (record: TSSAReportRecord) => {
-    const projectName = (record.project_name || '').trim();
-    const batchText = getScanBatchText(record.scan_batch);
-    if (projectName && batchText) {
-        return `${projectName} ${batchText}`;
-    }
-    if (projectName) {
-        return projectName;
-    }
-    return record.scope_name || record.title || '未命名报告';
 };
 
 const getPreviewBlocks = (jsonRaw?: string) => {
@@ -120,66 +118,232 @@ const getPreviewBlocks = (jsonRaw?: string) => {
     }
 };
 
+const getTaskParams = (task: TAsyncTask): TSSAReportExportTaskParams => {
+    const params = task.params;
+    if (!params || typeof params !== 'object') {
+        return {};
+    }
+    return params as TSSAReportExportTaskParams;
+};
+
+const getTaskPercent = (task: TAsyncTask) =>
+    Math.max(
+        0,
+        Math.min(
+            100,
+            Math.round(Number(task.progress?.progress_percent || 0) * 100),
+        ),
+    );
+
+const getTaskLatestMessage = (task: TAsyncTask) => {
+    const logs = task.progress?.log || [];
+    const latest = logs[logs.length - 1];
+    return latest?.message || '等待导出任务开始执行';
+};
+
+const isTaskRunning = (task: TAsyncTask) =>
+    !!task.is_executing || !task.is_finished;
+
+const getTaskStatusClass = (task: TAsyncTask) => {
+    if (task.is_finished) return 'status-success';
+    if (task.is_executing) return 'status-running';
+    return 'status-pending';
+};
+
+const getTaskStatusText = (task: TAsyncTask) => {
+    if (task.is_finished) return '已完成';
+    if (task.is_executing) return '进行中';
+    return '等待中';
+};
+
+const buildTaskScopeText = (params: TSSAReportExportTaskParams) => {
+    const projectName = (
+        params.project_name ||
+        params.program_name ||
+        ''
+    ).trim();
+    const batchText = getScanBatchText(params.scan_batch);
+    if (projectName && batchText) {
+        return `${projectName} ${batchText}`;
+    }
+    if (projectName) {
+        return projectName;
+    }
+    if (params.task_id) {
+        return params.task_id;
+    }
+    if (params.task_ids) {
+        return `${params.task_ids.split(',').filter(Boolean).length} 个任务`;
+    }
+    if (params.ids) {
+        return `${params.ids.split(',').filter(Boolean).length} 条漏洞`;
+    }
+    return '筛选范围导出';
+};
+
 const IRifyReportManagePage: React.FC = () => {
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(12);
-    const [orderBy, setOrderBy] =
-        useState<TSSAReportRecordQueryParams['order_by']>('published_at');
-    const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-    const [filters, setFilters] = useState<TAppliedFilters>({});
+    const token = useLoginStore((state) => state.token);
+    const focusedTaskID = searchParams.get('task_id') || '';
+
+    const [form] = Form.useForm();
+
+    const [filters, setFilters] = useState<{
+        keyword: string;
+        status: string;
+        start?: number;
+        end?: number;
+    }>({ keyword: '', status: '' });
+
+    const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(
+        new Set(),
+    );
+
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewTitle, setPreviewTitle] = useState('报告预览');
     const [previewBlocks, setPreviewBlocks] = useState<any[]>([]);
-    const [previewRecord, setPreviewRecord] = useState<TSSAReportRecord | null>(
-        null,
-    );
+    const [previewTask, setPreviewTask] = useState<TAsyncTask | null>(null);
     const [previewFiles, setPreviewFiles] = useState<TSSAReportRecordFile[]>(
         [],
     );
     const [fileActionLoading, setFileActionLoading] = useState('');
-    const previewRef = useRef<HTMLDivElement>(null);
 
-    const {
-        data: reportResponse,
-        loading,
-        refresh,
-    } = useRequest(
-        async () => {
-            const res = await querySSAReportRecords({
-                page,
-                limit,
-                order_by: orderBy,
-                order,
-                keyword: filters.keyword,
-                project_name: filters.project_name,
-                start: filters.start,
-                end: filters.end,
-            });
-            return res.data;
-        },
-        {
-            refreshDeps: [
-                page,
-                limit,
-                orderBy,
-                order,
-                filters.keyword,
-                filters.project_name,
-                filters.start,
-                filters.end,
-            ],
-        },
+    const previewRef = useRef<HTMLDivElement>(null);
+    const wsRef = useRef<Map<string, WebSocket>>(new Map());
+
+    const { data: asyncTaskResponse, refresh } = useRequest(async () => {
+        const res = await queryAsyncTasks({
+            page: 1,
+            limit: 200,
+            order_by: 'created_at',
+            order: 'desc',
+            type: ['ssa-report-export'],
+        });
+        return res.data;
+    }, {});
+
+    const [tasks, setTasks] = useState<TAsyncTask[]>([]);
+
+    useEffect(() => {
+        setTasks(asyncTaskResponse?.list || []);
+    }, [asyncTaskResponse]);
+
+    useEffect(() => {
+        const onCreated = () => {
+            refresh();
+        };
+        window.addEventListener(SSA_REPORT_RECORD_CREATED_EVENT, onCreated);
+        return () => {
+            window.removeEventListener(
+                SSA_REPORT_RECORD_CREATED_EVENT,
+                onCreated,
+            );
+        };
+    }, [refresh]);
+
+    const displayedTasks = useMemo(() => {
+        return tasks.filter((task) => {
+            const params = getTaskParams(task);
+            const keyword = filters.keyword.trim().toLowerCase();
+            const submittedAt = Number(params.submitted_at || 0);
+            const reportName = String(params.report_name || '').toLowerCase();
+            const scopeName = buildTaskScopeText(params).toLowerCase();
+            const projectName = String(
+                params.project_name || params.program_name || '',
+            ).toLowerCase();
+
+            if (filters.status === 'running' && !isTaskRunning(task))
+                return false;
+            if (filters.status === 'finished' && !task.is_finished)
+                return false;
+            if (
+                keyword &&
+                !reportName.includes(keyword) &&
+                !scopeName.includes(keyword) &&
+                !projectName.includes(keyword) &&
+                !(task.task_id || '').toLowerCase().includes(keyword)
+            )
+                return false;
+            if (filters.start && submittedAt < filters.start) return false;
+            if (filters.end && submittedAt > filters.end) return false;
+            return true;
+        });
+    }, [filters, tasks]);
+
+    const runningTaskIDs = useMemo(
+        () =>
+            tasks
+                .filter((task) => !!task.task_id && isTaskRunning(task))
+                .map((task) => task.task_id || ''),
+        [tasks],
     );
 
-    const records = reportResponse?.list || [];
-    const total = reportResponse?.pagemeta?.total || 0;
+    useEffect(() => {
+        const nextIDs = new Set(runningTaskIDs);
 
-    const handlePreview = useCallback(async (record: TSSAReportRecord) => {
+        const handleWsMessage = (event: MessageEvent) => {
+            try {
+                const payload = JSON.parse(event.data) as {
+                    task_id?: string;
+                    progress?: TAsyncTask['progress'];
+                };
+                if (!payload?.task_id) return;
+                setTasks((prev) =>
+                    prev.map((item) =>
+                        item.task_id === payload.task_id
+                            ? mergeAsyncTaskProgress(item, payload.progress)
+                            : item,
+                    ),
+                );
+                if (payload.progress?.is_finished) {
+                    refresh();
+                }
+            } catch {}
+        };
+
+        runningTaskIDs.forEach((taskId) => {
+            if (!taskId || wsRef.current.has(taskId) || !token) return;
+            const ws = new WebSocket(
+                buildSSAReportExportTaskWebSocketURL(taskId, token),
+            );
+            ws.onmessage = handleWsMessage;
+            ws.onclose = () => {
+                wsRef.current.delete(taskId);
+            };
+            wsRef.current.set(taskId, ws);
+        });
+
+        Array.from(wsRef.current.entries()).forEach(([taskId, ws]) => {
+            if (nextIDs.has(taskId)) return;
+            ws.close();
+            wsRef.current.delete(taskId);
+        });
+    }, [refresh, runningTaskIDs, token]);
+
+    useEffect(
+        () => () => {
+            Array.from(wsRef.current.values()).forEach((ws) => ws.close());
+            wsRef.current.clear();
+        },
+        [],
+    );
+
+    const refreshPreviewFiles = useCallback(async (recordId: number) => {
+        const filesRes = await querySSAReportRecordFiles(recordId);
+        setPreviewFiles(filesRes.data?.list || []);
+    }, []);
+
+    const handlePreview = useCallback(async (task: TAsyncTask) => {
+        const params = getTaskParams(task);
+        if (!params.record_id) {
+            message.warning('当前导出任务尚未生成可预览报告');
+            return;
+        }
         try {
             const [detailRes, filesRes] = await Promise.all([
-                fetchSSAReportRecord(record.id),
-                querySSAReportRecordFiles(record.id),
+                fetchSSAReportRecord(params.record_id),
+                querySSAReportRecordFiles(params.record_id),
             ]);
             const detail = detailRes.data as TSSAReportRecordDetail;
             const blocks = getPreviewBlocks(detail.json_raw);
@@ -187,15 +351,62 @@ const IRifyReportManagePage: React.FC = () => {
                 message.warning('该报告暂无可预览内容');
                 return;
             }
-            setPreviewTitle(detail.title || record.title || '报告预览');
+            setPreviewTitle(detail.title || params.report_name || '报告预览');
             setPreviewBlocks(blocks);
-            setPreviewRecord(record);
+            setPreviewTask(task);
             setPreviewFiles(filesRes.data?.list || []);
             setPreviewOpen(true);
         } catch {
             message.error('获取报告详情失败');
         }
     }, []);
+
+    const handleDownload = useCallback(async (task: TAsyncTask) => {
+        const params = getTaskParams(task);
+        if (!params.file_id) {
+            message.warning('当前报告文件尚未生成完成');
+            return;
+        }
+        try {
+            setFileActionLoading(`task-download-${task.task_id}`);
+            const res = await downloadSSAReportRecordFile(params.file_id);
+            if (!res.data) {
+                throw new Error('empty report file');
+            }
+            saveFile(
+                res.data,
+                params.file_name ||
+                    `${params.report_name || 'ssa-report'}.${params.format || 'pdf'}`,
+            );
+        } catch {
+            message.error('下载文件失败');
+        } finally {
+            setFileActionLoading('');
+        }
+    }, []);
+
+    const handleCreateFile = useCallback(
+        async (format: 'pdf' | 'docx') => {
+            const params = getTaskParams(previewTask || {});
+            if (!params.record_id) return;
+            try {
+                setFileActionLoading(`create-${format}`);
+                const created = await createSSAReportRecordFile(
+                    params.record_id,
+                    { format, overwrite: false },
+                );
+                if (created.data?.id) {
+                    await refreshPreviewFiles(params.record_id);
+                    message.success(`${format.toUpperCase()} 文件已生成`);
+                }
+            } catch {
+                message.error(`${format.toUpperCase()} 文件生成失败`);
+            } finally {
+                setFileActionLoading('');
+            }
+        },
+        [previewTask, refreshPreviewFiles],
+    );
 
     const handleDownloadFile = useCallback(
         async (file: TSSAReportRecordFile) => {
@@ -219,40 +430,10 @@ const IRifyReportManagePage: React.FC = () => {
         [],
     );
 
-    const refreshPreviewFiles = useCallback(async (recordId: number) => {
-        const filesRes = await querySSAReportRecordFiles(recordId);
-        setPreviewFiles(filesRes.data?.list || []);
-    }, []);
-
-    const handleCreateFile = useCallback(
-        async (format: 'pdf' | 'docx') => {
-            if (!previewRecord?.id) return;
-            try {
-                setFileActionLoading(`create-${format}`);
-                const created = await createSSAReportRecordFile(
-                    previewRecord.id,
-                    {
-                        format,
-                        overwrite: false,
-                    },
-                );
-                if (created.data?.id) {
-                    await refreshPreviewFiles(previewRecord.id);
-                    await handleDownloadFile(created.data);
-                    message.success(`${format.toUpperCase()} 文件已生成`);
-                }
-            } catch {
-                message.error(`${format.toUpperCase()} 文件生成失败`);
-            } finally {
-                setFileActionLoading('');
-            }
-        },
-        [handleDownloadFile, previewRecord, refreshPreviewFiles],
-    );
-
     const handleDeleteFile = useCallback(
         (file: TSSAReportRecordFile) => {
-            if (!file.id || !previewRecord?.id) return;
+            const params = getTaskParams(previewTask || {});
+            if (!file.id || !params.record_id) return;
             Modal.confirm({
                 title: '删除导出文件',
                 content: `确定删除文件「${file.file_name || file.id}」吗？`,
@@ -263,7 +444,7 @@ const IRifyReportManagePage: React.FC = () => {
                     try {
                         setFileActionLoading(`delete-${file.id}`);
                         await deleteSSAReportRecordFile(file.id);
-                        await refreshPreviewFiles(previewRecord.id);
+                        await refreshPreviewFiles(params.record_id!);
                         message.success('文件删除成功');
                     } catch {
                         message.error('文件删除失败');
@@ -273,20 +454,25 @@ const IRifyReportManagePage: React.FC = () => {
                 },
             });
         },
-        [previewRecord, refreshPreviewFiles],
+        [previewTask, refreshPreviewFiles],
     );
 
-    const handleDelete = useCallback(
-        (record: TSSAReportRecord) => {
+    const handleDeleteTask = useCallback(
+        (task: TAsyncTask) => {
+            const params = getTaskParams(task);
+            if (!params.record_id) {
+                message.warning('当前导出任务尚未生成报告记录，暂不支持删除');
+                return;
+            }
             Modal.confirm({
                 title: '删除报告记录',
-                content: `确定删除报告「${record.title || record.scope_name || record.id}」吗？此操作不可恢复。`,
+                content: `确定删除报告「${params.report_name || task.task_id}」吗？此操作不可恢复。`,
                 okText: '删除',
                 cancelText: '取消',
                 okButtonProps: { danger: true },
                 onOk: async () => {
                     try {
-                        await deleteSSAReportRecord(record.id);
+                        await deleteSSAReportRecord(params.record_id!);
                         message.success('删除成功');
                         refresh();
                     } catch {
@@ -298,297 +484,467 @@ const IRifyReportManagePage: React.FC = () => {
         [refresh],
     );
 
-    const goToScans = useCallback(
-        (record?: TSSAReportRecord) => {
+    const handleBatchDelete = useCallback(() => {
+        const targets = displayedTasks.filter(
+            (t) => !!t.task_id && selectedTaskIds.has(t.task_id),
+        );
+        if (targets.length === 0) return;
+        Modal.confirm({
+            title: '批量删除报告',
+            content: `确定删除选中的 ${targets.length} 个导出任务吗？`,
+            okText: '删除',
+            cancelText: '取消',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                let success = 0;
+                for (const task of targets) {
+                    const params = getTaskParams(task);
+                    if (!params.record_id) continue;
+                    try {
+                        await deleteSSAReportRecord(params.record_id);
+                        success++;
+                    } catch {}
+                }
+                if (success > 0) {
+                    message.success(`已删除 ${success} 个报告`);
+                    setSelectedTaskIds(new Set());
+                    refresh();
+                }
+            },
+        });
+    }, [displayedTasks, selectedTaskIds, refresh]);
+
+    const openSourceTask = useCallback(
+        (task: TAsyncTask) => {
+            const params = getTaskParams(task);
             const base = getRoutePath(RouteKey.IRIFY_SCANS);
-            navigate(
-                record?.task_id ? `${base}?task_id=${record.task_id}` : base,
-            );
+            const sourceTaskID = params.task_id;
+            navigate(sourceTaskID ? `${base}?task_id=${sourceTaskID}` : base);
         },
         [navigate],
     );
 
-    const columns = useMemo<ColumnsType<TSSAReportRecord>>(
-        () => [
-            {
-                title: '报告 / 范围',
-                dataIndex: 'title',
-                key: 'title',
-                width: 340,
-                render: (_, record) => (
-                    <div className="report-scope-cell">
-                        <div className="report-scope-head">
-                            <span className="report-scope-title">
-                                {record.title || '未命名报告'}
-                            </span>
-                            <Tag className="report-scope-tag">
-                                {record.report_type || 'ssa-scan'}
-                            </Tag>
-                        </div>
-                        <div className="report-scope-sub">
-                            {buildScopeDisplayName(record)}
-                        </div>
-                        <div className="report-scope-meta">
-                            <span>Owner {record.owner || '-'}</span>
-                            <span>
-                                任务范围{' '}
-                                {record.task_count && record.task_count > 1
-                                    ? `${record.task_count} 项`
-                                    : record.task_id || '-'}
-                            </span>
-                        </div>
-                    </div>
-                ),
-            },
-            {
-                title: '安全风险',
-                dataIndex: 'risk_total',
-                key: 'risk_total',
-                width: 300,
-                sorter: true,
-                render: (_, record) => {
-                    const totalRiskCount = Number(record.risk_total || 0);
-                    const toneClass =
-                        Number(record.risk_critical || 0) > 0
-                            ? 'tone-critical'
-                            : Number(record.risk_high || 0) > 0
-                              ? 'tone-high'
-                              : totalRiskCount > 0
-                                ? 'tone-medium'
-                                : 'tone-clean';
-                    return (
-                        <div className="report-risk-cell">
-                            <div className={`report-risk-total ${toneClass}`}>
-                                {totalRiskCount > 0
-                                    ? `共沉淀 ${totalRiskCount} 项风险`
-                                    : '当前报告未包含风险'}
-                            </div>
-                            <div className="report-risk-tags">
-                                <Tag color="magenta">
-                                    严重 {record.risk_critical || 0}
-                                </Tag>
-                                <Tag color="red">
-                                    高危 {record.risk_high || 0}
-                                </Tag>
-                                <Tag color="orange">
-                                    中危 {record.risk_medium || 0}
-                                </Tag>
-                                <Tag color="green">
-                                    低危 {record.risk_low || 0}
-                                </Tag>
-                            </div>
-                        </div>
-                    );
-                },
-            },
-            {
-                title: '时间',
-                dataIndex: 'published_at',
-                key: 'published_at',
-                width: 240,
-                sorter: true,
-                defaultSortOrder: 'descend',
-                render: (_, record) => (
-                    <div className="report-time-cell">
-                        <div className="report-time-primary">
-                            记录生成：{formatTimestamp(record.published_at)}
-                        </div>
-                        <div className="report-time-secondary">
-                            <span>
-                                {formatRelativeTime(record.published_at)}
-                            </span>
-                            <span>
-                                源结果完成：
-                                {formatTimestamp(record.source_finished_at)}
-                            </span>
-                        </div>
-                    </div>
-                ),
-            },
-            {
-                title: '操作',
-                dataIndex: 'id',
-                key: 'actions',
-                fixed: 'right',
-                width: 180,
-                render: (_, record) => {
-                    const menuItems: MenuProps['items'] = [
-                        {
-                            key: 'source',
-                            icon: <FolderOpenOutlined />,
-                            label: '来源任务',
-                            onClick: () => goToScans(record),
-                        },
-                        { type: 'divider' },
-                        {
-                            key: 'delete',
-                            icon: <DeleteOutlined />,
-                            label: '删除报告',
-                            danger: true,
-                            onClick: () => handleDelete(record),
-                        },
-                    ];
+    const toggleSingleSelect = useCallback(
+        (taskId: string, checked: boolean) => {
+            setSelectedTaskIds((prev) => {
+                const next = new Set(prev);
+                if (checked) {
+                    next.add(taskId);
+                } else {
+                    next.delete(taskId);
+                }
+                return next;
+            });
+        },
+        [],
+    );
 
-                    return (
-                        <Space size="small" className="report-action-group">
+    const toggleSelectAllVisible = useCallback(
+        (checked: boolean) => {
+            if (checked) {
+                setSelectedTaskIds(
+                    new Set(
+                        displayedTasks
+                            .map((t) => t.task_id)
+                            .filter(Boolean) as string[],
+                    ),
+                );
+            } else {
+                setSelectedTaskIds(new Set());
+            }
+        },
+        [displayedTasks],
+    );
+
+    const handleSearch = useCallback((values: any) => {
+        setFilters({
+            keyword: (values.query || '').trim(),
+            status: values.status || '',
+            start: values.date_range?.[0]
+                ? values.date_range[0].startOf('day').unix()
+                : undefined,
+            end: values.date_range?.[1]
+                ? values.date_range[1].endOf('day').unix()
+                : undefined,
+        });
+    }, []);
+
+    const handleReset = useCallback(() => {
+        form.resetFields();
+        setFilters({ keyword: '', status: '' });
+    }, [form]);
+
+    const renderTaskCard = useCallback(
+        (task: TAsyncTask) => {
+            const params = getTaskParams(task);
+            const isSelected = selectedTaskIds.has(task.task_id || '');
+            const progressPercent = getTaskPercent(task);
+            const taskScope = buildTaskScopeText(params);
+            const submittedAt = Number(params.submitted_at || 0);
+            const sourceFinishedAt = Number(params.source_finished_at || 0);
+            const riskTotal = Number(params.risk_total || 0);
+            const statusClass = getTaskStatusClass(task);
+            const statusText = getTaskStatusText(task);
+            const latestMessage = getTaskLatestMessage(task);
+
+            const moreMenuItems: MenuProps['items'] = [
+                {
+                    key: 'source',
+                    icon: <FolderOpenOutlined />,
+                    label: '来源任务',
+                    onClick: () => openSourceTask(task),
+                },
+                {
+                    key: 'preview',
+                    icon: <EyeOutlined />,
+                    label: '报告预览',
+                    disabled: !params.record_id,
+                    onClick: () => handlePreview(task),
+                },
+                { type: 'divider' },
+                {
+                    key: 'delete',
+                    icon: <DeleteOutlined />,
+                    label: '删除报告',
+                    danger: true,
+                    disabled: !params.record_id,
+                    onClick: () => handleDeleteTask(task),
+                },
+            ];
+
+            return (
+                <div
+                    key={task.task_id}
+                    className={`task-card ${isSelected ? 'selected' : ''} ${focusedTaskID === task.task_id ? 'is-current' : ''}`}
+                    onClick={() => {
+                        const id = task.task_id || '';
+                        if (!id) return;
+                        setSelectedTaskIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(id)) {
+                                next.delete(id);
+                            } else {
+                                next.add(id);
+                            }
+                            return next;
+                        });
+                    }}
+                >
+                    <div className="task-main-info">
+                        <div className="task-leading-cells">
+                            <div className="task-check-cell">
+                                <Checkbox
+                                    className="task-select-checkbox"
+                                    checked={isSelected}
+                                    onClick={(e: React.MouseEvent) =>
+                                        e.stopPropagation()
+                                    }
+                                    onChange={(e) =>
+                                        toggleSingleSelect(
+                                            task.task_id || '',
+                                            e.target.checked,
+                                        )
+                                    }
+                                />
+                            </div>
+                            <div className={`task-status-dot ${statusClass}`} />
+                        </div>
+                        <div className="task-details">
+                            <div className="task-header">
+                                <span className="task-title">
+                                    {params.report_name || '未命名导出任务'}
+                                </span>
+                                <Tag
+                                    color="blue"
+                                    className="task-mini-tag task-mini-tag--format"
+                                >
+                                    {String(
+                                        params.format || 'pdf',
+                                    ).toUpperCase()}
+                                </Tag>
+                                <Tag
+                                    color={
+                                        task.is_finished
+                                            ? 'success'
+                                            : task.is_executing
+                                              ? 'processing'
+                                              : 'default'
+                                    }
+                                    className="task-mini-tag"
+                                >
+                                    {statusText}
+                                </Tag>
+                                {taskScope && (
+                                    <Tag className="task-mini-tag task-mini-tag--scope">
+                                        {taskScope}
+                                    </Tag>
+                                )}
+                            </div>
+
+                            <div className="task-meta-grid">
+                                <div className="meta-item">
+                                    提交于{' '}
+                                    <span>{formatTimestamp(submittedAt)}</span>
+                                </div>
+                                <div className="meta-item">
+                                    <span className="meta-inline-value">
+                                        {formatRelativeTime(submittedAt)}
+                                    </span>
+                                </div>
+                                <div className="meta-item">
+                                    来源完成{' '}
+                                    <span>
+                                        {formatTimestamp(sourceFinishedAt)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="task-status-row">
+                                <div className="status-label">
+                                    导出状态{' '}
+                                    <span
+                                        className={`status-text ${statusClass}`}
+                                    >
+                                        {statusText}
+                                    </span>
+                                </div>
+                                <div className="status-message">
+                                    {latestMessage}
+                                </div>
+                                {isTaskRunning(task) ? (
+                                    <div className="task-progress-wrapper">
+                                        <Progress
+                                            percent={progressPercent}
+                                            size="small"
+                                            showInfo={false}
+                                            status="active"
+                                            style={{ width: 140 }}
+                                        />
+                                        <span className="task-progress-percent">
+                                            {progressPercent}%
+                                        </span>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="task-stats-actions">
+                        <div className="vulnerability-stats">
+                            <span className="stat-label">缺陷数</span>
+                            <div className="stat-boxes">
+                                <Tooltip title="严重">
+                                    <div className="stat-box critical">
+                                        严重 {params.risk_critical || 0}
+                                    </div>
+                                </Tooltip>
+                                <Tooltip title="高危">
+                                    <div className="stat-box high">
+                                        高 {params.risk_high || 0}
+                                    </div>
+                                </Tooltip>
+                                <Tooltip title="中危">
+                                    <div className="stat-box medium">
+                                        中 {params.risk_medium || 0}
+                                    </div>
+                                </Tooltip>
+                                <Tooltip title="低危">
+                                    <div className="stat-box low">
+                                        低 {params.risk_low || 0}
+                                    </div>
+                                </Tooltip>
+                                <Tooltip title="总数（不含信息级别）">
+                                    <div className="stat-box total">
+                                        总 {riskTotal}
+                                    </div>
+                                </Tooltip>
+                            </div>
+                        </div>
+
+                        <div className="action-buttons">
                             <Button
                                 type="primary"
-                                size="small"
+                                icon={<DownloadOutlined />}
+                                loading={
+                                    fileActionLoading ===
+                                    `task-download-${task.task_id}`
+                                }
+                                disabled={!task.is_finished || !params.file_id}
+                                onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    handleDownload(task);
+                                }}
+                            >
+                                {task.is_finished ? '下载' : '生成中'}
+                            </Button>
+                            <Button
                                 icon={<EyeOutlined />}
-                                onClick={() => handlePreview(record)}
+                                disabled={!params.record_id}
+                                onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    handlePreview(task);
+                                }}
                             >
                                 预览
                             </Button>
                             <Dropdown
-                                menu={{ items: menuItems }}
+                                menu={{ items: moreMenuItems }}
                                 trigger={['click']}
+                                placement="bottomRight"
                             >
                                 <Button
-                                    size="small"
                                     icon={<MoreOutlined />}
-                                    aria-label="更多操作"
+                                    onClick={(e: React.MouseEvent) =>
+                                        e.stopPropagation()
+                                    }
                                 />
                             </Dropdown>
-                        </Space>
-                    );
-                },
-            },
+                        </div>
+                    </div>
+                </div>
+            );
+        },
+        [
+            selectedTaskIds,
+            focusedTaskID,
+            fileActionLoading,
+            toggleSingleSelect,
+            handleDownload,
+            handlePreview,
+            handleDeleteTask,
+            openSourceTask,
         ],
-        [goToScans, handleDelete, handlePreview],
     );
 
-    const handleFilterReset = useCallback(() => {
-        setPage(1);
-        setFilters({});
-    }, []);
+    const allVisibleSelected =
+        displayedTasks.length > 0 &&
+        displayedTasks.every(
+            (t) => !!t.task_id && selectedTaskIds.has(t.task_id),
+        );
+    const partVisibleSelected = selectedTaskIds.size > 0 && !allVisibleSelected;
 
     return (
-        <div className="p-4 irify-report-manage-page">
-            <Card>
-                <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-bold">报告管理</span>
-                    <Space>
-                        <Button
-                            icon={<ReloadOutlined />}
-                            onClick={() => refresh()}
-                            loading={loading}
+        <div
+            className={`irify-report-manage-page ${selectedTaskIds.size > 0 ? 'has-selection-bar' : ''}`}
+        >
+            <div className="filter-bar">
+                <Form form={form} layout="inline" onFinish={handleSearch}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '16px',
+                            width: '100%',
+                            marginBottom: 16,
+                        }}
+                    >
+                        <Form.Item name="query" style={{ flex: '1 1 260px' }}>
+                            <Input
+                                placeholder="搜索报告名称 / 项目 / 任务 ID"
+                                prefix={<SearchOutlined />}
+                                allowClear
+                            />
+                        </Form.Item>
+                        <Form.Item name="status" style={{ flex: '0 0 180px' }}>
+                            <Select
+                                placeholder="导出状态"
+                                allowClear
+                                options={[
+                                    {
+                                        label: '进行中 / 等待中',
+                                        value: 'running',
+                                    },
+                                    { label: '已完成', value: 'finished' },
+                                ]}
+                            />
+                        </Form.Item>
+                        <Form.Item
+                            name="date_range"
+                            style={{ flex: '0 0 280px' }}
                         >
-                            刷新
+                            <RangePicker
+                                placeholder={['开始日期', '结束日期']}
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                        <Form.Item>
+                            <Space>
+                                <Button
+                                    type="primary"
+                                    icon={<SearchOutlined />}
+                                    htmlType="submit"
+                                >
+                                    查询
+                                </Button>
+                                <Button
+                                    icon={<ReloadOutlined />}
+                                    onClick={handleReset}
+                                >
+                                    重置
+                                </Button>
+                            </Space>
+                        </Form.Item>
+                    </div>
+                </Form>
+            </div>
+
+            <div className="list-actions">
+                <Checkbox
+                    className="select-all-checkbox"
+                    checked={allVisibleSelected}
+                    indeterminate={partVisibleSelected}
+                    disabled={displayedTasks.length === 0}
+                    onChange={(e) => toggleSelectAllVisible(e.target.checked)}
+                >
+                    全选当前列表
+                </Checkbox>
+            </div>
+
+            <div className="task-card-list">
+                {displayedTasks.length > 0 ? (
+                    displayedTasks.map((task) => renderTaskCard(task))
+                ) : (
+                    <Card>
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description="当前筛选条件下暂无导出任务"
+                        >
+                            <Button
+                                type="primary"
+                                onClick={() =>
+                                    navigate(getRoutePath(RouteKey.IRIFY_SCANS))
+                                }
+                            >
+                                去扫描历史发起导出
+                            </Button>
+                        </Empty>
+                    </Card>
+                )}
+            </div>
+
+            {selectedTaskIds.size > 0 && (
+                <div className="task-selection-bar">
+                    <div className="selection-info">
+                        已选中{' '}
+                        <span className="selected-count">
+                            {selectedTaskIds.size}
+                        </span>{' '}
+                        个任务
+                    </div>
+                    <Space>
+                        <Button onClick={() => setSelectedTaskIds(new Set())}>
+                            取消选择
                         </Button>
                         <Button
-                            type="primary"
-                            icon={<FolderOpenOutlined />}
-                            onClick={() => goToScans()}
+                            icon={<DeleteOutlined />}
+                            danger
+                            onClick={handleBatchDelete}
                         >
-                            去扫描历史生成
+                            删除所选
                         </Button>
                     </Space>
                 </div>
-
-                <div className="mb-4 flex gap-3 flex-wrap">
-                    <Input.Search
-                        allowClear
-                        placeholder="搜索报告标题 / 范围 / 项目"
-                        style={{ width: 280 }}
-                        onSearch={(value) => {
-                            setPage(1);
-                            setFilters((prev) => ({
-                                ...prev,
-                                keyword: value.trim() || undefined,
-                            }));
-                        }}
-                    />
-                    <Input
-                        allowClear
-                        placeholder="项目名称"
-                        style={{ width: 180 }}
-                        onPressEnter={(e) => {
-                            const v = (
-                                e.target as HTMLInputElement
-                            ).value.trim();
-                            setPage(1);
-                            setFilters((prev) => ({
-                                ...prev,
-                                project_name: v || undefined,
-                            }));
-                        }}
-                        onChange={(e) => {
-                            if (!e.target.value) {
-                                setPage(1);
-                                setFilters((prev) => ({
-                                    ...prev,
-                                    project_name: undefined,
-                                }));
-                            }
-                        }}
-                    />
-                    <RangePicker
-                        style={{ width: 280 }}
-                        onChange={(dates) => {
-                            setPage(1);
-                            if (dates && dates[0] && dates[1]) {
-                                setFilters((prev) => ({
-                                    ...prev,
-                                    start: dates[0]!.startOf('day').unix(),
-                                    end: dates[1]!.endOf('day').unix(),
-                                }));
-                            } else {
-                                setFilters((prev) => ({
-                                    ...prev,
-                                    start: undefined,
-                                    end: undefined,
-                                }));
-                            }
-                        }}
-                    />
-                    <Button onClick={handleFilterReset}>重置</Button>
-                </div>
-
-                <Table<TSSAReportRecord>
-                    rowKey="id"
-                    loading={loading}
-                    dataSource={records}
-                    columns={columns}
-                    scroll={{ x: 1160 }}
-                    onChange={(_pagination, _filters, sorter) => {
-                        const s = sorter as SorterResult<TSSAReportRecord>;
-                        const newOrderBy =
-                            (s.columnKey as TSSAReportRecordQueryParams['order_by']) ||
-                            'published_at';
-                        const newOrder = s.order === 'ascend' ? 'asc' : 'desc';
-                        setOrderBy(newOrderBy);
-                        setOrder(newOrder);
-                        setPage(1);
-                    }}
-                    pagination={{
-                        current: page,
-                        pageSize: limit,
-                        total,
-                        showSizeChanger: true,
-                        pageSizeOptions: [12, 24, 48],
-                        onChange: (nextPage, nextPageSize) => {
-                            setPage(nextPage);
-                            setLimit(nextPageSize);
-                        },
-                        showTotal: (all) => `共 ${all} 项`,
-                    }}
-                    locale={{
-                        emptyText: (
-                            <Empty
-                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description="报告中心还没有记录。先去导出一份 PDF / Word，系统会自动保存快照。"
-                            >
-                                <Button
-                                    type="primary"
-                                    onClick={() => goToScans()}
-                                >
-                                    去扫描历史
-                                </Button>
-                            </Empty>
-                        ),
-                    }}
-                />
-            </Card>
+            )}
 
             <Drawer
                 title={previewTitle}
@@ -686,6 +1042,23 @@ const IRifyReportManagePage: React.FC = () => {
                         divRef={previewRef}
                     />
                 </div>
+                {previewTask ? (
+                    <div style={{ marginTop: 20 }}>
+                        <Descriptions bordered size="small" column={2}>
+                            <Descriptions.Item label="导出任务 ID" span={2}>
+                                {previewTask.task_id || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="项目 / 范围">
+                                {buildTaskScopeText(getTaskParams(previewTask))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="提交时间">
+                                {formatTimestamp(
+                                    getTaskParams(previewTask).submitted_at,
+                                )}
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </div>
+                ) : null}
             </Drawer>
         </div>
     );
