@@ -9,6 +9,8 @@ import {
     DeleteOutlined,
     DownloadOutlined,
     EyeOutlined,
+    FilePdfOutlined,
+    FileWordOutlined,
     FolderOpenOutlined,
     MoreOutlined,
     ReloadOutlined,
@@ -20,7 +22,6 @@ import {
     Checkbox,
     DatePicker,
     Descriptions,
-    Drawer,
     Dropdown,
     Empty,
     Form,
@@ -37,21 +38,10 @@ import type { MenuProps } from 'antd';
 import { useRequest } from 'ahooks';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
 
-import {
-    fetchSSAReportRecord,
-    deleteSSAReportRecord,
-} from '@/apis/SSAReportRecordApi';
-import {
-    createSSAReportRecordFile,
-    deleteSSAReportRecordFile,
-    downloadSSAReportRecordFile,
-    querySSAReportRecordFiles,
-} from '@/apis/SSAReportRecordFileApi';
-import type { TSSAReportRecordDetail } from '@/apis/SSAReportRecordApi/type';
-import type { TSSAReportRecordFile } from '@/apis/SSAReportRecordFileApi/type';
+import { deleteSSAReportRecord } from '@/apis/SSAReportRecordApi';
+import { downloadSSAReportRecordFile } from '@/apis/SSAReportRecordFileApi';
 import {
     buildSSAReportExportTaskWebSocketURL,
     mergeAsyncTaskProgress,
@@ -59,63 +49,68 @@ import {
 } from '@/apis/AsyncTaskApi';
 import type {
     TAsyncTask,
+    TAsyncTaskLog,
     TSSAReportExportTaskParams,
 } from '@/apis/AsyncTaskApi/type';
 import useLoginStore from '@/App/store/loginStore';
-import ReportTemplate from '@/compoments/ReportTemplate';
 import { saveFile } from '@/utils';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { SSA_REPORT_RECORD_CREATED_EVENT } from '@/utils/ssaReportExport';
 
 import './IRifyReportManagePage.scss';
 
-dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
 
 const { RangePicker } = DatePicker;
 
-interface TReportRecordItemJSON {
-    type: string;
-    content: string;
-}
+const PhaseFlipText: React.FC<{ text: string }> = ({ text }) => {
+    const [currentText, setCurrentText] = useState(text);
+    const [previousText, setPreviousText] = useState<string | null>(null);
+    const [incomingText, setIncomingText] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!text || text === currentText) {
+            return;
+        }
+
+        setPreviousText(currentText);
+        setIncomingText(text);
+
+        const timer = window.setTimeout(() => {
+            setCurrentText(text);
+            setPreviousText(null);
+            setIncomingText(null);
+        }, 300);
+
+        return () => window.clearTimeout(timer);
+    }, [text, currentText]);
+
+    return (
+        <span
+            className={`phase-flip-text ${incomingText ? 'is-animating' : ''}`}
+        >
+            {previousText ? (
+                <span className="phase-flip-text__item phase-flip-text__item--out">
+                    {previousText}
+                </span>
+            ) : null}
+            <span
+                className={`phase-flip-text__item ${incomingText ? 'phase-flip-text__item--in' : 'phase-flip-text__item--current'}`}
+            >
+                {incomingText || currentText}
+            </span>
+        </span>
+    );
+};
 
 const formatTimestamp = (value?: number) => {
     if (!value || value <= 0) return '-';
     return dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss');
 };
 
-const formatRelativeTime = (value?: number) => {
-    if (!value || value <= 0) return '-';
-    return dayjs.unix(value).fromNow();
-};
-
 const getScanBatchText = (scanBatch?: number) => {
     if (!scanBatch || scanBatch <= 0) return '';
     return `第${scanBatch}批`;
-};
-
-const getPreviewBlocks = (jsonRaw?: string) => {
-    if (!jsonRaw) return [];
-    try {
-        const parsed = JSON.parse(jsonRaw) as TReportRecordItemJSON[];
-        if (!Array.isArray(parsed)) return [];
-        return parsed
-            .filter((item) =>
-                ['markdown', 'json-table', 'search-json-table', 'raw'].includes(
-                    item?.type,
-                ),
-            )
-            .map((item) => ({
-                type: item.type as
-                    | 'markdown'
-                    | 'json-table'
-                    | 'search-json-table'
-                    | 'raw',
-                data: item.content,
-            }));
-    } catch {
-        return [];
-    }
 };
 
 const getTaskParams = (task: TAsyncTask): TSSAReportExportTaskParams => {
@@ -126,6 +121,8 @@ const getTaskParams = (task: TAsyncTask): TSSAReportExportTaskParams => {
     return params as TSSAReportExportTaskParams;
 };
 
+const getTaskLogs = (task: TAsyncTask) => task.progress?.log || [];
+
 const getTaskPercent = (task: TAsyncTask) =>
     Math.max(
         0,
@@ -135,22 +132,29 @@ const getTaskPercent = (task: TAsyncTask) =>
         ),
     );
 
-const getTaskLatestMessage = (task: TAsyncTask) => {
-    const logs = task.progress?.log || [];
-    const latest = logs[logs.length - 1];
-    return latest?.message || '等待导出任务开始执行';
+const hasTaskFailed = (task: TAsyncTask) => {
+    const params = getTaskParams(task);
+    const logs = getTaskLogs(task);
+    const latest = logs[logs.length - 1]?.message || '';
+    return (
+        !!task.is_finished &&
+        !params.file_id &&
+        (latest.includes('失败') || latest.toLowerCase().includes('failed'))
+    );
 };
 
 const isTaskRunning = (task: TAsyncTask) =>
-    !!task.is_executing || !task.is_finished;
+    !!task.is_executing || (!task.is_finished && !hasTaskFailed(task));
 
 const getTaskStatusClass = (task: TAsyncTask) => {
+    if (hasTaskFailed(task)) return 'status-failed';
     if (task.is_finished) return 'status-success';
     if (task.is_executing) return 'status-running';
     return 'status-pending';
 };
 
 const getTaskStatusText = (task: TAsyncTask) => {
+    if (hasTaskFailed(task)) return '失败';
     if (task.is_finished) return '已完成';
     if (task.is_executing) return '进行中';
     return '等待中';
@@ -181,6 +185,140 @@ const buildTaskScopeText = (params: TSSAReportExportTaskParams) => {
     return '筛选范围导出';
 };
 
+const normalizeCompactText = (value?: string) => (value || '').trim();
+
+const isGeneratedReportName = (value?: string) => {
+    const text = normalizeCompactText(value);
+    if (!text) return false;
+    return (
+        text.length > 40 ||
+        /_\d{8}_\d{6}/.test(text) ||
+        /-\d{8}_\d{6}/.test(text)
+    );
+};
+
+const getTaskPrimaryTitle = (params: TSSAReportExportTaskParams) => {
+    const projectName = normalizeCompactText(
+        params.project_name || params.program_name,
+    );
+    const reportName = normalizeCompactText(params.report_name);
+
+    if (projectName) {
+        return projectName;
+    }
+
+    if (reportName) {
+        return reportName;
+    }
+
+    return '未命名报告';
+};
+
+const getTaskSecondaryTitle = (params: TSSAReportExportTaskParams) => {
+    const projectName = normalizeCompactText(
+        params.project_name || params.program_name,
+    );
+    const reportName = normalizeCompactText(params.report_name);
+
+    if (!reportName) {
+        return '';
+    }
+
+    if (projectName && reportName === projectName) {
+        return '';
+    }
+
+    if (projectName && isGeneratedReportName(reportName)) {
+        return '';
+    }
+
+    return reportName;
+};
+
+const getTaskLatestMessage = (task: TAsyncTask) => {
+    const logs = getTaskLogs(task);
+    const latest = logs[logs.length - 1];
+    if (latest?.message) {
+        return latest.message;
+    }
+    if (hasTaskFailed(task)) {
+        return '导出任务执行失败';
+    }
+    if (task.is_finished) {
+        return '文件已就绪，可直接下载';
+    }
+    if (task.is_executing) {
+        return '后台正在生成报告文件';
+    }
+    return '等待导出任务开始执行';
+};
+
+const getTaskCardMessage = (task: TAsyncTask) => {
+    if (hasTaskFailed(task)) {
+        return '查看详情可见失败原因';
+    }
+    return getTaskLatestMessage(task);
+};
+
+const resolveTaskPhaseText = (task: TAsyncTask) => {
+    const latestMessage = getTaskLatestMessage(task);
+    if (latestMessage.includes('保存报告快照')) {
+        return '保存报告快照';
+    }
+    if (
+        latestMessage.includes('生成导出文件') ||
+        latestMessage.includes('生成报告文件')
+    ) {
+        return '生成导出文件';
+    }
+    if (latestMessage.includes('导出文件已生成')) {
+        return '准备下载';
+    }
+    if (latestMessage.includes('导出完成') || task.is_finished) {
+        return hasTaskFailed(task) ? '生成失败' : '导出完成';
+    }
+    if (hasTaskFailed(task)) {
+        return '生成失败';
+    }
+    if (task.is_executing) {
+        return '处理中';
+    }
+    return '等待调度';
+};
+
+const countTaskScope = (params: TSSAReportExportTaskParams) => {
+    if (params.task_ids) {
+        return `${params.task_ids.split(',').filter(Boolean).length} 个任务`;
+    }
+    if (params.task_id) {
+        return '1 个任务';
+    }
+    if (params.ids) {
+        return `${params.ids.split(',').filter(Boolean).length} 条漏洞`;
+    }
+    return '-';
+};
+
+const formatLogLevel = (level?: string) => {
+    switch ((level || '').toLowerCase()) {
+        case 'error':
+            return { color: 'red', text: '错误' };
+        case 'warning':
+            return { color: 'orange', text: '警告' };
+        case 'debug':
+            return { color: 'blue', text: '调试' };
+        default:
+            return { color: 'default', text: '信息' };
+    }
+};
+
+const renderFileFormatIcon = (format?: string) => {
+    if ((format || '').toLowerCase() === 'docx') {
+        return <FileWordOutlined style={{ fontSize: 22, color: '#2b579a' }} />;
+    }
+    return <FilePdfOutlined style={{ fontSize: 22, color: '#b91c1c' }} />;
+};
+
 const IRifyReportManagePage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -188,28 +326,19 @@ const IRifyReportManagePage: React.FC = () => {
     const focusedTaskID = searchParams.get('task_id') || '';
 
     const [form] = Form.useForm();
-
     const [filters, setFilters] = useState<{
         keyword: string;
         status: string;
         start?: number;
         end?: number;
     }>({ keyword: '', status: '' });
-
     const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(
         new Set(),
     );
-
-    const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewTitle, setPreviewTitle] = useState('报告预览');
-    const [previewBlocks, setPreviewBlocks] = useState<any[]>([]);
-    const [previewTask, setPreviewTask] = useState<TAsyncTask | null>(null);
-    const [previewFiles, setPreviewFiles] = useState<TSSAReportRecordFile[]>(
-        [],
+    const [expandedTaskId, setExpandedTaskId] = useState<string | null>(
+        focusedTaskID || null,
     );
     const [fileActionLoading, setFileActionLoading] = useState('');
-
-    const previewRef = useRef<HTMLDivElement>(null);
     const wsRef = useRef<Map<string, WebSocket>>(new Map());
 
     const { data: asyncTaskResponse, refresh } = useRequest(async () => {
@@ -228,6 +357,12 @@ const IRifyReportManagePage: React.FC = () => {
     useEffect(() => {
         setTasks(asyncTaskResponse?.list || []);
     }, [asyncTaskResponse]);
+
+    useEffect(() => {
+        if (focusedTaskID) {
+            setExpandedTaskId(focusedTaskID);
+        }
+    }, [focusedTaskID]);
 
     useEffect(() => {
         const onCreated = () => {
@@ -253,20 +388,30 @@ const IRifyReportManagePage: React.FC = () => {
                 params.project_name || params.program_name || '',
             ).toLowerCase();
 
-            if (filters.status === 'running' && !isTaskRunning(task))
+            if (filters.status === 'running' && !isTaskRunning(task)) {
                 return false;
-            if (filters.status === 'finished' && !task.is_finished)
+            }
+            if (filters.status === 'finished' && !task.is_finished) {
                 return false;
+            }
+            if (filters.status === 'failed' && !hasTaskFailed(task)) {
+                return false;
+            }
             if (
                 keyword &&
                 !reportName.includes(keyword) &&
                 !scopeName.includes(keyword) &&
                 !projectName.includes(keyword) &&
                 !(task.task_id || '').toLowerCase().includes(keyword)
-            )
+            ) {
                 return false;
-            if (filters.start && submittedAt < filters.start) return false;
-            if (filters.end && submittedAt > filters.end) return false;
+            }
+            if (filters.start && submittedAt < filters.start) {
+                return false;
+            }
+            if (filters.end && submittedAt > filters.end) {
+                return false;
+            }
             return true;
         });
     }, [filters, tasks]);
@@ -288,7 +433,9 @@ const IRifyReportManagePage: React.FC = () => {
                     task_id?: string;
                     progress?: TAsyncTask['progress'];
                 };
-                if (!payload?.task_id) return;
+                if (!payload?.task_id) {
+                    return;
+                }
                 setTasks((prev) =>
                     prev.map((item) =>
                         item.task_id === payload.task_id
@@ -303,7 +450,9 @@ const IRifyReportManagePage: React.FC = () => {
         };
 
         runningTaskIDs.forEach((taskId) => {
-            if (!taskId || wsRef.current.has(taskId) || !token) return;
+            if (!taskId || wsRef.current.has(taskId) || !token) {
+                return;
+            }
             const ws = new WebSocket(
                 buildSSAReportExportTaskWebSocketURL(taskId, token),
             );
@@ -315,7 +464,9 @@ const IRifyReportManagePage: React.FC = () => {
         });
 
         Array.from(wsRef.current.entries()).forEach(([taskId, ws]) => {
-            if (nextIDs.has(taskId)) return;
+            if (nextIDs.has(taskId)) {
+                return;
+            }
             ws.close();
             wsRef.current.delete(taskId);
         });
@@ -328,38 +479,6 @@ const IRifyReportManagePage: React.FC = () => {
         },
         [],
     );
-
-    const refreshPreviewFiles = useCallback(async (recordId: number) => {
-        const filesRes = await querySSAReportRecordFiles(recordId);
-        setPreviewFiles(filesRes.data?.list || []);
-    }, []);
-
-    const handlePreview = useCallback(async (task: TAsyncTask) => {
-        const params = getTaskParams(task);
-        if (!params.record_id) {
-            message.warning('当前导出任务尚未生成可预览报告');
-            return;
-        }
-        try {
-            const [detailRes, filesRes] = await Promise.all([
-                fetchSSAReportRecord(params.record_id),
-                querySSAReportRecordFiles(params.record_id),
-            ]);
-            const detail = detailRes.data as TSSAReportRecordDetail;
-            const blocks = getPreviewBlocks(detail.json_raw);
-            if (blocks.length === 0) {
-                message.warning('该报告暂无可预览内容');
-                return;
-            }
-            setPreviewTitle(detail.title || params.report_name || '报告预览');
-            setPreviewBlocks(blocks);
-            setPreviewTask(task);
-            setPreviewFiles(filesRes.data?.list || []);
-            setPreviewOpen(true);
-        } catch {
-            message.error('获取报告详情失败');
-        }
-    }, []);
 
     const handleDownload = useCallback(async (task: TAsyncTask) => {
         const params = getTaskParams(task);
@@ -384,78 +503,6 @@ const IRifyReportManagePage: React.FC = () => {
             setFileActionLoading('');
         }
     }, []);
-
-    const handleCreateFile = useCallback(
-        async (format: 'pdf' | 'docx') => {
-            const params = getTaskParams(previewTask || {});
-            if (!params.record_id) return;
-            try {
-                setFileActionLoading(`create-${format}`);
-                const created = await createSSAReportRecordFile(
-                    params.record_id,
-                    { format, overwrite: false },
-                );
-                if (created.data?.id) {
-                    await refreshPreviewFiles(params.record_id);
-                    message.success(`${format.toUpperCase()} 文件已生成`);
-                }
-            } catch {
-                message.error(`${format.toUpperCase()} 文件生成失败`);
-            } finally {
-                setFileActionLoading('');
-            }
-        },
-        [previewTask, refreshPreviewFiles],
-    );
-
-    const handleDownloadFile = useCallback(
-        async (file: TSSAReportRecordFile) => {
-            if (!file.id) return;
-            try {
-                setFileActionLoading(`download-${file.id}`);
-                const res = await downloadSSAReportRecordFile(file.id);
-                if (!res.data) {
-                    throw new Error('empty report file');
-                }
-                saveFile(
-                    res.data,
-                    file.file_name || `report.${file.format || 'bin'}`,
-                );
-            } catch {
-                message.error('下载文件失败');
-            } finally {
-                setFileActionLoading('');
-            }
-        },
-        [],
-    );
-
-    const handleDeleteFile = useCallback(
-        (file: TSSAReportRecordFile) => {
-            const params = getTaskParams(previewTask || {});
-            if (!file.id || !params.record_id) return;
-            Modal.confirm({
-                title: '删除导出文件',
-                content: `确定删除文件「${file.file_name || file.id}」吗？`,
-                okText: '删除',
-                cancelText: '取消',
-                okButtonProps: { danger: true },
-                onOk: async () => {
-                    try {
-                        setFileActionLoading(`delete-${file.id}`);
-                        await deleteSSAReportRecordFile(file.id);
-                        await refreshPreviewFiles(params.record_id!);
-                        message.success('文件删除成功');
-                    } catch {
-                        message.error('文件删除失败');
-                    } finally {
-                        setFileActionLoading('');
-                    }
-                },
-            });
-        },
-        [previewTask, refreshPreviewFiles],
-    );
 
     const handleDeleteTask = useCallback(
         (task: TAsyncTask) => {
@@ -484,42 +531,28 @@ const IRifyReportManagePage: React.FC = () => {
         [refresh],
     );
 
-    const handleBatchDelete = useCallback(() => {
-        const targets = displayedTasks.filter(
-            (t) => !!t.task_id && selectedTaskIds.has(t.task_id),
-        );
-        if (targets.length === 0) return;
-        Modal.confirm({
-            title: '批量删除报告',
-            content: `确定删除选中的 ${targets.length} 个导出任务吗？`,
-            okText: '删除',
-            cancelText: '取消',
-            okButtonProps: { danger: true },
-            onOk: async () => {
-                let success = 0;
-                for (const task of targets) {
-                    const params = getTaskParams(task);
-                    if (!params.record_id) continue;
-                    try {
-                        await deleteSSAReportRecord(params.record_id);
-                        success++;
-                    } catch {}
-                }
-                if (success > 0) {
-                    message.success(`已删除 ${success} 个报告`);
-                    setSelectedTaskIds(new Set());
-                    refresh();
-                }
-            },
-        });
-    }, [displayedTasks, selectedTaskIds, refresh]);
-
     const openSourceTask = useCallback(
         (task: TAsyncTask) => {
             const params = getTaskParams(task);
             const base = getRoutePath(RouteKey.IRIFY_SCANS);
             const sourceTaskID = params.task_id;
             navigate(sourceTaskID ? `${base}?task_id=${sourceTaskID}` : base);
+        },
+        [navigate],
+    );
+
+    const openRelatedProject = useCallback(
+        (task: TAsyncTask) => {
+            const params = getTaskParams(task);
+            const projectName = normalizeCompactText(
+                params.project_name || params.program_name,
+            );
+            if (!projectName) {
+                return;
+            }
+            navigate(
+                `${getRoutePath(RouteKey.IRIFY_PROJECTS)}?project_name=${encodeURIComponent(projectName)}`,
+            );
         },
         [navigate],
     );
@@ -545,7 +578,7 @@ const IRifyReportManagePage: React.FC = () => {
                 setSelectedTaskIds(
                     new Set(
                         displayedTasks
-                            .map((t) => t.task_id)
+                            .map((task) => task.task_id)
                             .filter(Boolean) as string[],
                     ),
                 );
@@ -555,6 +588,40 @@ const IRifyReportManagePage: React.FC = () => {
         },
         [displayedTasks],
     );
+
+    const handleBatchDelete = useCallback(() => {
+        const targets = displayedTasks.filter(
+            (task) => !!task.task_id && selectedTaskIds.has(task.task_id),
+        );
+        if (targets.length === 0) {
+            return;
+        }
+        Modal.confirm({
+            title: '批量删除报告',
+            content: `确定删除选中的 ${targets.length} 个导出任务吗？`,
+            okText: '删除',
+            cancelText: '取消',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                let success = 0;
+                for (const task of targets) {
+                    const params = getTaskParams(task);
+                    if (!params.record_id) {
+                        continue;
+                    }
+                    try {
+                        await deleteSSAReportRecord(params.record_id);
+                        success++;
+                    } catch {}
+                }
+                if (success > 0) {
+                    message.success(`已删除 ${success} 个报告`);
+                    setSelectedTaskIds(new Set());
+                    refresh();
+                }
+            },
+        });
+    }, [displayedTasks, refresh, selectedTaskIds]);
 
     const handleSearch = useCallback((values: any) => {
         setFilters({
@@ -574,9 +641,63 @@ const IRifyReportManagePage: React.FC = () => {
         setFilters({ keyword: '', status: '' });
     }, [form]);
 
+    const handleTaskCardClick = useCallback(
+        (event: React.MouseEvent<HTMLDivElement>, taskId: string) => {
+            const target = event.target as HTMLElement;
+            const ignoreSelect =
+                target.closest('button') ||
+                target.closest('a') ||
+                target.closest('input') ||
+                target.closest('.task-detail-panel') ||
+                target.closest('.ant-dropdown') ||
+                target.closest('.ant-dropdown-menu');
+            if (ignoreSelect) {
+                return;
+            }
+            setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
+        },
+        [],
+    );
+
+    const renderLatestLogs = (logs: TAsyncTaskLog[]) => {
+        if (logs.length === 0) {
+            return <div className="report-log-empty">当前暂无日志</div>;
+        }
+        return (
+            <div className="report-log-list">
+                {logs.slice(-5).map((log, index) => {
+                    const meta = formatLogLevel(log.level);
+                    return (
+                        <div
+                            key={`${log.timestamp_nano || index}`}
+                            className="report-log-item"
+                        >
+                            <div className="report-log-item__head">
+                                <Tag color={meta.color}>{meta.text}</Tag>
+                                <span className="report-log-item__time">
+                                    {formatTimestamp(
+                                        log.timestamp_nano
+                                            ? Math.floor(
+                                                  log.timestamp_nano / 1e9,
+                                              )
+                                            : 0,
+                                    )}
+                                </span>
+                            </div>
+                            <div className="report-log-item__message">
+                                {log.message || '-'}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
+
     const renderTaskCard = useCallback(
         (task: TAsyncTask) => {
             const params = getTaskParams(task);
+            const isExpanded = expandedTaskId === task.task_id;
             const isSelected = selectedTaskIds.has(task.task_id || '');
             const progressPercent = getTaskPercent(task);
             const taskScope = buildTaskScopeText(params);
@@ -585,7 +706,15 @@ const IRifyReportManagePage: React.FC = () => {
             const riskTotal = Number(params.risk_total || 0);
             const statusClass = getTaskStatusClass(task);
             const statusText = getTaskStatusText(task);
-            const latestMessage = getTaskLatestMessage(task);
+            const latestMessage = getTaskCardMessage(task);
+            const phaseText = resolveTaskPhaseText(task);
+            const logs = getTaskLogs(task);
+            const primaryTitle = getTaskPrimaryTitle(params);
+            const secondaryTitle = getTaskSecondaryTitle(params);
+            const fileLabel = params.file_name || '';
+            const relatedProjectName = normalizeCompactText(
+                params.project_name || params.program_name,
+            );
 
             const moreMenuItems: MenuProps['items'] = [
                 {
@@ -593,13 +722,6 @@ const IRifyReportManagePage: React.FC = () => {
                     icon: <FolderOpenOutlined />,
                     label: '来源任务',
                     onClick: () => openSourceTask(task),
-                },
-                {
-                    key: 'preview',
-                    icon: <EyeOutlined />,
-                    label: '报告预览',
-                    disabled: !params.record_id,
-                    onClick: () => handlePreview(task),
                 },
                 { type: 'divider' },
                 {
@@ -615,20 +737,8 @@ const IRifyReportManagePage: React.FC = () => {
             return (
                 <div
                     key={task.task_id}
-                    className={`task-card ${isSelected ? 'selected' : ''} ${focusedTaskID === task.task_id ? 'is-current' : ''}`}
-                    onClick={() => {
-                        const id = task.task_id || '';
-                        if (!id) return;
-                        setSelectedTaskIds((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(id)) {
-                                next.delete(id);
-                            } else {
-                                next.add(id);
-                            }
-                            return next;
-                        });
-                    }}
+                    className={`task-card ${focusedTaskID === task.task_id ? 'is-current' : ''}`}
+                    onClick={(e) => handleTaskCardClick(e, task.task_id || '')}
                 >
                     <div className="task-main-info">
                         <div className="task-leading-cells">
@@ -636,9 +746,7 @@ const IRifyReportManagePage: React.FC = () => {
                                 <Checkbox
                                     className="task-select-checkbox"
                                     checked={isSelected}
-                                    onClick={(e: React.MouseEvent) =>
-                                        e.stopPropagation()
-                                    }
+                                    onClick={(e) => e.stopPropagation()}
                                     onChange={(e) =>
                                         toggleSingleSelect(
                                             task.task_id || '',
@@ -647,70 +755,91 @@ const IRifyReportManagePage: React.FC = () => {
                                     }
                                 />
                             </div>
-                            <div className={`task-status-dot ${statusClass}`} />
+                            <div className="report-type-icon-cell">
+                                {renderFileFormatIcon(params.format)}
+                            </div>
                         </div>
                         <div className="task-details">
                             <div className="task-header">
-                                <span className="task-title">
-                                    {params.report_name || '未命名导出任务'}
-                                </span>
-                                <Tag
-                                    color="blue"
-                                    className="task-mini-tag task-mini-tag--format"
-                                >
-                                    {String(
-                                        params.format || 'pdf',
-                                    ).toUpperCase()}
-                                </Tag>
-                                <Tag
-                                    color={
-                                        task.is_finished
-                                            ? 'success'
-                                            : task.is_executing
-                                              ? 'processing'
-                                              : 'default'
-                                    }
-                                    className="task-mini-tag"
-                                >
-                                    {statusText}
-                                </Tag>
-                                {taskScope && (
-                                    <Tag className="task-mini-tag task-mini-tag--scope">
-                                        {taskScope}
+                                <Tooltip title={primaryTitle}>
+                                    {relatedProjectName ? (
+                                        <Button
+                                            type="link"
+                                            className="task-title task-title--link"
+                                            onClick={(e: React.MouseEvent) => {
+                                                e.stopPropagation();
+                                                openRelatedProject(task);
+                                            }}
+                                        >
+                                            {primaryTitle}
+                                        </Button>
+                                    ) : (
+                                        <span className="task-title">
+                                            {primaryTitle}
+                                        </span>
+                                    )}
+                                </Tooltip>
+                                {params.scan_batch ? (
+                                    <Tag className="task-mini-tag task-mini-tag--batch">
+                                        {getScanBatchText(params.scan_batch)}
                                     </Tag>
-                                )}
+                                ) : null}
                             </div>
+                            {secondaryTitle ? (
+                                <div className="task-subtitle">
+                                    <Tooltip title={secondaryTitle}>
+                                        <span>{secondaryTitle}</span>
+                                    </Tooltip>
+                                </div>
+                            ) : null}
 
                             <div className="task-meta-grid">
                                 <div className="meta-item">
-                                    提交于{' '}
-                                    <span>{formatTimestamp(submittedAt)}</span>
+                                    <span>{countTaskScope(params)}</span>
                                 </div>
                                 <div className="meta-item">
-                                    <span className="meta-inline-value">
-                                        {formatRelativeTime(submittedAt)}
+                                    <span>
+                                        提交于 {formatTimestamp(submittedAt)}
                                     </span>
                                 </div>
                                 <div className="meta-item">
-                                    来源完成{' '}
                                     <span>
+                                        源结果{' '}
                                         {formatTimestamp(sourceFinishedAt)}
                                     </span>
                                 </div>
                             </div>
+                            {fileLabel ? (
+                                <div className="task-file-meta">
+                                    <span className="task-file-meta__label">
+                                        文件
+                                    </span>
+                                    <Tooltip title={fileLabel}>
+                                        <span className="task-file-meta__value">
+                                            {fileLabel}
+                                        </span>
+                                    </Tooltip>
+                                </div>
+                            ) : null}
 
                             <div className="task-status-row">
                                 <div className="status-label">
-                                    导出状态{' '}
                                     <span
                                         className={`status-text ${statusClass}`}
                                     >
-                                        {statusText}
+                                        <PhaseFlipText text={statusText} />
                                     </span>
                                 </div>
-                                <div className="status-message">
-                                    {latestMessage}
-                                </div>
+                                {isTaskRunning(task) || hasTaskFailed(task) ? (
+                                    <div className="status-phase">
+                                        <PhaseFlipText text={phaseText} />
+                                    </div>
+                                ) : null}
+                                {isTaskRunning(task) ? (
+                                    <div className="status-message">
+                                        {latestMessage}
+                                    </div>
+                                ) : null}
                                 {isTaskRunning(task) ? (
                                     <div className="task-progress-wrapper">
                                         <Progress
@@ -718,7 +847,7 @@ const IRifyReportManagePage: React.FC = () => {
                                             size="small"
                                             showInfo={false}
                                             status="active"
-                                            style={{ width: 140 }}
+                                            style={{ width: 180 }}
                                         />
                                         <span className="task-progress-percent">
                                             {progressPercent}%
@@ -731,7 +860,7 @@ const IRifyReportManagePage: React.FC = () => {
 
                     <div className="task-stats-actions">
                         <div className="vulnerability-stats">
-                            <span className="stat-label">缺陷数</span>
+                            <span className="stat-label">风险概况</span>
                             <div className="stat-boxes">
                                 <Tooltip title="严重">
                                     <div className="stat-box critical">
@@ -775,17 +904,20 @@ const IRifyReportManagePage: React.FC = () => {
                                     handleDownload(task);
                                 }}
                             >
-                                {task.is_finished ? '下载' : '生成中'}
+                                {task.is_finished ? '下载报告' : '生成中'}
                             </Button>
                             <Button
                                 icon={<EyeOutlined />}
-                                disabled={!params.record_id}
                                 onClick={(e: React.MouseEvent) => {
                                     e.stopPropagation();
-                                    handlePreview(task);
+                                    setExpandedTaskId((prev) =>
+                                        prev === task.task_id
+                                            ? null
+                                            : task.task_id || null,
+                                    );
                                 }}
                             >
-                                预览
+                                {isExpanded ? '收起详情' : '查看详情'}
                             </Button>
                             <Dropdown
                                 menu={{ items: moreMenuItems }}
@@ -801,32 +933,89 @@ const IRifyReportManagePage: React.FC = () => {
                             </Dropdown>
                         </div>
                     </div>
+
+                    {isExpanded ? (
+                        <div className="task-detail-panel">
+                            <div className="detail-section">
+                                <h4>导出详情</h4>
+                                <Descriptions bordered column={2} size="small">
+                                    <Descriptions.Item
+                                        label="报告名称"
+                                        span={2}
+                                    >
+                                        {params.report_name || '-'}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="导出状态">
+                                        <Tag
+                                            color={
+                                                statusClass === 'status-success'
+                                                    ? 'success'
+                                                    : statusClass ===
+                                                        'status-running'
+                                                      ? 'processing'
+                                                      : statusClass ===
+                                                          'status-failed'
+                                                        ? 'error'
+                                                        : 'default'
+                                            }
+                                        >
+                                            {statusText}
+                                        </Tag>
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="当前步骤">
+                                        {phaseText}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="项目 / 范围">
+                                        {taskScope}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="导出范围">
+                                        {countTaskScope(params)}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="提交时间">
+                                        {formatTimestamp(submittedAt)}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="源结果完成时间">
+                                        {formatTimestamp(sourceFinishedAt)}
+                                    </Descriptions.Item>
+                                    <Descriptions.Item label="文件名" span={2}>
+                                        {params.file_name || '-'}
+                                    </Descriptions.Item>
+                                </Descriptions>
+                            </div>
+
+                            <div className="detail-section">
+                                <h4>最近运行日志</h4>
+                                {renderLatestLogs(logs)}
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
             );
         },
         [
-            selectedTaskIds,
-            focusedTaskID,
+            expandedTaskId,
             fileActionLoading,
-            toggleSingleSelect,
-            handleDownload,
-            handlePreview,
+            focusedTaskID,
             handleDeleteTask,
+            handleDownload,
+            handleTaskCardClick,
+            openRelatedProject,
             openSourceTask,
+            renderLatestLogs,
+            selectedTaskIds,
+            toggleSingleSelect,
         ],
     );
 
     const allVisibleSelected =
         displayedTasks.length > 0 &&
         displayedTasks.every(
-            (t) => !!t.task_id && selectedTaskIds.has(t.task_id),
+            (task) => !!task.task_id && selectedTaskIds.has(task.task_id),
         );
     const partVisibleSelected = selectedTaskIds.size > 0 && !allVisibleSelected;
 
     return (
-        <div
-            className={`irify-report-manage-page ${selectedTaskIds.size > 0 ? 'has-selection-bar' : ''}`}
-        >
+        <div className="irify-report-manage-page">
             <div className="filter-bar">
                 <Form form={form} layout="inline" onFinish={handleSearch}>
                     <div
@@ -840,51 +1029,51 @@ const IRifyReportManagePage: React.FC = () => {
                     >
                         <Form.Item name="query" style={{ flex: '1 1 260px' }}>
                             <Input
-                                placeholder="搜索报告名称 / 项目 / 任务 ID"
-                                prefix={<SearchOutlined />}
                                 allowClear
+                                prefix={<SearchOutlined />}
+                                placeholder="搜索报告名称 / 项目 / 任务 ID"
                             />
                         </Form.Item>
-                        <Form.Item name="status" style={{ flex: '0 0 180px' }}>
+                        <Form.Item name="status">
                             <Select
                                 placeholder="导出状态"
                                 allowClear
+                                style={{ width: 160 }}
                                 options={[
                                     {
                                         label: '进行中 / 等待中',
                                         value: 'running',
                                     },
                                     { label: '已完成', value: 'finished' },
+                                    { label: '失败', value: 'failed' },
                                 ]}
                             />
                         </Form.Item>
-                        <Form.Item
-                            name="date_range"
-                            style={{ flex: '0 0 280px' }}
-                        >
-                            <RangePicker
-                                placeholder={['开始日期', '结束日期']}
-                                style={{ width: '100%' }}
-                            />
-                        </Form.Item>
-                        <Form.Item>
-                            <Space>
-                                <Button
-                                    type="primary"
-                                    icon={<SearchOutlined />}
-                                    htmlType="submit"
-                                >
-                                    查询
-                                </Button>
-                                <Button
-                                    icon={<ReloadOutlined />}
-                                    onClick={handleReset}
-                                >
-                                    重置
-                                </Button>
-                            </Space>
+                        <Form.Item name="date_range">
+                            <RangePicker />
                         </Form.Item>
                     </div>
+
+                    <Space>
+                        <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            htmlType="submit"
+                        >
+                            查询
+                        </Button>
+                        <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                            重置
+                        </Button>
+                        <Button
+                            icon={<FolderOpenOutlined />}
+                            onClick={() =>
+                                navigate(getRoutePath(RouteKey.IRIFY_SCANS))
+                            }
+                        >
+                            去扫描历史
+                        </Button>
+                    </Space>
                 </Form>
             </div>
 
@@ -905,31 +1094,19 @@ const IRifyReportManagePage: React.FC = () => {
                     displayedTasks.map((task) => renderTaskCard(task))
                 ) : (
                     <Card>
-                        <Empty
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description="当前筛选条件下暂无导出任务"
-                        >
-                            <Button
-                                type="primary"
-                                onClick={() =>
-                                    navigate(getRoutePath(RouteKey.IRIFY_SCANS))
-                                }
-                            >
-                                去扫描历史发起导出
-                            </Button>
-                        </Empty>
+                        <Empty description="暂无报告导出任务" />
                     </Card>
                 )}
             </div>
 
-            {selectedTaskIds.size > 0 && (
+            {selectedTaskIds.size > 0 ? (
                 <div className="task-selection-bar">
                     <div className="selection-info">
                         已选中{' '}
                         <span className="selected-count">
                             {selectedTaskIds.size}
                         </span>{' '}
-                        个任务
+                        个报告
                     </div>
                     <Space>
                         <Button onClick={() => setSelectedTaskIds(new Set())}>
@@ -944,122 +1121,7 @@ const IRifyReportManagePage: React.FC = () => {
                         </Button>
                     </Space>
                 </div>
-            )}
-
-            <Drawer
-                title={previewTitle}
-                width="72%"
-                open={previewOpen}
-                destroyOnClose
-                onClose={() => setPreviewOpen(false)}
-            >
-                <div className="report-file-panel">
-                    <div className="report-file-head">
-                        <h4>导出文件</h4>
-                        <Space>
-                            <Button
-                                loading={fileActionLoading === 'create-pdf'}
-                                onClick={() => handleCreateFile('pdf')}
-                            >
-                                生成 PDF
-                            </Button>
-                            <Button
-                                loading={fileActionLoading === 'create-docx'}
-                                onClick={() => handleCreateFile('docx')}
-                            >
-                                生成 Word
-                            </Button>
-                        </Space>
-                    </div>
-                    {previewFiles.length > 0 ? (
-                        <div className="report-file-list">
-                            {previewFiles.map((file) => (
-                                <div key={file.id} className="report-file-item">
-                                    <div className="report-file-meta">
-                                        <div className="report-file-name">
-                                            {file.file_name ||
-                                                `file-${file.id}`}
-                                        </div>
-                                        <div className="report-file-sub">
-                                            <span>
-                                                {String(
-                                                    file.format || '',
-                                                ).toUpperCase()}
-                                            </span>
-                                            <span>
-                                                {file.size_bytes
-                                                    ? `${(file.size_bytes / 1024).toFixed(1)} KB`
-                                                    : '-'}
-                                            </span>
-                                            <span>
-                                                {formatTimestamp(
-                                                    file.created_at,
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <Space>
-                                        <Button
-                                            size="small"
-                                            loading={
-                                                fileActionLoading ===
-                                                `download-${file.id}`
-                                            }
-                                            onClick={() =>
-                                                handleDownloadFile(file)
-                                            }
-                                        >
-                                            下载
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            danger
-                                            loading={
-                                                fileActionLoading ===
-                                                `delete-${file.id}`
-                                            }
-                                            onClick={() =>
-                                                handleDeleteFile(file)
-                                            }
-                                        >
-                                            删除
-                                        </Button>
-                                    </Space>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <Empty
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description="当前报告尚未生成文件资产"
-                        />
-                    )}
-                </div>
-                <div ref={previewRef}>
-                    <ReportTemplate
-                        blocks={previewBlocks}
-                        width={960}
-                        divRef={previewRef}
-                    />
-                </div>
-                {previewTask ? (
-                    <div style={{ marginTop: 20 }}>
-                        <Descriptions bordered size="small" column={2}>
-                            <Descriptions.Item label="导出任务 ID" span={2}>
-                                {previewTask.task_id || '-'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="项目 / 范围">
-                                {buildTaskScopeText(getTaskParams(previewTask))}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="提交时间">
-                                {formatTimestamp(
-                                    getTaskParams(previewTask).submitted_at,
-                                )}
-                            </Descriptions.Item>
-                        </Descriptions>
-                    </div>
-                ) : null}
-            </Drawer>
+            ) : null}
         </div>
     );
 };
