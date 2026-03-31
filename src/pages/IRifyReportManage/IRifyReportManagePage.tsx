@@ -487,24 +487,27 @@ const IRifyReportManagePage: React.FC = () => {
     );
 
     return (
-        <div className="irify-report-manage-page">
+        <div className="p-4 irify-report-manage-page">
             <div className="report-toolbar">
-                <Space size={12}>
-                    <Button
-                        icon={<ReloadOutlined />}
-                        onClick={() => refresh()}
-                        loading={loading}
-                    >
-                        刷新数据
-                    </Button>
-                    <Button
-                        type="primary"
-                        icon={<FolderOpenOutlined />}
-                        onClick={() => goToScans()}
-                    >
-                        去扫描历史生成
-                    </Button>
-                </Space>
+                <div className="flex justify-between items-center w-full">
+                    <span className="text-lg font-bold">报告管理</span>
+                    <Space size={12}>
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={() => refresh()}
+                            loading={loading}
+                        >
+                            刷新
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<FolderOpenOutlined />}
+                            onClick={() => goToScans()}
+                        >
+                            去扫描历史生成
+                        </Button>
+                    </Space>
+                </div>
             </div>
 
             <Card className="report-filter-card">
