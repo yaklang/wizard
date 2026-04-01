@@ -31,6 +31,7 @@ import { DiJava } from 'react-icons/di';
 import {
     postSSAProject as createSSAProject,
     getScanPolicyConfig,
+    testGitConnection,
 } from '@/apis/SSAProjectApi';
 import { getNodeList } from '@/apis/task';
 import type {
@@ -39,6 +40,7 @@ import type {
 } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import { normalizeProjectAuthKind } from '@/utils/ssaCredential';
+import { buildRepositoryUrlRules } from '@/utils/repositoryUrl';
 import dayjs from 'dayjs';
 import CodeSourceAuthSection from './components/CodeSourceAuthSection';
 import './CreateProject.scss';
@@ -494,18 +496,12 @@ const CreateProject: React.FC = () => {
                     <Form.Item
                         label="仓库地址"
                         name={['config', 'CodeSource', 'url']}
-                        rules={[
-                            { required: true, message: '请输入仓库地址' },
-                            {
-                                type: 'url',
-                                message: '请输入有效的 URL 地址',
-                            },
-                        ]}
+                        rules={buildRepositoryUrlRules('请输入仓库地址')}
                         extra="支持 HTTP(S) 和 SSH 协议"
                     >
                         <Input
                             size="large"
-                            placeholder="https://github.com/username/repo.git"
+                            placeholder="https://github.com/username/repo.git 或 git@github.com:username/repo.git"
                         />
                     </Form.Item>
 
@@ -946,27 +942,36 @@ const CreateProject: React.FC = () => {
 
     const handleTestConnection = async () => {
         try {
-            await form.validateFields([
-                ['config', 'CodeSource', 'url'],
-                ['config', 'CodeSource', 'auth'],
-            ]);
+            await form.validateFields([['config', 'CodeSource', 'url']]);
 
             setTestingConnection(true);
             setConnectionStatus('idle');
 
-            // TODO: 实际调用测试连接 API
-            // const result = await testGitConnection(form.getFieldsValue());
+            const url = form.getFieldValue(['config', 'CodeSource', 'url']);
+            const auth = form.getFieldValue(['config', 'CodeSource', 'auth']);
+            const proxy = form.getFieldValue([
+                'config',
+                'CodeSource',
+                'proxy',
+            ]);
 
-            // 模拟测试
-            await new Promise((resolve) => {
-                setTimeout(resolve, 2000);
+            const result = await testGitConnection({
+                url,
+                auth,
+                proxy: proxy?.url ? proxy : undefined,
             });
 
-            setConnectionStatus('success');
-            message.success('连接测试成功');
+            if (result?.data?.success) {
+                setConnectionStatus('success');
+                message.success(result.data.message || '连接测试成功');
+                return;
+            }
+
+            setConnectionStatus('error');
+            message.error(result?.data?.message || '连接测试失败');
         } catch (error) {
             setConnectionStatus('error');
-            message.error('连接测试失败');
+            message.error((error as any)?.message || '连接测试失败');
         } finally {
             setTestingConnection(false);
         }

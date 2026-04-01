@@ -36,6 +36,7 @@ import {
 } from '@/apis/SSAProjectApi';
 import { getNodeList } from '@/apis/task';
 import { normalizeProjectAuthKind } from '@/utils/ssaCredential';
+import { buildRepositoryUrlRules } from '@/utils/repositoryUrl';
 import type {
     TSSAProjectRequest,
     TScanPolicyConfig,
@@ -305,35 +306,11 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
     const handleTestConnection = async () => {
         try {
             const url = form.getFieldValue(['config', 'CodeSource', 'url']);
-            const authKind = form.getFieldValue([
-                'config',
-                'CodeSource',
-                'auth',
-                'kind',
-            ]);
-            const userName = form.getFieldValue([
-                'config',
-                'CodeSource',
-                'auth',
-                'user_name',
-            ]);
-            const password = form.getFieldValue([
-                'config',
-                'CodeSource',
-                'auth',
-                'password',
-            ]);
-            const keyContent = form.getFieldValue([
-                'config',
-                'CodeSource',
-                'auth',
-                'key_content',
-            ]);
-            const proxyUrl = form.getFieldValue([
+            const auth = form.getFieldValue(['config', 'CodeSource', 'auth']);
+            const proxy = form.getFieldValue([
                 'config',
                 'CodeSource',
                 'proxy',
-                'url',
             ]);
 
             if (!url) {
@@ -346,13 +323,8 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
 
             const result = await testGitConnection({
                 url,
-                auth: {
-                    kind: authKind,
-                    user_name: userName,
-                    password: password,
-                    key_content: keyContent,
-                },
-                proxy: proxyUrl ? { url: proxyUrl } : undefined,
+                auth,
+                proxy: proxy?.url ? proxy : undefined,
             });
 
             if (result?.data?.success) {
@@ -620,15 +592,10 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 <Form.Item
                                     label="源码地址 (URL)"
                                     name={['config', 'CodeSource', 'url']}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入源码地址',
-                                        },
-                                    ]}
+                                    rules={buildRepositoryUrlRules('请输入源码地址')}
                                     extra="Legion 将通过此 URL 拉取代码进行扫描"
                                 >
-                                    <Input placeholder="https://github.com/example/repo.git" />
+                                    <Input placeholder="https://github.com/example/repo.git 或 git@github.com:example/repo.git" />
                                 </Form.Item>
 
                                 <Form.Item
