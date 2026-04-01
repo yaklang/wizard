@@ -7,7 +7,7 @@ import type {
   ImportAIForgeFormValues,
   ImportAIForgeRequest,
 } from './type'
-import { OutlineExportIcon, OutlinePencilaltIcon, OutlineSearchIcon, OutlineTrashIcon } from '@/assets/icon/outline'
+import { OutlinePencilaltIcon, OutlineSearchIcon, OutlineTrashIcon } from '@/assets/icon/outline'
 import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
 import {
   useDebounceEffect,
@@ -129,7 +129,8 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
 
   const wrapperRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [list] = useVirtualList(data.Data, {
+  const forgeData = data.Data || []
+  const [list] = useVirtualList(forgeData, {
     containerTarget: wrapperRef,
     wrapperTarget: containerRef,
     itemHeight: 41,
@@ -152,11 +153,13 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
     setLoading(true)
     postAiforgeQuery(request)
       .then((res) => {
-        const newLength = res.Data?.length || 0
+        const responseData = res.Data || []
+        const newLength = responseData.length
         if (newLength < request.Pagination.Limit) isMore.current = false
         else isMore.current = true
 
-        const newArr = isInit ? res.Data : getData().Data.concat(res.Data)
+        const oldData = getData().Data || []
+        const newArr = isInit ? responseData : oldData.concat(responseData)
         setData({
           ...res,
           Pagination: request.Pagination,
@@ -367,7 +370,7 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
     try {
       const res = await grpcGetAIToolList(newQuery)
       if (!res.Tools) res.Tools = []
-      if (res.Tools.length > 0) {
+      if (res.Tools?.length > 0) {
         setAiToolPagination((v) => ({
           ...v,
           Page: paginationProps.page,
@@ -452,7 +455,7 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
                         <div className={styles['detail-content']}>
                           <div className={styles['content-description']}>{Description || '暂无更多说明'}</div>
 
-                          {tools.length > 0 && (
+                          {tools?.length > 0 && (
                             <div className={styles['content-tools']}>
                               <div className={styles['tools-header']}>
                                 <SolidToolIcon />
@@ -483,7 +486,7 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
                       </div>
 
                       <div className={styles['item-extra']}>
-                        <Tooltip title="导出技能" placement="topRight" overlayClassName={styles['item-extra-tooltip']}>
+                        {/* <Tooltip title="导出技能" placement="topRight" overlayClassName={styles['item-extra-tooltip']}>
                           <YakitButton
                             type="text2"
                             icon={<OutlineExportIcon />}
@@ -499,7 +502,7 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
                               })
                             }}
                           />
-                        </Tooltip>
+                        </Tooltip> */}
                         <Tooltip title="编辑Forge" placement="topRight" overlayClassName={styles['item-extra-tooltip']}>
                           <YakitButton
                             type="text2"

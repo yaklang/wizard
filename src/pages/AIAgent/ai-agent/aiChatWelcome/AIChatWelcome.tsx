@@ -3,7 +3,7 @@ import React, {
   useEffect,
   //   useId,
   useImperativeHandle,
-  useMemo,
+  // useMemo,
   // useMemo,
   useRef,
   useState,
@@ -24,7 +24,7 @@ import type { AIChatTextareaRefProps, AIChatTextareaSubmit } from '../template/t
 import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
 import {
   OutlineCloseIcon,
-  OutlineImportIcon,
+  // OutlineImportIcon,
   OutlineOpenIcon,
   //   OutlineArrowrightIcon,
   // OutlineCloseIcon,
@@ -33,7 +33,7 @@ import {
   // OutlineOpenIcon,
   OutlinePinIcon,
   OutlinePinOffIcon,
-  OutlinePluscircleIcon,
+  // OutlinePluscircleIcon,
   // OutlinePluscircleIcon,
   //   OutlineRefreshIcon,
 } from '@/assets/icon/outline'
@@ -66,8 +66,8 @@ import classNames from 'classnames'
 import { RemoteAIAgentGV } from '@/pages/AIAgent/enums/aiAgent'
 import { getRemoteValue, setRemoteValue } from '@/utils/kv'
 import { YakitDrawer } from '@/compoments/YakitUI/YakitDrawer/YakitDrawer'
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
-import Tabs from './Tabs/Tabs'
+// import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
+// import Tabs from './Tabs/Tabs'
 
 import type { ForgeNameRef } from '../forgeName/ForgeName'
 import ForgeName from '../forgeName/ForgeName'
@@ -383,82 +383,82 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
     // const knowledgeSidebarListRef = useRef<KnowledgeModalRef>(null);
     const forgeNameRef = useRef<ForgeNameRef>(null)
 
-    const items = useMemo(() => {
-      return [
-        // {
-        //     label: '知识库',
-        //     key: 'knowledge',
-        //     children: (
-        //         <KnowledgeSidebarList
-        //             ref={knowledgeSidebarListRef}
-        //             api={api}
-        //             streams={streams}
-        //         />
-        //     ),
-        //     extra: [
-        //         <YakitButton
-        //             key="import"
-        //             onClick={() => {
-        //                 knowledgeSidebarListRef.current?.openImport();
-        //             }}
-        //             type="text2"
-        //             icon={<OutlineImportIcon />}
-        //         />,
-        //         <YakitButton
-        //             key="add"
-        //             onClick={() => {
-        //                 knowledgeSidebarListRef.current?.openAdd();
-        //             }}
-        //             type="text2"
-        //             icon={<OutlinePluscircleIcon />}
-        //         />,
-        //     ],
-        // },
-        {
-          label: '技能库',
-          key: 'skills',
-          children: <ForgeName ref={forgeNameRef} />,
-          extra: [
-            <YakitButton
-              key="import"
-              onClick={() => {
-                forgeNameRef.current?.openImport()
-              }}
-              type="text2"
-              icon={<OutlineImportIcon />}
-            />,
-            <YakitButton
-              key="add"
-              onClick={() => {
-                forgeNameRef.current?.openAdd()
-              }}
-              type="text2"
-              icon={<OutlinePluscircleIcon />}
-            />,
-          ],
-        },
-        // {
-        //   label: '工具库',
-        //   key: 'tools',
-        //   children: <AIToolList />,
-        //   extra: [
-        //     <YakitButton
-        //       key="add"
-        //       onClick={() => {
-        //         emiter.emit(
-        //           'menuOpenPage',
-        //           JSON.stringify({
-        //             route: YakitRoute.AddAITool,
-        //           }),
-        //         )
-        //       }}
-        //       type="text2"
-        //       icon={<OutlinePluscircleIcon />}
-        //     />,
-        //   ],
-        // },
-      ]
-    }, []) // api, streams
+    // const items = useMemo(() => {
+    //   return [
+    //     // {
+    //     //     label: '知识库',
+    //     //     key: 'knowledge',
+    //     //     children: (
+    //     //         <KnowledgeSidebarList
+    //     //             ref={knowledgeSidebarListRef}
+    //     //             api={api}
+    //     //             streams={streams}
+    //     //         />
+    //     //     ),
+    //     //     extra: [
+    //     //         <YakitButton
+    //     //             key="import"
+    //     //             onClick={() => {
+    //     //                 knowledgeSidebarListRef.current?.openImport();
+    //     //             }}
+    //     //             type="text2"
+    //     //             icon={<OutlineImportIcon />}
+    //     //         />,
+    //     //         <YakitButton
+    //     //             key="add"
+    //     //             onClick={() => {
+    //     //                 knowledgeSidebarListRef.current?.openAdd();
+    //     //             }}
+    //     //             type="text2"
+    //     //             icon={<OutlinePluscircleIcon />}
+    //     //         />,
+    //     //     ],
+    //     // },
+    //     {
+    //       label: '技能库',
+    //       key: 'skills',
+    //       children: <ForgeName ref={forgeNameRef} />,
+    //       extra: [
+    //         <YakitButton
+    //           key="import"
+    //           onClick={() => {
+    //             forgeNameRef.current?.openImport()
+    //           }}
+    //           type="text2"
+    //           icon={<OutlineImportIcon />}
+    //         />,
+    //         <YakitButton
+    //           key="add"
+    //           onClick={() => {
+    //             forgeNameRef.current?.openAdd()
+    //           }}
+    //           type="text2"
+    //           icon={<OutlinePluscircleIcon />}
+    //         />,
+    //       ],
+    //     },
+    //     // {
+    //     //   label: '工具库',
+    //     //   key: 'tools',
+    //     //   children: <AIToolList />,
+    //     //   extra: [
+    //     //     <YakitButton
+    //     //       key="add"
+    //     //       onClick={() => {
+    //     //         emiter.emit(
+    //     //           'menuOpenPage',
+    //     //           JSON.stringify({
+    //     //             route: YakitRoute.AddAITool,
+    //     //           }),
+    //     //         )
+    //     //       }}
+    //     //       type="text2"
+    //     //       icon={<OutlinePluscircleIcon />}
+    //     //     />,
+    //     //   ],
+    //     // },
+    //   ]
+    // }, []) // api, streams
 
     return (
       <div className={styles['ai-chat-welcome-wrapper']} ref={welcomeRef}>
@@ -484,14 +484,16 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
             </div>
           }
         >
-          <YakitResizeBox
+          {/* <YakitResizeBox
             isVer
             firstNodeStyle={{
               padding: '0 12px',
             }}
             firstNode={null} // <FileTreeList />
             secondNode={<Tabs items={items} />}
-          />
+          /> */}
+          {/* <Tabs items={items} /> */}
+          <ForgeName ref={forgeNameRef} />
         </YakitDrawer>
         <div className={styles['content']}>
           <div className={styles['content-absolute']}>

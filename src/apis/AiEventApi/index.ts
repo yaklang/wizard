@@ -1,4 +1,4 @@
-import axios from '@/utils/axios'
+﻿import axios from '@/utils/axios'
 import type { AIDelSessionParam, AIResponseData } from '@/utils/commonTypes'
 import type {
   TPostCreateSessionRequest,
@@ -31,6 +31,75 @@ import type {
   QueryAIForgeRequest,
   QueryAIForgeResponse,
 } from '@/pages/AIAgent/ai-agent/type/forge'
+import type {
+  ExportAIForgeRequest,
+  ExportImportAIForgeProgress,
+  ImportAIForgeRequest,
+} from '@/pages/AIAgent/ai-agent/forgeName/type'
+import useLoginStore from '@/App/store/loginStore'
+
+/** 通用 POST SSE 流式请求：发起 POST 后逐条解析 SSE data 帧并回调 */
+async function fetchSSEPost<TReq, TProgress>(
+  url: string,
+  data: TReq,
+  onProgress?: (progress: TProgress) => void,
+  signal?: AbortSignal,
+): Promise<null> {
+  const store = useLoginStore.getState()
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json;charset=UTF-8',
+    Accept: 'text/event-stream',
+  }
+  if (store.token) {
+    headers.Authorization = store.token
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+    credentials: 'include',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`请求失败(${response.status})`)
+  }
+
+  if (!response.body) return null
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder('utf-8')
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const frames = buffer.split(/\r?\n\r?\n/g)
+    buffer = frames.pop() || ''
+
+    for (const frame of frames) {
+      const dataLines = frame
+        .split(/\r?\n/g)
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trim())
+
+      if (!dataLines.length) continue
+      const payload = dataLines.join('\n')
+      if (!payload || payload === '[DONE]') continue
+
+      try {
+        onProgress?.(JSON.parse(payload) as TProgress)
+      } catch {
+        // 忽略非 JSON 帧
+      }
+    }
+  }
+
+  return null
+}
 
 // #region 会话Session相关接口
 /** 创建会话通道, 并生成session（也可传 run_id 恢复已有会话） */
@@ -135,13 +204,19 @@ export const postAiforgeCreate = (data: AIForge): Promise<{ CreateID: number }> 
 export const postAiforgeUpdate = (data: AIForge): Promise<null> =>
   axios.post<AIForge, null>(`/agent/forge/update`, data)
 
-// 导出一个或多个 AI Forge
-export const postAiforgeExport = (data: { ForgeNames: string[] }): Promise<{ FilePath: string }> =>
-  axios.post<{ ForgeNames: string[] }, { FilePath: string }>(`/agent/forge/export`, data)
+// 导出一个或多个 AI Forge（SSE 流）
+export const postAiforgeExport = (
+  data: ExportAIForgeRequest,
+  onProgress?: (progress: ExportImportAIForgeProgress) => void,
+  signal?: AbortSignal,
+): Promise<null> => fetchSSEPost('/agent/forge/export', data, onProgress, signal)
 
-// 导入 AI Forge
-export const postAiforgeImport = (data: { FilePath: string }): Promise<null> =>
-  axios.post<{ FilePath: string }, null>(`/agent/forge/import`, data)
+// 导入 AI Forge（SSE 流）
+export const postAiforgeImport = (
+  data: ImportAIForgeRequest,
+  onProgress?: (progress: ExportImportAIForgeProgress) => void,
+  signal?: AbortSignal,
+): Promise<null> => fetchSSEPost('/agent/forge/import', data, onProgress, signal)
 
 export {
   postCreateSession,

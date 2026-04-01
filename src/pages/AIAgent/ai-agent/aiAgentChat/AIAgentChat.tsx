@@ -40,7 +40,6 @@ import type { AIAgentGrpcApi, AIInputEvent, AIStartParams } from '@/pages/AIAgen
 import type { AIChatQSData, AIReviewType } from '@/pages/AIAgent/ai-re-act/hooks/aiRender'
 import { yakitNotify } from '@/utils/notification'
 import { AIForgeForm, AIToolForm } from '../aiTriageChatTemplate/AITriageChatTemplate'
-import { grpcGetAIForge } from '../grpc'
 import type { AIForge } from '../type/forge'
 import type { AITool } from '../type/aiTool'
 import { AIChatContent } from '../aiChatContent/AIChatContent'
@@ -64,6 +63,7 @@ import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox'
 import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint'
 import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm'
 import { AIAgentLogChannelName } from '../../defaultConstant'
+import { postAiforgeGet } from '@/apis/AiEventApi'
 
 const AIChatWelcome = React.lazy(() => import('../aiChatWelcome/AIChatWelcome'))
 
@@ -475,7 +475,8 @@ export const AIAgentChat = memo(() => {
       }
       let forgeInfo = cloneDeep(forge)
       if (!useForge) {
-        let res = await grpcGetAIForge({ ID: forgeID })
+        let res = await postAiforgeGet({ ID: forgeID })
+
         forgeInfo = cloneDeep(res)
       }
       if (!activeForge) setActiveForge(forgeInfo)
