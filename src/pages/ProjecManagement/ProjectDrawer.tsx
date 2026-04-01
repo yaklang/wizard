@@ -158,9 +158,13 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
 
     const isEdit = !!projectId;
     const scanNodeMode =
-        Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+        Form.useWatch(['execution_preference', 'scan_node', 'mode'], form) ||
+        'auto';
     const scheduleEnabled =
-        Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
+        Form.useWatch(
+            ['execution_preference', 'scan_schedule', 'enabled'],
+            form,
+        ) || false;
 
     // 加载策略配置
     useEffect(() => {
@@ -285,18 +289,9 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                     setSelectedSpecialRules([]);
                 }
 
-                if (res.data.config?.ScanNode) {
+                if (res.data.execution_preference) {
                     form.setFieldsValue({
-                        config: {
-                            ScanNode: res.data.config.ScanNode,
-                        },
-                    });
-                }
-                if (res.data.config?.ScanSchedule) {
-                    form.setFieldsValue({
-                        config: {
-                            ScanSchedule: res.data.config.ScanSchedule,
-                        },
+                        execution_preference: res.data.execution_preference,
                     });
                 }
             }
@@ -416,28 +411,30 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
             };
 
             // 规范化扫描节点配置
-            if (values.config.ScanNode) {
-                if (values.config.ScanNode.mode !== 'manual') {
-                    values.config.ScanNode.mode = 'auto';
-                    delete values.config.ScanNode.node_id;
+            if (values.execution_preference?.scan_node) {
+                if (values.execution_preference.scan_node.mode !== 'manual') {
+                    values.execution_preference.scan_node.mode = 'auto';
+                    delete values.execution_preference.scan_node.node_id;
                 }
             }
 
             // 规范化定时扫描配置
-            if (values.config.ScanSchedule) {
-                if (dayjs.isDayjs(values.config.ScanSchedule.time)) {
-                    values.config.ScanSchedule.time =
-                        values.config.ScanSchedule.time.format('HH:mm');
+            if (values.execution_preference?.scan_schedule) {
+                if (dayjs.isDayjs(values.execution_preference.scan_schedule.time)) {
+                    values.execution_preference.scan_schedule.time =
+                        values.execution_preference.scan_schedule.time.format(
+                            'HH:mm',
+                        );
                 }
-                if (!values.config.ScanSchedule.enabled) {
-                    delete values.config.ScanSchedule.time;
+                if (!values.execution_preference.scan_schedule.enabled) {
+                    delete values.execution_preference.scan_schedule.time;
                 }
-                values.config.ScanSchedule.interval_type =
-                    values.config.ScanSchedule.interval_type || 1;
-                values.config.ScanSchedule.interval_time =
-                    values.config.ScanSchedule.interval_time || 1;
-                values.config.ScanSchedule.sched_type =
-                    values.config.ScanSchedule.sched_type || 3;
+                values.execution_preference.scan_schedule.interval_type =
+                    values.execution_preference.scan_schedule.interval_type || 1;
+                values.execution_preference.scan_schedule.interval_time =
+                    values.execution_preference.scan_schedule.interval_time || 1;
+                values.execution_preference.scan_schedule.sched_type =
+                    values.execution_preference.scan_schedule.sched_type || 3;
             }
 
             setSaving(true);
@@ -495,10 +492,12 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                     kind: 'none',
                                 },
                             },
-                            ScanNode: {
+                        },
+                        execution_preference: {
+                            scan_node: {
                                 mode: 'auto',
                             },
-                            ScanSchedule: {
+                            scan_schedule: {
                                 enabled: false,
                                 time: '02:00',
                                 interval_type: 1,
@@ -739,7 +738,11 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                         >
                             <Form.Item
                                 label="扫描节点"
-                                name={['config', 'ScanNode', 'mode']}
+                                name={[
+                                    'execution_preference',
+                                    'scan_node',
+                                    'mode',
+                                ]}
                             >
                                 <Radio.Group
                                     optionType="button"
@@ -757,7 +760,11 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             {scanNodeMode === 'manual' && (
                                 <Form.Item
                                     label="执行节点"
-                                    name={['config', 'ScanNode', 'node_id']}
+                                    name={[
+                                        'execution_preference',
+                                        'scan_node',
+                                        'node_id',
+                                    ]}
                                     rules={[
                                         {
                                             required: true,
@@ -835,8 +842,8 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                                 >
                                     <Form.Item
                                         name={[
-                                            'config',
-                                            'ScanSchedule',
+                                            'execution_preference',
+                                            'scan_schedule',
                                             'enabled',
                                         ]}
                                         valuePropName="checked"
@@ -851,7 +858,11 @@ const ProjectDrawer: React.FC<ProjectDrawerProps> = ({
                             {scheduleEnabled && (
                                 <Form.Item
                                     label="扫描时间"
-                                    name={['config', 'ScanSchedule', 'time']}
+                                    name={[
+                                        'execution_preference',
+                                        'scan_schedule',
+                                        'time',
+                                    ]}
                                     getValueProps={(value) => ({
                                         value: value
                                             ? dayjs(value, 'HH:mm')
