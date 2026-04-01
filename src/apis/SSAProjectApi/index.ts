@@ -2,6 +2,7 @@ import axios from '@/utils/axios';
 import type { ResponseData } from '@/utils/commonTypes';
 import type {
     TSSAProject,
+    TSSAProjectConfig,
     TSSAProjectFavoriteListResponse,
     TSSAProjectListResponse,
     TSSAProjectRequest,
@@ -52,18 +53,12 @@ const deleteSSAProject = (params: {
 // POST /ssa/project/test-connection - 测试Git连接
 const testGitConnection = (data: {
     url: string;
-    auth?: {
-        kind?: string;
-        user_name?: string;
-        password?: string;
-        key_content?: string;
-        credential_id?: number;
-        credential_name?: string;
-        secret_set?: boolean;
-    };
-    proxy?: {
-        url?: string;
-    };
+    auth?: TSSAProjectConfig['CodeSource'] extends { auth?: infer TAuth }
+        ? TAuth
+        : never;
+    proxy?: TSSAProjectConfig['CodeSource'] extends { proxy?: infer TProxy }
+        ? TProxy
+        : never;
 }): Promise<ResponseData<{ success: boolean; message: string }>> =>
     axios.post<never, ResponseData<{ success: boolean; message: string }>>(
         `/ssa/project/test-connection`,

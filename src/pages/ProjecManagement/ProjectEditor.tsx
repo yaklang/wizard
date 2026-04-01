@@ -22,6 +22,7 @@ import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
 import { ROUTES } from '@/utils/routeMap';
 import { getNodeList } from '@/apis/task';
 import { normalizeProjectAuthKind } from '@/utils/ssaCredential';
+import { buildRepositoryUrlRules } from '@/utils/repositoryUrl';
 import dayjs from 'dayjs';
 import CodeSourceAuthSection from './components/CodeSourceAuthSection';
 
@@ -347,13 +348,7 @@ const ProjectEditor = () => {
                                                     'CodeSource',
                                                     'url',
                                                 ]}
-                                                rules={[
-                                                    {
-                                                        required: true,
-                                                        message:
-                                                            '请输入源码地址',
-                                                    },
-                                                ]}
+                                                rules={buildRepositoryUrlRules('请输入源码地址')}
                                                 extra="Legion 将通过此 URL 拉取代码进行扫描"
                                             >
                                                 <Input placeholder="https://github.com/example/repo.git or git@github.com:..." />

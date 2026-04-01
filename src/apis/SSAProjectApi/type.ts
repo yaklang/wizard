@@ -58,6 +58,7 @@ export interface TSSAProjectConfig {
             key_content?: string;
             credential_id?: number;
             credential_name?: string;
+            secret_hint?: string;
             secret_set?: boolean;
         };
         proxy?: {
