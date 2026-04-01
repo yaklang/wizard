@@ -17,7 +17,11 @@ import {
 } from 'antd';
 import { ArrowLeftOutlined, UploadOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
-import { fetchSSAProject, postSSAProject } from '@/apis/SSAProjectApi';
+import {
+    fetchSSAProject,
+    postSSAProject,
+    uploadSSAProjectSourceArchive,
+} from '@/apis/SSAProjectApi';
 import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
 import { ROUTES } from '@/utils/routeMap';
 import { getNodeList } from '@/apis/task';
@@ -41,6 +45,19 @@ const languageOptions = [
     { label: 'Ruby', value: 'ruby' },
     { label: 'Rust', value: 'rust' },
 ];
+
+const resolveUploadArchiveData = (payload: any) => {
+    if (payload?.url) return payload;
+    if (payload?.data?.url) return payload.data;
+    return undefined;
+};
+
+const resolveUploadArchiveErrorMessage = (error: any) =>
+    error?.message ||
+    error?.reason ||
+    error?.data?.message ||
+    error?.data?.reason ||
+    '上传失败';
 
 const ProjectEditor = () => {
     const navigate = useNavigate();
@@ -315,7 +332,20 @@ const ProjectEditor = () => {
                             name={['config', 'CodeSource', 'kind']}
                             initialValue="git"
                         >
-                            <Select>
+                            <Select
+                                onChange={(value) => {
+                                    form.setFieldsValue({
+                                        config: {
+                                            CodeSource: {
+                                                kind: value,
+                                                url: undefined,
+                                                local_file: undefined,
+                                                branch: undefined,
+                                            },
+                                        },
+                                    });
+                                }}
+                            >
                                 <Select.Option value="git">Git</Select.Option>
                                 <Select.Option value="svn">SVN</Select.Option>
                                 <Select.Option value="compression">
@@ -367,36 +397,63 @@ const ProjectEditor = () => {
                                                     ) => {
                                                         const {
                                                             file,
+                                                            onError,
                                                             onSuccess,
                                                         } = options;
-                                                        // Mock upload success for demonstration as backend handler is removed per request
-                                                        await new Promise<void>(
-                                                            (resolve) => {
-                                                                setTimeout(
-                                                                    resolve,
-                                                                    500,
+                                                        try {
+                                                            const res =
+                                                                await uploadSSAProjectSourceArchive(
+                                                                    file as File,
                                                                 );
-                                                            },
-                                                        );
-                                                        const mockPath = `/mock/path/to/${(file as File).name}`;
-
-                                                        form.setFieldsValue({
-                                                            config: {
-                                                                CodeSource: {
-                                                                    local_file:
-                                                                        mockPath,
-                                                                },
-                                                            },
-                                                        });
-                                                        onSuccess &&
-                                                            onSuccess(mockPath);
-                                                        message.success(
-                                                            '文件已选择 (模拟上传)',
-                                                        );
+                                                            const data =
+                                                                resolveUploadArchiveData(
+                                                                    res?.data,
+                                                                );
+                                                            if (data?.url) {
+                                                                form.setFieldsValue(
+                                                                    {
+                                                                        config: {
+                                                                            CodeSource:
+                                                                                {
+                                                                                    url: data.url,
+                                                                                    local_file:
+                                                                                        undefined,
+                                                                                },
+                                                                        },
+                                                                    },
+                                                                );
+                                                                onSuccess &&
+                                                                    onSuccess(
+                                                                        data,
+                                                                    );
+                                                                message.success(
+                                                                    '上传成功',
+                                                                );
+                                                            } else {
+                                                                throw new Error(
+                                                                    '未返回文件地址',
+                                                                );
+                                                            }
+                                                        } catch (error) {
+                                                            onError &&
+                                                                onError(
+                                                                    error as Error,
+                                                                );
+                                                            message.error(
+                                                                resolveUploadArchiveErrorMessage(
+                                                                    error,
+                                                                ),
+                                                            );
+                                                        }
                                                     }}
                                                     showUploadList={{
                                                         showRemoveIcon: false,
                                                     }}
+                                                    accept={
+                                                        kind === 'jar'
+                                                            ? '.jar,.war'
+                                                            : '.zip'
+                                                    }
                                                 >
                                                     <Button
                                                         icon={
@@ -410,7 +467,7 @@ const ProjectEditor = () => {
                                                     name={[
                                                         'config',
                                                         'CodeSource',
-                                                        'local_file',
+                                                        'url',
                                                     ]}
                                                     noStyle
                                                     rules={[

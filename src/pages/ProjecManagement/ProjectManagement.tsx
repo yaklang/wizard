@@ -100,6 +100,24 @@ const resolveMemoryScanOverrideVisible = (): boolean => {
     return window.localStorage.getItem('irify:ssa-memory-scan') === '1';
 };
 
+const resolveProjectSourceDisplay = (value?: string, kind?: string) => {
+    const fallback = kind === 'jar' ? '已上传 JAR 文件' : '已上传 ZIP 文件';
+    const normalized = value?.trim() || '';
+    if (!normalized) {
+        return { display: '-', raw: '-' };
+    }
+    if (normalized.startsWith('ssa-object://')) {
+        return {
+            display:
+                normalized.split('/').pop()?.trim() ||
+                normalized.split('://')[1] ||
+                fallback,
+            raw: normalized,
+        };
+    }
+    return { display: normalized, raw: normalized };
+};
+
 const ProjectManagement: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -913,6 +931,10 @@ const ProjectManagement: React.FC = () => {
             render: (_, record) => {
                 const sourceKind = record.config?.CodeSource?.kind || 'git';
                 const url = record.config?.CodeSource?.url || record.url || '-';
+                const sourceDisplay = resolveProjectSourceDisplay(
+                    url,
+                    sourceKind,
+                );
                 const branch = record.config?.CodeSource?.branch || 'master';
                 const hasAuth =
                     record.config?.CodeSource?.auth?.kind !== 'none';
@@ -927,7 +949,7 @@ const ProjectManagement: React.FC = () => {
                             }}
                         >
                             {getSourceTypeIcon(sourceKind)}
-                            <Tooltip title={url}>
+                            <Tooltip title={sourceDisplay.raw}>
                                 <Text
                                     ellipsis
                                     className="url-text"
@@ -935,9 +957,11 @@ const ProjectManagement: React.FC = () => {
                                         maxWidth: 200,
                                         cursor: 'pointer',
                                     }}
-                                    onClick={() => copyToClipboard(url)}
+                                    onClick={() =>
+                                        copyToClipboard(sourceDisplay.raw)
+                                    }
                                 >
-                                    {url}
+                                    {sourceDisplay.display}
                                 </Text>
                             </Tooltip>
                             <CopyOutlined
@@ -946,7 +970,9 @@ const ProjectManagement: React.FC = () => {
                                     color: '#999',
                                     cursor: 'pointer',
                                 }}
-                                onClick={() => copyToClipboard(url)}
+                                onClick={() =>
+                                    copyToClipboard(sourceDisplay.raw)
+                                }
                             />
                         </div>
                         <div

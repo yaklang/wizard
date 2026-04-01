@@ -35,6 +35,17 @@ export interface TProjectExecutionPreference {
     };
 }
 
+export interface TSSAProjectSourceArchiveUpload {
+    url: string;
+    path: string;
+    object_key: string;
+    bucket: string;
+    file_name: string;
+    content_type: string;
+    size_bytes: number;
+    uploaded_at: number;
+}
+
 // SSA 项目配置类型
 export interface TSSAProjectConfig {
     BaseInfo?: {

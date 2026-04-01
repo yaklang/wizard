@@ -6,6 +6,7 @@ import type {
     TSSAProjectFavoriteListResponse,
     TSSAProjectListResponse,
     TSSAProjectRequest,
+    TSSAProjectSourceArchiveUpload,
     TScanPolicyConfig,
 } from './type';
 
@@ -98,6 +99,22 @@ const removeSSAProjectFavorite = (
         `/ssa/project/${projectId}/favorite`,
     );
 
+const uploadSSAProjectSourceArchive = (
+    file: File,
+): Promise<ResponseData<TSSAProjectSourceArchiveUpload>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axios.post<never, ResponseData<TSSAProjectSourceArchiveUpload>>(
+        '/ssa/project/upload',
+        formData,
+        {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        },
+    );
+};
+
 export {
     addSSAProjectFavorite,
     getSSAProjects,
@@ -108,4 +125,5 @@ export {
     removeSSAProjectFavorite,
     testGitConnection,
     getScanPolicyConfig,
+    uploadSSAProjectSourceArchive,
 };

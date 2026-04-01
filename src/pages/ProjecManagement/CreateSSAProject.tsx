@@ -13,7 +13,10 @@ import {
     Upload,
 } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { postSSAProject as createSSAProject } from '@/apis/SSAProjectApi';
+import {
+    postSSAProject as createSSAProject,
+    uploadSSAProjectSourceArchive,
+} from '@/apis/SSAProjectApi';
 import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
 
@@ -30,6 +33,19 @@ const languageOptions = [
     { label: 'Ruby', value: 'ruby' },
     { label: 'Rust', value: 'rust' },
 ];
+
+const resolveUploadArchiveData = (payload: any) => {
+    if (payload?.url) return payload;
+    if (payload?.data?.url) return payload.data;
+    return undefined;
+};
+
+const resolveUploadArchiveErrorMessage = (error: any) =>
+    error?.message ||
+    error?.reason ||
+    error?.data?.message ||
+    error?.data?.reason ||
+    '上传失败';
 
 const CreateSSAProject: React.FC = () => {
     const navigate = useNavigate();
@@ -140,7 +156,13 @@ const CreateSSAProject: React.FC = () => {
                                 className="cursor-pointer rounded-lg p-2 flex flex-col items-center justify-center transition-all"
                                 onClick={() => {
                                     form.setFieldsValue({
-                                        config: { CodeSource: { kind: k } },
+                                        config: {
+                                            CodeSource: {
+                                                kind: k,
+                                                url: undefined,
+                                                local_file: undefined,
+                                            },
+                                        },
                                     });
                                     // Force update to refresh UI
                                     setFormData({ ...formData });
@@ -194,23 +216,20 @@ const CreateSSAProject: React.FC = () => {
                     <Upload
                         customRequest={async (options) => {
                             const { file, onSuccess, onError } = options;
-                            const fm = new FormData();
-                            fm.append('file', file);
                             try {
-                                const res = await fetch(
-                                    '/api/ssa/project/upload',
-                                    {
-                                        method: 'POST',
-                                        body: fm,
-                                    },
+                                const res =
+                                    await uploadSSAProjectSourceArchive(
+                                        file as File,
+                                    );
+                                const data = resolveUploadArchiveData(
+                                    res?.data,
                                 );
-                                const data = await res.json();
-                                if (data.path) {
-                                    // Store the returned path in local_file
+                                if (data?.url) {
                                     form.setFieldsValue({
                                         config: {
                                             CodeSource: {
-                                                local_file: data.path,
+                                                url: data.url,
+                                                local_file: undefined,
                                             },
                                         },
                                     });
@@ -219,19 +238,27 @@ const CreateSSAProject: React.FC = () => {
                                 } else {
                                     onError &&
                                         onError(new Error('Upload failed'));
-                                    message.error('上传失败');
+                                    message.error('上传失败：未返回文件地址');
                                 }
                             } catch (e) {
                                 onError && onError(e as Error);
-                                message.error('上传出错');
+                                message.error(
+                                    resolveUploadArchiveErrorMessage(e),
+                                );
                             }
                         }}
                         showUploadList={{ showRemoveIcon: false }}
+                        accept={
+                            form.getFieldValue(['config', 'CodeSource', 'kind']) ===
+                            'jar'
+                                ? '.jar,.war'
+                                : '.zip'
+                        }
                     >
                         <Button icon={<UploadOutlined />}>点击上传</Button>
                     </Upload>
                     <Form.Item
-                        name={['config', 'CodeSource', 'local_file']}
+                        name={['config', 'CodeSource', 'url']}
                         noStyle
                         rules={[{ required: true, message: '请上传文件' }]}
                     >

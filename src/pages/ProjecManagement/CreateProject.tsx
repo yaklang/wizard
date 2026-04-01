@@ -32,6 +32,7 @@ import {
     postSSAProject as createSSAProject,
     getScanPolicyConfig,
     testGitConnection,
+    uploadSSAProjectSourceArchive,
 } from '@/apis/SSAProjectApi';
 import { getNodeList } from '@/apis/task';
 import type {
@@ -185,6 +186,19 @@ const specialRules = [
     { label: 'SCA / 其他', value: 'sca' },
     { label: 'Dependency Check', value: 'dependency-check' },
 ];
+
+const resolveUploadArchiveData = (payload: any) => {
+    if (payload?.url) return payload;
+    if (payload?.data?.url) return payload.data;
+    return undefined;
+};
+
+const resolveUploadArchiveErrorMessage = (error: any) =>
+    error?.message ||
+    error?.reason ||
+    error?.data?.message ||
+    error?.data?.reason ||
+    '上传失败';
 
 const CreateProject: React.FC = () => {
     const navigate = useNavigate();
@@ -470,9 +484,13 @@ const CreateProject: React.FC = () => {
                                                 | 'svn'
                                                 | 'compression'
                                                 | 'jar',
+                                            url: undefined,
+                                            local_file: undefined,
+                                            branch: undefined,
                                         },
                                     },
                                 });
+                                setConnectionStatus('idle');
                             }}
                         >
                             <div className="source-kind-name">
@@ -566,22 +584,20 @@ const CreateProject: React.FC = () => {
                     <Upload
                         customRequest={async (options) => {
                             const { file, onSuccess, onError } = options;
-                            const fm = new FormData();
-                            fm.append('file', file);
                             try {
-                                const res = await fetch(
-                                    '/api/ssa/project/upload',
-                                    {
-                                        method: 'POST',
-                                        body: fm,
-                                    },
+                                const res =
+                                    await uploadSSAProjectSourceArchive(
+                                        file as File,
+                                    );
+                                const data = resolveUploadArchiveData(
+                                    res?.data,
                                 );
-                                const data = await res.json();
-                                if (data.path) {
+                                if (data?.url) {
                                     form.setFieldsValue({
                                         config: {
                                             CodeSource: {
-                                                local_file: data.path,
+                                                url: data.url,
+                                                local_file: undefined,
                                             },
                                         },
                                     });
@@ -590,22 +606,29 @@ const CreateProject: React.FC = () => {
                                 } else {
                                     onError &&
                                         onError(new Error('Upload failed'));
-                                    message.error('上传失败');
+                                    message.error('上传失败：未返回文件地址');
                                 }
                             } catch (e) {
                                 onError && onError(e as Error);
-                                message.error('上传出错');
+                                message.error(
+                                    resolveUploadArchiveErrorMessage(e),
+                                );
                             }
                         }}
                         showUploadList={{ showRemoveIcon: false }}
                         maxCount={1}
+                        accept={
+                            selectedSourceKind === 'jar'
+                                ? '.jar,.war'
+                                : '.zip'
+                        }
                     >
                         <Button icon={<UploadOutlined />} size="large">
                             点击上传文件
                         </Button>
                     </Upload>
                     <Form.Item
-                        name={['config', 'CodeSource', 'local_file']}
+                        name={['config', 'CodeSource', 'url']}
                         noStyle
                         rules={[{ required: true, message: '请上传文件' }]}
                     >
@@ -998,7 +1021,7 @@ const CreateProject: React.FC = () => {
                 } else {
                     fieldsToValidate = [
                         ['config', 'CodeSource', 'kind'],
-                        ['config', 'CodeSource', 'local_file'],
+                        ['config', 'CodeSource', 'url'],
                     ];
                 }
             }
