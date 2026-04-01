@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Card,
     Button,
@@ -29,7 +29,6 @@ import {
     SearchOutlined,
     AuditOutlined,
     EyeOutlined,
-    EyeInvisibleOutlined,
     FileTextOutlined,
     LockOutlined,
     DownloadOutlined,
@@ -166,6 +165,7 @@ const TaskList: React.FC = () => {
         useState<TSSAReportExportProgressModalState>(
             defaultExportProgressState,
         );
+    const [sortValue, setSortValue] = useState('created_at-desc');
 
     const [form] = Form.useForm();
 
@@ -344,6 +344,7 @@ const TaskList: React.FC = () => {
 
     const handleReset = () => {
         form.resetFields();
+        setSortValue('created_at-desc');
         setPage(1);
         setData([]);
         setHasMore(true);
@@ -875,6 +876,9 @@ const TaskList: React.FC = () => {
     const handleTaskMoreAction = useCallback(
         (task: TSSATask, key: string) => {
             switch (key) {
+                case 'detail':
+                    toggleTaskDetail(task.task_id, task.project_id);
+                    return;
                 case 'report':
                     openTaskExportModal(task);
                     return;
@@ -891,7 +895,7 @@ const TaskList: React.FC = () => {
                     return;
             }
         },
-        [handleTaskDelete, openTaskExportModal],
+        [handleTaskDelete, openTaskExportModal, toggleTaskDetail],
     );
 
     const handleTaskCardClick = useCallback(
@@ -1005,6 +1009,41 @@ const TaskList: React.FC = () => {
             },
         });
     }, [data, deleteTaskRecordsByIDs, isTaskRunningStatus, selectedTaskIds]);
+
+    const displayedTasks = useMemo(() => {
+        const list = [...data];
+        const taskTitle = (task: TSSATask) =>
+            String(task.project_name || task.task_id || '');
+        switch (sortValue) {
+            case 'created_at-asc':
+                return list.sort(
+                    (a, b) =>
+                        Number(a.created_at || 0) - Number(b.created_at || 0),
+                );
+            case 'project_name-asc':
+                return list.sort((a, b) =>
+                    taskTitle(a).localeCompare(taskTitle(b), 'zh-CN'),
+                );
+            case 'risk_count-desc':
+                return list.sort(
+                    (a, b) =>
+                        Number(b.risk_count || 0) - Number(a.risk_count || 0),
+                );
+            case 'status-asc':
+                return list.sort((a, b) =>
+                    getStatusText(a.status).localeCompare(
+                        getStatusText(b.status),
+                        'zh-CN',
+                    ),
+                );
+            case 'created_at-desc':
+            default:
+                return list.sort(
+                    (a, b) =>
+                        Number(b.created_at || 0) - Number(a.created_at || 0),
+                );
+        }
+    }, [data, sortValue]);
 
     async function toggleTaskDetail(taskId: string, projectId?: number) {
         const newExpandedId = expandedTaskId === taskId ? null : taskId;
@@ -1182,6 +1221,11 @@ const TaskList: React.FC = () => {
             : '-';
         const languageDisplay = getLanguageDisplay(task.language);
         const moreMenuItems: MenuProps['items'] = [
+            {
+                key: 'detail',
+                icon: <EyeOutlined />,
+                label: isExpanded ? '收起详情' : '详情',
+            },
             {
                 key: 'report',
                 icon: <FileTextOutlined />,
@@ -1371,21 +1415,6 @@ const TaskList: React.FC = () => {
                             }
                         >
                             缺陷审计
-                        </Button>
-                        <Button
-                            className={`detail-toggle-btn ${isExpanded ? 'is-expanded' : ''}`}
-                            icon={
-                                isExpanded ? (
-                                    <EyeInvisibleOutlined />
-                                ) : (
-                                    <EyeOutlined />
-                                )
-                            }
-                            onClick={() =>
-                                toggleTaskDetail(task.task_id, task.project_id)
-                            }
-                        >
-                            {isExpanded ? '收起详情' : '详情'}
                         </Button>
                         <Dropdown
                             menu={{
@@ -2108,6 +2137,36 @@ const TaskList: React.FC = () => {
                                 </Select>
                             </Form.Item>
                         </Col>
+                        <Col span={4}>
+                            <Form.Item label="排序">
+                                <Select
+                                    value={sortValue}
+                                    onChange={setSortValue}
+                                    options={[
+                                        {
+                                            label: '最新创建',
+                                            value: 'created_at-desc',
+                                        },
+                                        {
+                                            label: '最早创建',
+                                            value: 'created_at-asc',
+                                        },
+                                        {
+                                            label: '项目名称 A-Z',
+                                            value: 'project_name-asc',
+                                        },
+                                        {
+                                            label: '缺陷数降序',
+                                            value: 'risk_count-desc',
+                                        },
+                                        {
+                                            label: '状态排序',
+                                            value: 'status-asc',
+                                        },
+                                    ]}
+                                />
+                            </Form.Item>
+                        </Col>
                         <Col span={6} style={{ marginTop: 16 }}>
                             <Form.Item label="缺陷数范围">
                                 <Space>
@@ -2155,9 +2214,14 @@ const TaskList: React.FC = () => {
             <div className="list-actions">
                 <Checkbox
                     className="select-all-checkbox"
-                    checked={allVisibleSelected}
+                    checked={
+                        displayedTasks.length > 0 &&
+                        displayedTasks.every((task) =>
+                            selectedTaskIds.has(task.task_id),
+                        )
+                    }
                     indeterminate={partVisibleSelected}
-                    disabled={data.length === 0}
+                    disabled={displayedTasks.length === 0}
                     onChange={(e) => toggleSelectAllVisible(e.target.checked)}
                 >
                     全选当前列表
@@ -2167,7 +2231,7 @@ const TaskList: React.FC = () => {
             <Spin spinning={loading && page === 1}>
                 <div className="task-card-list">
                     {data.length > 0
-                        ? data.map((task) => renderTaskCard(task))
+                        ? displayedTasks.map((task) => renderTaskCard(task))
                         : !loading && (
                               <Card>
                                   <Empty description="暂无任务数据" />

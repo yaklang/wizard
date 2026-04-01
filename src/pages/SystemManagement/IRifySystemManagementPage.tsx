@@ -367,12 +367,22 @@ const IRifySystemManagementPage: FC = () => {
             dataIndex: 'username',
             key: 'username',
             width: 160,
+            sorter: (a, b) =>
+                String(a.username || '').localeCompare(
+                    String(b.username || ''),
+                    'zh-CN',
+                ),
             render: (value) => <span className="user-name-value">{value}</span>,
         },
         {
             title: '邮箱',
             key: 'email',
             width: 220,
+            sorter: (a, b) =>
+                String(a.email || '').localeCompare(
+                    String(b.email || ''),
+                    'zh-CN',
+                ),
             render: (_, record) => (
                 <span className="user-cell-value">{record.email || '-'}</span>
             ),
@@ -381,6 +391,11 @@ const IRifySystemManagementPage: FC = () => {
             title: '用户组',
             key: 'user_group',
             width: 130,
+            sorter: (a, b) =>
+                String(a.user_group || '').localeCompare(
+                    String(b.user_group || ''),
+                    'zh-CN',
+                ),
             render: (_, record) => (
                 <span className="user-cell-value">
                     {record.user_group || '-'}
@@ -391,6 +406,11 @@ const IRifySystemManagementPage: FC = () => {
             title: '角色',
             key: 'role',
             width: 180,
+            sorter: (a, b) =>
+                String(a.role?.join(', ') || '').localeCompare(
+                    String(b.role?.join(', ') || ''),
+                    'zh-CN',
+                ),
             render: (_, record) => {
                 const roleText =
                     record.role && record.role.length
@@ -403,6 +423,7 @@ const IRifySystemManagementPage: FC = () => {
             title: '有效期',
             key: 'expire',
             width: 120,
+            sorter: (a, b) => Number(a.expire || 0) - Number(b.expire || 0),
             render: (_, record) => (
                 <span className="user-cell-value">
                     {getExpireText(record.expire, record.username)}
@@ -413,6 +434,7 @@ const IRifySystemManagementPage: FC = () => {
             title: '状态',
             key: 'status',
             width: 100,
+            sorter: (a, b) => Number(a.status || 0) - Number(b.status || 0),
             render: (_, record) =>
                 record.status === 0 ? (
                     <Tag color="default">已禁用</Tag>

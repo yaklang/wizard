@@ -30,6 +30,7 @@ import { TaskScript } from '@/pages/TaskScript/TaskScript';
 import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript';
 import { CveLoophole } from '@/pages/DataService/CveLoophole';
 import GlobalReverseLink from '@/pages/ReverseLink';
+import CredentialManagementPage from '@/pages/Profile/CredentialManagementPage';
 
 const irifyRouters: RouteObject[] = [
     {
@@ -112,6 +113,15 @@ const irifyRouters: RouteObject[] = [
             {
                 path: 'reports',
                 element: <IRifyReportManagePage />,
+            },
+            {
+                path: 'profile',
+                children: [
+                    {
+                        path: 'credentials',
+                        element: <CredentialManagementPage />,
+                    },
+                ],
             },
             {
                 path: 'node-config',

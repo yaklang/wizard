@@ -21,7 +21,9 @@ import { fetchSSAProject, postSSAProject } from '@/apis/SSAProjectApi';
 import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
 import { ROUTES } from '@/utils/routeMap';
 import { getNodeList } from '@/apis/task';
+import { normalizeProjectAuthKind } from '@/utils/ssaCredential';
 import dayjs from 'dayjs';
+import CodeSourceAuthSection from './components/CodeSourceAuthSection';
 
 interface LocationState {
     id?: number;
@@ -51,10 +53,14 @@ const ProjectEditor = () => {
     const [form] = Form.useForm<TSSAProjectRequest>();
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [authType, setAuthType] = useState<string>('none');
-    const [nodeOptions, setNodeOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [nodeOptions, setNodeOptions] = useState<
+        Array<{ label: string; value: string }>
+    >([]);
     const [loadingNodes, setLoadingNodes] = useState(false);
-    const scanNodeMode = Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
-    const scheduleEnabled = Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
+    const scanNodeMode =
+        Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+    const scheduleEnabled =
+        Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
 
     const { loading: saving, runAsync: saveProject } = useRequest(
         async (payload: TSSAProjectRequest) => postSSAProject(payload),
@@ -100,7 +106,11 @@ const ProjectEditor = () => {
 
                         // Set auth type state if it exists in config
                         if (res.data.config?.CodeSource?.auth?.kind) {
-                            setAuthType(res.data.config.CodeSource.auth.kind);
+                            setAuthType(
+                                normalizeProjectAuthKind(
+                                    res.data.config.CodeSource.auth.kind,
+                                ),
+                            );
                         }
                     }
                 })
@@ -123,10 +133,7 @@ const ProjectEditor = () => {
                     .filter((item) => item?.node_id)
                     .map((item) => ({
                         value: item.node_id as string,
-                        label:
-                            item.hostname ||
-                            item.node_id ||
-                            '未知节点',
+                        label: item.hostname || item.node_id || '未知节点',
                     }));
                 setNodeOptions(options);
             } catch (error) {
@@ -166,7 +173,8 @@ const ProjectEditor = () => {
             }
             if (values.config?.ScanSchedule) {
                 if (dayjs.isDayjs(values.config.ScanSchedule.time)) {
-                    values.config.ScanSchedule.time = values.config.ScanSchedule.time.format('HH:mm');
+                    values.config.ScanSchedule.time =
+                        values.config.ScanSchedule.time.format('HH:mm');
                 }
                 if (!values.config.ScanSchedule.enabled) {
                     delete values.config.ScanSchedule.time;
@@ -247,7 +255,10 @@ const ProjectEditor = () => {
                         onValuesChange={(changedValues) => {
                             if (changedValues.config?.CodeSource?.auth?.kind) {
                                 setAuthType(
-                                    changedValues.config.CodeSource.auth.kind,
+                                    normalizeProjectAuthKind(
+                                        changedValues.config.CodeSource.auth
+                                            .kind,
+                                    ),
                                 );
                             }
                         }}
@@ -420,87 +431,11 @@ const ProjectEditor = () => {
                             高级配置
                         </div>
 
-                        <Form.Item
-                            label="认证方式"
-                            name={['config', 'CodeSource', 'auth', 'kind']}
-                            initialValue="none"
-                        >
-                            <Select>
-                                <Select.Option value="none">
-                                    无认证
-                                </Select.Option>
-                                <Select.Option value="basic">
-                                    用户名/密码
-                                </Select.Option>
-                                <Select.Option value="ssh">
-                                    SSH 私钥
-                                </Select.Option>
-                            </Select>
-                        </Form.Item>
-
-                        {authType === 'basic' && (
-                            <div className="border p-4 rounded bg-gray-50 mb-4">
-                                <Form.Item
-                                    label="用户名"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'user_name',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入用户名',
-                                        },
-                                    ]}
-                                >
-                                    <Input placeholder="Username" />
-                                </Form.Item>
-                                <Form.Item
-                                    label="密码/Token"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'password',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入密码或Token',
-                                        },
-                                    ]}
-                                >
-                                    <Input.Password placeholder="Password / Token" />
-                                </Form.Item>
-                            </div>
-                        )}
-
-                        {authType === 'ssh' && (
-                            <div className="border p-4 rounded bg-gray-50 mb-4">
-                                <Form.Item
-                                    label="SSH 私钥"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'key_content',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入SSH私钥',
-                                        },
-                                    ]}
-                                >
-                                    <Input.TextArea
-                                        rows={4}
-                                        placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
-                                    />
-                                </Form.Item>
-                            </div>
-                        )}
+                        <CodeSourceAuthSection
+                            form={form}
+                            authType={authType}
+                            onAuthTypeChange={setAuthType}
+                        />
 
                         <Form.Item
                             label="分支"
@@ -549,9 +484,16 @@ const ProjectEditor = () => {
                             label="扫描节点"
                             name={['config', 'ScanNode', 'mode']}
                         >
-                            <Radio.Group optionType="button" buttonStyle="solid">
-                                <Radio.Button value="auto">自动检测</Radio.Button>
-                                <Radio.Button value="manual">指定节点</Radio.Button>
+                            <Radio.Group
+                                optionType="button"
+                                buttonStyle="solid"
+                            >
+                                <Radio.Button value="auto">
+                                    自动检测
+                                </Radio.Button>
+                                <Radio.Button value="manual">
+                                    指定节点
+                                </Radio.Button>
                             </Radio.Group>
                         </Form.Item>
 
@@ -559,7 +501,12 @@ const ProjectEditor = () => {
                             <Form.Item
                                 label="执行节点"
                                 name={['config', 'ScanNode', 'node_id']}
-                                rules={[{ required: true, message: '请选择扫描节点' }]}
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: '请选择扫描节点',
+                                    },
+                                ]}
                             >
                                 <Select
                                     placeholder="请选择扫描节点"
@@ -576,7 +523,13 @@ const ProjectEditor = () => {
                         )}
 
                         <Form.Item label="定时扫描">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                }}
+                            >
                                 <Form.Item
                                     name={['config', 'ScanSchedule', 'enabled']}
                                     valuePropName="checked"
@@ -593,7 +546,9 @@ const ProjectEditor = () => {
                                 label="扫描时间"
                                 name={['config', 'ScanSchedule', 'time']}
                                 getValueProps={(value) => ({
-                                    value: value ? dayjs(value, 'HH:mm') : undefined,
+                                    value: value
+                                        ? dayjs(value, 'HH:mm')
+                                        : undefined,
                                 })}
                                 normalize={(val) =>
                                     val ? dayjs(val).format('HH:mm') : undefined

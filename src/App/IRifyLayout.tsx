@@ -192,7 +192,8 @@ const IRifyLayout: React.FC = () => {
         if (path.startsWith('/scans')) return ['扫描历史'];
 
         if (path.startsWith('/rules')) {
-            if (path.startsWith('/rules/create')) return ['规则管理', '规则编辑'];
+            if (path.startsWith('/rules/create'))
+                return ['规则管理', '规则编辑'];
             return ['规则管理'];
         }
 
@@ -202,6 +203,8 @@ const IRifyLayout: React.FC = () => {
         }
 
         if (path.startsWith('/reports')) return ['报告管理'];
+        if (path.startsWith('/profile/credentials'))
+            return ['个人中心', '凭证管理'];
 
         if (path.startsWith('/node-config/install'))
             return ['节点配置', '节点安装'];
@@ -282,7 +285,8 @@ const IRifyLayout: React.FC = () => {
         {
             key: 'profile',
             icon: <UserOutlined />,
-            label: '个人资料',
+            label: '凭证管理',
+            onClick: () => navigate('/profile/credentials'),
         },
         {
             type: 'divider',
