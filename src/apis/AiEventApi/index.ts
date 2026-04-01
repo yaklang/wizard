@@ -24,6 +24,13 @@ import type {
   QueryAIProvidersResponse,
 } from '@/pages/AIAgent/ai-agent/aiModelList/utils'
 import type { GetThirdPartyAppConfigTemplateResponse } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig'
+import type {
+  AIForge,
+  AIForgeFilter,
+  GetAIForgeRequest,
+  QueryAIForgeRequest,
+  QueryAIForgeResponse,
+} from '@/pages/AIAgent/ai-agent/type/forge'
 
 // #region 会话Session相关接口
 /** 创建会话通道, 并生成session（也可传 run_id 恢复已有会话） */
@@ -107,6 +114,34 @@ const postSettingAppconfigsTemplateGet = (): Promise<GetThirdPartyAppConfigTempl
 // 分页查询 AI Provider
 const postSettingProvidersQuery = (data: QueryAIProvidersRequest): Promise<QueryAIProvidersResponse> =>
   axios.post<QueryAIProvidersRequest, QueryAIProvidersResponse>(`/agent/setting/providers/query`, data)
+
+// 分页查询 AI Forge
+export const postAiforgeQuery = (data: QueryAIForgeRequest): Promise<QueryAIForgeResponse> =>
+  axios.post<QueryAIForgeRequest, QueryAIForgeResponse>(`/agent/forge/query`, data)
+
+// 按名称或 ID 获取单个 AI Forge
+export const postAiforgeGet = (data: GetAIForgeRequest): Promise<AIForge> =>
+  axios.post<GetAIForgeRequest, AIForge>(`/agent/forge/get`, data)
+
+// 删除 AI Forge
+export const postAiforgeDelete = (data: AIForgeFilter): Promise<null> =>
+  axios.post<AIForgeFilter, null>(`/agent/forge/delete`, data)
+
+// 创建 AI Forge
+export const postAiforgeCreate = (data: AIForge): Promise<{ CreateID: number }> =>
+  axios.post<AIForge, { CreateID: number }>(`/agent/forge/create`, data)
+
+// 更新 AI Forge
+export const postAiforgeUpdate = (data: AIForge): Promise<null> =>
+  axios.post<AIForge, null>(`/agent/forge/update`, data)
+
+// 导出一个或多个 AI Forge
+export const postAiforgeExport = (data: { ForgeNames: string[] }): Promise<{ FilePath: string }> =>
+  axios.post<{ ForgeNames: string[] }, { FilePath: string }>(`/agent/forge/export`, data)
+
+// 导入 AI Forge
+export const postAiforgeImport = (data: { FilePath: string }): Promise<null> =>
+  axios.post<{ FilePath: string }, null>(`/agent/forge/import`, data)
 
 export {
   postCreateSession,
