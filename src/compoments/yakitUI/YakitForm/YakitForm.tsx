@@ -239,50 +239,43 @@ export const YakitDragger: React.FC<YakitDraggerProps> = React.memo((props) => {
    */
   const onUploadFolder = useMemoizedFn(() => {
     if (disabled) return
-    const properties = ['openDirectory']
+    const input = document.createElement('input')
+    input.type = 'file'
     if (multiple !== false) {
-      properties.push('multiSelections')
+      input.multiple = true
     }
-    // ipcRenderer
-    //     .invoke("openDialog", {
-    //         title: "请选择文件夹",
-    //         properties
-    //     })
-    //     .then((data: {filePaths: string[]}) => {
-    //         const filesLength = data.filePaths.length
-    //         if (filesLength) {
-    //             const absolutePath = data.filePaths.map((p) => p.replace(/\\/g, "\\")).join(",")
-    //             // 设置名字
-    //             if (setFileName) setFileName(absolutePath)
-    //         }
-    //     })
+    input.setAttribute('webkitdirectory', '')
+    input.setAttribute('directory', '')
+    input.onchange = () => {
+      const files = Array.from(input.files || [])
+      if (files.length && setFileName) {
+        const paths = files.map((file) => file.webkitRelativePath || file.name)
+        setFileName(paths.join(','))
+      }
+    }
+    input.click()
   })
 
   const onUploadFile = useMemoizedFn(() => {
     if (disabled) return
-    const properties = ['openFile']
+    const input = document.createElement('input')
+    input.type = 'file'
     if (multiple !== false) {
-      properties.push('multiSelections')
+      input.multiple = true
     }
-    // ipcRenderer
-    //     .invoke("openDialog", {
-    //         title: "请选择文件",
-    //         properties
-    //     })
-    //     .then((data: {filePaths: string[]}) => {
-    //         const filesLength = data.filePaths.length
-    //         if (filesLength) {
-    //             const absolutePath: string[] = []
-    //             data.filePaths.forEach((p) => {
-    //                 const path = p.replace(/\\/g, "\\")
-    //                 if (isAcceptEligible(path, props.accept || ".*")) {
-    //                     absolutePath.push(path)
-    //                 }
-    //             })
-    //             // 设置名字
-    //             if (setFileName) setFileName(absolutePath.join(","))
-    //         }
-    //     })
+    if (props.accept) {
+      input.accept = props.accept
+    }
+    input.onchange = () => {
+      const files = Array.from(input.files || [])
+      if (files.length) {
+        const absolutePath = files
+          .map((file) => file.name)
+          .filter((path) => isAcceptEligible(path, props.accept || '.*'))
+        if (setFileName) setFileName(absolutePath.join(','))
+      }
+    }
+    input.click()
   })
 
   const afterFolderDrop = useMemoizedFn((e) => {
@@ -475,6 +468,7 @@ export const YakitDraggerContent: React.FC<YakitDraggerContentProps> = React.mem
     help,
     showDefHelp,
     fileLimit = 1024,
+    valueSeparator = ',',
     ...restProps
   } = props
   const [uploadLoading, setUploadLoading] = useState<boolean>(false)
@@ -520,14 +514,14 @@ export const YakitDraggerContent: React.FC<YakitDraggerContentProps> = React.mem
     )
   })
 
-  const onHandlerFile = useMemoizedFn((item: { size: number; path: string }) => {
+  const onHandlerFile = useMemoizedFn((item: { size: number; path: string; file: File }) => {
     if (item.size / 1024 > fileLimit) {
       yakitNotify('error', `文件大小不能超过${fileLimit}KB`)
       return
     }
     const path = item.path.replace(/\\/g, '\\')
     if (isAcceptEligible(path, props.accept || '.*')) {
-      onGetContent()
+      onGetContent(item.file)
     } else {
       yakitNotify('error', '文件类型不支持')
     }
@@ -542,61 +536,71 @@ export const YakitDraggerContent: React.FC<YakitDraggerContentProps> = React.mem
     }
     if (filesLength > 0) {
       const item = files[0]
-      onHandlerFile(item)
+      onHandlerFile({
+        size: item.size,
+        path: item.name,
+        file: item,
+      })
     }
   })
 
   const onUploadFile = useMemoizedFn((e) => {
     e.stopPropagation()
     if (disabled) return
-    // ipcRenderer
-    //     .invoke("openDialog", {
-    //         title: "请选择文件",
-    //         properties: ["openFile"]
-    //     })
-    //     .then((data: {filePaths: string[]}) => {
-    //         const filesLength = data.filePaths.length
-    //         if (filesLength === 1) {
-    //             const path: string = data.filePaths[0].replace(/\\/g, "\\")
-    //             ipcRenderer
-    //                 .invoke("fetch-file-info-by-path", path)
-    //                 .then((fileInfo) => {
-    //                     onHandlerFile({
-    //                         size: fileInfo.size,
-    //                         path
-    //                     })
-    //                 })
-    //                 .catch((err) => {
-    //                     yakitNotify("error", "文件数据读取异常:" + err)
-    //                 })
-    //         } else if (filesLength > 1) {
-    //             yakitNotify("error", "只支持单文件上传")
-    //         }
-    //     })
+    const input = document.createElement('input')
+    input.type = 'file'
+    if (props.accept) {
+      input.accept = props.accept
+    }
+    input.onchange = () => {
+      const files = Array.from(input.files || [])
+      if (files.length > 1) {
+        yakitNotify('error', '只支持单文件上传')
+      }
+      if (files.length > 0) {
+        const item = files[0]
+        onHandlerFile({
+          size: item.size,
+          path: item.name,
+          file: item,
+        })
+      }
+    }
+    input.click()
   })
 
-  const onGetContent = useMemoizedFn(() => {
+  const onGetContent = useMemoizedFn(async (file: File) => {
     setUploadLoading(true)
-    // ipcRenderer
-    //     .invoke("fetch-file-content", path)
-    //     .then((res: string | {name: string; data: string[]}[]) => {
-    //         if (Array.isArray(res)) {
-    //             // 表格文件读取出来的
-    //             let data: string[] = []
-    //             res.forEach((element) => {
-    //                 data = data.concat(element.data)
-    //             })
-    //             const value = data.join(valueSeparator)
-    //             if (onChange) onChange(value)
-    //         } else {
-    //             // 其他文件读取出来的
-    //             if (onChange) onChange(res)
-    //         }
-    //     })
-    //     .catch((err) => {
-    //         failed("数据获取失败：" + err)
-    //     })
-    //     .finally(() => setTimeout(() => setUploadLoading(false), 200))
+    try {
+      const fileName = file.name || ''
+      const type = fileName.split('.').pop()?.toLowerCase() || ''
+      const typeArr = ['csv', 'xls', 'xlsx']
+
+      if (typeArr.includes(type)) {
+        if (type === 'xls') {
+          throw new Error('暂不支持 .xls，请转为 .xlsx')
+        }
+
+        if (type === 'csv') {
+          const text = await file.text()
+          const rows = text
+            .split(/\r?\n/)
+            .filter(Boolean)
+            .map((line) => line.trim())
+          if (onChange) onChange(rows.join(valueSeparator))
+          return
+        }
+
+        throw new Error('浏览器环境暂不支持 .xlsx，请转为 .csv 或 .txt')
+      } else {
+        const text = await file.text()
+        if (onChange) onChange(text)
+      }
+    } catch (err) {
+      failed('数据获取失败：' + err)
+    } finally {
+      setTimeout(() => setUploadLoading(false), 200)
+    }
   })
   return (
     <Dragger
