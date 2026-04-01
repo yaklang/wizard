@@ -14,14 +14,28 @@ interface TSSAProject {
     risk_count?: number;
     latest_scan_mode?: string;
     config?: TSSAProjectConfig;
+    execution_preference?: TProjectExecutionPreference;
 }
 
 interface TSSAProjectFavoriteItem extends TSSAProject {
     pinned_at?: number;
 }
 
+export interface TProjectExecutionPreference {
+    scan_node?: {
+        mode?: 'auto' | 'manual';
+        node_id?: string;
+    };
+    scan_schedule?: {
+        enabled?: boolean;
+        time?: string;
+        interval_type?: number;
+        interval_time?: number;
+        sched_type?: number;
+    };
+}
+
 // SSA 项目配置类型
-// SSA Project Configuration
 export interface TSSAProjectConfig {
     BaseInfo?: {
         project_id?: number;
@@ -58,17 +72,6 @@ export interface TSSAProjectConfig {
             special_rules?: string[];
         };
     };
-    ScanNode?: {
-        mode?: 'auto' | 'manual';
-        node_id?: string;
-    };
-    ScanSchedule?: {
-        enabled?: boolean;
-        time?: string; // HH:mm
-        interval_type?: number; // 1=day,2=hour,3=minute
-        interval_time?: number;
-        sched_type?: number;
-    };
     // SyntaxFlow scan manager options (optional).
     SyntaxFlowScan?: {
         // Scan concurrency (0/undefined means default on backend).
@@ -85,6 +88,7 @@ export interface TSSAProjectConfig {
 // SSA 项目请求类型
 interface TSSAProjectRequest {
     config?: TSSAProjectConfig;
+    execution_preference?: TProjectExecutionPreference;
 }
 
 // SSA 项目列表响应类型

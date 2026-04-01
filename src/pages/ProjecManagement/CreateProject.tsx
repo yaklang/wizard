@@ -218,9 +218,13 @@ const CreateProject: React.FC = () => {
     );
     const [loadingPolicyConfig, setLoadingPolicyConfig] = useState(false);
     const scanNodeMode =
-        Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
+        Form.useWatch(['execution_preference', 'scan_node', 'mode'], form) ||
+        'auto';
     const scheduleEnabled =
-        Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
+        Form.useWatch(
+            ['execution_preference', 'scan_schedule', 'enabled'],
+            form,
+        ) || false;
 
     // 加载策略配置
     useEffect(() => {
@@ -832,7 +836,11 @@ const CreateProject: React.FC = () => {
                                     </Form.Item>
                                     <Form.Item
                                         label="扫描节点"
-                                        name={['config', 'ScanNode', 'mode']}
+                                        name={[
+                                            'execution_preference',
+                                            'scan_node',
+                                            'mode',
+                                        ]}
                                     >
                                         <Radio.Group
                                             optionType="button"
@@ -850,8 +858,8 @@ const CreateProject: React.FC = () => {
                                         <Form.Item
                                             label="执行节点"
                                             name={[
-                                                'config',
-                                                'ScanNode',
+                                                'execution_preference',
+                                                'scan_node',
                                                 'node_id',
                                             ]}
                                             rules={[
@@ -888,7 +896,11 @@ const CreateProject: React.FC = () => {
                     <Form.Item>
                         <div className="schedule-toggle">
                             <Form.Item
-                                name={['config', 'ScanSchedule', 'enabled']}
+                                name={[
+                                    'execution_preference',
+                                    'scan_schedule',
+                                    'enabled',
+                                ]}
                                 valuePropName="checked"
                                 noStyle
                             >
@@ -902,7 +914,11 @@ const CreateProject: React.FC = () => {
                         <>
                             <Form.Item
                                 label="扫描时间"
-                                name={['config', 'ScanSchedule', 'time']}
+                                name={[
+                                    'execution_preference',
+                                    'scan_schedule',
+                                    'time',
+                                ]}
                                 getValueProps={(value) => ({
                                     value: value
                                         ? dayjs(value, 'HH:mm')
@@ -1013,6 +1029,10 @@ const CreateProject: React.FC = () => {
                     ...(formData.config || {}),
                     ...(values.config || {}),
                 },
+                execution_preference: {
+                    ...(formData.execution_preference || {}),
+                    ...(values.execution_preference || {}),
+                },
             };
 
             // 处理标签（Select mode="tags" 已经返回数组，无需额外处理）
@@ -1039,22 +1059,25 @@ const CreateProject: React.FC = () => {
                           }
                         : undefined,
             };
-            if (finalData.config?.ScanNode) {
-                if (finalData.config.ScanNode.mode !== 'manual') {
-                    finalData.config.ScanNode.mode = 'auto';
-                    delete finalData.config.ScanNode.node_id;
+            if (finalData.execution_preference?.scan_node) {
+                if (finalData.execution_preference.scan_node.mode !== 'manual') {
+                    finalData.execution_preference.scan_node.mode = 'auto';
+                    delete finalData.execution_preference.scan_node.node_id;
                 }
             }
-            if (finalData.config?.ScanSchedule) {
-                if (!finalData.config.ScanSchedule.enabled) {
-                    delete finalData.config.ScanSchedule.time;
+            if (finalData.execution_preference?.scan_schedule) {
+                if (!finalData.execution_preference.scan_schedule.enabled) {
+                    delete finalData.execution_preference.scan_schedule.time;
                 }
-                finalData.config.ScanSchedule.interval_type =
-                    finalData.config.ScanSchedule.interval_type || 1;
-                finalData.config.ScanSchedule.interval_time =
-                    finalData.config.ScanSchedule.interval_time || 1;
-                finalData.config.ScanSchedule.sched_type =
-                    finalData.config.ScanSchedule.sched_type || 3;
+                finalData.execution_preference.scan_schedule.interval_type =
+                    finalData.execution_preference.scan_schedule.interval_type ||
+                    1;
+                finalData.execution_preference.scan_schedule.interval_time =
+                    finalData.execution_preference.scan_schedule.interval_time ||
+                    1;
+                finalData.execution_preference.scan_schedule.sched_type =
+                    finalData.execution_preference.scan_schedule.sched_type ||
+                    3;
             }
 
             setLoading(true);
@@ -1097,10 +1120,12 @@ const CreateProject: React.FC = () => {
                                     kind: 'git',
                                     auth: { kind: 'none' },
                                 },
-                                ScanNode: {
+                            },
+                            execution_preference: {
+                                scan_node: {
                                     mode: 'auto',
                                 },
-                                ScanSchedule: {
+                                scan_schedule: {
                                     enabled: false,
                                     time: '02:00',
                                     interval_type: 1,

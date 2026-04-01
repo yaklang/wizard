@@ -689,12 +689,12 @@ const ProjectManagement: React.FC = () => {
             const scanRequest: TSSAScanRequest = {
                 audit_carry_enabled: auditCarryEnabled,
             };
-            const scanNode = record.config?.ScanNode;
+            const scanNode = record.execution_preference?.scan_node;
             if (scanNode?.mode === 'manual' && scanNode.node_id) {
                 scanRequest.node_id = scanNode.node_id;
             }
 
-            const schedule = record.config?.ScanSchedule;
+            const schedule = record.execution_preference?.scan_schedule;
             if (schedule?.enabled) {
                 const now = dayjs();
                 const timeStr = schedule.time || '02:00';
@@ -1067,7 +1067,7 @@ const ProjectManagement: React.FC = () => {
                         .pop()
                         ?.replace(/\.git$/, '') || '代码仓库';
                 const hasSchedule = Boolean(
-                    record.config?.ScanSchedule?.enabled,
+                    record.execution_preference?.scan_schedule?.enabled,
                 );
                 const isScanning = scanningProjectId === record.id;
 
