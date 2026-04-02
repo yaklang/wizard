@@ -238,7 +238,7 @@ export const AIAgent = () => {
       yakitNotify('error', 'menu open page failed!')
       return
     }
-    navigate(data.route, { state: { pluginId: data.pluginId, pluginName: data.pluginName } })
+    navigate(data.route, { state: data })
   })
 
   return (

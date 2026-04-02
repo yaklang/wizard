@@ -38,9 +38,6 @@ import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor'
 import { ExecuteEnterNodeByPluginParams } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeard'
 import { ExtraParamsNodeByType } from '@/pages/AIAgent/plugins/operator/localPluginExecuteDetailHeard/PluginExecuteExtraParams'
 import cloneDeep from 'lodash/cloneDeep'
-import type { PageNodeItemProps } from '@/pages/AIAgent/store/pageInfo'
-import { usePageInfo } from '@/pages/AIAgent/store/pageInfo'
-import { shallow } from 'zustand/shallow'
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute'
 import { yakitNotify } from '@/utils/notification'
 import emiter from '@/utils/eventBus/eventBus'
@@ -56,29 +53,32 @@ import classNames from 'classnames'
 import styles from './ForgeEditor.module.scss'
 import { postAiforgeCreate, postAiforgeGet, postAiforgeUpdate } from '@/apis/AiEventApi'
 import type { CustomPluginExecuteFormValue } from '../../aiTriageChatTemplate/AITriageChatTemplate'
-import { getValueByType, ParamsToGroupByGroupName } from '@/pages/TaskScript/taskScript/helpers'
+import { getValueByType, ParamsToGroupByGroupName } from '@/pages/AIAgent/plugins/editDetails/utils'
 import { onCodeToInfo } from '@/pages/AIAgent/plugins/editDetails/utils'
 import type { YakParamProps } from '@/pages/invoker/schema'
-import { useNavigate } from 'react-router-dom'
+import type { YakExtraParamProps } from '@/pages/AIAgent/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeardType'
+import { useLocation, useNavigate } from 'react-router-dom'
+
+interface ForgeEditorLocationState {
+  params?: {
+    id?: number
+    source?: string
+  }
+  route?: string
+}
 
 const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
   const { isModify } = props
-
-  // #region 判断新建还是编辑-编辑下读取编辑信息
-  const { queryPagesDataById, updatePagesDataCacheById } = usePageInfo(
-    (s) => ({
-      queryPagesDataById: s.queryPagesDataById,
-      updatePagesDataCacheById: s.updatePagesDataCacheById,
-    }),
-    shallow,
-  )
-
-  useEffect(() => {
-    if (isModify) {
-      handleModifyInit()
-    }
-  }, [isModify])
-  // #endregion
+  const location = useLocation()
+  const navigate = useNavigate()
+  const pageIsModify = useMemo(() => {
+    if (typeof isModify === 'boolean') return isModify
+    return location.pathname.includes(YakitRoute.ModifyAIForge)
+  }, [isModify, location.pathname])
+  const editId = useMemo(() => {
+    const state = (location.state || {}) as ForgeEditorLocationState
+    return Number(state?.params?.id) || 0
+  }, [location.state])
 
   // #region forge模板全局数据和全局功能 全局数据和全局功能方法
   /** 储存着已有ID的数据(包括编辑获取和新建保存后的数据) */
@@ -91,71 +91,62 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
     }, 200)
   })
   // 编辑页面，初始化编辑数据功能
-  const handleModifyInit = useMemoizedFn(() => {
+  const handleModifyInit = useMemoizedFn((id: number) => {
     setFetchDataLoading(true)
+    if (!id) {
+      yakitNotify('error', `尝试编辑的模板异常(ID: ${id}), 请关闭页面重试`)
+      setDelayCancelFetchDataLoading()
+      return
+    }
 
-    const currentItem: PageNodeItemProps | undefined = queryPagesDataById(
-      YakitRoute.ModifyAIForge,
-      YakitRoute.ModifyAIForge,
-    )
-    if (currentItem && currentItem.pageParamsInfo.modifyAIForgePageInfo) {
-      const id = currentItem.pageParamsInfo.modifyAIForgePageInfo?.id
-      const newCurrentItem: PageNodeItemProps = {
-        ...currentItem,
-        pageParamsInfo: {
-          ...currentItem.pageParamsInfo,
-          modifyAIForgePageInfo: undefined,
-        },
-      }
-      updatePagesDataCacheById(YakitRoute.ModifyAIForge, { ...newCurrentItem })
-      if (!id) {
-        yakitNotify('error', `尝试编辑的模板异常(ID: ${id}), 请关闭页面重试`)
-        return
-      }
-
-      postAiforgeGet({ ID: id })
-        .then((res) => {
-          if (!res) {
-            yakitNotify('error', `未获取到待编辑模板的详情, 请关闭页面重试`)
-            setDelayCancelFetchDataLoading()
-            return
-          }
-          forgeData.current = cloneDeep(res)
-          try {
-            if (infoFormRef.current) {
-              infoFormRef.current.resetFormValues()
-              infoFormRef.current.setFormValues({
-                ForgeType: forgeData.current.ForgeType || 'yak',
-                ForgeName: forgeData.current.ForgeName || '',
-                Description: forgeData.current.Description || '',
-                Tag: forgeData.current.Tag || [],
-                ToolNames: forgeData.current.ToolNames || [],
-                ToolKeywords: forgeData.current.ToolKeywords || [],
-              })
-            }
-            setPromptAction({
-              Action: forgeData.current.Action || '',
-              InitPrompt: forgeData.current.InitPrompt || '',
-              PersistentPrompt: forgeData.current.PersistentPrompt || '',
-              PlanPrompt: forgeData.current.PlanPrompt || '',
-              ResultPrompt: forgeData.current.ResultPrompt || '',
-            })
-            handleChangeContent(
-              forgeData.current.ForgeType === 'config'
-                ? forgeData.current.ForgeContent || forgeData.current.Params || ''
-                : forgeData.current.ForgeContent || '',
-            )
-          } catch (error) {}
-          setDelayCancelFetchDataLoading()
-        })
-        .catch(() => {
+    postAiforgeGet({ ID: id })
+      .then((res) => {
+        if (!res) {
           yakitNotify('error', `未获取到待编辑模板的详情, 请关闭页面重试`)
           setDelayCancelFetchDataLoading()
-        })
-    }
+          return
+        }
+        forgeData.current = cloneDeep(res)
+        try {
+          if (infoFormRef.current) {
+            infoFormRef.current.resetFormValues()
+            infoFormRef.current.setFormValues({
+              ForgeType: forgeData.current.ForgeType || 'yak',
+              ForgeName: forgeData.current.ForgeName || '',
+              Description: forgeData.current.Description || '',
+              Tag: forgeData.current.Tag || [],
+              ToolNames: forgeData.current.ToolNames || [],
+              ToolKeywords: forgeData.current.ToolKeywords || [],
+            })
+          }
+          setPromptAction({
+            Action: forgeData.current.Action || '',
+            InitPrompt: forgeData.current.InitPrompt || '',
+            PersistentPrompt: forgeData.current.PersistentPrompt || '',
+            PlanPrompt: forgeData.current.PlanPrompt || '',
+            ResultPrompt: forgeData.current.ResultPrompt || '',
+          })
+          handleChangeContent(
+            forgeData.current.ForgeType === 'config'
+              ? forgeData.current.ForgeContent || forgeData.current.Params || ''
+              : forgeData.current.ForgeContent || '',
+          )
+        } catch (error) {}
+        setDelayCancelFetchDataLoading()
+      })
+      .catch(() => {
+        yakitNotify('error', `未获取到待编辑模板的详情, 请关闭页面重试`)
+        setDelayCancelFetchDataLoading()
+      })
   })
 
-  const navigate = useNavigate()
+  // #region 判断新建还是编辑-编辑下读取编辑信息
+  useEffect(() => {
+    if (pageIsModify) {
+      handleModifyInit(editId)
+    }
+  }, [pageIsModify, editId])
+  // #endregion
 
   const [saveLoading, setSaveLoading] = useState(false)
   // 保存功能
@@ -367,14 +358,14 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
     try {
       if (isSave) await handleSave()
       destroySaveModal()
-      handleModifyInit()
+      handleModifyInit(editId)
     } catch (error) {}
   })
   const { setSubscribeClose, removeSubscribeClose } = useSubscribeClose()
   // 二次提示框的实例
   const modalRef = useRef<any>(null)
   useEffect(() => {
-    if (isModify) {
+    if (pageIsModify) {
       setSubscribeClose(YakitRoute.ModifyAIForge, {
         close: async () => {
           return {
@@ -462,7 +453,7 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
         removeSubscribeClose(YakitRoute.AddAIForge)
       }
     }
-  }, [isModify])
+  }, [pageIsModify])
   // #endregion
 
   return (
@@ -470,7 +461,7 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
       <YakitSpin spinning={fetchDataLoading}>
         <div className={styles['forge-editor-wrapper']}>
           <div className={styles['forge-editor-header']}>
-            <div className={styles['header-title']}>{isModify ? '编辑模板' : '新建模板'}</div>
+            <div className={styles['header-title']}>{pageIsModify ? '编辑模板' : '新建模板'}</div>
 
             <div className={styles['header-btn-group']}>
               <YakitButton loading={saveLoading} type="outline1" icon={<OutlineExitIcon />} onClick={handleSaveAndRun}>
@@ -973,7 +964,7 @@ const AIForgeEditorCodeAndParams: React.FC<AIForgeEditorCodeAndParamsProps> = me
   /** 选填参数 */
   const groupParams = useMemo(() => {
     const arr = params.filter((item) => !item.Required) || []
-    return ParamsToGroupByGroupName(arr)
+    return ParamsToGroupByGroupName(arr) as YakExtraParamProps[]
   }, [params])
   // #endregion
 

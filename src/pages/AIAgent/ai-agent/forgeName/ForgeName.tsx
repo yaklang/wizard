@@ -56,9 +56,9 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
       return
     }
     emiter.emit(
-      'openPage',
+      'menuOpenPage',
       JSON.stringify({
-        route: YakitRoute.ModifyAIForge,
+        route: `/${YakitRoute.ModifyAIForge}`,
         params: { id: id, source: YakitRoute.AI_Agent },
       }),
     )
