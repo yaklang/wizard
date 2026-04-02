@@ -62,6 +62,10 @@ import './IRifyReportManagePage.scss';
 dayjs.locale('zh-cn');
 
 const { RangePicker } = DatePicker;
+const SSA_REPORT_EXPORT_TASK_TYPE = 'ssa-report-export';
+
+const isSSAReportExportTask = (task?: TAsyncTask) =>
+    task?.task_type === SSA_REPORT_EXPORT_TASK_TYPE;
 
 const PhaseFlipText: React.FC<{ text: string }> = ({ text }) => {
     const [currentText, setCurrentText] = useState(text);
@@ -347,7 +351,7 @@ const IRifyReportManagePage: React.FC = () => {
             limit: 200,
             order_by: 'created_at',
             order: 'desc',
-            type: ['ssa-report-export'],
+            type: [SSA_REPORT_EXPORT_TASK_TYPE],
         });
         return res.data;
     }, {});
@@ -355,7 +359,11 @@ const IRifyReportManagePage: React.FC = () => {
     const [tasks, setTasks] = useState<TAsyncTask[]>([]);
 
     useEffect(() => {
-        setTasks(asyncTaskResponse?.list || []);
+        setTasks(
+            (asyncTaskResponse?.list || []).filter((task) =>
+                isSSAReportExportTask(task),
+            ),
+        );
     }, [asyncTaskResponse]);
 
     useEffect(() => {
@@ -379,6 +387,9 @@ const IRifyReportManagePage: React.FC = () => {
 
     const displayedTasks = useMemo(() => {
         return tasks.filter((task) => {
+            if (!isSSAReportExportTask(task)) {
+                return false;
+            }
             const params = getTaskParams(task);
             const keyword = filters.keyword.trim().toLowerCase();
             const submittedAt = Number(params.submitted_at || 0);

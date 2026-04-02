@@ -32,6 +32,28 @@ const normalizeSSAReportExportTaskSubmitResponse = (
     format: payload?.format || payload?.data?.format || '',
 });
 
+const serializeAsyncTaskQuery = (params?: TAsyncTaskQueryParams) => {
+    const searchParams = new URLSearchParams();
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') {
+            return;
+        }
+        if (Array.isArray(value)) {
+            value.forEach((item) => {
+                if (item === undefined || item === null || item === '') {
+                    return;
+                }
+                searchParams.append(key, String(item));
+            });
+            return;
+        }
+        searchParams.append(key, String(value));
+    });
+
+    return searchParams.toString();
+};
+
 export const queryAsyncTasks = async (
     params?: TAsyncTaskQueryParams,
 ): Promise<ResponseData<TAsyncTaskListResponse>> => {
@@ -39,6 +61,12 @@ export const queryAsyncTasks = async (
         '/async/tasks',
         {
             params,
+            paramsSerializer: {
+                serialize: (queryParams) =>
+                    serializeAsyncTaskQuery(
+                        queryParams as TAsyncTaskQueryParams,
+                    ),
+            },
         },
     );
     return {
