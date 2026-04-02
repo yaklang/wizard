@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useCallback,
+    useMemo,
+    useRef,
+} from 'react';
 import {
     Card,
     Button,
@@ -34,11 +40,13 @@ import {
     DownloadOutlined,
     DeleteOutlined,
     MoreOutlined,
+    StopOutlined,
 } from '@ant-design/icons';
 import { SiPhp, SiJavascript, SiPython, SiGo, SiC } from 'react-icons/si';
 import { DiJava } from 'react-icons/di';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useRequest } from 'ahooks';
+import throttle from 'lodash/throttle';
 import {
     querySSATasks,
     querySSAArtifactSummary,
@@ -170,91 +178,118 @@ const TaskList: React.FC = () => {
         Record<string, boolean>
     >({});
 
-    // SSE连接，自动接收任务更新事件
+    const sseDispatchRef = useRef<(data: any) => void>(() => {});
+
+    useEffect(() => {
+        const applySSATaskSSE = (data: any) => {
+            const { msg } = data;
+            if (!msg?.taskId) {
+                return;
+            }
+
+            setData((prevData) => {
+                const idx = prevData.findIndex((t) => t.task_id === msg.taskId);
+                if (idx < 0) {
+                    return prevData;
+                }
+
+                const task = prevData[idx];
+                const updates: Partial<TSSATask> = {};
+
+                if (
+                    msg.status &&
+                    msg.status !== 'progress' &&
+                    msg.status !== 'phase'
+                ) {
+                    updates.status = msg.status;
+                }
+
+                if (msg.progress !== undefined) {
+                    updates.progress = msg.progress;
+                }
+
+                if (msg.data?.phase) {
+                    updates.phase = msg.data.phase;
+                }
+
+                if (msg.data?.risk_count !== undefined) {
+                    updates.risk_count = msg.data.risk_count;
+                }
+                if (msg.data?.risk_count_critical !== undefined) {
+                    updates.risk_count_critical = msg.data.risk_count_critical;
+                }
+                if (msg.data?.risk_count_high !== undefined) {
+                    updates.risk_count_high = msg.data.risk_count_high;
+                }
+                if (msg.data?.risk_count_medium !== undefined) {
+                    updates.risk_count_medium = msg.data.risk_count_medium;
+                }
+                if (msg.data?.risk_count_low !== undefined) {
+                    updates.risk_count_low = msg.data.risk_count_low;
+                }
+                if (msg.data?.audit_carry_hidden_count !== undefined) {
+                    updates.audit_carry_hidden_count =
+                        msg.data.audit_carry_hidden_count;
+                }
+
+                if (msg.data?.total_lines !== undefined) {
+                    updates.total_lines = msg.data.total_lines;
+                }
+                if (msg.data?.program_name) {
+                    updates.program_name = msg.data.program_name;
+                }
+                if (msg.data?.error) {
+                    updates.error_message = msg.data.error;
+                }
+                if (msg.data?.finished_at !== undefined) {
+                    updates.finished_at = msg.data.finished_at;
+                } else if (
+                    msg.status === 'completed' ||
+                    msg.status === 'failed' ||
+                    msg.status === 'canceled'
+                ) {
+                    const eventFinishedAt = msg.time
+                        ? dayjs(msg.time).unix()
+                        : dayjs().unix();
+                    updates.finished_at = eventFinishedAt;
+                }
+
+                const nextRow = { ...task, ...updates };
+                const next = prevData.slice();
+                next[idx] = nextRow;
+                return next;
+            });
+        };
+
+        const throttled = throttle(applySSATaskSSE, 120, {
+            leading: true,
+            trailing: true,
+        });
+
+        sseDispatchRef.current = (data: any) => {
+            const status = String(data?.msg?.status || '').toLowerCase();
+            const terminal =
+                status === 'completed' ||
+                status === 'failed' ||
+                status === 'canceled';
+            if (terminal) {
+                throttled.flush();
+                applySSATaskSSE(data);
+                return;
+            }
+            throttled(data);
+        };
+
+        return () => {
+            throttled.cancel();
+        };
+    }, []);
+
     const { disconnect } = useEventSource<{ msg: any }>(
         'events?stream_type=ssa_task_update',
         {
             maxRetries: 3,
-            onsuccess: (data: any) => {
-                const { msg } = data;
-                if (msg?.taskId) {
-                    setData((prevData) =>
-                        prevData.map((task) => {
-                            if (task.task_id !== msg.taskId) {
-                                return task;
-                            }
-
-                            const updates: Partial<TSSATask> = {};
-
-                            if (
-                                msg.status &&
-                                msg.status !== 'progress' &&
-                                msg.status !== 'phase'
-                            ) {
-                                updates.status = msg.status;
-                            }
-
-                            if (msg.progress !== undefined) {
-                                updates.progress = msg.progress;
-                            }
-
-                            if (msg.data?.phase) {
-                                updates.phase = msg.data.phase;
-                            }
-
-                            if (msg.data?.risk_count !== undefined) {
-                                updates.risk_count = msg.data.risk_count;
-                            }
-                            if (msg.data?.risk_count_critical !== undefined) {
-                                updates.risk_count_critical =
-                                    msg.data.risk_count_critical;
-                            }
-                            if (msg.data?.risk_count_high !== undefined) {
-                                updates.risk_count_high =
-                                    msg.data.risk_count_high;
-                            }
-                            if (msg.data?.risk_count_medium !== undefined) {
-                                updates.risk_count_medium =
-                                    msg.data.risk_count_medium;
-                            }
-                            if (msg.data?.risk_count_low !== undefined) {
-                                updates.risk_count_low =
-                                    msg.data.risk_count_low;
-                            }
-                            if (
-                                msg.data?.audit_carry_hidden_count !== undefined
-                            ) {
-                                updates.audit_carry_hidden_count =
-                                    msg.data.audit_carry_hidden_count;
-                            }
-
-                            if (msg.data?.total_lines !== undefined) {
-                                updates.total_lines = msg.data.total_lines;
-                            }
-                            if (msg.data?.program_name) {
-                                updates.program_name = msg.data.program_name;
-                            }
-                            if (msg.data?.error) {
-                                updates.error_message = msg.data.error;
-                            }
-                            if (msg.data?.finished_at !== undefined) {
-                                updates.finished_at = msg.data.finished_at;
-                            } else if (
-                                msg.status === 'completed' ||
-                                msg.status === 'failed' ||
-                                msg.status === 'canceled'
-                            ) {
-                                const eventFinishedAt = msg.time
-                                    ? dayjs(msg.time).unix()
-                                    : dayjs().unix();
-                                updates.finished_at = eventFinishedAt;
-                            }
-
-                            return { ...task, ...updates };
-                        }),
-                    );
-                }
-            },
+            onsuccess: (data: any) => sseDispatchRef.current(data),
         },
     );
 
@@ -424,12 +459,9 @@ const TaskList: React.FC = () => {
         return phaseText !== '-' && !!phaseText;
     };
 
-    const isTaskRunningStatus = useCallback((status?: string) => {
-        return (
-            status === 'running' ||
-            status === 'scanning' ||
-            status === 'compiling'
-        );
+    const isSSATaskTerminalStatus = useCallback((status?: string) => {
+        const s = (status || '').toLowerCase();
+        return s === 'completed' || s === 'failed' || s === 'canceled';
     }, []);
 
     const getCurrentFilters = useCallback(() => {
@@ -717,10 +749,10 @@ const TaskList: React.FC = () => {
 
     const handleTaskDelete = useCallback(
         (task: TSSATask) => {
-            if (isTaskRunningStatus(task.status)) {
+            if (!isSSATaskTerminalStatus(task.status)) {
                 Modal.confirm({
                     title: '取消任务',
-                    content: `确定取消任务 ${task.project_name || task.task_id.substring(0, 8)} 吗？任务会停止执行，但历史记录会保留。`,
+                    content: `确定取消任务 ${task.project_name || task.task_id.substring(0, 8)} 吗？未结束的任务（含等待调度）将标记为已取消，之后可再删除记录。`,
                     okText: '确认取消',
                     cancelText: '返回',
                     okButtonProps: { danger: true },
@@ -741,7 +773,7 @@ const TaskList: React.FC = () => {
                 },
             });
         },
-        [cancelTasksByIDs, deleteTaskRecordsByIDs, isTaskRunningStatus],
+        [cancelTasksByIDs, deleteTaskRecordsByIDs, isSSATaskTerminalStatus],
     );
 
     const handleTaskMoreAction = useCallback(
@@ -836,24 +868,24 @@ const TaskList: React.FC = () => {
         const selectedTasks = data.filter((task) =>
             selectedTaskIds.has(task.task_id),
         );
-        const runningTasks = selectedTasks.filter((task) =>
-            isTaskRunningStatus(task.status),
+        const activeTasks = selectedTasks.filter(
+            (task) => !isSSATaskTerminalStatus(task.status),
         );
-        const deletableTasks = selectedTasks.filter(
-            (task) => !isTaskRunningStatus(task.status),
+        const deletableTasks = selectedTasks.filter((task) =>
+            isSSATaskTerminalStatus(task.status),
         );
 
         if (deletableTasks.length === 0) {
             message.warning(
-                '当前批量操作仅支持删除已结束任务记录；运行中的任务请逐条取消',
+                '当前选中任务均未结束（含等待中），请先在单条任务上点「取消任务」或更多菜单取消后再删除记录',
             );
             return;
         }
 
-        if (runningTasks.length > 0) {
+        if (activeTasks.length > 0) {
             Modal.confirm({
-                title: '包含运行中任务',
-                content: `已选择 ${selectedTasks.length} 条任务，其中 ${runningTasks.length} 条正在运行中，当前不会删除它们。是否仅删除其余 ${deletableTasks.length} 条已结束任务记录？`,
+                title: '包含未结束任务',
+                content: `已选择 ${selectedTasks.length} 条任务，其中 ${activeTasks.length} 条尚未结束（含等待中），将不会删除。是否仅删除其余 ${deletableTasks.length} 条已结束任务记录？`,
                 okText: '仅删除记录',
                 cancelText: '取消',
                 okButtonProps: { danger: true },
@@ -876,7 +908,12 @@ const TaskList: React.FC = () => {
                 await deleteTaskRecordsByIDs(Array.from(selectedTaskIds));
             },
         });
-    }, [data, deleteTaskRecordsByIDs, isTaskRunningStatus, selectedTaskIds]);
+    }, [
+        data,
+        deleteTaskRecordsByIDs,
+        isSSATaskTerminalStatus,
+        selectedTaskIds,
+    ]);
 
     const displayedTasks = useMemo(() => {
         const list = [...data];
@@ -1108,9 +1145,9 @@ const TaskList: React.FC = () => {
             {
                 key: 'delete',
                 icon: <DeleteOutlined />,
-                label: isTaskRunningStatus(task.status)
-                    ? '取消任务'
-                    : '删除记录',
+                label: isSSATaskTerminalStatus(task.status)
+                    ? '删除记录'
+                    : '取消任务',
                 danger: true,
             },
         ];
@@ -1268,23 +1305,43 @@ const TaskList: React.FC = () => {
                     </div>
 
                     <div className="action-buttons">
-                        <Button
-                            type="primary"
-                            icon={<AuditOutlined />}
-                            onClick={() =>
-                                navigate(
-                                    `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?task_id=${task.task_id}&project_name=${encodeURIComponent(task.project_name || '')}&scan_batch=${task.scan_batch || ''}`,
-                                )
-                            }
-                        >
-                            缺陷审计
-                        </Button>
-                        <Button
-                            icon={<FileTextOutlined />}
-                            onClick={() => openTaskExportModal(task)}
-                        >
-                            导出报告
-                        </Button>
+                        {!isSSATaskTerminalStatus(task.status) ? (
+                            <Button
+                                type="primary"
+                                danger
+                                icon={<StopOutlined />}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTaskDelete(task);
+                                }}
+                            >
+                                取消任务
+                            </Button>
+                        ) : (
+                            <>
+                                <Button
+                                    type="primary"
+                                    icon={<AuditOutlined />}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(
+                                            `${getRoutePath(RouteKey.SSA_RISK_AUDIT)}?task_id=${task.task_id}&project_name=${encodeURIComponent(task.project_name || '')}&scan_batch=${task.scan_batch || ''}`,
+                                        );
+                                    }}
+                                >
+                                    缺陷审计
+                                </Button>
+                                <Button
+                                    icon={<FileTextOutlined />}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openTaskExportModal(task);
+                                    }}
+                                >
+                                    导出报告
+                                </Button>
+                            </>
+                        )}
                         <Dropdown
                             menu={{
                                 items: moreMenuItems,

@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, {
+    useEffect,
+    useState,
+    useCallback,
+    useMemo,
+    useRef,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Card,
@@ -58,7 +64,6 @@ import { getRoutePath, RouteKey } from '@/utils/routeMap';
 import ProjectDrawer from './ProjectDrawer';
 import { dedupeSSAProjects, mergeSSAProjects } from './projectManagementUtils';
 import { useUrlState } from '@/hooks/useUrlState';
-import dayjs from 'dayjs';
 import { buildFavoriteProjectIDSet } from '../IRifyDashboard/dashboardFavorites';
 import './ProjectManagement.scss';
 
@@ -326,7 +331,7 @@ const ProjectManagement: React.FC = () => {
     ]);
 
     useEffect(() => {
-        void loadFavoriteProjects();
+        loadFavoriteProjects().catch(() => {});
     }, [loadFavoriteProjects]);
 
     useEffect(() => {
@@ -568,9 +573,7 @@ const ProjectManagement: React.FC = () => {
         const filtered = favoriteProjects.filter((project) => {
             if (
                 loweredProjectName &&
-                !project.project_name
-                    .toLowerCase()
-                    .includes(loweredProjectName)
+                !project.project_name.toLowerCase().includes(loweredProjectName)
             ) {
                 return false;
             }
@@ -712,34 +715,6 @@ const ProjectManagement: React.FC = () => {
                 scanRequest.node_id = scanNode.node_id;
             }
 
-            const schedule = record.execution_preference?.scan_schedule;
-            if (schedule?.enabled) {
-                const now = dayjs();
-                const timeStr = schedule.time || '02:00';
-                const [hourStr, minuteStr] = timeStr.split(':');
-                const hour = Number(hourStr);
-                const minute = Number(minuteStr);
-                let start = now
-                    .hour(Number.isFinite(hour) ? hour : 2)
-                    .minute(Number.isFinite(minute) ? minute : 0)
-                    .second(0)
-                    .millisecond(0);
-                if (start.isBefore(now)) {
-                    start = start.add(1, 'day');
-                }
-
-                scanRequest.enable_sched = true;
-                scanRequest.interval_type = schedule.interval_type || 1;
-                scanRequest.interval_time = schedule.interval_time || 1;
-                scanRequest.sched_type = schedule.sched_type || 3;
-                scanRequest.start_timestamp = Math.floor(
-                    start.valueOf() / 1000,
-                );
-                scanRequest.end_timestamp = Math.floor(
-                    start.add(365, 'day').valueOf() / 1000,
-                );
-            }
-
             const res = await scanSSAProject(record.id, scanRequest, {
                 scan_mode: scanMode,
             });
@@ -754,11 +729,7 @@ const ProjectManagement: React.FC = () => {
                             size="small"
                             onClick={() => {
                                 message.destroy();
-                                navigate(
-                                    `${getRoutePath(
-                                        RouteKey.TASK_LIST,
-                                    )}?project_id=${record.id}`,
-                                );
+                                navigate(getRoutePath(RouteKey.TASK_LIST));
                             }}
                             style={{ padding: 0, height: 'auto' }}
                         >
@@ -983,10 +954,7 @@ const ProjectManagement: React.FC = () => {
                                 marginTop: 6,
                             }}
                         >
-                            <Tag
-                                className="branch-tag"
-                                style={{ margin: 0 }}
-                            >
+                            <Tag className="branch-tag" style={{ margin: 0 }}>
                                 分支: {branch}
                             </Tag>
                             {hasAuth ? (
@@ -1092,9 +1060,6 @@ const ProjectManagement: React.FC = () => {
                         .split('/')
                         .pop()
                         ?.replace(/\.git$/, '') || '代码仓库';
-                const hasSchedule = Boolean(
-                    record.execution_preference?.scan_schedule?.enabled,
-                );
                 const isScanning = scanningProjectId === record.id;
 
                 return (
@@ -1138,8 +1103,7 @@ const ProjectManagement: React.FC = () => {
                                             marginTop: 8,
                                         }}
                                     >
-                                        扫描将在后台执行。系统默认会优先复用/更新编译产物；
-                                        当前项目若启用了调度，则仍会走兼容的调度链路。
+                                        扫描将在后台执行。系统默认会优先复用/更新编译产物。
                                     </div>
                                     <div style={{ marginTop: 12 }}>
                                         <Space wrap>
@@ -1154,9 +1118,7 @@ const ProjectManagement: React.FC = () => {
                                                     await handleScan(record);
                                                 }}
                                             >
-                                                {hasSchedule
-                                                    ? '开始扫描（含调度）'
-                                                    : '开始扫描'}
+                                                开始扫描
                                             </Button>
                                             {showMemoryScanOverride && (
                                                 <Button
@@ -1315,7 +1277,9 @@ const ProjectManagement: React.FC = () => {
                         onChange: setSelectedRowKeys,
                         columnWidth: 60,
                     }}
-                    loading={favoriteOnlyEnabled ? false : loading && page === 1}
+                    loading={
+                        favoriteOnlyEnabled ? false : loading && page === 1
+                    }
                     scroll={{ x: 1200 }}
                     pagination={false}
                     onChange={(_pagination, _filters, sorter) => {
@@ -1356,23 +1320,19 @@ const ProjectManagement: React.FC = () => {
                     {!favoriteOnlyEnabled &&
                         !loading &&
                         hasMore &&
-                        tableData.length > 0 && (
-                        <span>向下滚动加载更多</span>
-                    )}
+                        tableData.length > 0 && <span>向下滚动加载更多</span>}
                     {!favoriteOnlyEnabled &&
                         !loading &&
                         !hasMore &&
                         tableData.length > 0 && (
-                        <span>已加载全部 {tableData.length} 个项目</span>
-                    )}
+                            <span>已加载全部 {tableData.length} 个项目</span>
+                        )}
                     {favoriteOnlyEnabled && tableData.length > 0 && (
                         <span>共 {tableData.length} 个收藏项目</span>
                     )}
                     {!loading && tableData.length === 0 && (
                         <span>
-                            {favoriteOnlyEnabled
-                                ? '暂无收藏项目'
-                                : '暂无项目'}
+                            {favoriteOnlyEnabled ? '暂无收藏项目' : '暂无项目'}
                         </span>
                     )}
                 </div>
