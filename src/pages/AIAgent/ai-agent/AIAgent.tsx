@@ -20,6 +20,9 @@ import styles from './AIAgent.module.scss'
 // import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
 import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox'
 import { getSessionAll, getSetting as getSettingData, postSetting } from '@/apis/AiEventApi'
+import type { RouteToPageProps } from '../types/interface/publicMenu'
+import { yakitNotify } from '@/utils/notification'
+import { useNavigate } from 'react-router-dom'
 
 export const AIAgentCacheClearValue = '20260113'
 
@@ -216,6 +219,27 @@ export const AIAgent = () => {
       dispatcher,
     }
   }, [store, dispatcher])
+
+  useEffect(() => {
+    emiter.on('menuOpenPage', menuOpenPage)
+    return () => {
+      emiter.off('menuOpenPage', menuOpenPage)
+    }
+  }, [])
+  const navigate = useNavigate()
+
+  const menuOpenPage = useMemoizedFn((res: string) => {
+    // @ts-ignore
+    let data: RouteToPageProps = {}
+    try {
+      data = JSON.parse(res || '{}') as RouteToPageProps
+    } catch (error) {}
+    if (!data.route) {
+      yakitNotify('error', 'menu open page failed!')
+      return
+    }
+    navigate(data.route, { state: { pluginId: data.pluginId, pluginName: data.pluginName } })
+  })
 
   return (
     <AIAgentContext.Provider value={contextValue}>

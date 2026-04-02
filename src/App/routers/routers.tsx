@@ -2,7 +2,7 @@ import { Navigate, type RouteObject } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import type { ReactNode } from 'react'
 import AuthRoute from './AuthRoute'
-import Login from '@/pages/Login'
+// import Login from '@/pages/Login'
 import {
   DataServiceIcon,
   NodeConfigIcon,
@@ -36,7 +36,7 @@ import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/Reverse
 import GlobalReverseLink from '@/pages/ReverseLink'
 import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer'
 import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon'
-import CodecEntry from '@/pages/Codec'
+// import CodecEntry from '@/pages/Codec'
 import SpecialTask from '@/pages/SpecialTask'
 import CreateTask from '@/pages/CreateTask'
 import { ProjectManagement, ProjectEditor, CreateProject } from '@/pages/ProjecManagement'
@@ -48,6 +48,8 @@ import TaskList from '@/pages/SSAScanTask/TaskList'
 import { AIAgent } from '@/pages/AIAgent/ai-agent/AIAgent'
 import AIAgentLog from '@/pages/AIAgent/ai-agent-log/AIAgentLog'
 import { TestAi } from '@/apis/AiEventApi/test'
+import ForgeEditor from '@/pages/AIAgent/ai-agent/aiForge/forgeEditor/ForgeEditor'
+import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute'
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -346,11 +348,19 @@ const routers: RouteObjectRootMy[] = [
         ],
       },
       {
-        name: 'AI-agent',
-        path: 'ai-aigent',
-        key: 'ai-agent',
+        name: YakitRoute.AI_Agent,
+        path: `/${YakitRoute.AI_Agent}`,
+        key: YakitRoute.AI_Agent,
         icon: <AIOutlinedIcon />,
         element: <AIAgent />,
+      },
+      {
+        path: `/${YakitRoute.AddAIForge}`,
+        name: '新增Forge',
+        key: YakitRoute.AddAIForge,
+        element: <ForgeEditor />,
+        hidden: true,
+        parentpath: `/${YakitRoute.AI_Agent}`,
       },
     ],
   },

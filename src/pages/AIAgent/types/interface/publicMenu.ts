@@ -1,4 +1,4 @@
-import type { YakitRoute } from '../../enums/yakitRoute';
+import type { YakitRoute } from '../../enums/yakitRoute'
 
 /**
  * @name Route信息(用于打开页面)
@@ -7,7 +7,7 @@ import type { YakitRoute } from '../../enums/yakitRoute';
  * @property pluginName-插件名称
  */
 export interface RouteToPageProps {
-    route: YakitRoute;
-    pluginId?: number;
-    pluginName?: string;
+  route: YakitRoute
+  pluginId?: number
+  pluginName?: string
 }

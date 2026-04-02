@@ -42,7 +42,6 @@ import { YakitRoute } from '../../enums/yakitRoute'
 import { useGetSetState } from '@/hooks'
 import { genDefaultPagination, type PaginationSchema } from '@/pages/invoker/schema'
 import { postAiforgeDelete, postAiforgeGet, postAiforgeQuery } from '@/apis/AiEventApi'
-// const { ipcRenderer } = window.require('electron');
 
 export interface ForgeNameRef {
   openAdd: () => void
@@ -55,7 +54,7 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
   // #region AIForge 模板增删改功能 使用功能
   // 新建 forge 模板
   const handleNewAIForge = useMemoizedFn(() => {
-    emiter.emit('menuOpenPage', JSON.stringify({ route: YakitRoute.AddAIForge }))
+    emiter.emit('menuOpenPage', JSON.stringify({ route: `/${YakitRoute.AddAIForge}` }))
   })
   // 编辑 forge 模板
   const handleModifyAIForge = useMemoizedFn((info: AIForge) => {

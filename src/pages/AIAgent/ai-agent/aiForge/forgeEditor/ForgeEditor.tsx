@@ -5,8 +5,6 @@ import type {
   AIForgeEditorInfoFormProps,
   AIForgeEditorInfoFormRef,
   AIForgeEditorPromptAndActionProps,
-  AIForgeEditorSkillFilesProps,
-  AIForgeMilkdownBaseProps,
   ConfigTypeForgePromptAction,
   EditorAIForge,
   ForgeEditorProps,
@@ -19,15 +17,13 @@ import {
   OutlineChevrondownIcon,
   OutlineChevronrightIcon,
   OutlineExitIcon,
-  OutlineFolderopenIcon,
   OutlineIdentificationIcon,
   OutlineInformationcircleIcon,
-  OutlinePluscircleIcon,
   OutlineRefreshIcon,
   OutlineTagIcon,
 } from '@/assets/icon/outline'
 import { SolidStoreIcon } from '@/assets/icon/solid'
-import { Form, Result, Tooltip } from 'antd'
+import { Form, Tooltip } from 'antd'
 import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
 import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect'
 import {
@@ -36,76 +32,34 @@ import {
   DefaultForgeTypeList,
   DefaultForgeYakToCode,
 } from '../defaultConstant'
-import type { GetAIToolListRequest } from '@/pages/ai-agent/type/aiTool'
+import type { GetAIToolListRequest } from '@/pages/AIAgent/ai-agent/type/aiTool'
 import { YakitRadioButtons } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtons'
 import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor'
 import { ExecuteEnterNodeByPluginParams } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeard'
-import { ExtraParamsNodeByType } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/PluginExecuteExtraParams'
-import type { YakParamProps } from '@/pages/plugins/pluginsType'
-import { getValueByType, onCodeToInfo, ParamsToGroupByGroupName } from '@/pages/plugins/editDetails/utils'
+import { ExtraParamsNodeByType } from '@/pages/AIAgent/plugins/operator/localPluginExecuteDetailHeard/PluginExecuteExtraParams'
 import cloneDeep from 'lodash/cloneDeep'
-import { CustomPluginExecuteFormValue } from '@/pages/AIAgent/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeardType'
-import { PageNodeItemProps, usePageInfo } from '@/store/pageInfo'
+import type { PageNodeItemProps } from '@/pages/AIAgent/store/pageInfo'
+import { usePageInfo } from '@/pages/AIAgent/store/pageInfo'
 import { shallow } from 'zustand/shallow'
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute'
 import { yakitNotify } from '@/utils/notification'
-import {
-  GenerateTempFilePath,
-  grpcCreateAIForge,
-  grpcGetAIForge,
-  grpcUpdateAIForge,
-} from '@/pages/AIAgent/ai-agent/grpc'
 import emiter from '@/utils/eventBus/eventBus'
-import { useSubscribeClose } from '@/store/tabSubscribe'
+import { useSubscribeClose } from '@/pages/AIAgent/ai-agent/store/tabSubscribe'
 import { AIForgeListDefaultPagination, ReActChatEventEnum } from '@/pages/AIAgent/ai-agent/defaultConstant'
 import { grpcGetAIToolList } from '@/pages/AIAgent/ai-agent/aiToolList/utils'
 import { QSInputTextarea } from '@/pages/AIAgent/ai-agent/template/template'
 import type { TextAreaRef } from 'antd/lib/input/TextArea'
 import { YakitSwitch } from '@/compoments/YakitUI/YakitSwitch/YakitSwitch'
 import type { AIForge } from '@/pages/AIAgent/ai-agent/type/forge'
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
-import { YakitDropdownMenu } from '@/compoments/YakitUI/YakitDropdownMenu/YakitDropdownMenu'
-import {
-  getCodeByPath,
-  getCodeSizeByPath,
-  getPathJoin,
-  getRelativePath,
-  grpcFetchCreateFolder,
-  grpcFetchDeleteFile,
-  grpcFetchFileTree,
-  grpcFetchSaveFile,
-  MAX_FILE_SIZE_BYTES,
-  monacaLanguageType,
-} from '@/pages/yakRunner/utils'
-import { randomString } from '@/utils/randomUtil'
-import FileTreeSystemList from '@/pages/ai-agent/components/aiFileSystemList/FileTreeSystemList/FileTreeSystemList'
-import { FileNodeProps } from '@/pages/yakRunner/FileTree/FileTreeType'
-import { YakitMenuItemType } from '@/components/yakitUI/YakitMenu/YakitMenu'
-import { v4 as uuidv4 } from 'uuid'
-import { onOpenLocalFileByPath } from '@/pages/notepadManage/notepadManage/utils'
-import { setClipboardText } from '@/utils/clipboard'
-import { FileMonitorProps } from '@/utils/duplex/duplex'
-import { YakitHint } from '@/components/yakitUI/YakitHint/YakitHint'
-import { FileInfo, FileTreeSystemListRef } from '@/pages/ai-agent/components/aiFileSystemList/type'
-import { KeyToIcon } from '@/pages/yakRunner/FileTree/icon'
-import { getLocalFileName } from '@/components/MilkdownEditor/CustomFile/utils'
-import { CopyComponents } from '@/components/yakitUI/YakitTag/YakitTag'
-import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
-import { placeholderConfig, placeholderPlugin } from '@/components/MilkdownEditor/Placeholder'
-import { Ctx } from '@milkdown/kit/ctx'
-import { defaultValueCtx, Editor, editorViewCtx, editorViewOptionsCtx, rootCtx } from '@milkdown/kit/core'
-import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
-import { getMarkdown } from '@milkdown/kit/utils'
-import { commonmark } from '@milkdown/kit/preset/commonmark'
-import { gfm } from '@milkdown/kit/preset/gfm'
-import { gapCursorPlugin } from '@milkdown/kit/plugin/cursor'
-import { history } from '@milkdown/kit/plugin/history'
-import { clipboard } from '@milkdown/kit/plugin/clipboard'
-import { ProsemirrorAdapterProvider } from '@prosemirror-adapter/react'
 
 import classNames from 'classnames'
 import styles from './ForgeEditor.module.scss'
-const { ipcRenderer } = window.require('electron')
+import { postAiforgeCreate, postAiforgeGet, postAiforgeUpdate } from '@/apis/AiEventApi'
+import type { CustomPluginExecuteFormValue } from '../../aiTriageChatTemplate/AITriageChatTemplate'
+import { getValueByType, ParamsToGroupByGroupName } from '@/pages/TaskScript/taskScript/helpers'
+import { onCodeToInfo } from '@/pages/AIAgent/plugins/editDetails/utils'
+import type { YakParamProps } from '@/pages/invoker/schema'
+import { useNavigate } from 'react-router-dom'
 
 const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
   const { isModify } = props
@@ -137,7 +91,7 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
     }, 200)
   })
   // 编辑页面，初始化编辑数据功能
-  const handleModifyInit = useMemoizedFn(async () => {
+  const handleModifyInit = useMemoizedFn(() => {
     setFetchDataLoading(true)
 
     const currentItem: PageNodeItemProps | undefined = queryPagesDataById(
@@ -159,71 +113,57 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
         return
       }
 
-      try {
-        const res = await grpcGetAIForge({ ID: id, InflateSkillPath: true })
-
-        if (!res) {
-          yakitNotify('error', '未获取到待编辑模板的详情, 请关闭页面重试')
-          return
-        }
-
-        forgeData.current = cloneDeep(res)
-
-        if (infoFormRef.current) {
-          infoFormRef.current.resetFormValues()
-          infoFormRef.current.setFormValues({
-            ForgeType: forgeData.current.ForgeType || 'yak',
-            ForgeName: forgeData.current.ForgeName || '',
-            Description: forgeData.current.Description || '',
-            Tag: forgeData.current.Tag || [],
-            ToolNames: forgeData.current.ToolNames || [],
-            ToolKeywords: forgeData.current.ToolKeywords || [],
-          })
-        }
-
-        setPromptAction({
-          Action: forgeData.current.Action || '',
-          InitPrompt: forgeData.current.InitPrompt || '',
-          PersistentPrompt: forgeData.current.PersistentPrompt || '',
-          PlanPrompt: forgeData.current.PlanPrompt || '',
-          ResultPrompt: forgeData.current.ResultPrompt || '',
-        })
-
-        handleChangeContent(
-          forgeData.current.ForgeType === 'config'
-            ? forgeData.current.ForgeContent || forgeData.current.Params || ''
-            : forgeData.current.ForgeContent || '',
-        )
-
-        let skillPath = ''
-        if (forgeData.current.ForgeType === 'skillmd') {
-          const { SkillPath } = forgeData.current
-          if (SkillPath) {
-            try {
-              await grpcFetchFileTree(SkillPath)
-              skillPath = SkillPath
-            } catch {
-              skillPath = await createTemporarySkillDirectory()
-            }
-          } else {
-            skillPath = await createTemporarySkillDirectory()
+      postAiforgeGet({ ID: id })
+        .then((res) => {
+          if (!res) {
+            yakitNotify('error', `未获取到待编辑模板的详情, 请关闭页面重试`)
+            setDelayCancelFetchDataLoading()
+            return
           }
-        }
-        setSkillPath(skillPath)
-        setSkillInitPrompt(forgeData.current.InitPrompt || '')
-      } catch (error) {
-        yakitNotify('error', '未获取到待编辑模板的详情, 请关闭页面重试')
-      } finally {
-        setDelayCancelFetchDataLoading()
-      }
+          forgeData.current = cloneDeep(res)
+          try {
+            if (infoFormRef.current) {
+              infoFormRef.current.resetFormValues()
+              infoFormRef.current.setFormValues({
+                ForgeType: forgeData.current.ForgeType || 'yak',
+                ForgeName: forgeData.current.ForgeName || '',
+                Description: forgeData.current.Description || '',
+                Tag: forgeData.current.Tag || [],
+                ToolNames: forgeData.current.ToolNames || [],
+                ToolKeywords: forgeData.current.ToolKeywords || [],
+              })
+            }
+            setPromptAction({
+              Action: forgeData.current.Action || '',
+              InitPrompt: forgeData.current.InitPrompt || '',
+              PersistentPrompt: forgeData.current.PersistentPrompt || '',
+              PlanPrompt: forgeData.current.PlanPrompt || '',
+              ResultPrompt: forgeData.current.ResultPrompt || '',
+            })
+            handleChangeContent(
+              forgeData.current.ForgeType === 'config'
+                ? forgeData.current.ForgeContent || forgeData.current.Params || ''
+                : forgeData.current.ForgeContent || '',
+            )
+          } catch (error) {}
+          setDelayCancelFetchDataLoading()
+        })
+        .catch(() => {
+          yakitNotify('error', `未获取到待编辑模板的详情, 请关闭页面重试`)
+          setDelayCancelFetchDataLoading()
+        })
     }
   })
+
+  const navigate = useNavigate()
 
   const [saveLoading, setSaveLoading] = useState(false)
   // 保存功能
   const handleSave = useMemoizedFn(() => {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve, reject) => {
       if (saveLoading) {
+        // eslint-disable-next-line prefer-promise-reject-errors
         reject()
         return
       }
@@ -234,6 +174,7 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
         if (infoFormRef.current) {
           const formData = await infoFormRef.current.getFormValues()
           if (!formData) {
+            // eslint-disable-next-line prefer-promise-reject-errors
             reject()
             return
           }
@@ -250,21 +191,8 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
             formData.ToolKeywords = undefined
           }
 
-          if (formData.ForgeType === 'skillmd') {
-            formData.SkillPath = skillPath || (await createTemporarySkillDirectory())
-            formData.ForgeContent = undefined
-            formData.ParamsUIConfig = undefined
-            formData.ToolNames = undefined
-            formData.ToolKeywords = undefined
-            formData.Action = undefined
-            formData.InitPrompt = skillInitPrompt
-            formData.PersistentPrompt = undefined
-            formData.PlanPrompt = undefined
-            formData.ResultPrompt = undefined
-          }
-
           // 解析参数UI数据
-          if (content && formData.ForgeType !== 'skillmd') {
+          if (content) {
             const codeInfo = await onCodeToInfo({ type: 'yak', code: content || '' }, true)
             if (codeInfo) {
               const params = codeInfo.CliParameter || []
@@ -277,19 +205,21 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
           }
 
           // 生成最终需要保存的数据
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const requestData: AIForge = { ...(forgeData.current || {}), ...formData } as AIForge
           // 清除无用字段里的内容
           requestData.Params = undefined
 
-          const apiFunc = requestData.Id ? grpcUpdateAIForge : grpcCreateAIForge
+          const apiFunc = requestData.Id ? postAiforgeUpdate : postAiforgeCreate
           apiFunc(requestData)
-            .then(async (res) => {
+            .then(async (res: any) => {
               let resInfo: AIForge = cloneDeep(requestData)
               if (!resInfo.Id) {
                 const resID = Number(res?.CreateID) || 0
                 if (resID) resInfo.Id = resID
                 else {
                   yakitNotify('error', `新建模板异常, 创建并未生成唯一ID号`)
+                  // eslint-disable-next-line prefer-promise-reject-errors
                   reject()
                   return
                 }
@@ -300,14 +230,18 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
               resolve()
             })
             .catch(() => {
+              // eslint-disable-next-line prefer-promise-reject-errors
               reject()
             })
         } else {
           yakitNotify('error', '未获取到模板信息表单，请关闭页面重试')
+          // eslint-disable-next-line prefer-promise-reject-errors
           reject()
           return
         }
       } catch (error) {
+        console.log('error:', error)
+        // eslint-disable-next-line prefer-promise-reject-errors
         reject()
       } finally {
         setTimeout(() => {
@@ -324,7 +258,8 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
           yakitNotify('warning', '保存成功但未获取到执行的模板数据')
           return
         }
-        emiter.emit('menuOpenPage', JSON.stringify({ route: YakitRoute.AI_Agent }))
+        navigate(`/${YakitRoute.AI_Agent}`)
+        // emiter.emit('menuOpenPage', JSON.stringify({ route: YakitRoute.AI_Agent }))
         setTimeout(() => {
           emiter.emit(
             'onReActChatEvent',
@@ -357,35 +292,16 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
   })
   // #endregion
 
-  // #region 简易模式、技能模板的右侧 Head-UI
+  // #region 简易模式下的右侧 Head-UI
   const [advanceMode, setAdvanceMode] = useState(false)
   const handleChangeAdvanceMode = useMemoizedFn((bool: boolean) => {
     setConfigTypeActiveTab(bool ? 'code' : 'prompt')
     setAdvanceMode(bool)
   })
   const [configTypeActiveTab, setConfigTypeActiveTab] = useState<'prompt' | 'code'>('prompt')
-  const [skillTab, setSkillTab] = useState<'content' | 'files'>('content')
 
   const configHeadUI = useMemo(() => {
     if (type === 'yak') return null
-
-    if (type === 'skillmd') {
-      return (
-        <div className={styles['right-header']}>
-          <div className={styles['header-left']}>
-            <YakitRadioButtons
-              buttonStyle="solid"
-              value={skillTab}
-              options={[
-                { value: 'content', label: '正文' },
-                { value: 'files', label: '文件' },
-              ]}
-              onChange={(e) => setSkillTab(e.target.value)}
-            />
-          </div>
-        </div>
-      )
-    }
 
     return (
       <div className={styles['right-header']}>
@@ -413,29 +329,20 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
         </div>
       </div>
     )
-  }, [type, advanceMode, configTypeActiveTab, skillTab])
+  }, [type, advanceMode, configTypeActiveTab])
 
   const isShowCode = useMemo(() => {
     if (type === 'yak') return true
-    if (type === 'skillmd') return false
     return configTypeActiveTab === 'code'
   }, [type, configTypeActiveTab])
   const isShowCodeBorderTop = useMemo(() => {
-    if (['yak', 'skillmd'].includes(type)) return false
+    if (type === 'yak') return false
     return configTypeActiveTab === 'code'
   }, [type, configTypeActiveTab])
   const isShowPrompt = useMemo(() => {
-    if (['yak', 'skillmd'].includes(type)) return false
+    if (type === 'yak') return false
     return configTypeActiveTab === 'prompt'
   }, [type, configTypeActiveTab])
-  const isShowCont = useMemo(() => {
-    if (['yak', 'config'].includes(type)) return false
-    return skillTab === 'content'
-  }, [type, skillTab])
-  const isShowFile = useMemo(() => {
-    if (['yak', 'config'].includes(type)) return false
-    return skillTab === 'files'
-  }, [type, skillTab])
   // #endregion
 
   // #region 注册关闭页面时的触发事件
@@ -451,10 +358,7 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
     handleSave()
       .then(() => {
         destroySaveModal()
-        emiter.emit(
-          'closePage',
-          JSON.stringify({ route: !!isModify ? YakitRoute.ModifyAIForge : YakitRoute.AddAIForge }),
-        )
+        emiter.emit('closePage', JSON.stringify({ route: isModify ? YakitRoute.ModifyAIForge : YakitRoute.AddAIForge }))
       })
       .catch(() => {})
   })
@@ -485,10 +389,10 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
                 取消
               </YakitButton>
             ),
-            onOk: (m) => {
+            onOk: () => {
               handleSaveAndExit(true)
             },
-            onCancel: (m) => {
+            onCancel: () => {
               destroySaveModal()
               emiter.emit('closePage', JSON.stringify({ route: YakitRoute.ModifyAIForge }))
             },
@@ -510,10 +414,10 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
                 取消
               </YakitButton>
             ),
-            onOk: (m) => {
+            onOk: () => {
               handleSaveAndOpen(true)
             },
-            onCancel: (m) => {
+            onCancel: () => {
               handleSaveAndOpen()
             },
             getModal: (m) => {
@@ -541,7 +445,7 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
                 取消
               </YakitButton>
             ),
-            onOk: (m) => {
+            onOk: () => {
               handleSaveAndExit()
             },
             onCancel: () => {
@@ -559,20 +463,6 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
       }
     }
   }, [isModify])
-  // #endregion
-
-  // #region 技能模板相关逻辑
-  const [skillInitPrompt, setSkillInitPrompt] = useState<string>('')
-  const [skillPath, setSkillPath] = useState('')
-  const createTemporarySkillDirectory = useMemoizedFn(async (): Promise<string> => {
-    try {
-      const path = await GenerateTempFilePath(`skill-${Date.now()}-${randomString(6)}`)
-      await grpcFetchCreateFolder(path)
-      return path
-    } catch (error) {
-      return ''
-    }
-  })
   // #endregion
 
   return (
@@ -593,14 +483,7 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
           </div>
 
           <div className={styles['forge-editor-body']}>
-            <AIForgeEditorInfoForm
-              ref={infoFormRef}
-              setType={setType}
-              setContent={handleChangeContent}
-              skillPath={skillPath}
-              setSkillPath={setSkillPath}
-              createTemporarySkillDirectory={createTemporarySkillDirectory}
-            />
+            <AIForgeEditorInfoForm ref={infoFormRef} setType={setType} setContent={handleChangeContent} />
 
             <div className={styles['forge-editor-right']}>
               {configHeadUI}
@@ -628,31 +511,6 @@ const ForgeEditor: React.FC<ForgeEditorProps> = memo((props) => {
                 >
                   <AIForgeEditorPromptAndAction promptAction={promptAction} setPromptAction={setPromptAction} />
                 </div>
-
-                <div
-                  tabIndex={isShowCont ? 1 : -1}
-                  className={classNames(styles['right-pane'], {
-                    [styles['right-pane-hidden']]: !isShowCont,
-                  })}
-                >
-                  <AIForgeMilkdown
-                    defaultValue={forgeData.current?.InitPrompt || ''}
-                    onUpdateContent={setSkillInitPrompt}
-                  />
-                </div>
-
-                <div
-                  tabIndex={isShowFile ? 1 : -1}
-                  className={classNames(styles['right-pane'], {
-                    [styles['right-pane-hidden']]: !isShowFile,
-                  })}
-                >
-                  <AIForgeEditorSkillFiles
-                    skillPath={skillPath}
-                    setSkillPath={setSkillPath}
-                    createTemporarySkillDirectory={createTemporarySkillDirectory}
-                  />
-                </div>
               </div>
             </div>
           </div>
@@ -667,7 +525,7 @@ export default ForgeEditor
 /** @name 基础信息表单 */
 const AIForgeEditorInfoForm: React.FC<AIForgeEditorInfoFormProps> = memo(
   forwardRef((props, ref) => {
-    const { setType, setContent, skillPath, setSkillPath, createTemporarySkillDirectory } = props
+    const { setType, setContent } = props
 
     useImperativeHandle(
       ref,
@@ -698,7 +556,8 @@ const AIForgeEditorInfoForm: React.FC<AIForgeEditorInfoFormProps> = memo(
       }
     })
     const handleGetFormValues = useMemoizedFn(() => {
-      return new Promise<EditorAIForge | null>(async (resolve, reject) => {
+      // eslint-disable-next-line no-async-promise-executor
+      return new Promise<EditorAIForge | null>(async (resolve) => {
         try {
           if (!form) {
             yakitNotify('error', '获取不到表单实例数据, 请关闭页面后重试')
@@ -738,18 +597,11 @@ const AIForgeEditorInfoForm: React.FC<AIForgeEditorInfoFormProps> = memo(
       return type === 'config'
     }, [type])
 
-    const handleTypeChange = useMemoizedFn(async (type: AIForge['ForgeType']) => {
+    const handleTypeChange = useMemoizedFn((type: AIForge['ForgeType']) => {
       if (type === 'yak') {
         setContent(DefaultForgeYakToCode)
-      } else if (type === 'config') {
-        setContent(DefaultForgeConfigToCode)
       } else {
-        if (!skillPath) {
-          const path = await createTemporarySkillDirectory()
-          if (path) {
-            setSkillPath(path)
-          }
-        }
+        setContent(DefaultForgeConfigToCode)
       }
     })
 
@@ -831,7 +683,7 @@ const AIForgeEditorInfoForm: React.FC<AIForgeEditorInfoFormProps> = memo(
                   dropdownClassName={styles['forge-type-select-dropdown']}
                   onChange={handleTypeChange}
                 >
-                  {DefaultForgeTypeList.map((item, index) => {
+                  {DefaultForgeTypeList.map((item) => {
                     return (
                       <YakitSelect.Option key={item.key}>
                         <div key={item.key} className={styles['forge-type-select-option']}>
@@ -926,11 +778,11 @@ const AIForgeEditorInfoForm: React.FC<AIForgeEditorInfoFormProps> = memo(
                       options={tools}
                       notFoundContent={fetchToolLoading ? '搜索中...' : '无匹配结果'}
                       onSearch={handleSearchTool}
-                    ></YakitSelect>
+                    />
                   </Form.Item>
 
                   <Form.Item name="ToolKeywords" label="工具关键词">
-                    <YakitSelect mode="tags" allowClear size="large"></YakitSelect>
+                    <YakitSelect mode="tags" allowClear size="large" />
                   </Form.Item>
                 </>
               )}
@@ -1128,7 +980,7 @@ const AIForgeEditorCodeAndParams: React.FC<AIForgeEditorCodeAndParamsProps> = me
   return (
     <div className={classNames(styles['ai-forge-editor-code-and-params'], className)}>
       <div className={styles['editor-code-wrapper']}>
-        <YakitEditor type={'yak'} value={content} setValue={setContent} />
+        <YakitEditor type="yak" value={content} setValue={setContent} />
       </div>
 
       <div className={styles['editor-params-preview-wrapper']}>
@@ -1156,16 +1008,16 @@ const AIForgeEditorCodeAndParams: React.FC<AIForgeEditorCodeAndParamsProps> = me
             }}
           >
             <div className={styles['custom-params-wrapper']}>
-              <ExecuteEnterNodeByPluginParams paramsList={requiredParams} pluginType={'yak'} isExecuting={false} />
+              <ExecuteEnterNodeByPluginParams paramsList={requiredParams} pluginType="yak" isExecuting={false} />
             </div>
 
             {groupParams.length !== 0 && (
               <div className={styles['additional-params-divider']}>
                 <div className={styles['text-style']}>额外参数 (非必填)</div>
-                <div className={styles['divider-style']}></div>
+                <div className={styles['divider-style']} />
               </div>
             )}
-            <ExtraParamsNodeByType extraParamsGroup={groupParams} pluginType={'yak'} />
+            <ExtraParamsNodeByType extraParamsGroup={groupParams} pluginType="yak" />
 
             <div className={styles['to-end']}>已经到底啦～</div>
           </Form>
@@ -1174,495 +1026,3 @@ const AIForgeEditorCodeAndParams: React.FC<AIForgeEditorCodeAndParamsProps> = me
     </div>
   )
 })
-
-/** @name 正文md */
-const AIForgeMilkdownBase: React.FC<AIForgeMilkdownBaseProps> = memo((props) => {
-  const { readonly, defaultValue, onUpdateContent, onUpdateEditor, classNameWrapper } = props
-  const { get, loading } = useEditor(
-    (root) => {
-      const placeholder = [
-        placeholderConfig,
-        placeholderPlugin,
-        (ctx: Ctx) => () => {
-          ctx.update(placeholderConfig.key, (prev) => ({
-            ...prev,
-            text: 'Please enter...',
-          }))
-        },
-      ]
-
-      return (
-        Editor.make()
-          .config((ctx) => {
-            ctx.set(rootCtx, root)
-            // 配置为只读
-            ctx.set(editorViewOptionsCtx, {
-              editable: () => !readonly,
-            })
-            ctx.set(defaultValueCtx, defaultValue || '')
-
-            const listener = ctx.get(listenerCtx)
-            listener.markdownUpdated((ctx, nextMarkdown, prevMarkdown) => {
-              const isSave = nextMarkdown !== prevMarkdown
-              if (isSave) {
-                onUpdateContent?.(nextMarkdown)
-              }
-            })
-          })
-          .use(commonmark)
-          .use(gfm)
-          .use(gapCursorPlugin)
-          .use(history)
-          .use(clipboard)
-          // placeholder
-          .use(placeholder)
-          // listener
-          .use(listener)
-      )
-    },
-    [readonly, defaultValue],
-  )
-  useEffect(() => {
-    if (loading) return
-    const editor = get()
-    if (editor) {
-      onUpdateEditor?.(editor)
-    }
-    editor?.action((ctx) => {
-      // 简单阻止所有文件粘贴
-      ctx.get(editorViewCtx).dom.addEventListener('paste', (e) => {
-        const clipboardData = e.clipboardData
-        if (clipboardData?.types.includes('Files')) {
-          e.preventDefault()
-        }
-      })
-    })
-  }, [loading, get])
-  useEffect(() => {
-    return () => {
-      const value = get()?.action(getMarkdown()) || ''
-      onUpdateContent?.(value)
-    }
-  }, [])
-
-  return (
-    <div className={classNames(styles['ai-forge-editor-skill-milkdown'], classNameWrapper)}>
-      <Milkdown />
-    </div>
-  )
-})
-const AIForgeMilkdown: React.FC<AIForgeMilkdownBaseProps> = React.memo((props) => {
-  return (
-    <MilkdownProvider>
-      <ProsemirrorAdapterProvider>
-        <AIForgeMilkdownBase {...props} />
-      </ProsemirrorAdapterProvider>
-    </MilkdownProvider>
-  )
-})
-
-/** @name 文件树和代码展示 */
-const AIForgeEditorSkillFiles: React.FC<AIForgeEditorSkillFilesProps> = memo((props) => {
-  const { skillPath, setSkillPath, createTemporarySkillDirectory } = props
-  const treeRef = useRef<FileTreeSystemListRef>(null)
-  const operatingNode = useRef<FileNodeProps>()
-  const [selected, setSelected] = useState<FileNodeProps>()
-  const watchToken = useRef<string>()
-  const updateWatchTokenFun = useMemoizedFn((token: string) => {
-    watchToken.current = token
-  })
-  const firstOpenRef = useRef<boolean>(false)
-
-  const updateTreeData = useMemoizedFn<React.Dispatch<React.SetStateAction<FileNodeProps[]>>>((value) => {
-    if (!value.length) {
-      setSkillPath('')
-    } else {
-      if (!firstOpenRef.current) {
-        firstOpenRef.current = true
-        positioningSKILLFile(value[0].path)
-      }
-      setSkillPath(value[0].path)
-    }
-  })
-
-  const positioningSKILLFile = useMemoizedFn(async (basePath) => {
-    try {
-      await treeRef.current?.loadFolder(basePath)
-      const path = await getPathJoin(basePath, 'SKILL.md')
-      const node = treeRef.current?.getDetailMap(path)
-      if (node) {
-        const event: FileMonitorProps = {
-          Id: watchToken.current!,
-          CreateEvents: [],
-          DeleteEvents: [],
-          ChangeEvents: [
-            {
-              Op: 'markReadOnly',
-              Path: node.path,
-              IsDir: node.isFolder,
-            },
-          ],
-        }
-        emiter.emit('onRefreshYakRunnerFileTree', JSON.stringify(event))
-        setSelected({ ...node, isReadOnly: true })
-      }
-    } catch (error) {}
-  })
-
-  const menuData = useMemo(
-    () => [
-      { key: 'createFile', label: '新建文件', disabled: !skillPath },
-      { key: 'createFolder', label: '新建文件夹' },
-    ],
-    [skillPath],
-  )
-  const handleMenuSelect = useMemoizedFn(async (key: string) => {
-    switch (key) {
-      case 'createFile':
-        creatTempTreeNode(false)
-        break
-      case 'createFolder':
-        if (!skillPath) {
-          const path = await createTemporarySkillDirectory()
-          if (path) {
-            setSkillPath(path)
-          }
-        } else {
-          creatTempTreeNode(true)
-        }
-        break
-      default:
-        break
-    }
-  })
-
-  const creatTempTreeNode = useMemoizedFn(async (isFolder: boolean) => {
-    let basePath: string = skillPath
-    if (selected?.path) {
-      basePath = selected.isFolder ? selected.path : selected.parent || skillPath
-    }
-    try {
-      // 先加载当前文件夹
-      await treeRef.current?.loadFolder(basePath)
-      let path = await getPathJoin(basePath, `${uuidv4()}-create`)
-      if (!path.length) return
-      // 通知新增临时文件夹或文件
-      const event: FileMonitorProps = {
-        Id: watchToken.current!,
-        CreateEvents: [
-          {
-            Path: path,
-            Op: 'createTemp',
-            IsDir: isFolder,
-          },
-        ],
-        DeleteEvents: [],
-        ChangeEvents: [],
-      }
-      emiter.emit('onRefreshYakRunnerFileTree', JSON.stringify(event))
-    } catch (error) {}
-  })
-
-  const treeMenuData = useMemoizedFn((node) => {
-    return [
-      {
-        key: 'openFolder',
-        label: '在文件夹中显示',
-      },
-      {
-        key: 'path',
-        label: '复制路径',
-      },
-      {
-        key: 'relativePath',
-        label: '复制相对路径',
-      },
-      {
-        type: 'divider',
-      },
-      {
-        key: 'delete',
-        label: <span style={{ color: 'var(--Colors-Use-Error-Primary)' }}>删除</span>,
-      },
-      {
-        key: 'rename',
-        label: '重命名',
-      },
-    ] satisfies YakitMenuItemType[]
-  })
-  const handleTreeDropdown = useMemoizedFn(async (treeNode: FileNodeProps, key: string) => {
-    operatingNode.current = treeNode
-    switch (key) {
-      case 'openFolder':
-        onOpenLocalFileByPath(treeNode.path)
-        break
-      case 'path':
-        setClipboardText(treeNode.path)
-        break
-      case 'relativePath':
-        const relativePath = await getRelativePath(skillPath, treeNode.path)
-        setClipboardText(relativePath)
-        break
-      case 'delete':
-        setShowDelete(true)
-        break
-      case 'rename':
-        const event: FileMonitorProps = {
-          Id: watchToken.current!,
-          CreateEvents: [],
-          DeleteEvents: [],
-          ChangeEvents: [
-            {
-              Op: 'renameFront',
-              Path: treeNode.path,
-              IsDir: treeNode.isFolder,
-            },
-          ],
-        }
-        emiter.emit('onRefreshYakRunnerFileTree', JSON.stringify(event))
-        break
-      default:
-        break
-    }
-  })
-
-  const [showDelete, setShowDelete] = useState<boolean>(false)
-  const onDelete = useMemoizedFn(async () => {
-    try {
-      if (!operatingNode.current) return
-      const { path, isFolder } = operatingNode.current
-      await grpcFetchDeleteFile(path)
-      const event: FileMonitorProps = {
-        Id: watchToken.current!,
-        CreateEvents: [],
-        DeleteEvents: [
-          {
-            Path: path,
-            Op: 'delete',
-            IsDir: isFolder,
-          },
-        ],
-        ChangeEvents: [],
-      }
-      emiter.emit('onRefreshYakRunnerFileTree', JSON.stringify(event))
-      yakitNotify('success', '删除成功')
-    } catch (error) {
-      yakitNotify('error', '删除失败')
-    } finally {
-      operatingNode.current = undefined
-      setShowDelete(false)
-    }
-  })
-  const onTreeNodeDelFun = useMemoizedFn((path: string) => {
-    if (path === skillPath) {
-      setSelected(undefined)
-      setSkillPath('')
-    }
-  })
-
-  const filePreviewData = useMemo(() => {
-    if (selected?.isFolder) return undefined
-    return selected
-  }, [selected])
-
-  return (
-    <div className={styles['ai-forge-editor-skill-files']}>
-      <YakitResizeBox
-        isVer={false}
-        lineDirection="left"
-        firstNode={
-          <div className={styles['fileTree-wrapper']}>
-            <div className={styles['fileTree-header']}>
-              <div className={styles['title-style']}>文件列表</div>
-              <div className={styles['extra']}>
-                <Tooltip title={'刷新'}>
-                  <YakitButton
-                    type="text2"
-                    icon={<OutlineRefreshIcon />}
-                    onClick={() => {
-                      treeRef.current?.onResetTreeList()
-                    }}
-                  />
-                </Tooltip>
-                <YakitDropdownMenu
-                  menu={{
-                    data: menuData,
-                    onClick: ({ key, keyPath }) => handleMenuSelect(key),
-                  }}
-                  dropdown={{
-                    trigger: ['click'],
-                    placement: 'bottomLeft',
-                  }}
-                >
-                  <YakitButton type="text2" icon={<OutlinePluscircleIcon />} />
-                </YakitDropdownMenu>
-              </div>
-            </div>
-            <div className={styles['fileTree-tree']}>
-              <FileTreeSystemList
-                ref={treeRef}
-                key={skillPath}
-                updateWatchTokenFun={updateWatchTokenFun}
-                onTreeNodeDelFun={onTreeNodeDelFun}
-                path={skillPath}
-                setTreeData={updateTreeData}
-                isOpen={false}
-                isFolder={true}
-                selected={selected}
-                setSelected={setSelected}
-                treeMenuData={treeMenuData}
-                handleTreeDropdown={handleTreeDropdown}
-              />
-              <YakitHint
-                visible={showDelete}
-                title={`是否要删除${operatingNode.current?.name}`}
-                content={`确认删除后将会彻底删除（windows系统将会移入回收站）`}
-                onOk={onDelete}
-                onCancel={() => setShowDelete(false)}
-              />
-            </div>
-          </div>
-        }
-        firstRatio="15%"
-        firstMinSize="300px"
-        secondNode={<AIForgeSkillFileCont data={filePreviewData} />}
-        secondRatio="85%"
-        secondMinSize="400px"
-      ></YakitResizeBox>
-    </div>
-  )
-})
-/** @name 文件树代码展示 */
-const AIForgeSkillFileCont: React.FC<{ data?: FileNodeProps }> = ({ data }) => {
-  const path = data?.path ?? ''
-  const name = data?.name ?? ''
-  const icon = data?.icon ?? 'default'
-  const isReadOnly = data?.isReadOnly ?? false
-
-  const [value, setValue] = useState<string>('')
-  const [showFileHint, setShowFileHint] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [fileInfo, setFileInfo] = useState<FileInfo | null>(null)
-  const [isBinary, setIsBinary] = useState(false)
-
-  const iconPath = useMemo(() => {
-    return KeyToIcon[icon]?.iconPath ?? ''
-  }, [icon])
-
-  const fetchFileInfo = useMemoizedFn(async (targetPath: string) => {
-    if (!targetPath) return
-    try {
-      // 取消上一次请求
-      if (loading) {
-        ipcRenderer.invoke('cancel-ReadFile')
-      }
-      setLoading(true)
-      const { size, isPlainText } = await getCodeSizeByPath(targetPath)
-      if (size > MAX_FILE_SIZE_BYTES) {
-        setFileInfo(null)
-        setShowFileHint(true)
-        return
-      }
-      setIsBinary(!isPlainText)
-      const content = await getCodeByPath(targetPath)
-      const file = await getLocalFileName(targetPath)
-      setFileInfo({ path: targetPath, size, isPlainText, content, language: monacaLanguageType(file.suffix) })
-    } catch (err) {
-      yakitNotify('error', `Failed to load file:${err}`)
-    } finally {
-      setLoading(false)
-    }
-  })
-
-  useEffect(() => {
-    setFileInfo(null)
-    setShowFileHint(false)
-    if (path) {
-      fetchFileInfo(path)
-    }
-  }, [path])
-
-  useEffect(() => {
-    if (fileInfo?.content) {
-      setValue(fileInfo?.content)
-    } else {
-      setValue('')
-    }
-  }, [fileInfo])
-
-  // 自动保存
-  const autoSaveCurrentFile = useDebounceFn(
-    (content: string) => {
-      grpcFetchSaveFile(path, content)
-    },
-    {
-      wait: 500,
-    },
-  )
-  const updateAreaInputInfo = useMemoizedFn((content: string) => {
-    autoSaveCurrentFile.run(content)
-  })
-
-  if (!data) {
-    return <></>
-  }
-
-  return (
-    <div className={styles['ai-forge-skill-file-cont']}>
-      <div className={styles['ai-forge-skill-file-cont-title']}>
-        <div className={styles['ai-forge-skill-file-cont-title-icon']}>
-          <div className={styles['ai-forge-skill-file-cont-title-icon-left']}>
-            <img src={iconPath} alt="" />
-            <span>{data.isDelete ? <del>{name}</del> : name}</span>
-          </div>
-          <div className={styles['ai-forge-skill-file-cont-title-icon-right']}>
-            <CopyComponents copyText={fileInfo?.content || ''} iconColor="var(--Colors-Use-Neutral-Text-3-Secondary)" />
-            <YakitButton
-              type="text2"
-              size="middle"
-              icon={<OutlineFolderopenIcon />}
-              onClick={() => onOpenLocalFileByPath(path)}
-            />
-          </div>
-        </div>
-        <div className={styles['ai-forge-skill-file-cont-title-path']}>{path}</div>
-      </div>
-      <div className={styles['ai-forge-skill-file-cont-content']}>
-        <YakitSpin spinning={loading}>
-          {isBinary ? (
-            <Result
-              status={'warning'}
-              subTitle={'此文件是二进制文件或使用了不受支持的文本编码，所以无法在文本编辑器中显示。'}
-              extra={[
-                <YakitButton size="max" type="primary" onClick={() => setIsBinary(false)}>
-                  仍然打开
-                </YakitButton>,
-              ]}
-            />
-          ) : (
-            <YakitEditor
-              key={fileInfo?.path || 'skill-empty-editor'}
-              value={value}
-              setValue={updateAreaInputInfo}
-              type={fileInfo?.language || 'plaintext'}
-              readOnly={isReadOnly}
-            />
-          )}
-        </YakitSpin>
-
-        {/* 文件过大弹窗 */}
-        <YakitHint
-          visible={showFileHint}
-          title="文件警告"
-          content="文件过大，无法预览"
-          cancelButtonProps={{ style: { display: 'none' } }}
-          onOk={() => {
-            setFileInfo(null)
-            setShowFileHint(false)
-          }}
-          okButtonText={'知道了'}
-        />
-      </div>
-    </div>
-  )
-}
