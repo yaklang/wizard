@@ -15,7 +15,6 @@ import {
     message,
     Select,
     Tooltip,
-    Tabs,
     Form,
     Input,
     DatePicker,
@@ -135,7 +134,6 @@ const TaskList: React.FC = () => {
     const projectId = searchParams.get('project_id');
     const taskId = searchParams.get('task_id');
 
-    const [activeTab, setActiveTab] = useState('defect');
     const [data, setData] = useState<TSSATask[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -2003,16 +2001,6 @@ const TaskList: React.FC = () => {
         <div
             className={`ssa-task-list ${selectedTaskIds.size > 0 ? 'has-selection-bar' : ''}`}
         >
-            <Tabs
-                activeKey={activeTab}
-                onChange={setActiveTab}
-                items={[
-                    { key: 'defect', label: '缺陷检测' },
-                    { key: 'compliance', label: '合规检测' },
-                    { key: 'provenance', label: '溯源检测' },
-                ]}
-            />
-
             <div className="filter-bar">
                 <Form form={form} layout="inline" onFinish={handleSearch}>
                     <Row gutter={[16, 16]} style={{ width: '100%' }}>
