@@ -281,40 +281,52 @@
 
         .task-stats-actions {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: max-content auto;
             align-items: center;
-            column-gap: 32px;
-            flex: 0 0 auto;
-            width: clamp(460px, 34vw, 660px);
+            column-gap: 24px;
+            flex: 0 1 auto;
+            width: auto;
+            max-width: 100%;
+            min-width: 0;
             margin-left: auto;
 
             .vulnerability-stats {
-                display: flex;
+                display: inline-flex;
+                flex-wrap: nowrap;
                 align-items: center;
-                gap: 16px;
-                min-width: 0;
+                gap: 12px;
+                flex-shrink: 0;
                 justify-self: start;
+                max-width: 100%;
 
                 .stat-label {
                     color: var(--irify-text-secondary);
                     font-size: 14px;
                     white-space: nowrap;
+                    flex-shrink: 0;
                 }
 
                 .stat-boxes {
-                    display: flex;
-                    gap: 8px;
-                    flex-wrap: wrap;
+                    display: inline-flex;
+                    gap: 6px;
+                    flex-wrap: nowrap;
+                    align-items: center;
+                    flex: 0 1 auto;
+                    min-width: 0;
+                    overflow-x: auto;
+                    overflow-y: hidden;
 
                     .stat-box {
-                        display: flex;
+                        display: inline-flex;
                         align-items: center;
                         gap: 8px;
-                        padding: 2px 8px;
+                        padding: 2px 6px;
                         border-radius: 2px;
                         color: #fff;
                         font-size: 12px;
-                        min-width: 50px;
+                        min-width: 44px;
+                        flex-shrink: 0;
+                        white-space: nowrap;
                         justify-content: center;
 
                         &.critical {
