@@ -373,6 +373,41 @@ const TaskList: React.FC = () => {
         };
     }, [disconnect]);
 
+    const dataRef = useRef(data);
+    dataRef.current = data;
+
+    useEffect(() => {
+        const POLL_INTERVAL = 5000;
+        const isRunning = (s: string) =>
+            s !== 'completed' && s !== 'failed' && s !== 'canceled';
+
+        const timer = setInterval(async () => {
+            const current = dataRef.current;
+            if (!current.some((t) => isRunning(t.status))) return;
+
+            try {
+                const params: TSSATaskQueryParams = {
+                    page: 1,
+                    limit: Math.max(current.length, limit),
+                };
+                if (projectId) params.project_id = parseInt(projectId, 10);
+                if (taskId) params.task_id = taskId;
+
+                const res = await querySSATasks(params);
+                const freshList = res.data?.list ?? [];
+                const freshMap = new Map(freshList.map((t) => [t.task_id, t]));
+
+                setData((prev) =>
+                    prev.map((old) => freshMap.get(old.task_id) ?? old),
+                );
+            } catch {
+                // silent
+            }
+        }, POLL_INTERVAL);
+
+        return () => clearInterval(timer);
+    }, [limit, projectId, taskId]);
+
     const handleLoadMore = useCallback(() => {
         if (loading || !hasMore) return;
         const filters = form.getFieldsValue();
@@ -1132,7 +1167,7 @@ const TaskList: React.FC = () => {
         const progressPercent = showImportProgress
             ? hasImportSegments
                 ? importPercent
-                : 1
+                : scanPercent
             : scanPercent;
         const createdAtText = task.created_at
             ? dayjs.unix(task.created_at).format('YYYY-MM-DD HH:mm:ss')
