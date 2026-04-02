@@ -52,6 +52,7 @@ import {
     querySSAArtifactEvents,
     cancelSSATask,
     deleteSSATaskRecord,
+    downloadSSATaskDiagnosticLog,
 } from '@/apis/SSAScanTaskApi';
 import { getSSARiskFilterOptions } from '@/apis/SSARiskApi';
 import type {
@@ -70,6 +71,7 @@ import SSAReportExportModal, {
     type TSSAReportExportFormValues,
 } from '@/compoments/SSAReportExportModal';
 import { getRoutePath, RouteKey } from '@/utils/routeMap';
+import { saveFile } from '@/utils';
 import { useEventSource } from '@/hooks';
 import { submitSSAReportExportTask } from '@/apis/AsyncTaskApi';
 import dayjs from 'dayjs';
@@ -774,6 +776,22 @@ const TaskList: React.FC = () => {
         [cancelTasksByIDs, deleteTaskRecordsByIDs, isSSATaskTerminalStatus],
     );
 
+    const handleDownloadDiagnosticLog = useCallback(async (task: TSSATask) => {
+        const hide = message.loading('正在生成诊断日志…', 0);
+        try {
+            const res = await downloadSSATaskDiagnosticLog(task.task_id);
+            if (res?.data) {
+                const name = task.project_name || task.task_id.slice(0, 8);
+                saveFile(res.data, `scan_diagnostic_${name}_${Date.now()}.zip`);
+                message.success('诊断日志已下载');
+            }
+        } catch {
+            message.error('下载诊断日志失败');
+        } finally {
+            hide();
+        }
+    }, []);
+
     const handleTaskMoreAction = useCallback(
         (task: TSSATask, key: string) => {
             switch (key) {
@@ -784,7 +802,7 @@ const TaskList: React.FC = () => {
                     message.info('修改访问权限功能开发中');
                     return;
                 case 'download_log':
-                    message.info('下载日志功能开发中');
+                    handleDownloadDiagnosticLog(task);
                     return;
                 case 'delete':
                     handleTaskDelete(task);
@@ -793,7 +811,7 @@ const TaskList: React.FC = () => {
                     return;
             }
         },
-        [handleTaskDelete, toggleTaskDetail],
+        [handleTaskDelete, toggleTaskDetail, handleDownloadDiagnosticLog],
     );
 
     const handleTaskCardClick = useCallback(
