@@ -1464,9 +1464,11 @@ const TaskPageList = () => {
                             const taskGroupName = getTaskGroupName(item);
                             const lastRun = getLastRunText(item);
                             const nextRun = getNextRunText(item);
-                            const checked = ['running', 'enabled'].includes(
-                                item.status || '',
-                            );
+                            const checked = [
+                                'running',
+                                'enabled',
+                                'waiting',
+                            ].includes(item.status || '');
                             const menuItems: MenuProps['items'] = [
                                 {
                                     key: 'detail',
