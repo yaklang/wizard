@@ -58,6 +58,21 @@ const querySSAArtifactEvents = (
         { params },
     );
 
+// GET /ssa/task/{taskId}/diagnostic-log - 下载扫描诊断日志
+const downloadSSATaskDiagnosticLog = (
+    taskId: string,
+): Promise<ResponseData<Blob>> =>
+    axios.get<never, ResponseData<Blob>>(`/ssa/task/${taskId}/diagnostic-log`, {
+        responseType: 'blob',
+        transformResponse: [
+            (data) => ({
+                data,
+                code: 200,
+                msg: '',
+            }),
+        ],
+    });
+
 export {
     scanSSAProject,
     querySSATasks,
@@ -65,4 +80,5 @@ export {
     deleteSSATaskRecord,
     querySSAArtifactSummary,
     querySSAArtifactEvents,
+    downloadSSATaskDiagnosticLog,
 };

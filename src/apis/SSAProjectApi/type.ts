@@ -14,10 +14,39 @@ interface TSSAProject {
     risk_count?: number;
     latest_scan_mode?: string;
     config?: TSSAProjectConfig;
+    execution_preference?: TProjectExecutionPreference;
+}
+
+interface TSSAProjectFavoriteItem extends TSSAProject {
+    pinned_at?: number;
+}
+
+export interface TProjectExecutionPreference {
+    scan_node?: {
+        mode?: 'auto' | 'manual';
+        node_id?: string;
+    };
+    scan_schedule?: {
+        enabled?: boolean;
+        time?: string;
+        interval_type?: number;
+        interval_time?: number;
+        sched_type?: number;
+    };
+}
+
+export interface TSSAProjectSourceArchiveUpload {
+    url: string;
+    path: string;
+    object_key: string;
+    bucket: string;
+    file_name: string;
+    content_type: string;
+    size_bytes: number;
+    uploaded_at: number;
 }
 
 // SSA 项目配置类型
-// SSA Project Configuration
 export interface TSSAProjectConfig {
     BaseInfo?: {
         project_id?: number;
@@ -33,11 +62,15 @@ export interface TSSAProjectConfig {
         branch?: string;
         path?: string;
         auth?: {
-            kind?: 'none' | 'basic' | 'ssh';
+            kind?: string;
             user_name?: string;
             password?: string;
             key_path?: string;
             key_content?: string;
+            credential_id?: number;
+            credential_name?: string;
+            secret_hint?: string;
+            secret_set?: boolean;
         };
         proxy?: {
             url?: string;
@@ -50,17 +83,6 @@ export interface TSSAProjectConfig {
             tech_stack_rules?: string[];
             special_rules?: string[];
         };
-    };
-    ScanNode?: {
-        mode?: 'auto' | 'manual';
-        node_id?: string;
-    };
-    ScanSchedule?: {
-        enabled?: boolean;
-        time?: string; // HH:mm
-        interval_type?: number; // 1=day,2=hour,3=minute
-        interval_time?: number;
-        sched_type?: number;
     };
     // SyntaxFlow scan manager options (optional).
     SyntaxFlowScan?: {
@@ -78,10 +100,15 @@ export interface TSSAProjectConfig {
 // SSA 项目请求类型
 interface TSSAProjectRequest {
     config?: TSSAProjectConfig;
+    execution_preference?: TProjectExecutionPreference;
 }
 
 // SSA 项目列表响应类型
 type TSSAProjectListResponse = TableResponseData<TSSAProject>;
+type TSSAProjectFavoriteListResponse =
+    TableResponseData<TSSAProjectFavoriteItem> | {
+        list: TSSAProjectFavoriteItem[];
+    };
 
 export type TSSAProjectDeleteMode = 'config-only' | 'cascade';
 
@@ -122,4 +149,10 @@ export interface TRuleGroup {
     display_name: string;
 }
 
-export type { TSSAProject, TSSAProjectRequest, TSSAProjectListResponse };
+export type {
+    TSSAProject,
+    TSSAProjectFavoriteItem,
+    TSSAProjectRequest,
+    TSSAProjectListResponse,
+    TSSAProjectFavoriteListResponse,
+};

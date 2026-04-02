@@ -139,31 +139,33 @@ export const YakCodemirror: React.FC<YakCodemirrorProps> = (props) => {
 
     useEffect(() => {
         if (!codemirrorEditor || !highLight) return;
-        // 清除之前的所有高亮
+
         const marks = codemirrorEditor.getAllMarks();
         marks.forEach((mark: any) => mark.clear());
 
-        // from: {line: 0, ch: 0}, // 开始位置：第1行，第1个字符
-        // to: {line: 2, ch: 5} // 结束位置：第3行，第6个字符
-        // 由于上诉原因，因此需要对传入数据做处理
         const { from, to } = highLight;
         const newFrom = { line: from.line - 1, ch: from.ch - 1 };
         const newTo = { line: to.line - 1, ch: to.ch - 1 };
 
-        // 添加新的高亮
+        const highlightClass = highLight.className || styles['highlight-text'];
         codemirrorEditor.markText(newFrom, newTo, {
-            className: highLight.className || styles['highlight-text'],
+            className: highlightClass,
             css: 'background-color: var(--Colors-Use-Yellow-Bg)',
         });
 
-        // 滚动到高亮位置
-        codemirrorEditor.scrollIntoView(
-            { line: newFrom.line, ch: newFrom.ch },
-            100,
-        );
+        // height:auto + viewportMargin:Infinity 使 CodeMirror 全量展开，
+        // 滚动由外部容器处理，CM 内部 scrollIntoView 无效，改用 DOM 原生滚动
+        const timer = setTimeout(() => {
+            codemirrorEditor.refresh();
+            const wrapper = codemirrorEditor.getWrapperElement();
+            const el = wrapper.querySelector('.' + CSS.escape(highlightClass));
+            if (el) {
+                el.scrollIntoView({ block: 'center' });
+            }
+            codemirrorEditor.setCursor(newFrom);
+        }, 50);
 
-        // 设置光标位置（即使是只读模式也能帮助定位）
-        codemirrorEditor.setCursor(newFrom);
+        return () => clearTimeout(timer);
     }, [codemirrorEditor, highLight]);
 
     return (

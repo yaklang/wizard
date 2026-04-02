@@ -255,7 +255,7 @@
         box-shadow:
             0 18px 40px rgba(0, 0, 0, 0.35),
             0 6px 16px rgba(0, 0, 0, 0.28);
-        backdrop-filter: blur(8px);
+
         animation: nodeSelectionBarRise 0.22s ease-out;
 
         @keyframes nodeSelectionBarRise {

@@ -33,8 +33,10 @@
         // 压缩标题高度
         h4.ant-typography {
             margin-bottom: 4px;
-            font-size: 15px;
+            font-size: 16px;
+            font-weight: 700;
             line-height: 1.4;
+            color: var(--irify-text);
         }
 
         .risk-meta {
@@ -46,6 +48,7 @@
 
             .ant-typography {
                 font-size: 12px;
+                font-weight: 500;
             }
 
             .ant-divider {
@@ -1151,32 +1154,32 @@
                 color: var(--irify-text-secondary);
                 border-radius: 50%;
                 font-size: 11px;
-                font-weight: 600;
+                font-weight: 700;
                 flex-shrink: 0;
             }
             
             .node-ir {
                 flex: 1;
                 min-width: 0;
-                font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+                font-family: var(--irify-code-family);
                 font-size: 13px;
                 color: var(--irify-text);
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                font-weight: 500;
+                font-weight: 600;
             }
             
             .node-file {
                 flex-shrink: 0;
                 padding: 3px 8px;
-                background: rgba(82, 196, 26, 0.1);
-                border: 1px solid rgba(82, 196, 26, 0.2);
+                background: rgba(82, 196, 26, 0.12);
+                border: 1px solid rgba(82, 196, 26, 0.25);
                 border-radius: 4px;
                 font-size: 11px;
                 color: #52c41a;
                 white-space: nowrap;
-                font-weight: 500;
+                font-weight: 600;
                 
                 &:hover {
                     background: rgba(82, 196, 26, 0.2);

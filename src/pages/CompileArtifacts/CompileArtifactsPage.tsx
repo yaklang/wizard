@@ -2,11 +2,11 @@ import React, { useCallback, useEffect } from 'react';
 import {
     AppstoreOutlined,
     ClusterOutlined,
+    CopyOutlined,
     DatabaseOutlined,
     EyeOutlined,
     MoreOutlined,
     ReloadOutlined,
-    SearchOutlined,
     SyncOutlined,
     WarningOutlined,
 } from '@ant-design/icons';
@@ -38,6 +38,9 @@ import { useSafeState } from 'ahooks';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
+import { SiPhp, SiJavascript, SiPython } from 'react-icons/si';
+import { FaJava } from 'react-icons/fa';
+import { TbBrandGolang } from 'react-icons/tb';
 
 import {
     fetchCompileArtifactDetail,
@@ -119,16 +122,6 @@ const formatTime = (value?: string) => {
     return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm:ss') : '-';
 };
 
-const formatUnixLikeTime = (value?: string) => {
-    const raw = (value || '').trim();
-    if (!/^\d{10,13}$/.test(raw)) return '';
-    const num = Number(raw);
-    if (!Number.isFinite(num) || num <= 0) return '';
-    const parsed =
-        raw.length >= 13 ? dayjs(num) : dayjs.unix(num);
-    return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm') : '';
-};
-
 const formatRelativeTime = (value?: string) => {
     if (!value) return '-';
     const parsed = dayjs(value);
@@ -151,43 +144,9 @@ const renderLanguageTag = (language?: string) => {
     );
 };
 
-const formatHeadDisplay = (value?: string) => {
-    const raw = (value || '').trim();
-    if (!raw) {
-        return { primary: '-', suffixDisplay: '' };
-    }
-
-    const atIndex = raw.lastIndexOf('@');
-    if (atIndex <= 0 || atIndex >= raw.length - 1) {
-        return { primary: raw, suffixDisplay: '' };
-    }
-
-    const primary = raw.slice(0, atIndex);
-    const suffix = raw.slice(atIndex + 1);
-    const directTime = formatUnixLikeTime(suffix);
-    if (directTime) {
-        return { primary, suffixDisplay: `@${directTime}` };
-    }
-
-    const trailingTimeMatch = suffix.match(/^(.*?)-(\d{10,13})$/);
-    if (trailingTimeMatch) {
-        const suffixLabel = trailingTimeMatch[1].trim();
-        const formatted = formatUnixLikeTime(trailingTimeMatch[2]);
-        if (formatted) {
-            return {
-                primary,
-                suffixDisplay: suffixLabel
-                    ? `@${suffixLabel} · ${formatted}`
-                    : `@${formatted}`,
-            };
-        }
-    }
-
-    return { primary, suffixDisplay: `@${suffix}` };
-};
-
 const renderHealthBadge = (healthStatus?: string, reason?: string) => {
-    const config = healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
+    const config =
+        healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
     const tooltipText =
         healthStatus === 'healthy'
             ? '当前 HEAD 的 SSA IR 正常，扫描任务可直接复用'
@@ -203,8 +162,12 @@ const renderHealthBadge = (healthStatus?: string, reason?: string) => {
     );
 };
 
-const renderInlineHealthIndicator = (healthStatus?: string, reason?: string) => {
-    const config = healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
+const renderInlineHealthIndicator = (
+    healthStatus?: string,
+    reason?: string,
+) => {
+    const config =
+        healthConfig[healthStatus || 'healthy'] || healthConfig.healthy;
     const tooltipText =
         healthStatus === 'healthy'
             ? '当前 HEAD 的 SSA IR 正常，扫描任务可直接复用'
@@ -274,8 +237,12 @@ const readerColumns: ColumnsType<TCompileArtifactReaderItem> = [
         width: 220,
         render: (_, record) => (
             <div className="reader-task-cell">
-                <div className="reader-task-id">{middleEllipsis(record.task_id, 10)}</div>
-                <div className="reader-task-meta">{record.node_id || '自动调度节点'}</div>
+                <div className="reader-task-id">
+                    {middleEllipsis(record.task_id, 10)}
+                </div>
+                <div className="reader-task-meta">
+                    {record.node_id || '自动调度节点'}
+                </div>
             </div>
         ),
     },
@@ -287,10 +254,17 @@ const readerColumns: ColumnsType<TCompileArtifactReaderItem> = [
             <Space direction="vertical" size={6}>
                 <Space size={6}>
                     {renderStatusTag(record.status)}
-                    <Tag>{phaseLabelMap[record.phase || ''] || record.phase || '-'}</Tag>
+                    <Tag>
+                        {phaseLabelMap[record.phase || ''] ||
+                            record.phase ||
+                            '-'}
+                    </Tag>
                 </Space>
                 <Progress
-                    percent={Math.max(0, Math.min(100, Number(record.progress || 0)))}
+                    percent={Math.max(
+                        0,
+                        Math.min(100, Number(record.progress || 0)),
+                    )}
                     size="small"
                     status={record.status === 'failed' ? 'exception' : 'active'}
                     showInfo={false}
@@ -303,7 +277,9 @@ const readerColumns: ColumnsType<TCompileArtifactReaderItem> = [
         key: 'program',
         render: (_, record) => (
             <div className="reader-task-cell">
-                <div className="reader-task-id">{middleEllipsis(record.program_name, 12)}</div>
+                <div className="reader-task-id">
+                    {middleEllipsis(record.program_name, 12)}
+                </div>
                 <div className="reader-task-meta">
                     {formatTime(record.started_at || record.created_at)}
                 </div>
@@ -321,7 +297,6 @@ const CompileArtifactsPage: React.FC = () => {
     const [loadingMore, setLoadingMore] = useSafeState(false);
     const [page, setPage] = useSafeState(1);
     const [limit, setLimit] = useSafeState(20);
-    const [total, setTotal] = useSafeState(0);
     const [hasMore, setHasMore] = useSafeState(true);
 
     const [queryInput, setQueryInput] = useSafeState('');
@@ -332,8 +307,35 @@ const CompileArtifactsPage: React.FC = () => {
     const [detailOpen, setDetailOpen] = useSafeState(false);
     const [detailLoading, setDetailLoading] = useSafeState(false);
     const [detail, setDetail] = useSafeState<TCompileArtifactDetail>();
-    const [selectedRecord, setSelectedRecord] = useSafeState<TCompileArtifactItem>();
+    const [selectedRecord, setSelectedRecord] =
+        useSafeState<TCompileArtifactItem>();
     const [rebuildSeriesKey, setRebuildSeriesKey] = useSafeState<string>('');
+
+    const copyText = useCallback(async (value: string, label: string) => {
+        const text = String(value || '').trim();
+        if (!text || text === '-') {
+            message.warning(`暂无可复制的${label}`);
+            return;
+        }
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            message.success(`${label}已复制`);
+        } catch {
+            message.error(`复制${label}失败`);
+        }
+    }, []);
 
     const loadList = useCallback(
         async (nextPage: number, nextLimit: number, append = false) => {
@@ -355,12 +357,12 @@ const CompileArtifactsPage: React.FC = () => {
                     const listRes = await listPromise;
                     const nextList = listRes.data?.list || [];
                     const metaPage = listRes.data?.pagemeta?.page || nextPage;
-                    const metaLimit = listRes.data?.pagemeta?.limit || nextLimit;
+                    const metaLimit =
+                        listRes.data?.pagemeta?.limit || nextLimit;
                     const metaTotal = listRes.data?.pagemeta?.total || 0;
                     setList((prev) => [...prev, ...nextList]);
                     setPage(metaPage);
                     setLimit(metaLimit);
-                    setTotal(metaTotal);
                     setHasMore(metaPage * metaLimit < metaTotal);
                     return;
                 }
@@ -377,10 +379,11 @@ const CompileArtifactsPage: React.FC = () => {
                 setList(nextList);
                 setPage(metaPage);
                 setLimit(metaLimit);
-                setTotal(metaTotal);
                 setHasMore(metaPage * metaLimit < metaTotal);
             } catch (err: any) {
-                message.error(`获取编译产物失败: ${err.msg || err.message || '未知错误'}`);
+                message.error(
+                    `获取编译产物失败: ${err.msg || err.message || '未知错误'}`,
+                );
             } finally {
                 if (append) {
                     setLoadingMore(false);
@@ -400,7 +403,6 @@ const CompileArtifactsPage: React.FC = () => {
             setLoadingMore,
             setPage,
             setSummary,
-            setTotal,
         ],
     );
 
@@ -421,7 +423,9 @@ const CompileArtifactsPage: React.FC = () => {
                 const res = await fetchCompileArtifactDetail(record.series_key);
                 setDetail(res.data);
             } catch (err: any) {
-                message.error(`获取产物详情失败: ${err.msg || err.message || '未知错误'}`);
+                message.error(
+                    `获取产物详情失败: ${err.msg || err.message || '未知错误'}`,
+                );
             } finally {
                 setDetailLoading(false);
             }
@@ -440,7 +444,8 @@ const CompileArtifactsPage: React.FC = () => {
 
     useEffect(() => {
         const handleScroll = () => {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollTop =
+                window.pageYOffset || document.documentElement.scrollTop;
             const scrollHeight = document.documentElement.scrollHeight;
             const clientHeight = document.documentElement.clientHeight;
 
@@ -477,13 +482,20 @@ const CompileArtifactsPage: React.FC = () => {
                     const res = await forceRebuildCompileArtifact({
                         series_key: record.series_key,
                     });
-                    message.success(`已提交重建任务：${res.data?.async_task_id || '-'}`);
+                    message.success(
+                        `已提交重建任务：${res.data?.async_task_id || '-'}`,
+                    );
                     await reloadFirstPage();
-                    if (detailOpen && selectedRecord?.series_key === record.series_key) {
+                    if (
+                        detailOpen &&
+                        selectedRecord?.series_key === record.series_key
+                    ) {
                         await loadDetail(record);
                     }
                 } catch (err: any) {
-                    message.error(`提交重建失败: ${err.msg || err.message || '未知错误'}`);
+                    message.error(
+                        `提交重建失败: ${err.msg || err.message || '未知错误'}`,
+                    );
                 } finally {
                     setRebuildSeriesKey('');
                 }
@@ -491,85 +503,91 @@ const CompileArtifactsPage: React.FC = () => {
         });
     };
 
+    const languageIconMap: Record<
+        string,
+        {
+            icon: React.ComponentType<{ size?: number; color?: string }>;
+            color: string;
+            label: string;
+        }
+    > = {
+        java: { icon: FaJava, color: '#007396', label: 'Java' },
+        php: { icon: SiPhp, color: '#777BB4', label: 'PHP' },
+        javascript: {
+            icon: SiJavascript,
+            color: '#F7DF1E',
+            label: 'JavaScript',
+        },
+        js: { icon: SiJavascript, color: '#F7DF1E', label: 'JavaScript' },
+        python: { icon: SiPython, color: '#3776AB', label: 'Python' },
+        py: { icon: SiPython, color: '#3776AB', label: 'Python' },
+        go: { icon: TbBrandGolang, color: '#00ADD8', label: 'Go' },
+        golang: { icon: TbBrandGolang, color: '#00ADD8', label: 'Go' },
+    };
+
     const columns: ColumnsType<TCompileArtifactItem> = [
         {
-            title: '项目 / 语言',
+            title: '项目',
             dataIndex: 'project_name',
             key: 'project_name',
-            width: 220,
-            render: (_, record) => (
-                <div className="artifact-project-cell">
-                    <div className="artifact-project-head">
-                        {renderInlineHealthIndicator(record.health_status, record.health_reason)}
-                        <a
-                            className="artifact-project-link"
-                            onClick={() => loadDetail(record)}
-                        >
-                            {record.project_name}
-                        </a>
-                    </div>
-                    <Space size={[0, 4]} wrap className="artifact-project-tags">
-                        {renderLanguageTag(record.language)}
-                        <Tag>{middleEllipsis(record.series_key, 10)}</Tag>
-                    </Space>
-                </div>
-            ),
-        },
-        {
-            title: '当前 HEAD',
-            dataIndex: 'head_program_name',
-            key: 'head_program_name',
-            width: 220,
+            width: 260,
+            sorter: (a, b) =>
+                String(a.project_name || '').localeCompare(
+                    String(b.project_name || ''),
+                    'zh-CN',
+                ),
             render: (_, record) => {
-                const headDisplay = formatHeadDisplay(record.head_program_name);
+                const langKey = (record.language || '').toLowerCase();
+                const langConfig = languageIconMap[langKey];
+                const LangIcon = langConfig?.icon;
                 return (
-                    <div className="artifact-head-cell">
-                        <Tooltip title={record.head_program_name || '-'}>
-                            <div className="artifact-head-title">
-                                <span className="artifact-head-primary">
-                                    {middleEllipsis(headDisplay.primary, 12)}
-                                </span>
-                                {headDisplay.suffixDisplay ? (
-                                    <span className="artifact-head-suffix">
-                                        {headDisplay.suffixDisplay}
-                                    </span>
-                                ) : null}
-                            </div>
-                        </Tooltip>
-                        {record.engine_version ? (
-                            <div className="artifact-head-meta">
-                                引擎 {record.engine_version}
-                            </div>
-                        ) : null}
-                    </div>
-                );
-            },
-        },
-        {
-            title: '产物结构',
-            key: 'structure',
-            width: 180,
-            render: (_, record) => {
-                const patchCount = Number(record.patch_programs || 0);
-                const historyCount = Number(record.history_programs || 0);
-                return (
-                    <div className="artifact-structure-cell">
-                        <div className="artifact-structure-title">
-                            <Tag color="blue" className="artifact-structure-tag">
-                                全量快照
-                            </Tag>
-                            <span>
-                                {patchCount > 0
-                                    ? `+ ${patchCount}次增量`
-                                    : '(无增量)'}
-                            </span>
+                    <div className="artifact-project-cell">
+                        <div className="artifact-project-head">
+                            {renderInlineHealthIndicator(
+                                record.health_status,
+                                record.health_reason,
+                            )}
+                            <a
+                                className="artifact-project-link"
+                                onClick={() => loadDetail(record)}
+                            >
+                                {record.project_name}
+                            </a>
                         </div>
-                        <div
-                            className={`artifact-structure-meta ${
-                                historyCount === 0 ? 'is-empty' : ''
-                            }`}
-                        >
-                            保留 {historyCount} 个历史快照
+                        <div className="artifact-project-sub">
+                            <span className="lang-icon-text">
+                                {LangIcon ? (
+                                    <LangIcon
+                                        size={14}
+                                        color={langConfig.color}
+                                    />
+                                ) : (
+                                    <span className="lang-dot">L</span>
+                                )}
+                                <span>
+                                    {langConfig?.label ||
+                                        record.language ||
+                                        '-'}
+                                </span>
+                            </span>
+                            <Tooltip title="复制 series_key">
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    className="copy-trigger"
+                                    icon={<CopyOutlined />}
+                                    onClick={() =>
+                                        copyText(
+                                            record.series_key,
+                                            'series_key',
+                                        )
+                                    }
+                                >
+                                    <span className="series-key-text">
+                                        {middleEllipsis(record.series_key, 16)}
+                                    </span>
+                                </Button>
+                            </Tooltip>
                         </div>
                     </div>
                 );
@@ -578,62 +596,43 @@ const CompileArtifactsPage: React.FC = () => {
         {
             title: '存储占用',
             key: 'storage',
-            width: 170,
-            render: (_, record) => {
-                const tooltip = (
-                    <div className="artifact-storage-tooltip">
-                        <div>总占用：{formatBytes(record.total_size_bytes)}</div>
-                        <div>当前链：{formatBytes(record.current_chain_size_bytes)}</div>
-                        <div>可回收：{formatBytes(record.reclaimable_size_bytes)}</div>
-                    </div>
-                );
-
-                return (
-                    <div className="artifact-storage-cell">
-                        <Tooltip title={tooltip}>
-                            <div className="artifact-storage-primary">
-                                {formatBytes(record.total_size_bytes)}
-                            </div>
-                        </Tooltip>
-                        <div className="artifact-storage-meta">
-                            链: {formatBytes(record.current_chain_size_bytes)} | 可回收:{' '}
-                            {formatBytes(record.reclaimable_size_bytes)}
-                        </div>
-                    </div>
-                );
-            },
-        },
-        {
-            title: '最近活动',
-            key: 'activity',
-            width: 180,
+            width: 140,
+            sorter: (a, b) =>
+                Number(a.total_size_bytes || 0) -
+                Number(b.total_size_bytes || 0),
+            defaultSortOrder: 'descend',
             render: (_, record) => (
-                <div className="artifact-activity-cell">
-                    <div className="artifact-activity-line">
-                        编译: {formatRelativeTime(record.last_compile_at)}
+                <div className="artifact-storage-cell">
+                    <div className="artifact-storage-primary">
+                        {formatBytes(record.total_size_bytes)}
                     </div>
-                    <div className="artifact-activity-line">
-                        扫描: {formatRelativeTime(record.last_scan_at)}
-                    </div>
-                    <div className="artifact-activity-line">
-                        节点读取: {record.active_reader_count}个
+                    <div className="artifact-storage-meta">
+                        当前链: {formatBytes(record.current_chain_size_bytes)}
                     </div>
                 </div>
             ),
         },
         {
+            title: '最近编译',
+            dataIndex: 'last_compile_at',
+            key: 'last_compile_at',
+            width: 120,
+            sorter: (a, b) =>
+                dayjs(a.last_compile_at || 0).valueOf() -
+                dayjs(b.last_compile_at || 0).valueOf(),
+            render: (val: number) => (
+                <span className="artifact-activity-line">
+                    {formatRelativeTime(val ? String(val) : undefined)}
+                </span>
+            ),
+        },
+        {
             title: '操作',
             key: 'actions',
-            width: 132,
+            width: 120,
             align: 'center',
             render: (_, record) => {
                 const menuItems: MenuProps['items'] = [
-                    {
-                        key: 'detail',
-                        icon: <EyeOutlined />,
-                        label: '详情',
-                        onClick: () => loadDetail(record),
-                    },
                     {
                         key: 'rebuild',
                         icon: <SyncOutlined />,
@@ -698,10 +697,15 @@ const CompileArtifactsPage: React.FC = () => {
                         {item.program_name}
                     </div>
                     <div className="artifact-timeline-meta">
-                        <span>逻辑占用 {formatBytes(item.logical_size_bytes)}</span>
+                        <span>
+                            逻辑占用 {formatBytes(item.logical_size_bytes)}
+                        </span>
                         <span>代码行数 {item.line_count || 0}</span>
                         {item.base_program_name ? (
-                            <span>基座 {middleEllipsis(item.base_program_name, 10)}</span>
+                            <span>
+                                基座{' '}
+                                {middleEllipsis(item.base_program_name, 10)}
+                            </span>
                         ) : null}
                     </div>
                 </div>
@@ -712,41 +716,57 @@ const CompileArtifactsPage: React.FC = () => {
     const detailOverview = detail?.overview;
 
     return (
-        <div className="compile-artifacts-page">
+        <div className="p-4 compile-artifacts-page">
             {contextHolder}
-            <div className="compile-artifacts-hero">
-                <div>
-                    <div className="page-eyebrow">System / Asset Control</div>
-                    <h1>编译产物</h1>
-                    <p>
-                        集中管理各项目的 SSA IR（Static Single Assignment Intermediate Representation）产物。复用 IR 数据可跳过重复编译，实现极速漏洞复测与增量扫描。
-                    </p>
+            <Card>
+                <div className="flex justify-between items-center mb-4">
+                    <div className="text-lg font-bold">编译产物</div>
+                    <Space>
+                        <Button
+                            icon={<ReloadOutlined />}
+                            onClick={() => reloadFirstPage()}
+                        >
+                            刷新
+                        </Button>
+                    </Space>
                 </div>
-            </div>
 
-            <Row gutter={[16, 16]} className="artifact-metrics-row">
-                {buildMetricCards(summary).map((item) => (
-                    <Col xs={24} md={12} xl={6} key={item.key}>
-                        <Card className={`artifact-metric-card tone-${item.tone}`}>
-                            <div className="artifact-metric-head">
-                                <span className="artifact-metric-icon">{item.icon}</span>
-                                <span className="artifact-metric-label">{item.label}</span>
-                            </div>
-                            <div className="artifact-metric-value">{item.value}</div>
-                            <div className="artifact-metric-sub">{item.sub}</div>
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
+                <Row
+                    gutter={[16, 16]}
+                    className="artifact-metrics-row"
+                    style={{ marginBottom: 24 }}
+                >
+                    {buildMetricCards(summary).map((item) => (
+                        <Col xs={24} md={12} xl={6} key={item.key}>
+                            <Card
+                                className={`artifact-metric-card tone-${item.tone}`}
+                            >
+                                <div className="artifact-metric-head">
+                                    <span className="artifact-metric-icon">
+                                        {item.icon}
+                                    </span>
+                                    <span className="artifact-metric-label">
+                                        {item.label}
+                                    </span>
+                                </div>
+                                <div className="artifact-metric-value">
+                                    {item.value}
+                                </div>
+                                <div className="artifact-metric-sub">
+                                    {item.sub}
+                                </div>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
 
-            <Card className="artifact-filter-card" bordered={false}>
-                <div className="artifact-filter-row">
-                    <Input
+                <div className="mb-4 flex gap-3 flex-wrap">
+                    <Input.Search
                         value={queryInput}
                         onChange={(e) => setQueryInput(e.target.value)}
-                        onPressEnter={handleSearch}
+                        onSearch={handleSearch}
                         placeholder="搜索项目名 / series_key / HEAD program"
-                        prefix={<SearchOutlined />}
+                        style={{ width: 280 }}
                         allowClear
                     />
                     <Select
@@ -754,6 +774,7 @@ const CompileArtifactsPage: React.FC = () => {
                         placeholder="语言"
                         value={language}
                         onChange={setLanguage}
+                        style={{ width: 130 }}
                         options={[
                             { label: 'Java', value: 'java' },
                             { label: 'PHP', value: 'php' },
@@ -768,32 +789,14 @@ const CompileArtifactsPage: React.FC = () => {
                         placeholder="健康状态"
                         value={healthStatus}
                         onChange={setHealthStatus}
+                        style={{ width: 130 }}
                         options={[
                             { label: '正常', value: 'healthy' },
                             { label: 'HEAD 异常', value: 'head-missing' },
                             { label: '增长异常', value: 'growth-warning' },
                         ]}
                     />
-                    <Space>
-                        <Button type="primary" onClick={handleSearch}>
-                            查询
-                        </Button>
-                        <Button onClick={handleReset}>重置</Button>
-                    </Space>
-                </div>
-            </Card>
-
-            <Card className="artifact-table-card" bordered={false}>
-                <div className="artifact-table-head">
-                    <div>
-                        <h3>SSA IR 资产列表</h3>
-                    </div>
-                    <Space size={12}>
-                        <Button icon={<ReloadOutlined />} onClick={() => reloadFirstPage()}>
-                            刷新数据
-                        </Button>
-                        <div className="artifact-table-meta">共 {total} 条资产</div>
-                    </Space>
+                    <Button onClick={handleReset}>重置</Button>
                 </div>
 
                 <Table<TCompileArtifactItem>
@@ -806,11 +809,15 @@ const CompileArtifactsPage: React.FC = () => {
                 />
                 <div className="artifact-list-footer">
                     {loadingMore && <span>加载中...</span>}
-                    {!loadingMore && hasMore && list.length > 0 && <span>向下滚动加载更多</span>}
+                    {!loadingMore && hasMore && list.length > 0 && (
+                        <span>向下滚动加载更多</span>
+                    )}
                     {!loadingMore && !hasMore && list.length > 0 && (
                         <span>已加载全部 {list.length} 条资产</span>
                     )}
-                    {!loading && !loadingMore && list.length === 0 && <span>暂无编译产物</span>}
+                    {!loading && !loadingMore && list.length === 0 && (
+                        <span>暂无编译产物</span>
+                    )}
                 </div>
             </Card>
 
@@ -823,18 +830,25 @@ const CompileArtifactsPage: React.FC = () => {
                 title={
                     <div className="artifact-drawer-title-wrap">
                         <span className="artifact-drawer-title">
-                            {detailOverview?.project_name || selectedRecord?.project_name || '编译产物详情'}
+                            {detailOverview?.project_name ||
+                                selectedRecord?.project_name ||
+                                '编译产物详情'}
                         </span>
-                        {detailOverview ? (
-                            renderHealthBadge(detailOverview.health_status, detailOverview.health_reason)
-                        ) : null}
+                        {detailOverview
+                            ? renderHealthBadge(
+                                  detailOverview.health_status,
+                                  detailOverview.health_reason,
+                              )
+                            : null}
                     </div>
                 }
                 extra={
                     selectedRecord ? (
                         <Button
                             icon={<SyncOutlined />}
-                            loading={rebuildSeriesKey === selectedRecord.series_key}
+                            loading={
+                                rebuildSeriesKey === selectedRecord.series_key
+                            }
                             onClick={() => handleForceRebuild(selectedRecord)}
                         >
                             强制重建 SSA IR
@@ -844,38 +858,62 @@ const CompileArtifactsPage: React.FC = () => {
             >
                 <Spin spinning={detailLoading}>
                     {!detailOverview ? (
-                        <Empty description="暂无产物详情" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                        <Empty
+                            description="暂无产物详情"
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        />
                     ) : (
                         <div className="artifact-detail-body">
-                            <Row gutter={[12, 12]} className="artifact-detail-stats">
+                            <Row
+                                gutter={[12, 12]}
+                                className="artifact-detail-stats"
+                            >
                                 <Col span={8}>
                                     <Card className="detail-stat-card">
-                                        <div className="detail-stat-label">总占用</div>
-                                        <div className="detail-stat-value">
-                                            {formatBytes(detailOverview.total_size_bytes)}
+                                        <div className="detail-stat-label">
+                                            总占用
                                         </div>
-                                        <div className="detail-stat-sub">项目全部版本</div>
-                                    </Card>
-                                </Col>
-                                <Col span={8}>
-                                    <Card className="detail-stat-card">
-                                        <div className="detail-stat-label">当前链占用</div>
                                         <div className="detail-stat-value">
-                                            {formatBytes(detailOverview.current_chain_size_bytes)}
+                                            {formatBytes(
+                                                detailOverview.total_size_bytes,
+                                            )}
                                         </div>
                                         <div className="detail-stat-sub">
-                                            {detailOverview.current_chain_programs} 个当前链 program
+                                            项目全部版本
                                         </div>
                                     </Card>
                                 </Col>
                                 <Col span={8}>
                                     <Card className="detail-stat-card">
-                                        <div className="detail-stat-label">可回收空间</div>
+                                        <div className="detail-stat-label">
+                                            当前链占用
+                                        </div>
+                                        <div className="detail-stat-value">
+                                            {formatBytes(
+                                                detailOverview.current_chain_size_bytes,
+                                            )}
+                                        </div>
+                                        <div className="detail-stat-sub">
+                                            {
+                                                detailOverview.current_chain_programs
+                                            }{' '}
+                                            个当前链 program
+                                        </div>
+                                    </Card>
+                                </Col>
+                                <Col span={8}>
+                                    <Card className="detail-stat-card">
+                                        <div className="detail-stat-label">
+                                            可回收空间
+                                        </div>
                                         <div className="detail-stat-value warning-text">
-                                            {formatBytes(detailOverview.reclaimable_size_bytes)}
+                                            {formatBytes(
+                                                detailOverview.reclaimable_size_bytes,
+                                            )}
                                         </div>
                                         <div className="detail-stat-sub">
-                                            历史版本 {detailOverview.history_programs} 个
+                                            历史版本{' '}
+                                            {detailOverview.history_programs} 个
                                         </div>
                                     </Card>
                                 </Col>
@@ -885,7 +923,10 @@ const CompileArtifactsPage: React.FC = () => {
                                 <div className="section-head">
                                     <h4>当前 HEAD 概览</h4>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     <Descriptions
                                         column={2}
                                         size="small"
@@ -894,49 +935,120 @@ const CompileArtifactsPage: React.FC = () => {
                                             {
                                                 key: 'series_key',
                                                 label: 'Series Key',
-                                                children: detailOverview.series_key,
+                                                children: (
+                                                    <span className="detail-copy-row">
+                                                        <code>
+                                                            {
+                                                                detailOverview.series_key
+                                                            }
+                                                        </code>
+                                                        <Tooltip title="复制 Series Key">
+                                                            <Button
+                                                                type="text"
+                                                                size="small"
+                                                                className="copy-trigger"
+                                                                icon={
+                                                                    <CopyOutlined />
+                                                                }
+                                                                onClick={() =>
+                                                                    copyText(
+                                                                        detailOverview.series_key,
+                                                                        'Series Key',
+                                                                    )
+                                                                }
+                                                            />
+                                                        </Tooltip>
+                                                    </span>
+                                                ),
                                             },
                                             {
                                                 key: 'language',
                                                 label: '语言',
-                                                children: renderLanguageTag(detailOverview.language),
+                                                children: renderLanguageTag(
+                                                    detailOverview.language,
+                                                ),
                                             },
                                             {
                                                 key: 'head',
                                                 label: '当前 HEAD',
                                                 children: (
-                                                    <Tooltip title={detailOverview.head_program_name || '-'}>
-                                                        {middleEllipsis(detailOverview.head_program_name, 14)}
-                                                    </Tooltip>
+                                                    <span className="detail-copy-row">
+                                                        <Tooltip
+                                                            title={
+                                                                detailOverview.head_program_name ||
+                                                                '-'
+                                                            }
+                                                        >
+                                                            <span>
+                                                                {middleEllipsis(
+                                                                    detailOverview.head_program_name,
+                                                                    14,
+                                                                )}
+                                                            </span>
+                                                        </Tooltip>
+                                                        {detailOverview.head_program_name ? (
+                                                            <Tooltip title="复制 HEAD program name">
+                                                                <Button
+                                                                    type="text"
+                                                                    size="small"
+                                                                    className="copy-trigger"
+                                                                    icon={
+                                                                        <CopyOutlined />
+                                                                    }
+                                                                    onClick={() =>
+                                                                        copyText(
+                                                                            detailOverview.head_program_name ||
+                                                                                '',
+                                                                            'HEAD program',
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </Tooltip>
+                                                        ) : null}
+                                                    </span>
                                                 ),
                                             },
                                             {
                                                 key: 'kind',
                                                 label: 'HEAD 类型',
-                                                children: renderCompileKindTag(detail.head_program_kind),
+                                                children: renderCompileKindTag(
+                                                    detail.head_program_kind,
+                                                ),
                                             },
                                             {
                                                 key: 'base',
                                                 label: 'Base Program',
-                                                children: detail.head_base_program || '-',
+                                                children:
+                                                    detail.head_base_program ||
+                                                    '-',
                                             },
                                             {
                                                 key: 'line_count',
                                                 label: 'HEAD 行数',
-                                                children: detailOverview.head_line_count || 0,
+                                                children:
+                                                    detailOverview.head_line_count ||
+                                                    0,
                                             },
                                             {
                                                 key: 'updated_at',
                                                 label: 'HEAD 更新时间',
-                                                children: formatTime(detailOverview.head_updated_at),
+                                                children: formatTime(
+                                                    detailOverview.head_updated_at,
+                                                ),
                                             },
                                             {
                                                 key: 'last_compile',
                                                 label: '最近编译',
                                                 children: (
                                                     <Space size={8} wrap>
-                                                        {renderCompileKindTag(detailOverview.last_compile_kind)}
-                                                        <span>{formatTime(detailOverview.last_compile_at)}</span>
+                                                        {renderCompileKindTag(
+                                                            detailOverview.last_compile_kind,
+                                                        )}
+                                                        <span>
+                                                            {formatTime(
+                                                                detailOverview.last_compile_at,
+                                                            )}
+                                                        </span>
                                                     </Space>
                                                 ),
                                             },
@@ -958,16 +1070,24 @@ const CompileArtifactsPage: React.FC = () => {
                             <section className="artifact-detail-section">
                                 <div className="section-head">
                                     <h4>生命周期时间线</h4>
-                                    <span>{detail.timeline.length} 个版本节点</span>
+                                    <span>
+                                        {detail.timeline.length} 个版本节点
+                                    </span>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     {detail.timeline.length === 0 ? (
                                         <Empty
                                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                                             description="暂无编译历史"
                                         />
                                     ) : (
-                                        <Timeline items={timelineItems} className="artifact-timeline" />
+                                        <Timeline
+                                            items={timelineItems}
+                                            className="artifact-timeline"
+                                        />
                                     )}
                                 </Card>
                             </section>
@@ -975,9 +1095,15 @@ const CompileArtifactsPage: React.FC = () => {
                             <section className="artifact-detail-section">
                                 <div className="section-head">
                                     <h4>底层路由探针</h4>
-                                    <span>当前有 {detail.active_readers.length} 个扫描任务在读取该 HEAD</span>
+                                    <span>
+                                        当前有 {detail.active_readers.length}{' '}
+                                        个扫描任务在读取该 HEAD
+                                    </span>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     {detail.active_readers.length === 0 ? (
                                         <Empty
                                             image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -998,9 +1124,14 @@ const CompileArtifactsPage: React.FC = () => {
                             <section className="artifact-detail-section">
                                 <div className="section-head">
                                     <h4>最近扫描记录</h4>
-                                    <span>按数据库扫描任务回放最近使用情况</span>
+                                    <span>
+                                        按数据库扫描任务回放最近使用情况
+                                    </span>
                                 </div>
-                                <Card className="detail-section-card" bordered={false}>
+                                <Card
+                                    className="detail-section-card"
+                                    bordered={false}
+                                >
                                     {detail.recent_scans.length === 0 ? (
                                         <Empty
                                             image={Empty.PRESENTED_IMAGE_SIMPLE}

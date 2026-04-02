@@ -2,8 +2,11 @@ import axios from '@/utils/axios';
 import type { ResponseData } from '@/utils/commonTypes';
 import type {
     TSSAProject,
+    TSSAProjectConfig,
+    TSSAProjectFavoriteListResponse,
     TSSAProjectListResponse,
     TSSAProjectRequest,
+    TSSAProjectSourceArchiveUpload,
     TScanPolicyConfig,
 } from './type';
 
@@ -51,15 +54,12 @@ const deleteSSAProject = (params: {
 // POST /ssa/project/test-connection - 测试Git连接
 const testGitConnection = (data: {
     url: string;
-    auth?: {
-        kind?: 'none' | 'basic' | 'ssh';
-        user_name?: string;
-        password?: string;
-        key_content?: string;
-    };
-    proxy?: {
-        url?: string;
-    };
+    auth?: TSSAProjectConfig['CodeSource'] extends { auth?: infer TAuth }
+        ? TAuth
+        : never;
+    proxy?: TSSAProjectConfig['CodeSource'] extends { proxy?: infer TProxy }
+        ? TProxy
+        : never;
 }): Promise<ResponseData<{ success: boolean; message: string }>> =>
     axios.post<never, ResponseData<{ success: boolean; message: string }>>(
         `/ssa/project/test-connection`,
@@ -77,11 +77,53 @@ const getScanPolicyConfig = (
         },
     );
 
+const getSSAProjectFavorites = (params?: {
+    limit?: number;
+}): Promise<ResponseData<TSSAProjectFavoriteListResponse>> =>
+    axios.get<never, ResponseData<TSSAProjectFavoriteListResponse>>(
+        `/ssa/project/favorites`,
+        { params },
+    );
+
+const addSSAProjectFavorite = (
+    projectId: number,
+): Promise<ResponseData<boolean>> =>
+    axios.post<never, ResponseData<boolean>>(
+        `/ssa/project/${projectId}/favorite`,
+    );
+
+const removeSSAProjectFavorite = (
+    projectId: number,
+): Promise<ResponseData<boolean>> =>
+    axios.delete<never, ResponseData<boolean>>(
+        `/ssa/project/${projectId}/favorite`,
+    );
+
+const uploadSSAProjectSourceArchive = (
+    file: File,
+): Promise<ResponseData<TSSAProjectSourceArchiveUpload>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axios.post<never, ResponseData<TSSAProjectSourceArchiveUpload>>(
+        '/ssa/project/upload',
+        formData,
+        {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        },
+    );
+};
+
 export {
+    addSSAProjectFavorite,
     getSSAProjects,
+    getSSAProjectFavorites,
     fetchSSAProject,
     postSSAProject,
     deleteSSAProject,
+    removeSSAProjectFavorite,
     testGitConnection,
     getScanPolicyConfig,
+    uploadSSAProjectSourceArchive,
 };

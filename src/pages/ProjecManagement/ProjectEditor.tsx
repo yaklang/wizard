@@ -17,11 +17,18 @@ import {
 } from 'antd';
 import { ArrowLeftOutlined, UploadOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
-import { fetchSSAProject, postSSAProject } from '@/apis/SSAProjectApi';
+import {
+    fetchSSAProject,
+    postSSAProject,
+    uploadSSAProjectSourceArchive,
+} from '@/apis/SSAProjectApi';
 import type { TSSAProjectRequest } from '@/apis/SSAProjectApi/type';
 import { ROUTES } from '@/utils/routeMap';
 import { getNodeList } from '@/apis/task';
+import { normalizeProjectAuthKind } from '@/utils/ssaCredential';
+import { buildRepositoryUrlRules } from '@/utils/repositoryUrl';
 import dayjs from 'dayjs';
+import CodeSourceAuthSection from './components/CodeSourceAuthSection';
 
 interface LocationState {
     id?: number;
@@ -39,6 +46,19 @@ const languageOptions = [
     { label: 'Rust', value: 'rust' },
 ];
 
+const resolveUploadArchiveData = (payload: any) => {
+    if (payload?.url) return payload;
+    if (payload?.data?.url) return payload.data;
+    return undefined;
+};
+
+const resolveUploadArchiveErrorMessage = (error: any) =>
+    error?.message ||
+    error?.reason ||
+    error?.data?.message ||
+    error?.data?.reason ||
+    '上传失败';
+
 const ProjectEditor = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -51,10 +71,18 @@ const ProjectEditor = () => {
     const [form] = Form.useForm<TSSAProjectRequest>();
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [authType, setAuthType] = useState<string>('none');
-    const [nodeOptions, setNodeOptions] = useState<Array<{ label: string; value: string }>>([]);
+    const [nodeOptions, setNodeOptions] = useState<
+        Array<{ label: string; value: string }>
+    >([]);
     const [loadingNodes, setLoadingNodes] = useState(false);
-    const scanNodeMode = Form.useWatch(['config', 'ScanNode', 'mode'], form) || 'auto';
-    const scheduleEnabled = Form.useWatch(['config', 'ScanSchedule', 'enabled'], form) || false;
+    const scanNodeMode =
+        Form.useWatch(['execution_preference', 'scan_node', 'mode'], form) ||
+        'auto';
+    const scheduleEnabled =
+        Form.useWatch(
+            ['execution_preference', 'scan_schedule', 'enabled'],
+            form,
+        ) || false;
 
     const { loading: saving, runAsync: saveProject } = useRequest(
         async (payload: TSSAProjectRequest) => postSSAProject(payload),
@@ -93,14 +121,18 @@ const ProjectEditor = () => {
                                 CodeSource: {
                                     ...res.data.config?.CodeSource,
                                 },
-                                ScanNode: res.data.config?.ScanNode,
-                                ScanSchedule: res.data.config?.ScanSchedule,
                             },
+                            execution_preference:
+                                res.data.execution_preference,
                         });
 
                         // Set auth type state if it exists in config
                         if (res.data.config?.CodeSource?.auth?.kind) {
-                            setAuthType(res.data.config.CodeSource.auth.kind);
+                            setAuthType(
+                                normalizeProjectAuthKind(
+                                    res.data.config.CodeSource.auth.kind,
+                                ),
+                            );
                         }
                     }
                 })
@@ -123,10 +155,7 @@ const ProjectEditor = () => {
                     .filter((item) => item?.node_id)
                     .map((item) => ({
                         value: item.node_id as string,
-                        label:
-                            item.hostname ||
-                            item.node_id ||
-                            '未知节点',
+                        label: item.hostname || item.node_id || '未知节点',
                     }));
                 setNodeOptions(options);
             } catch (error) {
@@ -158,25 +187,28 @@ const ProjectEditor = () => {
                 values.config.BaseInfo.tags = (tags as string).split(',');
             }
 
-            if (values.config?.ScanNode) {
-                if (values.config.ScanNode.mode !== 'manual') {
-                    values.config.ScanNode.mode = 'auto';
-                    delete values.config.ScanNode.node_id;
+            if (values.execution_preference?.scan_node) {
+                if (values.execution_preference.scan_node.mode !== 'manual') {
+                    values.execution_preference.scan_node.mode = 'auto';
+                    delete values.execution_preference.scan_node.node_id;
                 }
             }
-            if (values.config?.ScanSchedule) {
-                if (dayjs.isDayjs(values.config.ScanSchedule.time)) {
-                    values.config.ScanSchedule.time = values.config.ScanSchedule.time.format('HH:mm');
+            if (values.execution_preference?.scan_schedule) {
+                if (dayjs.isDayjs(values.execution_preference.scan_schedule.time)) {
+                    values.execution_preference.scan_schedule.time =
+                        values.execution_preference.scan_schedule.time.format(
+                            'HH:mm',
+                        );
                 }
-                if (!values.config.ScanSchedule.enabled) {
-                    delete values.config.ScanSchedule.time;
+                if (!values.execution_preference.scan_schedule.enabled) {
+                    delete values.execution_preference.scan_schedule.time;
                 }
-                values.config.ScanSchedule.interval_type =
-                    values.config.ScanSchedule.interval_type || 1;
-                values.config.ScanSchedule.interval_time =
-                    values.config.ScanSchedule.interval_time || 1;
-                values.config.ScanSchedule.sched_type =
-                    values.config.ScanSchedule.sched_type || 3;
+                values.execution_preference.scan_schedule.interval_type =
+                    values.execution_preference.scan_schedule.interval_type || 1;
+                values.execution_preference.scan_schedule.interval_time =
+                    values.execution_preference.scan_schedule.interval_time || 1;
+                values.execution_preference.scan_schedule.sched_type =
+                    values.execution_preference.scan_schedule.sched_type || 3;
             }
 
             await saveProject(values);
@@ -232,10 +264,12 @@ const ProjectEditor = () => {
                                         kind: 'none',
                                     },
                                 },
-                                ScanNode: {
+                            },
+                            execution_preference: {
+                                scan_node: {
                                     mode: 'auto',
                                 },
-                                ScanSchedule: {
+                                scan_schedule: {
                                     enabled: false,
                                     time: '02:00',
                                     interval_type: 1,
@@ -247,7 +281,10 @@ const ProjectEditor = () => {
                         onValuesChange={(changedValues) => {
                             if (changedValues.config?.CodeSource?.auth?.kind) {
                                 setAuthType(
-                                    changedValues.config.CodeSource.auth.kind,
+                                    normalizeProjectAuthKind(
+                                        changedValues.config.CodeSource.auth
+                                            .kind,
+                                    ),
                                 );
                             }
                         }}
@@ -295,7 +332,20 @@ const ProjectEditor = () => {
                             name={['config', 'CodeSource', 'kind']}
                             initialValue="git"
                         >
-                            <Select>
+                            <Select
+                                onChange={(value) => {
+                                    form.setFieldsValue({
+                                        config: {
+                                            CodeSource: {
+                                                kind: value,
+                                                url: undefined,
+                                                local_file: undefined,
+                                                branch: undefined,
+                                            },
+                                        },
+                                    });
+                                }}
+                            >
                                 <Select.Option value="git">Git</Select.Option>
                                 <Select.Option value="svn">SVN</Select.Option>
                                 <Select.Option value="compression">
@@ -328,13 +378,7 @@ const ProjectEditor = () => {
                                                     'CodeSource',
                                                     'url',
                                                 ]}
-                                                rules={[
-                                                    {
-                                                        required: true,
-                                                        message:
-                                                            '请输入源码地址',
-                                                    },
-                                                ]}
+                                                rules={buildRepositoryUrlRules('请输入源码地址')}
                                                 extra="Legion 将通过此 URL 拉取代码进行扫描"
                                             >
                                                 <Input placeholder="https://github.com/example/repo.git or git@github.com:..." />
@@ -353,36 +397,63 @@ const ProjectEditor = () => {
                                                     ) => {
                                                         const {
                                                             file,
+                                                            onError,
                                                             onSuccess,
                                                         } = options;
-                                                        // Mock upload success for demonstration as backend handler is removed per request
-                                                        await new Promise<void>(
-                                                            (resolve) => {
-                                                                setTimeout(
-                                                                    resolve,
-                                                                    500,
+                                                        try {
+                                                            const res =
+                                                                await uploadSSAProjectSourceArchive(
+                                                                    file as File,
                                                                 );
-                                                            },
-                                                        );
-                                                        const mockPath = `/mock/path/to/${(file as File).name}`;
-
-                                                        form.setFieldsValue({
-                                                            config: {
-                                                                CodeSource: {
-                                                                    local_file:
-                                                                        mockPath,
-                                                                },
-                                                            },
-                                                        });
-                                                        onSuccess &&
-                                                            onSuccess(mockPath);
-                                                        message.success(
-                                                            '文件已选择 (模拟上传)',
-                                                        );
+                                                            const data =
+                                                                resolveUploadArchiveData(
+                                                                    res?.data,
+                                                                );
+                                                            if (data?.url) {
+                                                                form.setFieldsValue(
+                                                                    {
+                                                                        config: {
+                                                                            CodeSource:
+                                                                                {
+                                                                                    url: data.url,
+                                                                                    local_file:
+                                                                                        undefined,
+                                                                                },
+                                                                        },
+                                                                    },
+                                                                );
+                                                                onSuccess &&
+                                                                    onSuccess(
+                                                                        data,
+                                                                    );
+                                                                message.success(
+                                                                    '上传成功',
+                                                                );
+                                                            } else {
+                                                                throw new Error(
+                                                                    '未返回文件地址',
+                                                                );
+                                                            }
+                                                        } catch (error) {
+                                                            onError &&
+                                                                onError(
+                                                                    error as Error,
+                                                                );
+                                                            message.error(
+                                                                resolveUploadArchiveErrorMessage(
+                                                                    error,
+                                                                ),
+                                                            );
+                                                        }
                                                     }}
                                                     showUploadList={{
                                                         showRemoveIcon: false,
                                                     }}
+                                                    accept={
+                                                        kind === 'jar'
+                                                            ? '.jar,.war'
+                                                            : '.zip'
+                                                    }
                                                 >
                                                     <Button
                                                         icon={
@@ -396,7 +467,7 @@ const ProjectEditor = () => {
                                                     name={[
                                                         'config',
                                                         'CodeSource',
-                                                        'local_file',
+                                                        'url',
                                                     ]}
                                                     noStyle
                                                     rules={[
@@ -420,87 +491,11 @@ const ProjectEditor = () => {
                             高级配置
                         </div>
 
-                        <Form.Item
-                            label="认证方式"
-                            name={['config', 'CodeSource', 'auth', 'kind']}
-                            initialValue="none"
-                        >
-                            <Select>
-                                <Select.Option value="none">
-                                    无认证
-                                </Select.Option>
-                                <Select.Option value="basic">
-                                    用户名/密码
-                                </Select.Option>
-                                <Select.Option value="ssh">
-                                    SSH 私钥
-                                </Select.Option>
-                            </Select>
-                        </Form.Item>
-
-                        {authType === 'basic' && (
-                            <div className="border p-4 rounded bg-gray-50 mb-4">
-                                <Form.Item
-                                    label="用户名"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'user_name',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入用户名',
-                                        },
-                                    ]}
-                                >
-                                    <Input placeholder="Username" />
-                                </Form.Item>
-                                <Form.Item
-                                    label="密码/Token"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'password',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入密码或Token',
-                                        },
-                                    ]}
-                                >
-                                    <Input.Password placeholder="Password / Token" />
-                                </Form.Item>
-                            </div>
-                        )}
-
-                        {authType === 'ssh' && (
-                            <div className="border p-4 rounded bg-gray-50 mb-4">
-                                <Form.Item
-                                    label="SSH 私钥"
-                                    name={[
-                                        'config',
-                                        'CodeSource',
-                                        'auth',
-                                        'key_content',
-                                    ]}
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: '请输入SSH私钥',
-                                        },
-                                    ]}
-                                >
-                                    <Input.TextArea
-                                        rows={4}
-                                        placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..."
-                                    />
-                                </Form.Item>
-                            </div>
-                        )}
+                        <CodeSourceAuthSection
+                            form={form}
+                            authType={authType}
+                            onAuthTypeChange={setAuthType}
+                        />
 
                         <Form.Item
                             label="分支"
@@ -547,19 +542,35 @@ const ProjectEditor = () => {
 
                         <Form.Item
                             label="扫描节点"
-                            name={['config', 'ScanNode', 'mode']}
+                            name={['execution_preference', 'scan_node', 'mode']}
                         >
-                            <Radio.Group optionType="button" buttonStyle="solid">
-                                <Radio.Button value="auto">自动检测</Radio.Button>
-                                <Radio.Button value="manual">指定节点</Radio.Button>
+                            <Radio.Group
+                                optionType="button"
+                                buttonStyle="solid"
+                            >
+                                <Radio.Button value="auto">
+                                    自动检测
+                                </Radio.Button>
+                                <Radio.Button value="manual">
+                                    指定节点
+                                </Radio.Button>
                             </Radio.Group>
                         </Form.Item>
 
                         {scanNodeMode === 'manual' && (
                             <Form.Item
                                 label="执行节点"
-                                name={['config', 'ScanNode', 'node_id']}
-                                rules={[{ required: true, message: '请选择扫描节点' }]}
+                                name={[
+                                    'execution_preference',
+                                    'scan_node',
+                                    'node_id',
+                                ]}
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: '请选择扫描节点',
+                                    },
+                                ]}
                             >
                                 <Select
                                     placeholder="请选择扫描节点"
@@ -576,9 +587,19 @@ const ProjectEditor = () => {
                         )}
 
                         <Form.Item label="定时扫描">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                }}
+                            >
                                 <Form.Item
-                                    name={['config', 'ScanSchedule', 'enabled']}
+                                    name={[
+                                        'execution_preference',
+                                        'scan_schedule',
+                                        'enabled',
+                                    ]}
                                     valuePropName="checked"
                                     noStyle
                                 >
@@ -591,9 +612,15 @@ const ProjectEditor = () => {
                         {scheduleEnabled && (
                             <Form.Item
                                 label="扫描时间"
-                                name={['config', 'ScanSchedule', 'time']}
+                                name={[
+                                    'execution_preference',
+                                    'scan_schedule',
+                                    'time',
+                                ]}
                                 getValueProps={(value) => ({
-                                    value: value ? dayjs(value, 'HH:mm') : undefined,
+                                    value: value
+                                        ? dayjs(value, 'HH:mm')
+                                        : undefined,
                                 })}
                                 normalize={(val) =>
                                     val ? dayjs(val).format('HH:mm') : undefined

@@ -3,6 +3,9 @@
 
 // Color Variables (CSS Custom Properties)
 :root {
+    --irify-font-family: 'Inter', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --irify-code-family: 'JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', monospace;
+
     --irify-bg-base: #F8FAFC;
     --irify-bg-container: #FFFFFF;
     --irify-bg-elevated: #F1F5F9;
@@ -39,8 +42,12 @@
 
 // Global body styling using CSS variables
 body.irify-app {
+    font-family: var(--irify-font-family);
     background-color: var(--irify-bg-base);
     color: var(--irify-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 

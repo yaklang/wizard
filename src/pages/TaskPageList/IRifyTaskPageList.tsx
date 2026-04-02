@@ -241,6 +241,7 @@ const TaskPageList = () => {
     }>({
         keyword: '',
     });
+    const [sortValue, setSortValue] = useSafeState('updated-desc');
 
     const [listState, setListState] = useSafeState<{
         loading: boolean;
@@ -1009,6 +1010,35 @@ const TaskPageList = () => {
         [listState.list, selectedTaskIds],
     );
 
+    const displayedTasks = useMemo(() => {
+        const list = [...listState.list];
+        const strategyName = (item: TaskListRequest) =>
+            getStrategyDisplay(item).title || '';
+        switch (sortValue) {
+            case 'updated-asc':
+                return list.sort(
+                    (a, b) => pickLatestTimestamp(a) - pickLatestTimestamp(b),
+                );
+            case 'name-asc':
+                return list.sort((a, b) =>
+                    strategyName(a).localeCompare(strategyName(b), 'zh-CN'),
+                );
+            case 'name-desc':
+                return list.sort((a, b) =>
+                    strategyName(b).localeCompare(strategyName(a), 'zh-CN'),
+                );
+            case 'next-run-asc':
+                return list.sort((a, b) =>
+                    getNextRunText(a).localeCompare(getNextRunText(b), 'zh-CN'),
+                );
+            case 'updated-desc':
+            default:
+                return list.sort(
+                    (a, b) => pickLatestTimestamp(b) - pickLatestTimestamp(a),
+                );
+        }
+    }, [listState.list, sortValue]);
+
     const allChecked =
         listState.list.length > 0 &&
         listState.list.every((it) => it.id && selectedTaskIds.has(it.id));
@@ -1096,6 +1126,7 @@ const TaskPageList = () => {
             scanner: undefined,
             status: undefined,
         };
+        setSortValue('updated-desc');
         setFilters(nextFilters);
         setTaskGroupKey('全部');
         setSelectedTaskIds(new Set());
@@ -1341,6 +1372,37 @@ const TaskPageList = () => {
                                 />
                             </Form.Item>
                         </Col>
+                        <Col span={5}>
+                            <Form.Item label="排序">
+                                <Select
+                                    value={sortValue}
+                                    style={{ width: '100%' }}
+                                    onChange={setSortValue}
+                                    options={[
+                                        {
+                                            label: '最近更新',
+                                            value: 'updated-desc',
+                                        },
+                                        {
+                                            label: '最早更新',
+                                            value: 'updated-asc',
+                                        },
+                                        {
+                                            label: '策略名称 A-Z',
+                                            value: 'name-asc',
+                                        },
+                                        {
+                                            label: '策略名称 Z-A',
+                                            value: 'name-desc',
+                                        },
+                                        {
+                                            label: '下次执行优先',
+                                            value: 'next-run-asc',
+                                        },
+                                    ]}
+                                />
+                            </Form.Item>
+                        </Col>
                         <Col span={3}>
                             <Form.Item>
                                 <Space size={8}>
@@ -1369,7 +1431,7 @@ const TaskPageList = () => {
                     className="select-all-checkbox"
                     checked={allChecked}
                     indeterminate={partChecked}
-                    disabled={listState.list.length === 0}
+                    disabled={displayedTasks.length === 0}
                     onChange={handleToggleSelectAll}
                 >
                     全选当前列表
@@ -1391,21 +1453,29 @@ const TaskPageList = () => {
 
             <div className="irify-task-card-list">
                 <Spin spinning={listState.loading}>
-                    {listState.list.length === 0 ? (
+                    {displayedTasks.length === 0 ? (
                         <div className="irify-task-empty">
                             <Empty description="暂无任务数据" />
                         </div>
                     ) : (
-                        listState.list.map((item) => {
+                        displayedTasks.map((item) => {
                             const status = item.status || 'waiting';
                             const strategyDisplay = getStrategyDisplay(item);
                             const taskGroupName = getTaskGroupName(item);
                             const lastRun = getLastRunText(item);
                             const nextRun = getNextRunText(item);
-                            const checked = ['running', 'enabled'].includes(
-                                item.status || '',
-                            );
+                            const checked = [
+                                'running',
+                                'enabled',
+                                'waiting',
+                            ].includes(item.status || '');
                             const menuItems: MenuProps['items'] = [
+                                {
+                                    key: 'detail',
+                                    icon: <MoreOutlined />,
+                                    label: '详情',
+                                    onClick: () => openDetailDrawer(item),
+                                },
                                 {
                                     key: 'run',
                                     icon: <PlayCircleOutlined />,
@@ -1616,15 +1686,6 @@ const TaskPageList = () => {
                                                     }}
                                                 >
                                                     配置策略
-                                                </Button>
-                                                <Button
-                                                    className="secondary-action-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        openDetailDrawer(item);
-                                                    }}
-                                                >
-                                                    详情
                                                 </Button>
                                                 <Dropdown
                                                     menu={{ items: menuItems }}
