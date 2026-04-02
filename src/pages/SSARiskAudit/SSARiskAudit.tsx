@@ -839,16 +839,13 @@ const SSARiskAudit: React.FC = () => {
             const success = await fetchFileContent(filePath);
             if (!success) return;
 
-            // 计算高亮位置
-            const sourceCodeStart =
-                nodeInfo.source_code_start || codeRange.source_code_start || 1;
             const highlightRange = {
                 from: {
-                    line: codeRange.start_line - sourceCodeStart + 1,
+                    line: codeRange.start_line,
                     ch: codeRange.start_column || 1,
                 },
                 to: {
-                    line: codeRange.end_line - sourceCodeStart + 1,
+                    line: codeRange.end_line,
                     ch: codeRange.end_column || 100,
                 },
             };
