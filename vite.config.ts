@@ -39,10 +39,9 @@ export default defineConfig(({ mode }) => {
                         `<title>${title}</title>`,
                     );
 
-                    // Inject IRify favicon when in IRify mode
                     if (isIRify) {
                         result = result.replace(
-                            /href="\.\/src\/assets\/compoments\/telecommunicationsLogo\.svg"/,
+                            /href="\.\/src\/assets\/compoments\/(telecommunicationsLogo\.svg|login_logo\.png)"/,
                             'href="/irify-favicon.svg"',
                         );
                     }
