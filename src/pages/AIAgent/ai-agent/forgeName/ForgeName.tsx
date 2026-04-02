@@ -9,15 +9,7 @@ import type {
 } from './type'
 import { OutlinePencilaltIcon, OutlineSearchIcon, OutlineTrashIcon } from '@/assets/icon/outline'
 import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
-import {
-  useDebounceEffect,
-  useDebounceFn,
-  useInViewport,
-  useMemoizedFn,
-  useThrottleFn,
-  useUpdateEffect,
-  useVirtualList,
-} from 'ahooks'
+import { useDebounceEffect, useDebounceFn, useInViewport, useMemoizedFn, useThrottleFn, useUpdateEffect } from 'ahooks'
 import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover'
 import { SolidToolIcon } from '@/assets/icon/solid'
 import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
@@ -127,24 +119,18 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
   const isMore = useRef(true)
 
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const forgeData = data.Data || []
-  const [list] = useVirtualList(forgeData, {
-    containerTarget: wrapperRef,
-    wrapperTarget: containerRef,
-    itemHeight: 41,
-    overscan: 5,
-  })
 
   // 获取 AI-Forge 列表
   const fetchData = useMemoizedFn((isInit?: boolean) => {
     if (isInit) isMore.current = true
     if (!isMore.current) return
     const pageInfo = getData().Pagination
+    const nextPage = isInit ? 1 : (pageInfo.Page || 1) + 1
     const request: QueryAIForgeRequest = {
       Pagination: {
         ...pageInfo,
-        Page: isInit ? 1 : ++pageInfo.Page,
+        Page: nextPage,
       },
     }
     if (search) request.Filter = { Keyword: search }
@@ -179,10 +165,9 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
   })
   // 判断数据是否填充满列表
   const handleFillList = useMemoizedFn(() => {
-    if (wrapperRef && wrapperRef.current && containerRef && containerRef.current) {
-      const { scrollHeight } = wrapperRef.current
-      const { height } = containerRef.current.getBoundingClientRect()
-      if (scrollHeight - height > -20) {
+    if (wrapperRef && wrapperRef.current) {
+      const { clientHeight, scrollHeight } = wrapperRef.current
+      if (scrollHeight <= clientHeight + 20) {
         fetchData()
       }
     }
@@ -250,11 +235,10 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
       if (!isMore.current) return
       if (loading) return
       if (wrapperRef && wrapperRef.current) {
-        const { height } = wrapperRef.current.getBoundingClientRect()
-        const { scrollHeight, scrollTop } = wrapperRef.current
+        const { clientHeight, scrollHeight, scrollTop } = wrapperRef.current
 
-        const scrollBottom = scrollHeight - scrollTop - height
-        if (scrollBottom > -10) {
+        const scrollBottom = scrollHeight - scrollTop - clientHeight
+        if (scrollBottom <= 50) {
           fetchData()
         }
       }
@@ -430,8 +414,8 @@ const ForgeName = (_: {}, ref: Ref<ForgeNameRef>) => {
 
       <div className={styles['forge-name-list']}>
         <div ref={wrapperRef} className={styles['list-wrapper']} onScroll={onScrollCapture}>
-          <div ref={containerRef}>
-            {list.map(({ data, index }) => {
+          <div>
+            {forgeData.map((data, index) => {
               const { Id, ForgeName, Description, ToolNames, ForgeVerboseName } = data
               const key = Number(Id) || index
               const tools = ToolNames ? ToolNames.filter(Boolean) : []
