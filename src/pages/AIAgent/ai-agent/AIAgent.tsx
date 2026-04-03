@@ -23,6 +23,7 @@ import { getSessionAll, getSetting as getSettingData, postSetting } from '@/apis
 import type { RouteToPageProps } from '../types/interface/publicMenu'
 import { yakitNotify } from '@/utils/notification'
 import { useNavigate } from 'react-router-dom'
+import { omit } from 'lodash'
 
 export const AIAgentCacheClearValue = '20260113'
 
@@ -141,7 +142,7 @@ export const AIAgent = () => {
             try {
               // const cache = JSON.parse(res) as AIAgentSetting;
               if (typeof res !== 'object') return
-              setSetting(res)
+              setSetting(omit(res, ['SelectedProviderID', 'SelectedModelName', 'SelectedModelTier']))
             } catch (error) {}
           })
           .catch(() => {})

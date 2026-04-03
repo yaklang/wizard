@@ -3,22 +3,22 @@ import type {
   AIChatMentionListRefProps,
   AIChatMentionProps,
   AIMentionSelectItemProps,
-  //   FileSystemTreeOfMentionProps,
+  // FileSystemTreeOfMentionProps,
   FocusModeOfMentionProps,
-  //   ForgeNameListOfMentionProps,
-  //   ToolListOfMentionProps,
+  ForgeNameListOfMentionProps,
+  // ToolListOfMentionProps,
 } from './type'
 import styles from './AIChatMention.module.scss'
 import { useCreation, useDebounceEffect, useDebounceFn, useInViewport, useKeyPress, useMemoizedFn } from 'ahooks'
-import { AIMentionTabsEnum, AIMentionTabs } from '../../defaultConstant'
+import { AIMentionTabsEnum, AIMentionTabs, AIForgeListDefaultPagination } from '../../defaultConstant'
 import type {
   AIFocus,
-  //   AIForge,
+  AIForge,
   QueryAIFocusResponse,
-  //   QueryAIForgeRequest,
-  //   QueryAIForgeResponse,
+  QueryAIForgeRequest,
+  QueryAIForgeResponse,
 } from '../../type/forge'
-// import { grpcQueryAIForge } from '../../grpc'
+import { grpcQueryAIForge } from '../../grpc'
 // import type { AITool, GetAIToolListRequest, GetAIToolListResponse } from '../../type/aiTool'
 // import { genDefaultPagination } from '@/pages/invoker/schema'
 // import { grpcGetAIToolList } from '../../aiToolList/utils'
@@ -31,7 +31,7 @@ import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
 import { useGetSetState } from '@/hooks'
 import type { RollingLoadListRef } from '@/compoments/RollingLoadList/RollingLoadList'
 import { RollingLoadList } from '@/compoments/RollingLoadList/RollingLoadList'
-import { postSettingAifocusGet } from '@/apis/AiEventApi'
+import { postAiforgeQuery, postSettingAifocusGet } from '@/apis/AiEventApi'
 
 const defaultRef: AIChatMentionListRefProps = {
   onRefresh: () => {},
@@ -45,13 +45,12 @@ const alphanumericKeys = [
 export const AIChatMention: React.FC<AIChatMentionProps> = React.memo((props) => {
   const { onSelect, defaultActiveTab, filterMode } = props
   const [activeKey, setActiveKey, getActiveKey] = useGetSetState<AIMentionTabsEnum>(
-    // defaultActiveTab || AIMentionTabsEnum.Forge_Name,
-    defaultActiveTab || AIMentionTabsEnum.FocusMode,
+    defaultActiveTab || AIMentionTabsEnum.Forge_Name,
   )
   const [keyWord, setKeyWord] = useState<string>('')
   const [focus, setFocus] = useState<boolean>(false)
 
-  //   const forgeRef = useRef<AIChatMentionListRefProps>(defaultRef)
+  const forgeRef = useRef<AIChatMentionListRefProps>(defaultRef)
   //   const toolRef = useRef<AIChatMentionListRefProps>(defaultRef)
   //   const knowledgeBaseRef = useRef<AIChatMentionListRefProps>(defaultRef)
   const focusModeRef = useRef<AIChatMentionListRefProps>(defaultRef)
@@ -149,24 +148,24 @@ export const AIChatMention: React.FC<AIChatMentionProps> = React.memo((props) =>
     setKeyWord('')
     setActiveKey(k as AIMentionTabsEnum)
   })
-  //   const onSelectForge = useMemoizedFn((forgeItem: AIForge) => {
-  //     onSelect('forge', {
-  //       id: `${forgeItem.Id}`,
-  //       name: forgeItem.ForgeVerboseName || forgeItem.ForgeName,
-  //     })
+  const onSelectForge = useMemoizedFn((forgeItem: AIForge) => {
+    onSelect('forge', {
+      id: `${forgeItem.Id}`,
+      name: forgeItem.ForgeVerboseName || forgeItem.ForgeName,
+    })
+  })
+  // const onSelectTool = useMemoizedFn((toolItem: AITool) => {
+  //   onSelect('tool', {
+  //     id: `${toolItem.ID}`,
+  //     name: toolItem.VerboseName || toolItem.Name,
   //   })
-  //   const onSelectTool = useMemoizedFn((toolItem: AITool) => {
-  //     onSelect('tool', {
-  //       id: `${toolItem.ID}`,
-  //       name: toolItem.VerboseName || toolItem.Name,
-  //     })
+  // })
+  // const onSelectFile = useMemoizedFn((path: string, isFolder: boolean) => {
+  //   onSelect(isFolder ? 'folder' : 'file', {
+  //     id: path,
+  //     name: path,
   //   })
-  //   const onSelectFile = useMemoizedFn((path: string, isFolder: boolean) => {
-  //     onSelect(isFolder ? 'folder' : 'file', {
-  //       id: path,
-  //       name: path,
-  //     })
-  //   })
+  // })
   const onSelectFocusMode = useMemoizedFn((focusMode: AIFocus) => {
     onSelect('focusMode', {
       id: `${focusMode.Name}`,
@@ -175,15 +174,15 @@ export const AIChatMention: React.FC<AIChatMentionProps> = React.memo((props) =>
   })
   const renderTabContent = useMemoizedFn((key: AIMentionTabsEnum) => {
     switch (key) {
-      //   case AIMentionTabsEnum.Forge_Name:
-      //     return (
-      //       <ForgeNameListOfMention
-      //         ref={forgeRef}
-      //         keyWord={keyWord}
-      //         onSelect={onSelectForge}
-      //         getContainer={getContainer}
-      //       />
-      //     )
+      case AIMentionTabsEnum.Forge_Name:
+        return (
+          <ForgeNameListOfMention
+            ref={forgeRef}
+            keyWord={keyWord}
+            onSelect={onSelectForge}
+            getContainer={getContainer}
+          />
+        )
       //   case AIMentionTabsEnum.Tool:
       //     return <ToolListOfMention ref={toolRef} keyWord={keyWord} onSelect={onSelectTool} getContainer={getContainer} />
       //   case AIMentionTabsEnum.File_System:
@@ -286,136 +285,136 @@ export const AIChatMention: React.FC<AIChatMentionProps> = React.memo((props) =>
   )
 })
 
-// const ForgeNameListOfMention: React.FC<ForgeNameListOfMentionProps> = React.memo(
-//   forwardRef((props, ref) => {
-//     const { keyWord, onSelect, getContainer } = props
-//     const [loading, setLoading] = useState<boolean>(false)
-//     const [spinning, setSpinning] = useState<boolean>(false)
-//     const [isRef, setIsRef] = useState<boolean>(false)
-//     const [hasMore, setHasMore] = useState<boolean>(true)
-//     const [response, setResponse] = useState<QueryAIForgeResponse>({
-//       Pagination: { ...AIForgeListDefaultPagination },
-//       Data: [],
-//       Total: 0,
-//     })
-//     const [selected, setSelected] = useState<AIForge>()
+const ForgeNameListOfMention: React.FC<ForgeNameListOfMentionProps> = React.memo(
+  forwardRef((props, ref) => {
+    const { keyWord, onSelect, getContainer } = props
+    const [loading, setLoading] = useState<boolean>(false)
+    const [spinning, setSpinning] = useState<boolean>(false)
+    const [isRef, setIsRef] = useState<boolean>(false)
+    const [hasMore, setHasMore] = useState<boolean>(true)
+    const [response, setResponse] = useState<QueryAIForgeResponse>({
+      Pagination: { ...AIForgeListDefaultPagination },
+      Data: [],
+      Total: 0,
+    })
+    const [selected, setSelected] = useState<AIForge>()
 
-//     const forgeListRef = useRef<HTMLDivElement>(null)
-//     const [inViewport = true] = useInViewport(forgeListRef)
+    const forgeListRef = useRef<HTMLDivElement>(null)
+    const [inViewport = true] = useInViewport(forgeListRef)
 
-//     const listRef = useRef<RollingLoadListRef>({
-//       containerRef: null,
-//       scrollTo: () => {},
-//     })
+    const listRef = useRef<RollingLoadListRef>({
+      containerRef: null,
+      scrollTo: () => {},
+    })
 
-//     useImperativeHandle(
-//       ref,
-//       () => ({
-//         onRefresh: () => {
-//           getList()
-//         },
-//       }),
-//       [],
-//     )
-//     useEffect(() => {
-//       // 获取模板列表
-//       getList()
-//     }, [])
-//     const onKeyboardSelect = useMemoizedFn((value: number, isScroll: boolean) => {
-//       if (value >= 0 && value < response.Data.length) {
-//         setSelected(response.Data[value])
-//         if (isScroll) {
-//           listRef.current.scrollTo(value)
-//         }
-//       }
-//     })
-//     useSwitchSelectByKeyboard<AIForge>(listRef.current.containerRef, {
-//       data: response.Data,
-//       selected,
-//       rowKey: (item) => `AIMentionSelectItem-${item.Id}`,
-//       onSelectNumber: onKeyboardSelect,
-//       onEnter: () => onEnter(),
-//       getContainer,
-//     })
+    useImperativeHandle(
+      ref,
+      () => ({
+        onRefresh: () => {
+          getList()
+        },
+      }),
+      [],
+    )
+    useEffect(() => {
+      // 获取模板列表
+      getList()
+    }, [])
+    const onKeyboardSelect = useMemoizedFn((value: number, isScroll: boolean) => {
+      if (value >= 0 && value < response.Data.length) {
+        setSelected(response.Data[value])
+        if (isScroll) {
+          listRef.current.scrollTo(value)
+        }
+      }
+    })
+    useSwitchSelectByKeyboard<AIForge>(listRef.current.containerRef, {
+      data: response.Data,
+      selected,
+      rowKey: (item) => `AIMentionSelectItem-${item.Id}`,
+      onSelectNumber: onKeyboardSelect,
+      onEnter: () => onEnter(),
+      getContainer,
+    })
 
-//     const onEnter = useMemoizedFn(() => {
-//       if (selected && inViewport) onSelect(selected)
-//     })
-//     const getList = useMemoizedFn(async (page?: number) => {
-//       setLoading(true)
-//       const newQuery: QueryAIForgeRequest = {
-//         Pagination: {
-//           ...response.Pagination,
-//           Page: page || 1,
-//         },
-//         Filter: {
-//           Keyword: keyWord,
-//         },
-//       }
-//       if (newQuery.Pagination.Page === 1) {
-//         setSpinning(true)
-//       }
-//       try {
-//         const res = await grpcQueryAIForge(newQuery)
-//         if (!res.Data) res.Data = []
-//         const newPage = Number(res.Pagination.Page)
-//         const length = newPage === 1 ? res.Data.length : res.Data.length + response.Data.length
-//         setHasMore(length < Number(res.Total))
-//         let newRes: QueryAIForgeResponse = {
-//           Data: newPage === 1 ? res?.Data : [...response.Data, ...(res?.Data || [])],
-//           Pagination: res?.Pagination || {
-//             ...AIForgeListDefaultPagination,
-//           },
-//           Total: res.Total,
-//         }
-//         setResponse(newRes)
-//         if (newPage === 1) {
-//           setIsRef(!isRef)
-//         }
-//       } catch (error) {}
-//       setTimeout(() => {
-//         setLoading(false)
-//         setSpinning(false)
-//       }, 300)
-//     })
-//     /** @description 列表加载更多 */
-//     const loadMoreData = useMemoizedFn(() => {
-//       getList(Number(response.Pagination.Page) + 1)
-//     })
+    const onEnter = useMemoizedFn(() => {
+      if (selected && inViewport) onSelect(selected)
+    })
+    const getList = useMemoizedFn(async (page?: number) => {
+      setLoading(true)
+      const newQuery: QueryAIForgeRequest = {
+        Pagination: {
+          ...response.Pagination,
+          Page: page || 1,
+        },
+        Filter: {
+          Keyword: keyWord,
+        },
+      }
+      if (newQuery.Pagination.Page === 1) {
+        setSpinning(true)
+      }
+      try {
+        const res = await postAiforgeQuery(newQuery)
+        if (!res.Data) res.Data = []
+        const newPage = Number(res.Pagination.Page)
+        const length = newPage === 1 ? res.Data.length : res.Data.length + response.Data.length
+        setHasMore(length < Number(res.Total))
+        let newRes: QueryAIForgeResponse = {
+          Data: newPage === 1 ? res?.Data : [...response.Data, ...(res?.Data || [])],
+          Pagination: res?.Pagination || {
+            ...AIForgeListDefaultPagination,
+          },
+          Total: res.Total,
+        }
+        setResponse(newRes)
+        if (newPage === 1) {
+          setIsRef(!isRef)
+        }
+      } catch (error) {}
+      setTimeout(() => {
+        setLoading(false)
+        setSpinning(false)
+      }, 300)
+    })
+    /** @description 列表加载更多 */
+    const loadMoreData = useMemoizedFn(() => {
+      getList(Number(response.Pagination.Page) + 1)
+    })
 
-//     return (
-//       <div className={styles['forge-name-list-of-mention']} ref={forgeListRef} tabIndex={0}>
-//         <YakitSpin spinning={spinning}>
-//           <RollingLoadList<AIForge>
-//             ref={listRef}
-//             data={response.Data}
-//             loadMoreData={loadMoreData}
-//             renderRow={(rowData: AIForge) => {
-//               return (
-//                 <AIMentionSelectItem
-//                   item={{
-//                     id: `${rowData.Id}`,
-//                     name: rowData.ForgeVerboseName || rowData.ForgeName,
-//                   }}
-//                   onSelect={() => onSelect(rowData)}
-//                   isActive={selected?.Id === rowData.Id}
-//                 />
-//               )
-//             }}
-//             classNameRow={styles['ai-forge-list-row']}
-//             classNameList={styles['ai-forge-list']}
-//             page={Number(response.Pagination.Page)}
-//             hasMore={hasMore}
-//             loading={loading}
-//             defItemHeight={24}
-//             rowKey="Id"
-//             isRef={isRef}
-//           />
-//         </YakitSpin>
-//       </div>
-//     )
-//   }),
-// )
+    return (
+      <div className={styles['forge-name-list-of-mention']} ref={forgeListRef} tabIndex={0}>
+        <YakitSpin spinning={spinning}>
+          <RollingLoadList<AIForge>
+            ref={listRef}
+            data={response.Data}
+            loadMoreData={loadMoreData}
+            renderRow={(rowData: AIForge) => {
+              return (
+                <AIMentionSelectItem
+                  item={{
+                    id: `${rowData.Id}`,
+                    name: rowData.ForgeVerboseName || rowData.ForgeName,
+                  }}
+                  onSelect={() => onSelect(rowData)}
+                  isActive={selected?.Id === rowData.Id}
+                />
+              )
+            }}
+            classNameRow={styles['ai-forge-list-row']}
+            classNameList={styles['ai-forge-list']}
+            page={Number(response.Pagination.Page)}
+            hasMore={hasMore}
+            loading={loading}
+            defItemHeight={24}
+            rowKey="Id"
+            isRef={isRef}
+          />
+        </YakitSpin>
+      </div>
+    )
+  }),
+)
 
 // const ToolListOfMention: React.FC<ToolListOfMentionProps> = React.memo(
 //   forwardRef((props, ref) => {

@@ -79,8 +79,8 @@ export const AiAgentTabList: YakitTabsProps[] = [
   // { value: AIAgentTabListEnum.MCP, label: 'MCP', icon: <OutlineMCPIcon /> },
 ]
 export enum AIMentionTabsEnum {
-  // /** forge 智能体 */
-  // Forge_Name = 'forgeName',
+  /** forge 智能体 */
+  Forge_Name = 'forgeName',
   // /** 工具 */
   // Tool = 'tool',
   // /** 知识库 */
@@ -91,7 +91,7 @@ export enum AIMentionTabsEnum {
   FocusMode = 'focusMode',
 }
 export const AIMentionTabs: YakitSideTabProps['yakitTabs'] = [
-  // { value: AIMentionTabsEnum.Forge_Name, label: '技能' },
+  { value: AIMentionTabsEnum.Forge_Name, label: '技能' },
   // { value: AIMentionTabsEnum.Tool, label: '工具' },
   // { value: AIMentionTabsEnum.KnowledgeBase, label: '知识库' },
   // { value: AIMentionTabsEnum.File_System, label: '文件系统' },
@@ -104,7 +104,7 @@ export const AIAgentSettingDefault: AIAgentSetting = {
   UseDefaultAIConfig: true,
   ForgeName: '',
   DisallowRequireForUserPrompt: true,
-  ReviewPolicy: 'manual',
+  ReviewPolicy: 'yolo',
   AIReviewRiskControlScore: 0.5,
   DisableToolUse: false,
   AICallAutoRetry: 3,

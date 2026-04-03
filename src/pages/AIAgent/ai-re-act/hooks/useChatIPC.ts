@@ -85,10 +85,7 @@ function useChatIPC(params?: UseChatIPCParams) {
       yakitNotify('error', 'AI异常, 未记录session却处于执行状态, 请关闭AI页面重试!')
       return
     }
-    postSendFirstMessage(chatID.current, {
-      IsStart: true,
-      Params: { ...(aiRequest.current || {}) },
-    }).finally(() => {
+    postSendFirstMessage(chatID.current, { ...aiRequestAll.current }).finally(() => {
       if (aiRequest.current?.UserQuery) {
         sendMessage({
           IsFreeInput: true,
@@ -123,12 +120,14 @@ function useChatIPC(params?: UseChatIPCParams) {
   })
 
   /** 启动流接口的请求参数 */
+  const aiRequestAll = useRef<AIInputEvent>()
   const aiRequest = useRef<AIStartParams>()
   const fetchAIRequest = useMemoizedFn(() => {
     return cloneDeep(aiRequest.current)
   })
   const handleResetAIRequest = useMemoizedFn(() => {
     aiRequest.current = undefined
+    aiRequestAll.current = undefined
   })
 
   /** 获取全部聊天数据 */
@@ -373,6 +372,7 @@ function useChatIPC(params?: UseChatIPCParams) {
       const { NodeId } = res
       const ipcContent = base64ToJson(res.Content) || ''
       const data = JSON.parse(ipcContent) as AIAgentGrpcApi.QuestionQueueStatusChange
+      console.log('11111111111111111:', data)
       if (NodeId === 'react_task_dequeue') {
         if (data.focus_mode) {
           // 记录专注模式状态
@@ -585,6 +585,7 @@ function useChatIPC(params?: UseChatIPCParams) {
     chatID.current = token
 
     aiRequest.current = omit(params.Params, ['SelectedProviderID', 'SelectedModelName', 'SelectedModelTier'])
+    aiRequestAll.current = params
     sseEvents.connect(`run/${token}/events`)
 
     // console.log('start-ai-re-act', token, params)

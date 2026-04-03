@@ -348,7 +348,7 @@ const routers: RouteObjectRootMy[] = [
         ],
       },
       {
-        name: YakitRoute.AI_Agent,
+        name: 'AIAgent',
         path: YakitRoute.AI_Agent,
         key: YakitRoute.AI_Agent,
         icon: <AIOutlinedIcon />,
