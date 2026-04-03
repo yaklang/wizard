@@ -29,8 +29,11 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Build project
+            - name: Build default project
               run: pnpm build
+
+            - name: Build IRify project
+              run: pnpm build:irify
 
             - name: Get date and commit hash
               run: |
@@ -46,11 +49,20 @@ jobs:
             - name: Zip dist directory
               run: zip -r preview-dist.zip ./dist
 
-            - name: Upload Artifacts
+            - name: Zip dist-irify directory
+              run: zip -r preview-dist-irify.zip ./dist-irify
+
+            - name: Upload dist artifacts
               uses: actions/upload-artifact@v4
               with:
                   name: preview-dist.zip
                   path: ./preview-dist.zip
+
+            - name: Upload dist-irify artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: preview-dist-irify.zip
+                  path: ./preview-dist-irify.zip
 
     release:
         needs:
@@ -64,6 +76,11 @@ jobs:
               uses: actions/download-artifact@v4
               with:
                   name: preview-dist.zip
+
+            - name: Download IRify Artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: preview-dist-irify.zip
 
             - name: Set release name
               run: |
@@ -90,6 +107,16 @@ jobs:
                   upload_url: ${{ steps.create_release.outputs.upload_url }}
                   asset_path: preview-dist.zip
                   asset_name: preview-dist.zip
+                  asset_content_type: application/zip
+
+            - name: Upload IRify release asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: preview-dist-irify.zip
+                  asset_name: preview-dist-irify.zip
                   asset_content_type: application/zip
 
     deploy_to_server:
