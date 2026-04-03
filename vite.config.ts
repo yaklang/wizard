@@ -32,20 +32,23 @@ export default defineConfig(({ mode }) => {
             // HTML transform plugin for title and favicon
             {
                 name: 'html-transform',
-                transformIndexHtml(html) {
-                    const title = env.VITE_APP_TITLE || '自动化渗透系统';
-                    let result = html.replace(
-                        /<title>.*?<\/title>/,
-                        `<title>${title}</title>`,
-                    );
-
-                    if (isIRify) {
-                        result = result.replace(
-                            /href="\.\/src\/assets\/compoments\/(telecommunicationsLogo\.svg|login_logo\.png)"/,
-                            'href="/irify-favicon.svg"',
+                transformIndexHtml: {
+                    order: 'pre',
+                    handler(html) {
+                        const title = env.VITE_APP_TITLE || '自动化渗透系统';
+                        let result = html.replace(
+                            /<title>.*?<\/title>/,
+                            `<title>${title}</title>`,
                         );
-                    }
-                    return result;
+
+                        if (isIRify) {
+                            result = result.replace(
+                                /<link\s+rel="icon"[\s\S]*?\/>/,
+                                `<link rel="icon" type="image/svg+xml" href="./irify-favicon.svg" />`,
+                            );
+                        }
+                        return result;
+                    },
                 },
             },
         ],
