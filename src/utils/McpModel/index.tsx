@@ -4,13 +4,7 @@ import type { UseModalRefType } from '@/compoments/WizardModal/useModal';
 import { useMemoizedFn, useRequest } from 'ahooks';
 import { CopyOutlined } from '@ant-design/icons';
 import { Button, Input, message, Tag } from 'antd';
-import {
-    forwardRef,
-    useEffect,
-    useImperativeHandle,
-    useMemo,
-    useState,
-} from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import { copyToClipboard } from '@/utils';
 
 // 启用MCP模型弹窗
@@ -22,6 +16,8 @@ const McpModal = forwardRef<UseModalRefType, object>((_, ref) => {
 
     useImperativeHandle(ref, () => ({
         async open() {
+            await getMcpStatusFn();
+
             model.open();
         },
     }));
@@ -45,30 +41,19 @@ const McpModal = forwardRef<UseModalRefType, object>((_, ref) => {
     );
 
     const getMcpStatusFn = useMemoizedFn(async () => {
-        const res = await getMcpStatus();
-        setEnabled(res.data.running ?? false);
-        return res.data.running ?? false;
+        try {
+            const res = await getMcpStatus();
+            setEnabled(res.data.running ?? false);
+            return res.data.running ?? false;
+        } catch (error) {
+            message.error('获取MCP状态失败');
+        }
     });
-
-    useEffect(() => {
-        getMcpStatusFn();
-    }, []);
 
     const onStartMcp = useMemoizedFn(async () => {
         try {
-            if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}$/.test(address)) {
-                message.error('请输入正确的启动地址格式');
-                return;
-            }
-            if (
-                !/^http?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}$/.test(
-                    baseUrl,
-                )
-            ) {
-                message.error('请输入正确的URL地址格式');
-                return;
-            }
             const action = enabled ? 'stop' : 'start';
+
             await startMcp({
                 action,
                 transport: 'sse',
