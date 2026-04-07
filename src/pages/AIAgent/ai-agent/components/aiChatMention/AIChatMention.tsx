@@ -18,7 +18,6 @@ import type {
   QueryAIForgeRequest,
   QueryAIForgeResponse,
 } from '../../type/forge'
-import { grpcQueryAIForge } from '../../grpc'
 // import type { AITool, GetAIToolListRequest, GetAIToolListResponse } from '../../type/aiTool'
 // import { genDefaultPagination } from '@/pages/invoker/schema'
 // import { grpcGetAIToolList } from '../../aiToolList/utils'
@@ -202,9 +201,9 @@ export const AIChatMention: React.FC<AIChatMentionProps> = React.memo((props) =>
   })
   const onSearch = useMemoizedFn(() => {
     switch (activeKey) {
-      //   case AIMentionTabsEnum.Forge_Name:
-      //     forgeRef.current.onRefresh()
-      //     break
+      case AIMentionTabsEnum.Forge_Name:
+        forgeRef.current.onRefresh()
+        break
       //   case AIMentionTabsEnum.Tool:
       //     toolRef.current.onRefresh()
       //     break
