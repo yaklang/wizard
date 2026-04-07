@@ -71,8 +71,8 @@ const HistoryChat = memo(() => {
   const handleClearChatByDays = useMemoizedFn(async (days: number) => {
     if (clearLoading) return
 
-    const beforeTimestamp = Date.now() - days * DAY_MS
-    const deletedChats = chats.filter((item) => getChatTimestamp(item) <= beforeTimestamp)
+    const cutoffTimestamp = Date.now() - days * DAY_MS
+    const deletedChats = chats.filter((item) => getChatTimestamp(item) <= cutoffTimestamp)
 
     if (deletedChats.length === 0) {
       yakitNotify('info', `暂无${days}天前的会话`)
@@ -80,11 +80,11 @@ const HistoryChat = memo(() => {
     }
     setClearLoading(true)
     try {
-      await deleteSession({ Filter: { BeforeTimestamp: beforeTimestamp } })
+      await deleteSession({ Filter: { SessionID: deletedChats.map((item) => item.run_id) } })
 
       clearLocalChats(deletedChats)
 
-      const nextChats = chats.filter((item) => getChatTimestamp(item) > beforeTimestamp)
+      const nextChats = chats.filter((item) => getChatTimestamp(item) > cutoffTimestamp)
       const activeDeleted = !!activeChat && deletedChats.some((item) => item.run_id === activeChat.run_id)
 
       if (nextChats.length === 0) {
