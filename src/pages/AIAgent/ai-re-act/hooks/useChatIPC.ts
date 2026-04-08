@@ -90,8 +90,8 @@ function useChatIPC(params?: UseChatIPCParams) {
         sendMessage({
           IsFreeInput: true,
           FreeInput: aiRequest.current.UserQuery,
-          AttachedResourceInfo: [],
-          FocusModeLoop: '',
+          AttachedResourceInfo: aiRequestAll.current?.AttachedResourceInfo,
+          FocusModeLoop: aiRequestAll.current?.FocusModeLoop,
         })
       }
     })
