@@ -372,7 +372,6 @@ function useChatIPC(params?: UseChatIPCParams) {
       const { NodeId } = res
       const ipcContent = base64ToJson(res.Content) || ''
       const data = JSON.parse(ipcContent) as AIAgentGrpcApi.QuestionQueueStatusChange
-      console.log('11111111111111111:', data)
       if (NodeId === 'react_task_dequeue') {
         if (data.focus_mode) {
           // 记录专注模式状态
