@@ -196,15 +196,17 @@ export const AIModelForm: React.FC<AIModelFormProps> = React.memo((props) => {
             const newConfig: AIGlobalConfig = cloneDeep(
                 aiGlobalConfigRef.current,
             );
-
             const fileName = getFileNameByModelType(modelType);
             if (!fileName) return;
-            const index = newConfig[fileName].findIndex((i) =>
+            const index = newConfig[fileName]?.findIndex((i) =>
                 isEqualAIModel(i, newItem),
             );
-            if (index !== -1) {
+            if (typeof index === "number" && index !== -1) {
                 yakitNotify('error', '已存在相同配置的AI模型，请勿重复添加');
                 return;
+            }
+            if(!newConfig[fileName]){
+                newConfig[fileName] = [];
             }
             newConfig[fileName].push(newItem);
             onSetAIGlobalConfig(newConfig, {

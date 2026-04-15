@@ -485,7 +485,7 @@ const AIOnlineModelList: React.FC<AIOnlineModelListProps> = React.memo(
                         className={styles['ai-online-model-wrapper']}
                         ref={onlineListRef}
                     >
-                        {!!aiGlobalConfig?.IntelligentModels.length && (
+                        {!!aiGlobalConfig?.IntelligentModels?.length && (
                             <AIOnlineModel
                                 title="高质模型"
                                 subTitle="用于执行复杂度高的任务,对话框中可切换该模型"
@@ -513,7 +513,7 @@ const AIOnlineModelList: React.FC<AIOnlineModelListProps> = React.memo(
                                 }
                             />
                         )}
-                        {!!aiGlobalConfig?.LightweightModels.length && (
+                        {!!aiGlobalConfig?.LightweightModels?.length && (
                             <AIOnlineModel
                                 title="高质模型"
                                 subTitle="用于执行复杂度高的任务,对话框中可切换该模型"
@@ -541,7 +541,7 @@ const AIOnlineModelList: React.FC<AIOnlineModelListProps> = React.memo(
                                 }
                             />
                         )}
-                        {!!aiGlobalConfig?.VisionModels.length && (
+                        {!!aiGlobalConfig?.VisionModels?.length && (
                             <AIOnlineModel
                                 title="轻量模型"
                                 subTitle="用于执行简单任务和会话"
