@@ -1,55 +1,56 @@
-import { Navigate, type RouteObject } from 'react-router-dom'
+import type { RouteObject } from 'react-router-dom'
 import AppLayout from '../AppLayout'
 import type { ReactNode } from 'react'
 import AuthRoute from './AuthRoute'
 // import Login from '@/pages/Login'
 import {
-  DataServiceIcon,
-  NodeConfigIcon,
-  PublicCodec,
-  ReportManageIcon,
+  // DataServiceIcon,
+  // NodeConfigIcon,
+  // PublicCodec,
+  // ReportManageIcon,
   SystemManagementIcon,
-  TaskCenterIcon,
+  // TaskCenterIcon,
   AIOutlinedIcon,
 } from '@/assets/menu'
 
 import { NetworkError } from '@/pages/NetworkError'
 
-import TaskPageList from '@/pages/TaskPageList'
-import TaskScript from '@/pages/TaskScript'
-import TaskDetail from '@/pages/TaskDetail'
-import ReportManage from '@/pages/ReportManage'
-import NodeConfig from '@/pages/NodeConfig'
+// import TaskPageList from '@/pages/TaskPageList'
+// import TaskScript from '@/pages/TaskScript'
+// import TaskDetail from '@/pages/TaskDetail'
+// import ReportManage from '@/pages/ReportManage'
+// import NodeConfig from '@/pages/NodeConfig'
 import SystemManagement from '@/pages/SystemManagement'
-import { PortAssets } from '@/pages/DataService/PortAssets'
-import { AssetsVulns } from '@/pages/DataService/AssetsVulns'
-import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage'
-import { CveLoophole } from '@/pages/DataService/CveLoophole'
-import NodeManagePage from '@/pages/NodeManage'
+// import { PortAssets } from '@/pages/DataService/PortAssets'
+// import { AssetsVulns } from '@/pages/DataService/AssetsVulns'
+// import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage'
+// import { CveLoophole } from '@/pages/DataService/CveLoophole'
+// import NodeManagePage from '@/pages/NodeManage'
 import License from '@/pages/License'
-import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript'
-import ActiChainDNS from '@/pages/ActiChainDNS'
-import ICMPSize from '@/pages/ICMPSize'
-import TCPLog from '@/pages/TCPLog'
+// import { ModifyTaskScript } from '@/pages/TaskScript/taskScript/ModifyTaskScript'
+// import ActiChainDNS from '@/pages/ActiChainDNS'
+// import ICMPSize from '@/pages/ICMPSize'
+// import TCPLog from '@/pages/TCPLog'
 // import MessageCollect from '@/pages/MessageCollect';
-import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/ReverseLinkServerFacadeServer'
-import GlobalReverseLink from '@/pages/ReverseLink'
-import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer'
-import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon'
+// import { ReverseLinkServerFacadeServer } from '@/pages/ReverseLinkServer/ReverseLinkServerFacadeServer'
+// import GlobalReverseLink from '@/pages/ReverseLink'
+// import { ReverseLinkServer } from '@/pages/ReverseLinkServer/ReverseLinkServer'
+// import ApiOutlinedIcon from '@/assets/menu/ApiOutlinedIcon'
 // import CodecEntry from '@/pages/Codec'
-import SpecialTask from '@/pages/SpecialTask'
-import CreateTask from '@/pages/CreateTask'
-import { ProjectManagement, ProjectEditor, CreateProject } from '@/pages/ProjecManagement'
-import RuleManagement from '@/pages/RuleManagement'
-import { RuleEditor } from '@/pages/RuleManagement/RuleEditor'
+// import SpecialTask from '@/pages/SpecialTask'
+// import CreateTask from '@/pages/CreateTask'
+// import { ProjectManagement, ProjectEditor, CreateProject } from '@/pages/ProjecManagement'
+// import RuleManagement from '@/pages/RuleManagement'
+// import { RuleEditor } from '@/pages/RuleManagement/RuleEditor'
 // SSARisk pages removed - now using SSARiskAudit
-import SSARiskAudit from '@/pages/SSARiskAudit'
-import TaskList from '@/pages/SSAScanTask/TaskList'
+// import SSARiskAudit from '@/pages/SSARiskAudit'
+// import TaskList from '@/pages/SSAScanTask/TaskList'
 import { AIAgent } from '@/pages/AIAgent/ai-agent/AIAgent'
 import AIAgentLog from '@/pages/AIAgent/ai-agent-log/AIAgentLog'
-import { TestAi } from '@/apis/AiEventApi/test'
+// import { TestAi } from '@/apis/AiEventApi/test'
 import ForgeEditor from '@/pages/AIAgent/ai-agent/aiForge/forgeEditor/ForgeEditor'
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute'
+import Login from '@/pages/Login'
 
 // 继承路由接口，增加name字段
 type RouteObjectRootMy = RouteObject & {
@@ -378,6 +379,20 @@ const routers: RouteObjectRootMy[] = [
         element: <AIAgent />,
       },
       {
+        path: 'system-management',
+        name: '系统管理',
+        key: 'system',
+        icon: <SystemManagementIcon />,
+        children: [
+          {
+            path: 'userinfo',
+            name: '用户管理',
+            key: 'system-user',
+            element: <SystemManagement />,
+          },
+        ],
+      },
+      {
         path: YakitRoute.AddAIForge,
         name: '新增Forge',
         key: YakitRoute.AddAIForge,
@@ -395,8 +410,8 @@ const routers: RouteObjectRootMy[] = [
   },
   {
     path: '/login',
-    // element: <Login />,
-    element: <Navigate to="/" replace />,
+    element: <Login />,
+    // element: <Navigate to="/" replace />,
   },
   {
     path: '/license',
