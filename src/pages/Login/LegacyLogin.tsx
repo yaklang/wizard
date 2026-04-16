@@ -185,8 +185,8 @@ const Login = () => {
                     <div className="flex items-center gap-1">
                         <img src={login_logo} className="w-10 h-10" />
                         <div className="font-YouSheBiaoTiHei text-[25px] font-normal color-[#31343F]">
-                            {/* 分布式平台 */}
-                            自动化渗透系统
+                            分布式平台
+                            {/* 自动化渗透系统 */}
                             <div />
                         </div>
                     </div>
