@@ -8,7 +8,7 @@ import {
   // NodeConfigIcon,
   // PublicCodec,
   // ReportManageIcon,
-  SystemManagementIcon,
+  // SystemManagementIcon,
   // TaskCenterIcon,
   AIOutlinedIcon,
 } from '@/assets/menu'
@@ -20,7 +20,7 @@ import { NetworkError } from '@/pages/NetworkError'
 // import TaskDetail from '@/pages/TaskDetail'
 // import ReportManage from '@/pages/ReportManage'
 // import NodeConfig from '@/pages/NodeConfig'
-import SystemManagement from '@/pages/SystemManagement'
+// import SystemManagement from '@/pages/SystemManagement'
 // import { PortAssets } from '@/pages/DataService/PortAssets'
 // import { AssetsVulns } from '@/pages/DataService/AssetsVulns'
 // import { SensitiveMessage } from '@/pages/DataService/SensitiveMessage'
@@ -378,20 +378,20 @@ const routers: RouteObjectRootMy[] = [
         icon: <AIOutlinedIcon />,
         element: <AIAgent />,
       },
-      {
-        path: 'system-management',
-        name: '系统管理',
-        key: 'system',
-        icon: <SystemManagementIcon />,
-        children: [
-          {
-            path: 'userinfo',
-            name: '用户管理',
-            key: 'system-user',
-            element: <SystemManagement />,
-          },
-        ],
-      },
+      // {
+      //   path: 'system-management',
+      //   name: '系统管理',
+      //   key: 'system',
+      //   icon: <SystemManagementIcon />,
+      //   children: [
+      //     {
+      //       path: 'userinfo',
+      //       name: '用户管理',
+      //       key: 'system-user',
+      //       element: <SystemManagement />,
+      //     },
+      //   ],
+      // },
       {
         path: YakitRoute.AddAIForge,
         name: '新增Forge',
