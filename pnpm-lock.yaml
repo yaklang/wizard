@@ -95,6 +95,9 @@ importers:
       highlight.js:
         specifier: ^11.10.0
         version: 11.10.0
+      html2canvas:
+        specifier: ^1.4.1
+        version: 1.4.1
       html2pdf.js:
         specifier: ^0.10.1
         version: 0.10.2
@@ -188,6 +191,9 @@ importers:
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
+      vite-html-docx:
+        specifier: ^1.0.0
+        version: 1.0.0
       zustand:
         specifier: ^4.5.5
         version: 4.5.5(@types/react@18.3.11)(react@18.3.1)
@@ -6434,6 +6440,9 @@ packages:
   viewport-mercator-project@6.2.3:
     resolution: {integrity: sha512-QQb0/qCLlP4DdfbHHSWVYXpghB2wkLIiiZQnoelOB59mXKQSyZVxjreq1S+gaBJFpcGkWEcyVtre0+2y2DTl/Q==}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
+  vite-html-docx@1.0.0:
+    resolution: {integrity: sha512-OcZQsLWhUvYMg+mvhNGAmuryyf7cnU1K5T6KjlyeFUvsZbF7R9JX3K7gbEKd8+CsABlgGdUrk2cHV4X/ttoMiA==}
 
   vite-node@2.1.8:
     resolution: {integrity: sha512-uPAwSr57kYjAUux+8E2j0q0Fxpn8M9VoyfGiRI8Kfktz9NcYMCenwY5RnZxnF1WTu3TGiYipirIzacLL3VVGFg==}
@@ -14679,6 +14688,8 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.25.7
       gl-matrix: 3.4.3
+
+  vite-html-docx@1.0.0: {}
 
   vite-node@2.1.8(@types/node@22.13.14)(sass@1.79.4)(terser@5.36.0):
     dependencies:

@@ -5,7 +5,7 @@ import TableDeleteOutlined from '@/assets/task/TableDeleteOutlined';
 import type { ReportItem } from '@/apis/reportManage/types';
 import { DownloadOutlinedIcon } from '@/assets/report/DownloadOutlinedIcon';
 import { FileOutlinedIcon } from '@/assets/report/FileOutlinedIcon';
-import { Button, message, Popover, Tooltip } from 'antd';
+import { Button, message, Popover, Spin, Tooltip } from 'antd';
 import { showErrorMessage } from '@/utils/showErrorMessage';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useRequest, useSafeState } from 'ahooks';
@@ -25,6 +25,7 @@ const ColumnsOperateRender: FC<{
 }> = ({ render, localRefrech, setDeleteValues }) => {
     const PreviewReportRef = useRef<UseModalRefType>(null);
     const [open, setOpen] = useSafeState(false);
+    const [previewLoading, setPreviewLoading] = useSafeState(false);
 
     const { run, loading: DeleteLoading } = useRequest(deleteProts, {
         manual: true,
@@ -54,27 +55,38 @@ const ColumnsOperateRender: FC<{
     };
 
     const handPreviewReport = async (report_title: string) => {
-        if (render?.report_id) {
+        setPreviewLoading(true);
+        try {
             const { data } = await getTimelinId(render!.report_id);
             const block = data.data.data.blocks;
-            PreviewReportRef.current?.open(block, report_title);
-        } else {
+            PreviewReportRef.current?.open(
+                block,
+                report_title,
+                render.report_id,
+            );
+        } catch (error) {
             showErrorMessage('获取失败');
+        } finally {
+            setPreviewLoading(false);
         }
     };
 
     return (
         <div className="flex gap-2 items-center justify-center min-w-30">
             <Tooltip title="查看报告">
-                <div className="flex items-center justify-center">
-                    <FileOutlinedIcon
-                        style={{
-                            width: '32px',
-                            borderRight: '1px solid var(--irify-border)',
-                        }}
-                        onClick={() => handPreviewReport(render?.report_title)}
-                    />
-                </div>
+                <Spin spinning={previewLoading}>
+                    <div className="flex items-center justify-center">
+                        <FileOutlinedIcon
+                            style={{
+                                width: '32px',
+                                borderRight: '1px solid var(--irify-border)',
+                            }}
+                            onClick={() =>
+                                handPreviewReport(render?.report_title)
+                            }
+                        />
+                    </div>
+                </Spin>
             </Tooltip>
             <ExportButton
                 type="link"

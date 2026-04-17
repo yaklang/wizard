@@ -1,28 +1,28 @@
-@import "../../../theme/themeify.scss";
+@import '../../../theme/themeify.scss';
 
-@mixin generateMenuSelect($type: "primary") {
-    --menu-select-color: #{fetch-color($type, "color-5")};
-    --menu-select-icon-color: #{fetch-color($type, "color-5")};
-    --menu-select-background: #{fetch-color($type, "color-1")};
+@mixin generateMenuSelect($type: 'primary') {
+    --menu-select-color: #{fetch-color($type, 'color-5')};
+    --menu-select-icon-color: #{fetch-color($type, 'color-5')};
+    --menu-select-background: #{fetch-color($type, 'color-1')};
 }
 // 专门给menu-item用的
-@mixin generateItemPrimary($type: "primary") {
-    --menu-color: #{fetch-color($type, "color-5")};
-    --menu-icon-color: #{fetch-color($type, "color-5")};
+@mixin generateItemPrimary($type: 'primary') {
+    --menu-color: #{fetch-color($type, 'color-5')};
+    --menu-icon-color: #{fetch-color($type, 'color-5')};
     --menu-background: var(--Colors-Use-Basic-Background);
     // TODO：该处不确定取值
     --menu-active-color: var(--Colors-Use-Basic-Background);
     --menu-active-icon-color: var(--Colors-Use-Basic-Background);
-    --menu-active-background: #{fetch-color($type, "color-6")};
+    --menu-active-background: #{fetch-color($type, 'color-6')};
     @include generateMenuSelect($type);
 }
 // 专门给menu-item用的
-@mixin generateItemGrey($type: "primary") {
-    --menu-color: #{fetch-color($type, "color-5")};
-    --menu-icon-color: #{fetch-color($type, "color-5")};
+@mixin generateItemGrey($type: 'primary') {
+    --menu-color: #{fetch-color($type, 'color-5')};
+    --menu-icon-color: #{fetch-color($type, 'color-5')};
     --menu-background: var(--Colors-Use-Basic-Background);
     --menu-active-color: #{var(--Colors-Use-Neutral-Text-1-Title)};
-    --menu-active-icon-color: #{fetch-color($type, "color-5")};
+    --menu-active-icon-color: #{fetch-color($type, 'color-5')};
     --menu-active-background: var(--Colors-Use-Neutral-Bg-Hover);
     @include generateMenuSelect($type);
 }
@@ -53,14 +53,14 @@
     --menu-select-background: var(--Colors-Use-Basic-Background);
 }
 
-@mixin generateItemText($type: "primary") {
-    --menu-color: #{fetch-color($type, "color-5")};
-    --menu-icon-color: #{fetch-color($type, "color-5")};
+@mixin generateItemText($type: 'primary') {
+    --menu-color: #{fetch-color($type, 'color-5')};
+    --menu-icon-color: #{fetch-color($type, 'color-5')};
     --menu-background: var(--Colors-Use-Basic-Background);
     // TODO：该处不确定取值
     --menu-active-color: var(--Colors-Use-Neutral-Text-1-Title);
-    --menu-active-icon-color: #{fetch-color($type, "color-5")};
-    --menu-active-background: var(--Colors-Use-Main-Focus);
+    --menu-active-icon-color: #{fetch-color($type, 'color-5')};
+    --menu-active-background: var(--Colors-Use-Blue-Focus);
     @include generateMenuSelect($type);
 }
 
@@ -69,18 +69,18 @@
     --menu-color: var(--Colors-Use-Neutral-Text-1-Title);
     --menu-icon-color: var(--Colors-Use-Neutral-Text-3-Secondary);
     --menu-background: var(--Colors-Use-Basic-Background);
-    --menu-active-color: #{fetch-color("primary", "color-7")};
+    --menu-active-color: #{fetch-color('primary', 'color-7')};
     --menu-active-icon-color: var(--Colors-Use-Basic-Background);
-    --menu-active-background: #{fetch-color("primary", "color-5")};
+    --menu-active-background: #{fetch-color('primary', 'color-5')};
     @include generateMenuSelect();
 
     :global {
         li:has(.yakit-menu-item-danger) {
-            @include generateItemPrimary("danger");
+            @include generateItemPrimary('danger');
         }
 
         li:has(.yakit-menu-item-success) {
-            @include generateItemPrimary("success");
+            @include generateItemPrimary('success');
         }
 
         li:has(.yakit-menu-item-info) {
@@ -107,11 +107,11 @@
 
     :global {
         li:has(.yakit-menu-item-danger) {
-            @include generateItemGrey("danger");
+            @include generateItemGrey('danger');
         }
 
         li:has(.yakit-menu-item-success) {
-            @include generateItemGrey("danger");
+            @include generateItemGrey('danger');
         }
 
         li:has(.yakit-menu-item-info) {
@@ -157,7 +157,7 @@
     }
 }
 
-@mixin generateMenuStyle($kind: "") {
+@mixin generateMenuStyle($kind: '') {
     .ant-#{$kind}menu-item.ant-#{$kind}menu-item-only-child {
         height: 100%;
         padding: 0;
@@ -196,7 +196,7 @@
         color: var(--menu-active-color);
         background-color: var(--menu-active-background);
         span.anticon {
-             color: var(--menu-active-color);
+            color: var(--menu-active-color);
         }
         .keys-style {
             color: var(--menu-active-icon-color);
@@ -286,7 +286,7 @@
             color: var(--menu-active-color);
         }
         .keys-style {
-            color: var(--Colors-Use-Main-On-Primary);
+            color: var(--Colors-Use-Blue-On-Primary);
         }
         .ant-#{$kind}menu-submenu-title {
             color: var(--menu-active-color);
@@ -351,7 +351,7 @@
         }
         // dropdown组件组合下
         // 注意! 该样式限制菜单层级为两层及以内
-        @include generateMenuStyle("dropdown-");
+        @include generateMenuStyle('dropdown-');
         .ant-dropdown-menu-submenu-expand-icon {
             display: none;
         }
@@ -388,7 +388,7 @@
             border: 1px solid var(--Colors-Use-Neutral-Border);
             box-shadow: 0px 8px 16px var(--Colors-Use-Basic-Shadow);
             border-radius: 4px;
-            @include generateMenuStyle("dropdown-");
+            @include generateMenuStyle('dropdown-');
             &-submenu-expand-icon {
                 display: none;
             }

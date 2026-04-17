@@ -32,23 +32,21 @@ export default defineConfig(({ mode }) => {
             // HTML transform plugin for title and favicon
             {
                 name: 'html-transform',
-                transformIndexHtml: {
-                    order: 'pre',
-                    handler(html) {
-                        const title = env.VITE_APP_TITLE || '自动化渗透系统';
-                        let result = html.replace(
-                            /<title>.*?<\/title>/,
-                            `<title>${title}</title>`,
-                        );
+                transformIndexHtml(html) {
+                    const title = env.VITE_APP_TITLE || '自动化渗透系统';
+                    let result = html.replace(
+                        /<title>.*?<\/title>/,
+                        `<title>${title}</title>`,
+                    );
 
-                        if (isIRify) {
-                            result = result.replace(
-                                /<link\s+rel="icon"[\s\S]*?\/>/,
-                                `<link rel="icon" type="image/svg+xml" href="./irify-favicon.svg" />`,
-                            );
-                        }
-                        return result;
-                    },
+                    // Inject IRify favicon when in IRify mode
+                    if (isIRify) {
+                        result = result.replace(
+                            /href="\.\/src\/assets\/compoments\/telecommunicationsLogo\.svg"/,
+                            'href="/irify-favicon.svg"',
+                        );
+                    }
+                    return result;
                 },
             },
         ],
@@ -65,7 +63,11 @@ export default defineConfig(({ mode }) => {
                 '/api': {
                     target: proxyTarget,
                     changeOrigin: true,
-                    ws: true,
+                    rewrite: (path) => path,
+                },
+                '/agent': {
+                    target: 'http://localhost:8089', // 代理到本地的 8089 端口
+                    changeOrigin: true,
                     rewrite: (path) => path,
                 },
             },

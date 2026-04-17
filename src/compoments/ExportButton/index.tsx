@@ -3,7 +3,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Modal, message, Spin } from 'antd';
 import showErrorMessage from '@/utils/showErrorMessage';
 import axios from '@/utils/axios';
-import type { FC } from 'react';
+import type { FC, HTMLAttributes, KeyboardEvent, MouseEvent } from 'react';
 import { useCallback, useReducer } from 'react';
 import { saveFile } from '@/utils';
 import type { AxiosRequestConfig } from 'axios';
@@ -30,6 +30,7 @@ const ExportButton: FC<
     fileName,
     msg = '导出成功',
     onChange,
+    renderType = 'button',
     ...props
 }) => {
     const [state, dispatch] = useReducer(reducer, initialValue);
@@ -85,20 +86,52 @@ const ExportButton: FC<
         [fileName, method, params, url, onChange],
     );
 
-    return (
-        <>
-            <Button
-                onClick={async (e) => {
-                    e.stopPropagation();
-                    request(() => {
-                        dispatch({ visible: false });
-                        message.success(msg);
-                    });
-                }}
-                {...props}
+    const runExport = useCallback(() => {
+        request(() => {
+            dispatch({ visible: false });
+            message.success(msg);
+        });
+    }, [request, msg]);
+
+    const onTriggerClick = useCallback(
+        (e: MouseEvent<HTMLElement>) => {
+            e.stopPropagation();
+            runExport();
+        },
+        [runExport],
+    );
+
+    const onTriggerKeyDown = useCallback(
+        (e: KeyboardEvent<HTMLDivElement>) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                runExport();
+            }
+        },
+        [runExport],
+    );
+
+    const trigger =
+        renderType === 'div' ? (
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={onTriggerClick}
+                onKeyDown={onTriggerKeyDown}
+                {...(props as HTMLAttributes<HTMLDivElement>)}
             >
                 {title}
+            </div>
+        ) : (
+            <Button onClick={onTriggerClick} {...props}>
+                {title}
             </Button>
+        );
+
+    return (
+        <>
+            {trigger}
             <Modal
                 maskClosable={false}
                 keyboard={false}

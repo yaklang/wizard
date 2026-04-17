@@ -9,6 +9,8 @@ export type ExportProps = {
     method: string;
     url: string;
     fileName: string;
+    /** 为 `div` 时用原生 div 作为触发器，否则为 antd Button */
+    renderType?: 'button' | 'div';
 } & Omit<ButtonProps, 'title'>;
 
 // 组件 set类型

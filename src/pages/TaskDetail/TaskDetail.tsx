@@ -421,7 +421,7 @@ const TaskDetail: FC = () => {
                                               dayjs().unix() +
                                               ').csv',
                                           params: {
-                                              type: ExportRequestKey?.[
+                                              typ: ExportRequestKey?.[
                                                   headerGroupValue
                                               ],
                                               data: {
