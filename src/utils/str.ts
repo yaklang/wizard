@@ -1,34 +1,40 @@
-import { yakitFailed } from '@/utils/notification';
+import { yakitFailed } from '@/utils/notification'
+// 原Buffer 是 Node.js 提供的全局对象，改成了浏览器兼容实现（不再依赖 Buffer）
+type DecodeEncoding = 'utf8' | 'latin1'
+type EncodeEncoding = 'latin1' | 'ascii' | 'utf8'
 
-export function Uint8ArrayToString(
-    fileData: Buffer | Uint8Array,
-    encoding?: 'utf8' | 'latin1' | any,
-) {
-    try {
-        return Buffer.from(fileData).toString(encoding ? encoding : 'utf8');
-    } catch (e) {
-        yakitFailed(`Uint8ArrayToString (${fileData}) Failed: ${e}`);
-        return `${fileData}`;
+export function Uint8ArrayToString(fileData: Uint8Array, encoding?: DecodeEncoding) {
+  try {
+    const targetEncoding = encoding ?? 'utf8'
+    if (targetEncoding === 'utf8') {
+      return new TextDecoder('utf-8').decode(fileData)
     }
+
+    // latin1/ascii-like one byte decoding.
+    return Array.from(fileData, (byte) => String.fromCharCode(byte)).join('')
+  } catch (e) {
+    yakitFailed(`Uint8ArrayToString (${fileData}) Failed: ${e}`)
+    return `${fileData}`
+  }
 }
 
-export function StringToUint8Array(
-    str: string,
-    encoding?: 'latin1' | 'ascii' | 'utf8',
-) {
-    try {
-        if (!encoding) {
-            return Buffer.from(str, 'utf8');
-        }
-        return Buffer.from(str, encoding);
-    } catch (e) {
-        yakitFailed(`String ${str} Encode Failed: ${e}`);
-        return Buffer.from(`${str}`, encoding);
+export function StringToUint8Array(str: string, encoding?: EncodeEncoding) {
+  try {
+    const targetEncoding = encoding ?? 'utf8'
+    if (targetEncoding === 'utf8') {
+      return new TextEncoder().encode(str)
     }
+
+    // latin1/ascii-like one byte encoding.
+    return Uint8Array.from(Array.from(str, (char) => char.charCodeAt(0) & 0xff))
+  } catch (e) {
+    yakitFailed(`String ${str} Encode Failed: ${e}`)
+    return new TextEncoder().encode(`${str}`)
+  }
 }
 
 export function removeRepeatedElement<T = string>(arr: T[]) {
-    return arr.filter((element, index) => {
-        return arr.indexOf(element) === index;
-    });
+  return arr.filter((element, index) => {
+    return arr.indexOf(element) === index
+  })
 }

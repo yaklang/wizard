@@ -19,6 +19,8 @@ import type {
 } from './type'
 import type { AIInputEvent } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi'
 import type {
+  AIConfigHealthCheckRequest,
+  AIConfigHealthCheckResponse,
   AIGlobalConfig,
   QueryAIProvidersRequest,
   QueryAIProvidersResponse,
@@ -176,6 +178,10 @@ const getSettingAiconfig = (): Promise<AIGlobalConfig> => axios.get<never, AIGlo
 const postSettingAiconfig = (data: AIGlobalConfig): Promise<null> =>
   axios.post<AIGlobalConfig, null>(`/agent/setting/aiconfig`, data)
 
+// 执行 AI 配置健康检查
+const postAIConfigHealthCheck = (data: AIConfigHealthCheckRequest): Promise<AIConfigHealthCheckResponse> =>
+  axios.post<AIConfigHealthCheckRequest, AIConfigHealthCheckResponse>(`/agent/setting/aiconfig/healthcheck`, data)
+
 // 获取 AI 第三方应用配置模板
 const postSettingAppconfigsTemplateGet = (): Promise<GetThirdPartyAppConfigTemplateResponse> =>
   axios.post<never, GetThirdPartyAppConfigTemplateResponse>(`/agent/setting/appconfigs/template/get`, {})
@@ -217,7 +223,6 @@ export const postAiforgeImport = (
   onProgress?: (progress: ExportImportAIForgeProgress) => void,
   signal?: AbortSignal,
 ): Promise<null> => fetchSSEPost('/agent/forge/import', data, onProgress, signal)
-
 export {
   postCreateSession,
   postSendFirstMessage,
@@ -237,4 +242,5 @@ export {
   postSettingAiconfig,
   postSettingAppconfigsTemplateGet,
   postSettingProvidersQuery,
+  postAIConfigHealthCheck,
 }

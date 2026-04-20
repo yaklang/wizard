@@ -14,6 +14,7 @@ import type { ThirdPartyApplicationConfig } from '@/compoments/configNetwork/Con
 import type { GetThirdPartyAppConfigTemplateResponse } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig'
 import {
   getSettingAiconfig,
+  postAIConfigHealthCheck,
   postSettingAiconfig,
   postSettingAppconfigsTemplateGet,
   postSettingProvidersQuery,
@@ -233,6 +234,36 @@ export const grpcGetAIThirdPartyAppConfigTemplate: APINoRequestFunc<GetThirdPart
       .then(resolve)
       .catch((err) => {
         if (!hiddenError) yakitNotify('error', 'grpcGetAIThirdPartyAppConfigTemplate 失败:' + err)
+        reject(err)
+      })
+  })
+}
+export interface AIConfigHealthCheckRequest {
+  Config: ThirdPartyApplicationConfig
+  Content: string
+}
+
+export interface AIConfigHealthCheckResponse {
+  FirstByteCostMs: number
+  TotalCostMs: number
+  RawRequest: string
+  ResponseStatusCode: number
+  ResponseContent: string
+  ErrorMessage: string
+  RawResponse: string
+  RecommendConfig: ThirdPartyApplicationConfig
+  Success: boolean
+}
+
+export const grpcAIConfigHealthCheck: APIFunc<AIConfigHealthCheckRequest, AIConfigHealthCheckResponse> = (
+  params,
+  hiddenError,
+) => {
+  return new Promise((resolve, reject) => {
+    postAIConfigHealthCheck(params)
+      .then(resolve)
+      .catch((err) => {
+        if (!hiddenError) yakitNotify('error', 'grpcAIConfigHealthCheck 失败:' + err)
         reject(err)
       })
   })
