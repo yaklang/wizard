@@ -424,7 +424,11 @@ const routers: RouteObjectRootMy[] = [
   },
   {
     path: '/agent-log',
-    element: <AIAgentLog />,
+    element: (
+      <AuthRoute>
+        <AIAgentLog />
+      </AuthRoute>
+    ),
   },
 ]
 

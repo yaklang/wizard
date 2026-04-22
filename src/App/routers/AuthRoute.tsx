@@ -8,14 +8,6 @@ interface AuthRouteType {
 
 const AuthRoute: FC<AuthRouteType> = ({ children }) => {
     const { token } = useLoginStore((state) => state);
-
-    // useEffect(() => {
-    //   if (!token) {
-    //     // dispatch(logOut(_pathname.slice(1)))
-    //   }
-    // }, [token]);
-
-    return children
-    // return token ? children : <NoLoginPermission />;
+    return token ? children : <NoLoginPermission />;
 };
 export default AuthRoute;
