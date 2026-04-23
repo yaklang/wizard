@@ -39,6 +39,7 @@ import type {
   ImportAIForgeRequest,
 } from '@/pages/AIAgent/ai-agent/forgeName/type'
 import useLoginStore from '@/App/store/loginStore'
+import { getAIEngineAuthorizationHeader, isAIEnginePath, resolveAIEngineRequestURL } from '@/utils/aiEngineAuth'
 
 /** 通用 POST SSE 流式请求：发起 POST 后逐条解析 SSE data 帧并回调 */
 async function fetchSSEPost<TReq, TProgress>(
@@ -52,11 +53,17 @@ async function fetchSSEPost<TReq, TProgress>(
     'Content-Type': 'application/json;charset=UTF-8',
     Accept: 'text/event-stream',
   }
-  if (store.token) {
+
+  if (isAIEnginePath(url)) {
+    const aiEngineAuthorization = await getAIEngineAuthorizationHeader()
+    if (aiEngineAuthorization) {
+      headers.Authorization = aiEngineAuthorization
+    }
+  } else if (store.token) {
     headers.Authorization = store.token
   }
 
-  const response = await fetch(url, {
+  const response = await fetch(resolveAIEngineRequestURL(url) || url, {
     method: 'POST',
     headers,
     body: JSON.stringify(data),

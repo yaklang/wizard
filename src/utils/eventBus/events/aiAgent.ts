@@ -44,4 +44,6 @@ export interface AIAgentEventProps {
 
   /** 删除会话列表里的会话时, 通知useChatIPC-hook对应会话数据已被删除，不需断开保存操作 */
   onDelChats: string
+  /** AI 引擎启停后刷新会话和全局配置 */
+  onRefreshAIAgentData?: string
 }

@@ -76,6 +76,8 @@ export interface UseCasualChatEvents extends UseHookBaseEvents {
 export interface UseTaskChatParams extends UseHookBaseParams {
   /** 获取流接口请求参数 */
   getRequest: () => AIAgentSetting | undefined
+  /** 是否正在只读重放历史会话 */
+  isHistoryReplay?: () => boolean
   /** review 触发回调事件 */
   onReview?: (data: AIChatQSData) => void
   /** plan_review 补充数据 */

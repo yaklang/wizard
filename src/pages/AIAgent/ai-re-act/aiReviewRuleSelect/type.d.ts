@@ -1,14 +1,14 @@
-import {YakitSelectProps} from "@/components/yakitUI/YakitSelect/YakitSelectType"
+import type { YakitSelectProps } from '@/compoments/yakitUI/YakitSelect/YakitSelectType'
 
-export interface AIReviewRuleSelectProps extends ReviewRuleSelectProps {}
+export type AIReviewRuleSelectProps = ReviewRuleSelectProps
 
 export interface ReviewRuleSelectProps {
-    className?: string
+  className?: string
 }
 
-export interface AIChatSelectProps extends Omit<YakitSelectProps, "dropdownRender"> {
-    dropdownRender: (menu: React.ReactElement, setOpen: (open: boolean) => void) => React.ReactElement
-    getList?: () => void
-    children?: React.ReactNode
-    setOpen?: (open: boolean) => void
+export interface AIChatSelectProps extends Omit<YakitSelectProps, 'dropdownRender'> {
+  dropdownRender: (menu: React.ReactElement, setOpen: (open: boolean) => void) => React.ReactElement
+  getList?: () => void
+  children?: React.ReactNode
+  setOpen?: (open: boolean) => void
 }

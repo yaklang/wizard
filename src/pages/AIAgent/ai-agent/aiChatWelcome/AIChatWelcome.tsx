@@ -22,7 +22,7 @@ import { AIChatTextarea } from '../template/template'
 import { useDebounceFn, useMemoizedFn } from 'ahooks'
 import type { AIChatTextareaRefProps, AIChatTextareaSubmit } from '../template/type'
 
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import {
   OutlineCloseIcon,
   // OutlineImportIcon,
@@ -48,7 +48,7 @@ import {
 //   HoverAIForgeIcon,
 //   HoverAIToolIcon,
 // } from './icon'
-// import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox'
+// import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox'
 import { Tooltip } from 'antd'
 // import ReactResizeDetector from 'react-resize-detector'
 import emiter from '@/utils/eventBus/eventBus'
@@ -60,22 +60,22 @@ import emiter from '@/utils/eventBus/eventBus'
 // import type { GetRandomAIMaterialsResponse } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi'
 // import type { StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType'
 import classNames from 'classnames'
-// import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
+// import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 // import { postCreateSession } from '@/apis/AiEventApi';
 // import { yakitNotify } from '@/utils/notification';
 
 import { RemoteAIAgentGV } from '@/pages/AIAgent/enums/aiAgent'
 import { getRemoteValue, setRemoteValue } from '@/utils/kv'
-import { YakitDrawer } from '@/compoments/YakitUI/YakitDrawer/YakitDrawer'
-// import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
+import { YakitDrawer } from '@/compoments/yakitUI/YakitDrawer/YakitDrawer'
+// import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox'
 import Tabs from './Tabs/Tabs'
 
 import type { ForgeNameRef } from '../forgeName/ForgeName'
 import ForgeName from '../forgeName/ForgeName'
 // import type { KnowledgeModalRef } from './KnowledgeSidebarList/KnowledgeSidebarList';
 // import KnowledgeSidebarList from './KnowledgeSidebarList/KnowledgeSidebarList';
-// import { YakitDrawer } from '@/compoments/YakitUI/YakitDrawer/YakitDrawer';
-// import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox';
+// import { YakitDrawer } from '@/compoments/yakitUI/YakitDrawer/YakitDrawer';
+// import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox';
 // import Tabs from './Tabs/Tabs';
 // import type { ForgeNameRef } from '../forgeName/ForgeName';
 // import ForgeName from '../forgeName/ForgeName';
@@ -471,6 +471,7 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
         <YakitDrawer
           width={310}
           visible={openDrawer}
+          destroyOnClose={true}
           getContainer={false}
           className={styles['drawer']}
           mask={false}
@@ -493,7 +494,7 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
             firstNode={null} // <FileTreeList />
             secondNode={<Tabs items={items} />}
           /> */}
-          <Tabs items={items} />
+          {openDrawer && <Tabs items={items} />}
         </YakitDrawer>
         <div className={styles['content']}>
           <div className={styles['content-absolute']}>

@@ -13,19 +13,26 @@ import cloneDeep from 'lodash/cloneDeep'
 import { AIAgentChat } from './aiAgentChat/AIAgentChat'
 // import { loadRemoteHistory } from './components/aiFileSystemList/store/useHistoryFolder';
 // import { initCustomFolderStore } from './components/aiFileSystemList/store/useCustomFolder';
-import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint'
+import { YakitHint } from '@/compoments/yakitUI/YakitHint/YakitHint'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 import emiter from '@/utils/eventBus/eventBus'
 import classNames from 'classnames'
 import styles from './AIAgent.module.scss'
 // import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
-import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox'
+import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox'
 import { getSessionAll, getSetting as getSettingData, postSetting } from '@/apis/AiEventApi'
+import type { AIEngineStatus } from '@/apis/AiEngineAdminApi'
+import { getAIEngineStatus } from '@/apis/AiEngineAdminApi'
 import type { RouteToPageProps } from '../types/interface/publicMenu'
 import { yakitNotify } from '@/utils/notification'
 import { useNavigate } from 'react-router-dom'
 import { omit } from 'lodash'
+import { getStoredAIEngineGatewayURL, hasAIEngineJWTSecret } from '@/utils/aiEngineAuth'
 
 export const AIAgentCacheClearValue = '20260113'
+
+const hasUsableAIEngineGateway = () => hasAIEngineJWTSecret() && !!getStoredAIEngineGatewayURL()
 
 export const AIAgent = () => {
   // #region ai-agent页面全局缓存
@@ -38,8 +45,11 @@ export const AIAgent = () => {
   const [activeChat, setActiveChat] = useState<AIChatInfo>()
 
   const [show, setShow] = useState<boolean>(false)
+  const [aiEngineStatus, setAIEngineStatus] = useState<AIEngineStatus>()
+  const [aiEngineStatusLoading, setAIEngineStatusLoading] = useState(true)
 
   const sideHiddenModeRef = useRef<string>()
+  const skipNextSettingPostRef = useRef(false)
 
   const welcomeRef = useRef<HTMLDivElement>(null)
 
@@ -72,6 +82,11 @@ export const AIAgent = () => {
 
   // 缓存全局配置数据
   useUpdateEffect(() => {
+    if (skipNextSettingPostRef.current) {
+      skipNextSettingPostRef.current = false
+      return
+    }
+
     postSetting({
       ai_service: '',
       selected_provider_id: 0,
@@ -81,11 +96,48 @@ export const AIAgent = () => {
     })
   }, [setting])
 
+  const refreshSettingData = useMemoizedFn(async () => {
+    try {
+      const res = await getSettingData()
+      if (!res || typeof res !== 'object') return
+      skipNextSettingPostRef.current = true
+      setSetting(omit(res, ['SelectedProviderID', 'SelectedModelName', 'SelectedModelTier']))
+    } catch (error) {}
+  })
+
   const getSessionAllData = useMemoizedFn(async () => {
     try {
       const { sessions } = await getSessionAll()
       setChats(sessions)
     } catch (error) {}
+  })
+
+  const primeAIEngineAuth = useMemoizedFn(async () => {
+    if (hasUsableAIEngineGateway() && aiEngineStatus?.running) return aiEngineStatus
+
+    const status = await getAIEngineStatus()
+    setAIEngineStatus(status)
+
+    return status
+  })
+
+  const refreshAgentData = useMemoizedFn(async () => {
+    if (!aiEngineStatus) setAIEngineStatusLoading(true)
+    try {
+      const status = await primeAIEngineAuth()
+      if (!status?.running || !hasUsableAIEngineGateway()) {
+        setChats([])
+        setActiveChat(undefined)
+        return
+      }
+    } catch (error) {
+      setChats([])
+      setActiveChat(undefined)
+      return
+    } finally {
+      setAIEngineStatusLoading(false)
+    }
+    await Promise.allSettled([getSessionAllData(), refreshSettingData()])
   })
 
   // 缓存历史对话数据
@@ -122,7 +174,7 @@ export const AIAgent = () => {
 
       if (res >= AIAgentCacheClearValue) {
         // 获取缓存的历史对话数据
-        getSessionAllData()
+        refreshAgentData()
         // getRemoteValue(RemoteAIAgentGV.AIAgentChatHistory)
         //     .then((res) => {
         //         console.log('res:', res);
@@ -135,17 +187,6 @@ export const AIAgent = () => {
         //         } catch (error) {}
         //     })
         //     .catch(() => {});
-        // 获取缓存的全局配置数据
-        getSettingData()
-          .then((res) => {
-            if (!res) return
-            try {
-              // const cache = JSON.parse(res) as AIAgentSetting;
-              if (typeof res !== 'object') return
-              setSetting(omit(res, ['SelectedProviderID', 'SelectedModelName', 'SelectedModelTier']))
-            } catch (error) {}
-          })
-          .catch(() => {})
       } else {
         setDelCacheVisible(true)
       }
@@ -164,6 +205,7 @@ export const AIAgent = () => {
 
     return () => {}
   }, [])
+
   // #endregion
 
   const wrapperSize = useSize(document.getElementById(YakitAIAgentPageID))
@@ -227,6 +269,17 @@ export const AIAgent = () => {
       emiter.off('menuOpenPage', menuOpenPage)
     }
   }, [])
+
+  useEffect(() => {
+    const onRefreshAIAgentData = () => {
+      refreshAgentData().catch(() => {})
+    }
+    emiter.on('onRefreshAIAgentData', onRefreshAIAgentData)
+    return () => {
+      emiter.off('onRefreshAIAgentData', onRefreshAIAgentData)
+    }
+  }, [refreshAgentData])
+
   const navigate = useNavigate()
 
   const menuOpenPage = useMemoizedFn((res: string) => {
@@ -241,6 +294,35 @@ export const AIAgent = () => {
     }
     navigate(data.route, { state: data })
   })
+
+  const isAIEngineReady = !!aiEngineStatus?.running && hasUsableAIEngineGateway()
+
+  const renderAIAgentChat = () => {
+    if (aiEngineStatusLoading && !aiEngineStatus) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 color-[#5E6673]">
+          <YakitSpin />
+          <div>正在检查 AI 引擎状态...</div>
+        </div>
+      )
+    }
+
+    if (!isAIEngineReady) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+          <div className="text-[16px] font-medium color-[#31343F]">AI 引擎未就绪</div>
+          <div className="max-w-[520px] text-[13px] leading-5 color-[#85899E]">
+            当前不会自动请求 /agent 接口。请先点击页面顶部的“启动 AI”，等待状态变为运行中后再进入会话。
+          </div>
+          <YakitButton type="outline2" loading={aiEngineStatusLoading} onClick={() => refreshAgentData()}>
+            刷新状态
+          </YakitButton>
+        </div>
+      )
+    }
+
+    return <AIAgentChat />
+  }
 
   return (
     <AIAgentContext.Provider value={contextValue}>
@@ -259,7 +341,7 @@ export const AIAgent = () => {
           })}
           onClick={onSendSwitchAIAgentTab}
         >
-          <AIAgentChat />
+          <div className={styles['ai-agent-chat-body']}>{renderAIAgentChat()}</div>
         </div>
 
         <YakitHint

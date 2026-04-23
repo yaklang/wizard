@@ -1,19 +1,19 @@
 import React, { memo, useEffect } from 'react'
 import type { FormItemSliderProps } from './type'
 import { Form, Slider, Tooltip } from 'antd'
-import { YakitSwitch } from '@/compoments/YakitUI/YakitSwitch/YakitSwitch'
+import { YakitSwitch } from '@/compoments/yakitUI/YakitSwitch/YakitSwitch'
 import { useMemoizedFn } from 'ahooks'
-import { YakitRadioButtons } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtons'
+import { YakitRadioButtons } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtons'
 import { OutlineInformationcircleIcon } from '@/assets/icon/outline'
 import cloneDeep from 'lodash/cloneDeep'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
-import { YakitInputNumber } from '@/compoments/YakitUI/YakitInputNumber/YakitInputNumber'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitInputNumber } from '@/compoments/yakitUI/YakitInputNumber/YakitInputNumber'
 import { AIAgentSettingDefault, AIReviewRuleOptions } from '../defaultConstant'
-// /YakitUI/YakitRadioButtons/YakitRadioButtons ype
-import type { YakitRadioButtonsProps } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtonsType.d'
+// /yakitUI/YakitRadioButtons/YakitRadioButtons type
+import type { YakitRadioButtonsProps } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtonsType.d'
 import useAIAgentStore from '../useContext/useStore'
 import useAIAgentDispatcher from '../useContext/useDispatcher'
-import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
+import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
 
 // import classNames from "classnames"
 import styles from './AIChatSetting.module.scss'

@@ -23,7 +23,16 @@ import { useGetSetState } from '@/hooks'
 function useTaskChat(params?: UseTaskChatParams): [UseTaskChatState, UseTaskChatEvents]
 
 function useTaskChat(params?: UseTaskChatParams) {
-  const { pushLog, getChatDataStore, getRequest, onReview, onReviewExtra, onReviewRelease, sendRequest } = params || {}
+  const {
+    pushLog,
+    getChatDataStore,
+    getRequest,
+    isHistoryReplay,
+    onReview,
+    onReviewExtra,
+    onReviewRelease,
+    sendRequest,
+  } = params || {}
 
   const handlePushLog = useMemoizedFn((logInfo: AIChatLogData) => {
     pushLog && pushLog(logInfo)
@@ -197,6 +206,7 @@ function useTaskChat(params?: UseTaskChatParams) {
       }
 
       const isAuto = isAutoExecuteReviewContinue({ type: res.Type, getFunc: getRequest })
+      const isHistory = !!isHistoryReplay?.()
       const chatData: AIChatQSData = {
         ...genBaseAIChatData(res),
         chatType: 'task',
@@ -209,10 +219,10 @@ function useTaskChat(params?: UseTaskChatParams) {
         },
       }
       review.current = isAuto ? undefined : chatData
-      if (isAuto) {
+      if (isAuto || isHistory) {
         setContentMap(chatData.id, cloneDeep(chatData))
         setElements((old) => [...old, { token: chatData.id, type: chatData.type, renderNum: 1, chatType: 'task' }])
-        handleRviewDataToUI(chatData)
+        if (isAuto) handleRviewDataToUI(chatData)
       } else {
         onReview && onReview(cloneDeep(chatData))
       }
@@ -280,6 +290,7 @@ function useTaskChat(params?: UseTaskChatParams) {
       }
 
       const isAuto = isAutoExecuteReviewContinue({ type: res.Type, getFunc: getRequest })
+      const isHistory = !!isHistoryReplay?.()
       const chatData: AIChatQSData = {
         ...genBaseAIChatData(res),
         chatType: 'task',
@@ -292,7 +303,7 @@ function useTaskChat(params?: UseTaskChatParams) {
         },
       }
       review.current = isAuto ? undefined : chatData
-      if (isAuto) {
+      if (isAuto || isHistory) {
         setContentMap(chatData.id, cloneDeep(chatData))
         setElements((old) => [...old, { token: chatData.id, type: chatData.type, renderNum: 1, chatType: 'task' }])
       } else {
@@ -321,6 +332,7 @@ function useTaskChat(params?: UseTaskChatParams) {
       }
 
       const isAuto = isAutoExecuteReviewContinue({ type: res.Type, getFunc: getRequest })
+      const isHistory = !!isHistoryReplay?.()
       const chatData: AIChatQSData = {
         ...genBaseAIChatData(res),
         chatType: 'task',
@@ -333,7 +345,7 @@ function useTaskChat(params?: UseTaskChatParams) {
         },
       }
       review.current = isAuto ? undefined : chatData
-      if (isAuto) {
+      if (isAuto || isHistory) {
         setContentMap(chatData.id, cloneDeep(chatData))
         setElements((old) => [...old, { token: chatData.id, type: chatData.type, renderNum: 1, chatType: 'task' }])
       } else {
@@ -365,7 +377,12 @@ function useTaskChat(params?: UseTaskChatParams) {
         data: cloneDeep(data),
       }
       review.current = chatData
-      onReview && onReview(cloneDeep(chatData))
+      if (isHistoryReplay?.()) {
+        setContentMap(chatData.id, cloneDeep(chatData))
+        setElements((old) => [...old, { token: chatData.id, type: chatData.type, renderNum: 1, chatType: 'task' }])
+      } else {
+        onReview && onReview(cloneDeep(chatData))
+      }
     } catch (error) {
       handleGrpcDataPushLog({
         info: res,
@@ -408,7 +425,22 @@ function useTaskChat(params?: UseTaskChatParams) {
         review.current.data = cloneDeep(info)
       }
       const isAuto = isAutoExecuteReviewContinue({ getFunc: getRequest })
-      if (!isAuto && onReview) onReview(cloneDeep(review.current))
+      if (!isAuto) {
+        if (isHistoryReplay?.()) {
+          const currentReview = cloneDeep(review.current)
+          if (!currentReview) return
+          setContentMap(currentReview.id, currentReview)
+          setElements((old) => {
+            const index = old.findIndex((item) => item.token === currentReview.id && item.type === currentReview.type)
+            if (index === -1) return old
+            const next = [...old]
+            next[index] = { ...next[index], renderNum: next[index].renderNum + 1 }
+            return next
+          })
+        } else if (onReview) {
+          onReview(cloneDeep(review.current))
+        }
+      }
     } catch (error) {
       handleGrpcDataPushLog({
         info: res,
@@ -487,7 +519,9 @@ function useTaskChat(params?: UseTaskChatParams) {
           // 结束任务 & 请求更新任务树最新状态数据
           const info = JSON.parse(ipcContent) as AIAgentGrpcApi.ChangeTask
           handleTaskEndNode(info)
-          sendRequest && sendRequest({ IsSyncMessage: true, SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_PLAN })
+          if (!isHistoryReplay?.()) {
+            sendRequest && sendRequest({ IsSyncMessage: true, SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_PLAN })
+          }
         }
         return
       }

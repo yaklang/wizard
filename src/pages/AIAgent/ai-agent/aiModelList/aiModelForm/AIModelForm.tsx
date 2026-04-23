@@ -10,7 +10,7 @@ import type {
 import { useCreation, useDebounceFn, useInViewport, useMemoizedFn } from 'ahooks'
 import { Form, type FormInstance } from 'antd'
 import { NewAIThirdPartyApplicationConfigBase } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import {
   type AIConfigHealthCheckResponse,
   type AIGlobalConfig,
@@ -24,26 +24,26 @@ import {
   grpcSetAIGlobalConfig,
   normalizeAIAPIType,
 } from '../utils'
-import { YakitAutoComplete } from '@/compoments/YakitUI/YakitAutoComplete/YakitAutoComplete'
-import type { YakitAutoCompleteProps } from '@/compoments/YakitUI/YakitAutoComplete/YakitAutoCompleteType'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
+import { YakitAutoComplete } from '@/compoments/yakitUI/YakitAutoComplete/YakitAutoComplete'
+import type { YakitAutoCompleteProps } from '@/compoments/yakitUI/YakitAutoComplete/YakitAutoCompleteType'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 import { AIModelTypeEnum, AIModelTypeInterFileNameEnum } from '../../defaultConstant'
 import { yakitNotify } from '@/utils/notification'
 import emiter from '@/utils/eventBus/eventBus'
 import { cloneDeep } from 'lodash'
-import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
+import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
 import type { ThirdPartyApplicationConfig } from '@/compoments/configNetwork/ConfigNetworkPage'
-import { showYakitModal } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm'
+import { showYakitModal } from '@/compoments/yakitUI/YakitModal/YakitModalConfirm'
 import styles from './AIModelForm.module.scss'
-import { YakitRadioButtons } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtons'
-import { NewHTTPPacketEditor } from '@/compoments/YakitUI/YakitEditor/editors'
+import { YakitRadioButtons } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtons'
+import { NewHTTPPacketEditor } from '@/compoments/yakitUI/YakitEditor/editors'
 import { HorizontalScrollCard } from '@/pages/AIAgent/plugins/operator/horizontalScrollCard/HorizontalScrollCard'
 import { OutlineXIcon } from '@/assets/icon/outline'
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag'
 // import { setRemoteValue } from '@/utils/kv'
 // import { RemoteAIAgentGV } from '@/pages/AIAgent/enums/aiAgent'
 import type { HoldGRPCStreamProps } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType'
-import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType'
+import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType'
 
 const defaultFormValues = {
   Type: '',

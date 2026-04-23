@@ -1,6 +1,6 @@
 import type { LocalModelConfig } from '../type/aiModel'
-import type { ThirdPartyApplicationConfig } from '@/components/configNetwork/ConfigNetworkPage'
-import type { YakitSizeType } from '@/components/yakitUI/YakitInputNumber/YakitInputNumberType'
+import type { ThirdPartyApplicationConfig } from '@/compoments/configNetwork/ConfigNetworkPage'
+import type { YakitSizeType } from '@/compoments/yakitUI/YakitInputNumber/YakitInputNumberType'
 import type { AIModelTypeEnum } from '../defaultConstant'
 export interface SelectOptionsProps {
   label: string | React.Element

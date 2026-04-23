@@ -1,13 +1,13 @@
 // 颜色键值对——键一定是有序添加
 $allColors: (
-    blue: var(--yakit-tag-color-blue),
-    cyan: var(--yakit-tag-color-cyan),
-    green: var(--yakit-tag-color-green),
-    grey: var(--yakit-helper-text-color),
-    orange: var(--yakit-tag-color-orange),
-    purple: var(--yakit-tag-color-purple),
-    red: var(--yakit-tag-color-red),
-    yellow: var(--yakit-tag-color-yellow)
+    "blue": var(--yakit-tag-color-blue),
+    "cyan": var(--yakit-tag-color-cyan),
+    "green": var(--yakit-tag-color-green),
+    "grey": var(--yakit-helper-text-color),
+    "orange": var(--yakit-tag-color-orange),
+    "purple": var(--yakit-tag-color-purple),
+    "red": var(--yakit-tag-color-red),
+    "yellow": var(--yakit-tag-color-yellow)
 );
 
 // 获取全部颜色集合里的颜色
@@ -73,7 +73,7 @@ $allColors: (
             $pre: append($prefix, $type, $separator: comma);
             @if length($pre) == 1 {
                 // 单色情况
-                @if $type == red {
+                @if $type == "red" {
                     // 单色-红色单独处理
                     .virtual-table-cell-red {
                         background: var(--yakit-table-select-row-bg-color-red);

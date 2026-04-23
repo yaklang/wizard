@@ -1,17 +1,17 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { AIForgeFormProps, AIForgeInfoOptProps, AIToolFormProps } from './type'
-import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover'
+import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover'
 import { SolidToolIcon } from '@/assets/icon/solid'
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag'
 import { OutlineChevrondownIcon, OutlineXIcon } from '@/assets/icon/outline'
 import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType'
 import { useMemoizedFn, useSize } from 'ahooks'
 import { Form } from 'antd'
-// import { ExecuteEnterNodeByPluginParams } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeard';
+// import { ExecuteEnterNodeByPluginParams } from '@/pages/Plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeard';
 import type { YakParamProps } from '@/pages/AIAgent/plugins/pluginsType'
 import { getValueByType, getYakExecutorParam } from '@/pages/AIAgent/plugins/editDetails/utils'
 import { QSInputTextarea } from '../template/template'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import { yakitNotify } from '@/utils/notification'
 import type { AIStartParams } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi'
 

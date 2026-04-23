@@ -1429,8 +1429,10 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 
   // --- Compact overrides for AI chat context ---
 
-  font-size: 13px !important;
-  line-height: 1.4 !important;
+  & {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
 
   [data-streamdown='code-block'] {
     margin-top: 6px !important;

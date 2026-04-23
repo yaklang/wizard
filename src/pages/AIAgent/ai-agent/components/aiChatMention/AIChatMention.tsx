@@ -24,9 +24,9 @@ import type {
 import useSwitchSelectByKeyboard from './useSwitchSelectByKeyboard'
 import classNames from 'classnames'
 import type { InputRef } from 'antd'
-import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
+import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
 import { YakitSideTab } from '@/compoments/yakitSideTab/YakitSideTab'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 import { useGetSetState } from '@/hooks'
 import type { RollingLoadListRef } from '@/compoments/RollingLoadList/RollingLoadList'
 import { RollingLoadList } from '@/compoments/RollingLoadList/RollingLoadList'
@@ -53,6 +53,7 @@ export const AIChatMention: React.FC<AIChatMentionProps> = React.memo((props) =>
   //   const toolRef = useRef<AIChatMentionListRefProps>(defaultRef)
   //   const knowledgeBaseRef = useRef<AIChatMentionListRefProps>(defaultRef)
   const focusModeRef = useRef<AIChatMentionListRefProps>(defaultRef)
+  const skipInitialSearchRef = useRef(true)
 
   const searchRef = useRef<InputRef>(null)
 
@@ -71,6 +72,10 @@ export const AIChatMention: React.FC<AIChatMentionProps> = React.memo((props) =>
   //   }, [activeKey])
   useDebounceEffect(
     () => {
+      if (skipInitialSearchRef.current) {
+        skipInitialSearchRef.current = false
+        return
+      }
       onSearch()
     },
     [keyWord],
@@ -357,13 +362,17 @@ const ForgeNameListOfMention: React.FC<ForgeNameListOfMentionProps> = React.memo
         const res = await postAiforgeQuery(newQuery)
         if (!res.Data) res.Data = []
         const newPage = Number(res.Pagination.Page)
+        const responsePagination = {
+          ...AIForgeListDefaultPagination,
+          ...res.Pagination,
+          Page: newPage,
+          Limit: Number(res.Pagination?.Limit) || AIForgeListDefaultPagination.Limit,
+        }
         const length = newPage === 1 ? res.Data.length : res.Data.length + response.Data.length
         setHasMore(length < Number(res.Total))
         let newRes: QueryAIForgeResponse = {
           Data: newPage === 1 ? res?.Data : [...response.Data, ...(res?.Data || [])],
-          Pagination: res?.Pagination || {
-            ...AIForgeListDefaultPagination,
-          },
+          Pagination: responsePagination,
           Total: res.Total,
         }
         setResponse(newRes)

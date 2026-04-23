@@ -42,6 +42,13 @@ import { postCancelMessage, postSendContinueMessage, postSendFirstMessage } from
 import { omit } from 'lodash'
 import type { ReActChatBaseInfo } from './aiRender'
 
+const HISTORY_EVENT_PAGE_SIZE = 500
+
+const hasCachedChatRenderData = (chatData?: AIChatData) => {
+  if (!chatData) return false
+  return !!(chatData.casualChat?.elements?.length || chatData.taskChat?.elements?.length)
+}
+
 function useChatIPC(params?: UseChatIPCParams): [UseChatIPCState, UseChatIPCEvents]
 
 function useChatIPC(params?: UseChatIPCParams) {
@@ -315,6 +322,8 @@ function useChatIPC(params?: UseChatIPCParams) {
   // #endregion
 
   // #region 任务规划相关变量和hook
+  const isHistoryReplay = useRef(false)
+
   /** 任务规划对应的问题信息, 供UI使用，因为任务结束后，该变量不会清空 */
   const taskChatID = useRef<TaskChatTaskInfo>()
   const fetchTaskChatID = useMemoizedFn(() => {
@@ -341,6 +350,7 @@ function useChatIPC(params?: UseChatIPCParams) {
     pushLog: logEvents.pushLog,
     getChatDataStore,
     getRequest: fetchAIRequest,
+    isHistoryReplay: () => isHistoryReplay.current,
     onReview: onTaskReview,
     onReviewExtra: onTaskReviewExtra,
     onReviewRelease: handleTaskReviewRelease,
@@ -519,30 +529,33 @@ function useChatIPC(params?: UseChatIPCParams) {
     sendMessage({ IsSyncMessage: true, SyncType: AIInputEventSyncTypeEnum.SYNC_TYPE_MEMORY_CONTEXT })
   })
 
-  /** 获取历史时间线 */
-  const fetchHistoryTimelines = useMemoizedFn(async (session: string) => {
-    try {
-      setReActTimelines([])
-      const { Events, Total } = await grpcQueryAIEvent({
-        Filter: {
-          SessionID: session,
-          NodeId: ['timeline_item'],
-        },
-        Pagination: {
-          Page: 1,
-          Limit: 1000,
-          OrderBy: 'created_at',
-          Order: 'desc',
-        },
-      })
-      if (Total === 0) return
+  /** 获取历史会话事件 */
+  const fetchHistoryEvents = useMemoizedFn(async (session: string) => {
+    const events: AIOutputEvent[] = []
+    let page = 1
 
-      const timelineItems: AIAgentGrpcApi.TimelineItem[] = Events.map((item) => {
-        let ipcContent = base64ToJson(item.Content) || ''
-        return JSON.parse(ipcContent) as AIAgentGrpcApi.TimelineItem
-      }).reverse()
-      setReActTimelines((old) => [...timelineItems, ...old])
-    } catch (error) {}
+    while (true) {
+      const { Events, Total } = await grpcQueryAIEvent(
+        {
+          Filter: {
+            SessionID: session,
+          },
+          Pagination: {
+            Page: page,
+            Limit: HISTORY_EVENT_PAGE_SIZE,
+            OrderBy: 'id',
+            Order: 'asc',
+          },
+        },
+        true,
+      )
+
+      events.push(...(Events || []))
+      if (!Events?.length || Events.length < HISTORY_EVENT_PAGE_SIZE || events.length >= Total) break
+      page++
+    }
+
+    return events
   })
 
   /** 保存state类型的数据 */
@@ -913,6 +926,159 @@ function useChatIPC(params?: UseChatIPCParams) {
       })
     }
   })
+
+  const handleHistoryMessage = useMemoizedFn((res: AIOutputEvent) => {
+    try {
+      if (['listener_ready', 'heartbeat'].includes(res.Type)) return
+
+      if (res.CoordinatorId) {
+        updateCoordinatorIDs(res.CoordinatorId)
+      }
+
+      setRunTimeIDs((old) => {
+        if (!res.CallToolID || old.includes(res.CallToolID)) return old
+        return [...old, res.CallToolID]
+      })
+
+      const ipcContent = base64ToJson(res.Content) || ''
+
+      if (res.Type === 'structured' && res.NodeId === 'session_title') {
+        const nameInfo = JSON.parse(ipcContent) as { title: string }
+        if (nameInfo?.title && setSessionChatName) setSessionChatName(chatID.current, nameInfo.title)
+        return
+      }
+
+      if (res.Type === 'start_plan_and_execution') {
+        const startInfo = JSON.parse(ipcContent) as AIAgentGrpcApi.AIStartPlanAndExecution
+        if (startInfo.coordinator_id) {
+          taskChatID.current = {
+            taskID: startInfo['re-act_task'],
+            status: AITaskStatus.inProgress,
+            coordinatorId: startInfo.coordinator_id,
+          }
+          planCoordinatorId.current = startInfo.coordinator_id
+        }
+        onTaskStart?.()
+        return
+      }
+
+      if (res.Type === 'end_plan_and_execution') {
+        const endInfo = JSON.parse(ipcContent) as AIAgentGrpcApi.AIStartPlanAndExecution
+        if (!endInfo.coordinator_id || planCoordinatorId.current === endInfo.coordinator_id) {
+          taskChatEvent.handlePlanExecEnd(res)
+        }
+        return
+      }
+
+      if (res.Type === 'memory_context') {
+        const lists = JSON.parse(ipcContent) as AIAgentGrpcApi.MemoryEntryList
+        if (planCoordinatorId.current === res.CoordinatorId) {
+          taskMemorys.current = lists
+        } else {
+          reactMemorys.current = lists
+        }
+        return
+      }
+
+      if (['filesystem_pin_directory', 'filesystem_pin_filename'].includes(res.Type)) {
+        const { path } = JSON.parse(ipcContent) as AIAgentGrpcApi.FileSystemPin
+        handleSetGrpcFolders({ path, isFolder: res.Type === 'filesystem_pin_directory' })
+        return
+      }
+
+      if (res.Type === 'structured' && res.NodeId === 'plan_exec_tasks') {
+        const list = JSON.parse(ipcContent) as AIAgentGrpcApi.PlanHistoryList
+        handlePlanHistoryListChange(list)
+        return
+      }
+
+      if (res.Type === 'structured' && res.NodeId === 'timeline_item') {
+        const timelineItem = JSON.parse(ipcContent) as AIAgentGrpcApi.TimelineItem
+        setReActTimelines((old) => [...old, timelineItem])
+        return
+      }
+
+      if (UseAIPerfDataTypes.includes(res.Type)) {
+        aiPerfDataEvent.handleSetData(res)
+        return
+      }
+
+      if (UseYakExecResultTypes.includes(res.Type)) {
+        yakExecResultEvent.handleSetData(res)
+        return
+      }
+
+      if (res.Type === 'structured') {
+        const obj = JSON.parse(ipcContent) || ''
+        if (obj?.level) {
+          logEvents.pushLog({
+            type: 'log',
+            Timestamp: res.Timestamp,
+            data: obj as AIAgentGrpcApi.Log,
+          })
+          return
+        }
+
+        if (
+          ['queue_info', 'react_task_enqueue', 'react_task_dequeue', 'react_task_cleared'].includes(res.NodeId) ||
+          res.NodeId === 'react_task_status_changed'
+        ) {
+          return
+        }
+
+        if (res.NodeId === 'status') {
+          return
+        }
+      }
+
+      if (res.Type === 'stream' && (res.IsSystem || res.IsReason)) {
+        const { CallToolID, TaskIndex, NodeId, NodeIdVerbose, EventUUID, StreamDelta, ContentType } = res
+        if (!NodeId || !EventUUID) return
+        const ipcStreamDelta = base64ToJson(StreamDelta) || ''
+        logEvents.pushLog({
+          type: 'stream',
+          Timestamp: res.Timestamp,
+          data: {
+            TaskIndex,
+            CallToolID,
+            NodeId,
+            NodeIdVerbose: NodeIdVerbose || convertNodeIdToVerbose(NodeId),
+            EventUUID,
+            status: 'start',
+            content: ipcContent + ipcStreamDelta,
+            ContentType,
+          },
+        })
+        return
+      }
+
+      if (planCoordinatorId.current && planCoordinatorId.current === res.CoordinatorId) {
+        taskChatEvent.handleSetData(res)
+      } else {
+        casualChatEvent.handleSetData(res)
+      }
+    } catch (error) {
+      handleGrpcDataPushLog({
+        info: res,
+        pushLog: logEvents.pushLog,
+      })
+    }
+  })
+
+  const replayHistorySession = useMemoizedFn(async (session: string) => {
+    const events = await fetchHistoryEvents(session)
+    if (!events.length) return
+
+    isHistoryReplay.current = true
+    try {
+      for (const event of events) {
+        handleHistoryMessage(event)
+      }
+    } finally {
+      isHistoryReplay.current = false
+    }
+  })
+
   const handleError = useMemoizedFn((err: any) => {
     // console.log('error', err)
     yakitNotify('error', `AI执行失败: ${err}`)
@@ -937,7 +1103,7 @@ function useChatIPC(params?: UseChatIPCParams) {
   })
 
   /** 切换session会话的数据 */
-  const handleSwitchSessionData = useMemoizedFn((session: string) => {
+  const handleSwitchSessionData = useMemoizedFn(async (session: string) => {
     if (!session) {
       setTimeout(() => {
         setSwitchLoading(false)
@@ -956,7 +1122,7 @@ function useChatIPC(params?: UseChatIPCParams) {
     }
 
     const chatData = cacheDataStore?.get(session)
-    if (chatData) {
+    if (chatData && hasCachedChatRenderData(chatData)) {
       chatID.current = session
       setGrpcFolders(chatData.grpcFolders || [])
       setRunTimeIDs(chatData.runTimeIDs || [])
@@ -965,7 +1131,17 @@ function useChatIPC(params?: UseChatIPCParams) {
       casualChatEvent.handleSetElements(chatData.casualChat?.elements || [])
       taskChatEvent.handleSetElements(chatData.taskChat?.elements || [])
     } else {
-      fetchHistoryTimelines(session)
+      try {
+        if (cacheDataStore?.has(session)) cacheDataStore.remove(session)
+        cacheDataStore?.create(session)
+      } catch (error) {}
+
+      chatID.current = session
+      try {
+        await replayHistorySession(session)
+      } catch (error) {
+        yakitNotify('error', `加载历史会话失败: ${error}`)
+      }
     }
     endAfterSession.current = ''
     setTimeout(() => {

@@ -20,7 +20,7 @@ import { formatAIAgentSetting, getAIReActRequestParams } from '@/pages/AIAgent/a
 import type { AIChatInfo } from '@/pages/AIAgent/ai-agent/type/aiChat'
 import useAIAgentDispatcher from '@/pages/AIAgent/ai-agent/useContext/useDispatcher'
 import { randomString } from '@/utils/randomUtil'
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag'
 import { postCreateSession } from '@/apis/AiEventApi'
 
 export const AIReActChat: React.FC<AIReActChatProps> = React.memo(

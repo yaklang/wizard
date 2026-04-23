@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import type { AIModelItemProps, AIModelSelectListProps, AIModelSelectProps, AISelectType } from './AIModelSelectType'
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect'
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect'
 import { useCreation, useDebounceFn, useInViewport, useMemoizedFn } from 'ahooks'
 import {
   type AIGlobalConfig,
@@ -40,9 +40,9 @@ import {
 import { cloneDeep, isEqual } from 'lodash'
 import { AIInputEventHotPatchTypeEnum } from '@/pages/AIAgent/ai-re-act/hooks/grpcApi'
 import emiter from '@/utils/eventBus/eventBus'
-import { YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm'
+import { YakitModalConfirm } from '@/compoments/yakitUI/YakitModal/YakitModalConfirm'
 import type { AIAgentTriggerEventInfo } from '../../aiAgentType'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import { Avatar, Tooltip } from 'antd'
 import { yakitNotify } from '@/utils/notification'
 import { getSetting } from '@/apis/AiEventApi'

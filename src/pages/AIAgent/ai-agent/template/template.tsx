@@ -9,7 +9,7 @@ import type {
 } from './type'
 import { AIInputInnerFeatureEnum } from './type'
 import { Input } from 'antd'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import { OutlineArrowupIcon, OutlineAtsymbolIcon } from '@/assets/icon/outline'
 import { useCreation, useInViewport, useMemoizedFn } from 'ahooks'
 import type { TextAreaRef } from 'antd/lib/input/TextArea'

@@ -1,132 +1,107 @@
-import React, { useEffect, useRef, useState } from 'react';
-import type { AIFocusModeProps } from './type';
-import { OutlineMicroscopeIcon, OutlineXIcon } from '@/assets/icon/outline';
-import { useInViewport, useMemoizedFn } from 'ahooks';
-import classNames from 'classnames';
-import { AIChatSelect } from '../aiReviewRuleSelect/AIReviewRuleSelect';
-import type { AIInputEvent } from '../hooks/grpcApi';
-import styles from './AIFocusMode.module.scss';
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect';
-import type { YakitSelectProps } from '@/compoments/YakitUI/YakitSelect/YakitSelectType';
-import { postSettingAifocusGet } from '@/apis/AiEventApi';
-import { Tooltip } from 'antd';
-import type { TPostSettingAifocusGetResponse } from '@/apis/AiEventApi/type';
+import React, { useEffect, useRef, useState } from 'react'
+import type { AIFocusModeProps } from './type'
+import { OutlineMicroscopeIcon, OutlineXIcon } from '@/assets/icon/outline'
+import { useInViewport, useMemoizedFn } from 'ahooks'
+import classNames from 'classnames'
+import { AIChatSelect } from '../aiReviewRuleSelect/AIReviewRuleSelect'
+import type { AIInputEvent } from '../hooks/grpcApi'
+import styles from './AIFocusMode.module.scss'
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect'
+import type { YakitSelectProps } from '@/compoments/yakitUI/YakitSelect/YakitSelectType'
+import { postSettingAifocusGet } from '@/apis/AiEventApi'
+import { Tooltip } from 'antd'
+import type { TPostSettingAifocusGetResponse } from '@/apis/AiEventApi/type'
 
 export const AIFocusMode: React.FC<AIFocusModeProps> = React.memo((props) => {
-    const { value, onChange, className } = props;
+  const { value, onChange, className } = props
 
-    const [focusModeList, setFocusModeList] = useState<
-        YakitSelectProps['options']
-    >([]);
-    const [open, setOpen] = useState<boolean>(false);
-    const ref = useRef<HTMLDivElement>(null);
+  const [focusModeList, setFocusModeList] = useState<YakitSelectProps['options']>([])
+  const [open, setOpen] = useState<boolean>(false)
+  const ref = useRef<HTMLDivElement>(null)
 
-    const [inViewPort = true] = useInViewport(ref);
+  const [inViewPort = true] = useInViewport(ref)
 
-    useEffect(() => {
-        if (inViewPort) getFocusMode();
-    }, [inViewPort]);
-    const getFocusMode = useMemoizedFn(async () => {
-        const res = await postSettingAifocusGet();
-        const list = (res.Data || []).map(
-            (item: TPostSettingAifocusGetResponse) => ({
-                label: item.VerboseNameZh || item.Name,
-                value: item.Name,
-                describe: item.Description,
-            }),
-        );
-        setFocusModeList(list);
-    });
-    const onSelectModel = useMemoizedFn(
-        (value: AIInputEvent['FocusModeLoop']) => {
-            onChange(value);
-        },
-    );
+  useEffect(() => {
+    if (inViewPort) getFocusMode()
+  }, [inViewPort])
+  const getFocusMode = useMemoizedFn(async () => {
+    const res = await postSettingAifocusGet()
+    const list = (res.Data || []).map((item: TPostSettingAifocusGetResponse) => ({
+      label: item.VerboseNameZh || item.Name,
+      value: item.Name,
+      describe: item.Description,
+    }))
+    setFocusModeList(list)
+  })
+  const onSelectModel = useMemoizedFn((value: AIInputEvent['FocusModeLoop']) => {
+    onChange(value)
+  })
 
-    const onSetOpen = useMemoizedFn((v: boolean) => {
-        setOpen(v);
-    });
-    const onRemove = useMemoizedFn(() => {
-        onChange(undefined);
-        setOpen(false);
-    });
-    return (
-        <div ref={ref} className={className}>
-            <AIChatSelect
-                // eslint-disable-next-line react/no-unstable-nested-components
-                dropdownRender={(menu) => {
-                    return (
-                        <div className={styles['drop-select-wrapper']}>
-                            <div className={styles['select-title']}>
-                                <OutlineMicroscopeIcon />
-                                专注模式
-                            </div>
-                            {menu}
-                        </div>
-                    );
-                }}
-                value={
-                    value || {
-                        label: (
-                            <div className={styles['select-option']}>
-                                <OutlineMicroscopeIcon
-                                    className={styles['icon-wrapper']}
-                                />
-                                <span className={styles['select-option-text']}>
-                                    请选择
-                                </span>
-                            </div>
-                        ),
-                        value: '',
-                    }
-                }
-                // placeholder="请选择"
-                onSelect={onSelectModel}
-                optionLabelProp="label"
-                open={open}
-                setOpen={onSetOpen}
-            >
-                {focusModeList?.map((item) => (
-                    <YakitSelect.Option
-                        key={item.value}
-                        value={item.value}
-                        label={
-                            <div className={styles['select-option']}>
-                                <OutlineMicroscopeIcon
-                                    className={styles['icon-wrapper']}
-                                />
-                                <span
-                                    className={styles['select-option-text']}
-                                    title={`${item.label}`}
-                                >
-                                    {item.label}
-                                </span>
-                                <OutlineXIcon
-                                    className={styles['icon-wrapper']}
-                                    onClick={onRemove}
-                                />
-                            </div>
-                        }
-                    >
-                        <Tooltip title={item.describe} placement="right">
-                            <div
-                                className={classNames(
-                                    styles['select-option-wrapper'],
-                                    {
-                                        [styles[
-                                            'select-option-active-wrapper'
-                                        ]]: item.value === value,
-                                    },
-                                )}
-                            >
-                                <div className={styles['text']}>
-                                    {item.label}
-                                </div>
-                            </div>
-                        </Tooltip>
-                    </YakitSelect.Option>
-                ))}
-            </AIChatSelect>
-        </div>
-    );
-});
+  const onSetOpen = useMemoizedFn((v: boolean) => {
+    setOpen(v)
+  })
+  const onRemove = useMemoizedFn(() => {
+    onChange(undefined)
+    setOpen(false)
+  })
+  return (
+    <div ref={ref} className={className}>
+      <AIChatSelect
+        // eslint-disable-next-line react/no-unstable-nested-components
+        dropdownRender={(menu) => {
+          return (
+            <div className={styles['drop-select-wrapper']}>
+              <div className={styles['select-title']}>
+                <OutlineMicroscopeIcon />
+                专注模式
+              </div>
+              {menu}
+            </div>
+          )
+        }}
+        value={
+          value || {
+            label: (
+              <div className={styles['select-option']}>
+                <OutlineMicroscopeIcon className={styles['icon-wrapper']} />
+                <span className={styles['select-option-text']}>请选择</span>
+              </div>
+            ),
+            value: '',
+          }
+        }
+        // placeholder="请选择"
+        onSelect={onSelectModel}
+        optionLabelProp="label"
+        open={open}
+        setOpen={onSetOpen}
+      >
+        {focusModeList?.map((item) => (
+          <YakitSelect.Option
+            key={item.value}
+            value={item.value}
+            label={
+              <div className={styles['select-option']}>
+                <OutlineMicroscopeIcon className={styles['icon-wrapper']} />
+                <span className={styles['select-option-text']} title={`${item.label}`}>
+                  {item.label}
+                </span>
+                <OutlineXIcon className={styles['icon-wrapper']} onClick={onRemove} />
+              </div>
+            }
+          >
+            <Tooltip title={item.describe} placement="right">
+              <div
+                className={classNames(styles['select-option-wrapper'], {
+                  [styles['select-option-active-wrapper']]: item.value === value,
+                })}
+              >
+                <div className={styles['text']}>{item.label}</div>
+              </div>
+            </Tooltip>
+          </YakitSelect.Option>
+        ))}
+      </AIChatSelect>
+    </div>
+  )
+})

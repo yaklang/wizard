@@ -11,8 +11,8 @@ import type {
   PromptAndActiveTextareaProps,
 } from './type'
 import { useControllableValue, useDebounceFn, useMemoizedFn, useUpdateEffect } from 'ahooks'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import {
   OutlineChevrondownIcon,
   OutlineChevronrightIcon,
@@ -24,8 +24,8 @@ import {
 } from '@/assets/icon/outline'
 import { SolidStoreIcon } from '@/assets/icon/solid'
 import { Form, Tooltip } from 'antd'
-import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect'
+import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect'
 import {
   AIForgeBuiltInTag,
   DefaultForgeConfigToCode,
@@ -33,9 +33,9 @@ import {
   DefaultForgeYakToCode,
 } from '../defaultConstant'
 import type { GetAIToolListRequest } from '@/pages/AIAgent/ai-agent/type/aiTool'
-import { YakitRadioButtons } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtons'
-import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor'
-import { ExecuteEnterNodeByPluginParams } from '@/pages/plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeard'
+import { YakitRadioButtons } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtons'
+import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor'
+import { ExecuteEnterNodeByPluginParams } from '@/pages/Plugins/operator/localPluginExecuteDetailHeard/LocalPluginExecuteDetailHeard'
 import { ExtraParamsNodeByType } from '@/pages/AIAgent/plugins/operator/localPluginExecuteDetailHeard/PluginExecuteExtraParams'
 import cloneDeep from 'lodash/cloneDeep'
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute'
@@ -46,7 +46,7 @@ import { AIForgeListDefaultPagination, ReActChatEventEnum } from '@/pages/AIAgen
 import { grpcGetAIToolList } from '@/pages/AIAgent/ai-agent/aiToolList/utils'
 import { QSInputTextarea } from '@/pages/AIAgent/ai-agent/template/template'
 import type { TextAreaRef } from 'antd/lib/input/TextArea'
-import { YakitSwitch } from '@/compoments/YakitUI/YakitSwitch/YakitSwitch'
+import { YakitSwitch } from '@/compoments/yakitUI/YakitSwitch/YakitSwitch'
 import type { AIForge } from '@/pages/AIAgent/ai-agent/type/forge'
 
 import classNames from 'classnames'

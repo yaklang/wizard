@@ -12,14 +12,14 @@ import { AIAgentSettingDefault, AIReviewRuleIconMap, AIReviewRuleOptions } from 
 import { isEqual } from 'lodash'
 import classNames from 'classnames'
 import styles from './AIReviewRuleSelect.module.scss'
-import { YakitSegmented } from '@/compoments/YakitUI/YakitSegmented/YakitSegmented'
+import { YakitSegmented } from '@/compoments/yakitUI/YakitSegmented/YakitSegmented'
 import type { AIAgentSetting } from '../../ai-agent/aiAgentType'
 import { Tooltip } from 'antd'
-import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover'
+import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover'
 import { FormItemSlider } from '../../ai-agent/AIChatSetting/AIChatSetting'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import { OutlineSirenIcon } from '@/assets/icon/outline'
-import { YakitSelect } from '@/compoments/YakitUI/YakitSelect/YakitSelect'
+import { YakitSelect } from '@/compoments/yakitUI/YakitSelect/YakitSelect'
 
 const AIReviewRuleSelect: React.FC<ReviewRuleSelectProps> = React.memo((props) => {
   const { setting } = useAIAgentStore()
