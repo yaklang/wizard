@@ -28,11 +28,11 @@ import type { RouteToPageProps } from '../types/interface/publicMenu'
 import { yakitNotify } from '@/utils/notification'
 import { useNavigate } from 'react-router-dom'
 import { omit } from 'lodash'
-import { getStoredAIEngineGatewayURL, hasAIEngineJWTSecret } from '@/utils/aiEngineAuth'
+import { hasAIEngineJWTSecret } from '@/utils/aiEngineAuth'
 
 export const AIAgentCacheClearValue = '20260113'
 
-const hasUsableAIEngineGateway = () => hasAIEngineJWTSecret() && !!getStoredAIEngineGatewayURL()
+const hasUsableAIEngineAuth = () => hasAIEngineJWTSecret()
 
 export const AIAgent = () => {
   // #region ai-agent页面全局缓存
@@ -113,7 +113,7 @@ export const AIAgent = () => {
   })
 
   const primeAIEngineAuth = useMemoizedFn(async () => {
-    if (hasUsableAIEngineGateway() && aiEngineStatus?.running) return aiEngineStatus
+    if (hasUsableAIEngineAuth() && aiEngineStatus?.running) return aiEngineStatus
 
     const status = await getAIEngineStatus()
     setAIEngineStatus(status)
@@ -125,7 +125,7 @@ export const AIAgent = () => {
     if (!aiEngineStatus) setAIEngineStatusLoading(true)
     try {
       const status = await primeAIEngineAuth()
-      if (!status?.running || !hasUsableAIEngineGateway()) {
+      if (!status?.running || !hasUsableAIEngineAuth()) {
         setChats([])
         setActiveChat(undefined)
         return
@@ -295,7 +295,7 @@ export const AIAgent = () => {
     navigate(data.route, { state: data })
   })
 
-  const isAIEngineReady = !!aiEngineStatus?.running && hasUsableAIEngineGateway()
+  const isAIEngineReady = !!aiEngineStatus?.running && hasUsableAIEngineAuth()
 
   const renderAIAgentChat = () => {
     if (aiEngineStatusLoading && !aiEngineStatus) {
@@ -312,7 +312,7 @@ export const AIAgent = () => {
         <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
           <div className="text-[16px] font-medium color-[#31343F]">AI 引擎未就绪</div>
           <div className="max-w-[520px] text-[13px] leading-5 color-[#85899E]">
-            当前不会自动请求 /agent 接口。请先点击页面顶部的“启动 AI”，等待状态变为运行中后再进入会话。
+            请先点击页面顶部的“启动 AI”，等待状态变为运行中后再进入会话。
           </div>
           <YakitButton type="outline2" loading={aiEngineStatusLoading} onClick={() => refreshAgentData()}>
             刷新状态

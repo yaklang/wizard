@@ -1,5 +1,5 @@
 const AI_ENGINE_JWT_SECRET_STORAGE_KEY = 'ai-engine-jwt-secret'
-const AI_ENGINE_GATEWAY_URL_STORAGE_KEY = 'ai-engine-gateway-url'
+const AI_ENGINE_LEGACY_GATEWAY_URL_STORAGE_KEY = 'ai-engine-gateway-url'
 const AI_ENGINE_ROUTE_PREFIX_STORAGE_KEY = 'ai-engine-route-prefix'
 const AI_ENGINE_JWT_TTL_SECONDS = 24 * 60 * 60
 const AI_ENGINE_JWT_REFRESH_BUFFER_MS = 60 * 1000
@@ -52,7 +52,6 @@ const getStoredAIEngineJWTSecret = () => {
 
 export const hasAIEngineJWTSecret = () => !!getStoredAIEngineJWTSecret()
 
-const normalizeGatewayURL = (gatewayURL?: string | null) => gatewayURL?.trim().replace(/\/+$/, '') || ''
 const normalizeRoutePrefix = (routePrefix?: string | null) => {
   const normalizedRoutePrefix = routePrefix?.trim() || '/agent'
   if (normalizedRoutePrefix === '/') return '/'
@@ -61,9 +60,7 @@ const normalizeRoutePrefix = (routePrefix?: string | null) => {
 }
 
 export const getStoredAIEngineGatewayURL = () => {
-  if (!isBrowser()) return ''
-
-  return normalizeGatewayURL(window.localStorage.getItem(AI_ENGINE_GATEWAY_URL_STORAGE_KEY))
+  return ''
 }
 
 export const getStoredAIEngineRoutePrefix = () => {
@@ -72,17 +69,9 @@ export const getStoredAIEngineRoutePrefix = () => {
   return normalizeRoutePrefix(window.localStorage.getItem(AI_ENGINE_ROUTE_PREFIX_STORAGE_KEY))
 }
 
-export const setAIEngineGatewayURL = (gatewayURL?: string | null) => {
-  const normalizedGatewayURL = normalizeGatewayURL(gatewayURL)
-
+export const setAIEngineGatewayURL = (_gatewayURL?: string | null) => {
   if (!isBrowser()) return
-
-  if (!normalizedGatewayURL) {
-    window.localStorage.removeItem(AI_ENGINE_GATEWAY_URL_STORAGE_KEY)
-    return
-  }
-
-  window.localStorage.setItem(AI_ENGINE_GATEWAY_URL_STORAGE_KEY, normalizedGatewayURL)
+  window.localStorage.removeItem(AI_ENGINE_LEGACY_GATEWAY_URL_STORAGE_KEY)
 }
 
 export const setAIEngineRoutePrefix = (routePrefix?: string | null) => {
@@ -127,9 +116,7 @@ export const syncAIEngineAuth = <T extends AIEngineStatusLike | null | undefined
     if (status.jwt_secret?.trim()) {
       setAIEngineJWTSecret(status.jwt_secret)
     }
-    if (status.gateway_url?.trim()) {
-      setAIEngineGatewayURL(status.gateway_url)
-    }
+    clearAIEngineGatewayURL()
     setAIEngineRoutePrefix(status.route_prefix)
     return status
   }
@@ -192,35 +179,9 @@ const getURLPathname = (url?: string) => {
 
 export const isAIEnginePath = (url?: string) => /^\/agent(?:\/|$)/.test(getURLPathname(url))
 
-const joinURLPath = (prefix: string, suffix: string) => {
-  const normalizedPrefix = prefix === '/' ? '' : prefix.replace(/\/+$/, '')
-  const normalizedSuffix = suffix ? `/${suffix.replace(/^\/+/, '')}` : ''
-
-  return `${normalizedPrefix}${normalizedSuffix}` || '/'
-}
-
 export const resolveAIEngineRequestURL = (url?: string) => {
   if (!url || !isAIEnginePath(url)) return url || ''
-
-  const gatewayURL = getStoredAIEngineGatewayURL()
-  if (!gatewayURL) return url
-
-  try {
-    const requestURL = new URL(url, isBrowser() ? window.location.origin : 'http://localhost')
-    const targetURL = new URL(gatewayURL)
-    const routePrefix = getStoredAIEngineRoutePrefix()
-    const gatewayPathname = targetURL.pathname.replace(/\/+$/, '') || '/'
-    const requestPathname = requestURL.pathname
-    const suffix = requestPathname.startsWith(routePrefix) ? requestPathname.slice(routePrefix.length) : requestPathname
-    const gatewayContainsRoutePrefix = gatewayPathname === routePrefix || gatewayPathname.endsWith(routePrefix)
-
-    targetURL.pathname = joinURLPath(gatewayPathname, gatewayContainsRoutePrefix ? suffix : requestPathname)
-    targetURL.search = requestURL.search
-
-    return targetURL.toString()
-  } catch {
-    return url
-  }
+  return url
 }
 
 export const getAIEngineAuthorizationHeader = async () => {
