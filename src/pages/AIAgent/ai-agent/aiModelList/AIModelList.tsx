@@ -613,6 +613,10 @@ const AIOnlineModelListItem: React.FC<AIOnlineModelListItemProps> = React.memo((
       proxy: item.Provider.Proxy,
       no_https: item.Provider.NoHttps,
       api_type: item.Provider.APIType,
+      base_url: item.Provider.BaseURL,
+      endpoint: item.Provider.Endpoint,
+      enable_endpoint: item.Provider.EnableEndpoint,
+      Headers: item.Provider.Headers,
       model: item.ModelName,
       model_type: modelType,
     }
@@ -622,6 +626,7 @@ const AIOnlineModelListItem: React.FC<AIOnlineModelListItemProps> = React.memo((
       Content: '测试成功',
     })
       .then((response) => {
+        const aiModelType = (modelType || AIModelTypeEnum.TierIntelligent) as AIModelTypeEnum
         const m = showYakitModal({
           hiddenHeader: true,
           type: 'white',
@@ -634,6 +639,8 @@ const AIOnlineModelListItem: React.FC<AIOnlineModelListItemProps> = React.memo((
                 onApplyRecommendConfig(config)
                 m.destroy()
               }}
+              aiModelType={aiModelType}
+              model={item?.ModelName}
             />
           ),
         })

@@ -91,6 +91,8 @@ export interface NewHTTPPacketEditorProp {
   editorOperationRecord?: string
   /** @name 打开WebFuzzer的回调 */
   webFuzzerCallBack?: () => void
+  // 是否由外部接管children的渲染，如果是由外部接管children的渲染，则编辑器组件不再对children进行任何处理，完全由外部控制，适用于一些特殊场景，比如内嵌入一些特殊组件等
+  children?: React.ReactNode
   /** @name 是否显示显示Extra默认项 */
   showDefaultExtra?: boolean
   /** @name 数据对比(默认无对比) */
@@ -376,49 +378,55 @@ export const NewHTTPPacketEditor: React.FC<NewHTTPPacketEditorProp> = (props) =>
           )
         }
       >
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          {empty && props.emptyOr}
-          {mode === 'text' && !empty && (
-            <YakitEditor
-              theme={props.theme}
-              noLineNumber={props.noLineNumber}
-              lineNumbersMinChars={props.lineNumbersMinChars}
-              noMiniMap={props.noMinimap}
-              type={props.language || (isResponse ? 'html' : 'http')}
-              value={props.readOnly && showValue.length > 0 ? showValue : strValue}
-              readOnly={props.readOnly}
-              disabled={props.disabled}
-              setValue={setStrValue}
-              noWordWrap={noWordwrap}
-              fontSize={fontSize}
-              showLineBreaks={showLineBreaks}
-              noPacketModifier={props.noPacketModifier}
-              editorDidMount={(editor) => {
-                setMonacoEditor(editor)
-              }}
-              editorOperationRecord={editorOperationRecord}
-              isWebSocket={props.isWebSocket}
-              webSocketValue={props.webSocketValue && new Buffer(props.webSocketValue).toString(getEncoding())}
-              webSocketToServer={props.webSocketToServer && new Buffer(props.webSocketToServer).toString(getEncoding())}
-              webFuzzerCallBack={props.webFuzzerCallBack}
-              editorId={editorId}
-              {...props.extraEditorProps}
-            />
-          )}
-          {mode === 'hex' && !empty && (
-            <HexEditor
-              className={classNames({
-                [styles['hex-editor-style']]: props.system === 'Windows_NT',
-              })}
-              showAscii={true}
-              data={hexValue}
-              showRowLabels={true}
-              showColumnLabels={false}
-              nonce={nonce}
-              onSetValue={props.readOnly ? undefined : handleSetValue}
-            />
-          )}
-        </div>
+        {props.children ? (
+          <div style={{ flex: 1, overflow: 'hidden' }}>{props.children}</div>
+        ) : (
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            {empty && props.emptyOr}
+            {mode === 'text' && !empty && (
+              <YakitEditor
+                theme={props.theme}
+                noLineNumber={props.noLineNumber}
+                lineNumbersMinChars={props.lineNumbersMinChars}
+                noMiniMap={props.noMinimap}
+                type={props.language || (isResponse ? 'html' : 'http')}
+                value={props.readOnly && showValue.length > 0 ? showValue : strValue}
+                readOnly={props.readOnly}
+                disabled={props.disabled}
+                setValue={setStrValue}
+                noWordWrap={noWordwrap}
+                fontSize={fontSize}
+                showLineBreaks={showLineBreaks}
+                noPacketModifier={props.noPacketModifier}
+                editorDidMount={(editor) => {
+                  setMonacoEditor(editor)
+                }}
+                editorOperationRecord={editorOperationRecord}
+                isWebSocket={props.isWebSocket}
+                webSocketValue={props.webSocketValue && new Buffer(props.webSocketValue).toString(getEncoding())}
+                webSocketToServer={
+                  props.webSocketToServer && new Buffer(props.webSocketToServer).toString(getEncoding())
+                }
+                webFuzzerCallBack={props.webFuzzerCallBack}
+                editorId={editorId}
+                {...props.extraEditorProps}
+              />
+            )}
+            {mode === 'hex' && !empty && (
+              <HexEditor
+                className={classNames({
+                  [styles['hex-editor-style']]: props.system === 'Windows_NT',
+                })}
+                showAscii={true}
+                data={hexValue}
+                showRowLabels={true}
+                showColumnLabels={false}
+                nonce={nonce}
+                onSetValue={props.readOnly ? undefined : handleSetValue}
+              />
+            )}
+          </div>
+        )}
       </Card>
     </div>
   )

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type {
   AIConfigAPIKeyFormItemProps,
   AIModelCheckResultProps,
@@ -9,8 +9,11 @@ import type {
 } from './AIModelFormType'
 import { useCreation, useDebounceFn, useInViewport, useMemoizedFn } from 'ahooks'
 import { Form, type FormInstance } from 'antd'
-import { NewAIThirdPartyApplicationConfigBase } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig'
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import {
+  type AIThirdPartyApplicationConfig,
+  NewAIThirdPartyApplicationConfigBase,
+} from '@/compoments/configNetwork/NewThirdPartyApplicationConfig'
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
 import {
   type AIConfigHealthCheckResponse,
   type AIGlobalConfig,
@@ -127,6 +130,10 @@ export const buildAIConfigHealthCheckConfig = (values: any): ThirdPartyApplicati
     'proxy',
     'no_https',
     'api_type',
+    'base_url',
+    'endpoint',
+    'enable_endpoint',
+    'Headers',
     'webhook_url',
     'api_key_id', // 测试不需要传这个给后端
   ])
@@ -148,18 +155,19 @@ export const buildAIConfigHealthCheckConfig = (values: any): ThirdPartyApplicati
 }
 
 const buildAIConfigHealthCheckFormValues = (config: ThirdPartyApplicationConfig) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return {
-    Type: config.Type,
-    api_key: config.APIKey,
-    api_type: normalizeAIAPIType(config.APIType),
-    domain: config.Domain,
-    proxy: config.Proxy,
-    no_https: config.NoHttps,
-    base_url: config.BaseURL,
-    endpoint: config.Endpoint,
-    enable_endpoint: config.EnableEndpoint,
-    Headers: config.Headers,
-  }
+    Type: config.Type ?? '',
+    api_key: config.APIKey ?? '',
+    api_type: normalizeAIAPIType(config.APIType ?? ''),
+    domain: config.Domain ?? '',
+    proxy: config.Proxy ?? '',
+    no_https: config.NoHttps ?? false,
+    base_url: config.BaseURL ?? '',
+    endpoint: config.Endpoint ?? '',
+    enable_endpoint: config.EnableEndpoint ?? false,
+    Headers: config.Headers ?? [],
+  } as AIThirdPartyApplicationConfig
 }
 
 export const AIModelForm: React.FC<AIModelFormProps> = React.memo((props) => {
@@ -408,6 +416,8 @@ export const AIModelForm: React.FC<AIModelFormProps> = React.memo((props) => {
             onApplyRecommendConfig(config)
             m.destroy()
           }}
+          aiModelType={aiModelType}
+          model={item?.ModelName}
         />
       ),
       onOk: () => m.destroy(),
@@ -441,10 +451,10 @@ export const AIModelForm: React.FC<AIModelFormProps> = React.memo((props) => {
 })
 
 export const AIModelCheckResult: React.FC<AIModelCheckResultProps> = (props) => {
-  const { testResult, onClose, onApplyRecommendConfig } = props
+  const { testResult, onClose, onApplyRecommendConfig, aiModelType, model } = props
   const [currentSelectShowType, setCurrentSelectShowType] = useState<
     'request' | 'response' | 'responseContent' | 'recommendConfig'
-  >('response') // 选中的表格项
+  >(testResult?.RecommendConfig ? 'recommendConfig' : 'responseContent') // 选中的表格项
   //   const [typeOptionVal, setTypeOptionVal] = useState<'beautify' | 'render' | 'hex'>()
 
   const testStatus = useCreation(() => {
@@ -508,11 +518,54 @@ export const AIModelCheckResult: React.FC<AIModelCheckResultProps> = (props) => 
       return testResult?.RawResponse || ''
     } else if (currentSelectShowType === 'responseContent') {
       return testResult?.ResponseContent || ''
-    } else if (currentSelectShowType === 'recommendConfig') {
-      return JSON.stringify(testResult?.RecommendConfig, null, 2) || ''
     }
     return ''
   }, [currentSelectShowType, testResult])
+
+  const getOptions = useMemo(() => {
+    let options = [
+      {
+        value: 'recommendConfig',
+        label: '推荐配置',
+      },
+      {
+        value: 'responseContent',
+        label: '响应内容',
+      },
+      {
+        value: 'request',
+        label: '请求',
+      },
+      {
+        value: 'response',
+        label: '响应',
+      },
+    ]
+
+    if (!testResult?.RecommendConfig) {
+      options = options.filter((i) => i.value !== 'recommendConfig')
+    }
+    return options
+  }, [testResult?.RecommendConfig])
+
+  const formValues = useMemo(() => {
+    // eslint-disable-next-line no-undef-init
+    let obj: AIThirdPartyApplicationConfig | undefined = undefined
+    if (testResult?.RecommendConfig) {
+      obj = buildAIConfigHealthCheckFormValues(testResult?.RecommendConfig)
+    }
+    if (obj) {
+      obj.ExtraParams = testResult?.RecommendConfig.ExtraParams || []
+    }
+    if (obj && aiModelType) {
+      obj.model_type = aiModelType
+    }
+    if (obj && model) {
+      obj.model = model
+    }
+
+    return obj
+  }, [aiModelType, model, testResult?.RecommendConfig])
 
   return (
     <div className={styles['test-result-wrapper']}>
@@ -561,24 +614,7 @@ export const AIModelCheckResult: React.FC<AIModelCheckResultProps> = (props) => 
                       setCurrentSelectShowType(e.target.value)
                     }}
                     buttonStyle="solid"
-                    options={[
-                      {
-                        value: 'request',
-                        label: '请求',
-                      },
-                      {
-                        value: 'response',
-                        label: '响应',
-                      },
-                      {
-                        value: 'responseContent',
-                        label: '响应内容',
-                      },
-                      {
-                        value: 'recommendConfig',
-                        label: '推荐配置',
-                      },
-                    ]}
+                    options={getOptions}
                   />
                 </div>
               </div>
@@ -588,7 +624,13 @@ export const AIModelCheckResult: React.FC<AIModelCheckResultProps> = (props) => 
             isResponse={true}
             // typeOptionVal={typeOptionVal}
             // onTypeOptionVal={onTypeOptionValChange}
-          />
+          >
+            {currentSelectShowType === 'recommendConfig' && (
+              <div style={{ flex: 1, overflow: 'auto' }}>
+                <NewAIThirdPartyApplicationConfigBase readOnly={true} formValues={formValues} />
+              </div>
+            )}
+          </NewHTTPPacketEditor>
         </div>
       </div>
     </div>

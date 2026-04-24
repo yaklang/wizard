@@ -1,6 +1,6 @@
 import type { LocalModelConfig } from '../type/aiModel'
-import type { ThirdPartyApplicationConfig } from '@/compoments/configNetwork/ConfigNetworkPage'
 import type { YakitSizeType } from '@/compoments/yakitUI/YakitInputNumber/YakitInputNumberType'
+import type { AIModelConfig, AIModelTypeFileName } from './utils'
 import type { AIModelTypeEnum } from '../defaultConstant'
 export interface SelectOptionsProps {
   label: string | React.Element
@@ -39,9 +39,9 @@ export interface AILocalModelListItemProps {
   currentPageTabRouteKey: string
 }
 export interface AIOnlineModelListItemProps {
-  item: ThirdPartyApplicationConfig
-  onRemove: (item: ThirdPartyApplicationConfig) => void
-  onEdit: (item: ThirdPartyApplicationConfig) => void
+  item: AIModelConfig
+  onRemove: (item: AIModelConfig) => void
+  onEdit: (item: AIModelConfig) => void
   checked: boolean
   modelType: `${AIModelTypeEnum}`
 }
