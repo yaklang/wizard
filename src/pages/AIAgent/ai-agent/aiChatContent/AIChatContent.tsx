@@ -416,9 +416,9 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
                 <YakitButton type="secondary2" icon={<OutlineNewspaperIcon />} onClick={onOpenLog}>
                   日志
                 </YakitButton>
-                <YakitButton type="secondary2" icon={<OutlineClouddownloadIcon />} onClick={onOpenExportModal}>
+                {/* <YakitButton type="secondary2" icon={<OutlineClouddownloadIcon />} onClick={onOpenExportModal}>
                   导出日志
-                </YakitButton>
+                </YakitButton> */}
               </div>
             </div>
             {yakExecResult.card.length > 0 ? (
