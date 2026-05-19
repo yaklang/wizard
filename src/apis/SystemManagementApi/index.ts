@@ -1,57 +1,30 @@
-import axios from '@/utils/axios';
-import type { ResponseData, TableResponseData } from '@/utils/commonTypes';
-import type {
-    User,
-    UserRequest,
-    TAddUserRequest,
-    TAddUserResponse,
-    PostUserOperateRequest,
-} from './types';
+import axios from '@/utils/axios'
+import type { ResponseData, TableResponseData } from '@/utils/commonTypes'
+import type { User, UserRequest, TAddUserRequest, TAddUserResponse, PostUserOperateRequest } from './types'
 
 // 获取用户管理 表格数据
-const getUserList = (
-    params: UserRequest,
-): Promise<ResponseData<TableResponseData<User>>> =>
-    axios.get<never, ResponseData<TableResponseData<User>>>(`/api/user`, {
-        params,
-    });
+const getUserList = (params: UserRequest): Promise<ResponseData<TableResponseData<User>>> =>
+  axios.get<never, ResponseData<TableResponseData<User>>>(`/api/user`, {
+    params,
+  })
 
 // 添加用户
-const postAddUser = (
-    data: TAddUserRequest,
-): Promise<ResponseData<TAddUserResponse>> =>
-    axios.post<never, ResponseData<TAddUserResponse>>('/api/user', data);
+const postAddUser = (data: TAddUserRequest): Promise<ResponseData<TAddUserResponse>> =>
+  axios.post<never, ResponseData<TAddUserResponse>>('/api/user', data)
 
-const putEditUser = (
-    data: TAddUserRequest,
-): Promise<ResponseData<TAddUserResponse>> =>
-    axios.put<never, ResponseData<TAddUserResponse>>('/api/user', data);
+const putEditUser = (data: TAddUserRequest): Promise<ResponseData<TAddUserResponse>> =>
+  axios.put<never, ResponseData<TAddUserResponse>>('/api/user', data)
 
 // 重置密码
-const postUserReset = (data: {
-    username: string;
-}): Promise<ResponseData<{ password: string; username: string }>> =>
-    axios.post<never, ResponseData<{ password: string; username: string }>>(
-        `/api/user/reset?username=${data.username}`,
-    );
+const postUserReset = (data: { username: string }): Promise<ResponseData<{ password: string; username: string }>> =>
+  axios.post<never, ResponseData<{ password: string; username: string }>>(`/api/user/reset?username=${data.username}`)
 
 // 添加用户
 const deleteUser = (username: string): Promise<ResponseData<boolean>> =>
-    axios.delete<never, ResponseData<boolean>>(
-        `/api/user?username=${username}`,
-    );
+  axios.delete<never, ResponseData<boolean>>(`/api/user?username=${username}`)
 
 // 操作用户权限 /user/operate
-const postUserOperate = (
-    data: PostUserOperateRequest,
-): Promise<ResponseData<boolean>> =>
-    axios.post<never, ResponseData<boolean>>('/api/user/operate', data);
+const postUserOperate = (data: PostUserOperateRequest): Promise<ResponseData<boolean>> =>
+  axios.post<never, ResponseData<boolean>>('/api/user/operate', data)
 
-export {
-    getUserList,
-    postAddUser,
-    postUserReset,
-    deleteUser,
-    postUserOperate,
-    putEditUser,
-};
+export { getUserList, postAddUser, postUserReset, deleteUser, postUserOperate, putEditUser }

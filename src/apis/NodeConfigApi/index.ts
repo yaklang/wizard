@@ -1,12 +1,8 @@
-import axios from '@/utils/axios';
-import type { ResponseData } from '@/utils/commonTypes';
+import axios from '@/utils/axios'
+import type { ResponseData } from '@/utils/commonTypes'
 
 // 节点是否安装成功
-const getFileExists = (
-    file_name: 'yak' | 'docker-compose',
-): Promise<ResponseData<boolean>> =>
-    axios.get<never, ResponseData<boolean>>(
-        `/api/file-exists?file_name=${file_name}`,
-    );
+const getFileExists = (file_name: 'yak' | 'docker-compose'): Promise<ResponseData<boolean>> =>
+  axios.get<never, ResponseData<boolean>>(`/api/file-exists?file_name=${file_name}`)
 
-export { getFileExists };
+export { getFileExists }
