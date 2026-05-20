@@ -127,12 +127,15 @@ export const getValueByType = (defaultValue: string, type: string): number | str
 export const getYakExecutorParam = (object: { [key: string]: any }) => {
   let newValue: YakExecutorParam[] = []
   Object.entries(object).forEach(([key, val]) => {
-    if (val instanceof Buffer) {
+    const isNodeBuffer = typeof Buffer !== 'undefined' && val instanceof Buffer
+    const isBinaryValue = isNodeBuffer || val instanceof Uint8Array || val instanceof ArrayBuffer
+    if (isBinaryValue) {
+      const uint8Val = val instanceof Uint8Array ? val : val instanceof ArrayBuffer ? new Uint8Array(val) : val
       newValue = [
         ...newValue,
         {
           Key: key,
-          Value: Uint8ArrayToString(val),
+          Value: Uint8ArrayToString(uint8Val),
         },
       ]
       return
