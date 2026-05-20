@@ -10,6 +10,7 @@ import {
   isAIEnginePath,
   resolveAIEngineRequestURL,
 } from '@/utils/aiEngineAuth'
+import { getIsAutoLoggingIn } from '@/utils/autoLoginState'
 import { logoutBySessionExpired } from '@/utils/sessionAuth'
 
 declare module 'axios' {
@@ -76,7 +77,7 @@ axios.interceptors.response.use(
     const { data } = response
     const responseCode = Number(data?.code)
 
-    if (responseCode === noAuthCode) {
+    if (responseCode === noAuthCode && !getIsAutoLoggingIn()) {
       await logoutBySessionExpired()
       return Promise.reject(data)
     }
@@ -129,7 +130,9 @@ axios.interceptors.response.use(
         return Promise.reject(response.data)
       }
 
-      await logoutBySessionExpired()
+      if (!getIsAutoLoggingIn()) {
+        await logoutBySessionExpired()
+      }
       return Promise.reject(response.data)
     }
 

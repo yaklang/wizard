@@ -18,6 +18,16 @@ import type { TDeleteValues } from '@/pages/ReportManage/ReportManage'
 import { CreateTaskScriptModal } from '@/pages/TaskPageList/compoment/CreateTaskScriptModal'
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal'
 
+const normalizeStringArrayFilter = (value?: string | string[]) => {
+  if (!value) return undefined
+  if (Array.isArray(value)) return value.length ? value : undefined
+  const list = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+  return list.length ? list : undefined
+}
+
 const PortAssets: FC = () => {
   const [page] = WizardTable.usePage()
 
@@ -121,11 +131,16 @@ const PortAssets: FC = () => {
   const triggerScanBtnDisable = useMemo(() => {
     const tableFilter = page.getParams()?.filter
     const isCidr = tableFilter?.cidr?.length > 0
-    const isService = tableFilter?.service_type?.length > 0
+    // const isService = tableFilter?.service_type?.length > 0
 
     const isAll = checkedValue?.host?.isAll
     const isIds = checkedValue?.host && checkedValue?.host?.ids?.length > 0
-    return isCidr || isService || isAll || isIds
+    return (
+      isCidr ||
+      // || isService
+      isAll ||
+      isIds
+    )
   }, [page.getParams()])
 
   // 批量漏洞扫描
@@ -191,9 +206,11 @@ const PortAssets: FC = () => {
         }}
         request={async (params, filter) => {
           setTableFilter(filter)
+          const { service_type, ...restFilter } = filter ?? {}
           const { data } = await postAssetsProts({
             ...params,
-            ...filter,
+            ...restFilter,
+            service_type: normalizeStringArrayFilter(service_type),
           })
 
           return {

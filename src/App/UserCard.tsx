@@ -1,85 +1,42 @@
 import type { FC } from 'react'
 import Avatar from '../assets/compoments/Avatar.png'
-import { CloseIcon } from '@/assets/compoments'
 import useLoginStore from './store/loginStore'
-import { Button, Popover } from 'antd'
-import { InfoCircleOutlined } from '@ant-design/icons'
-import { useSafeState } from 'ahooks'
-import { logoutManually } from '@/utils/sessionAuth'
 
-/**
- *
- * @param collapse sider 展开收起状态
- * @returns
- */
-const UserCard: FC<{ collapsed: boolean }> = ({ collapsed }) => {
-  const [open, setOpen] = useSafeState(false)
-
-  // 个人登录信息下拉菜单
+const UserCard: FC<{ collapsed: boolean; variant?: 'light' | 'dark' }> = ({ collapsed, variant = 'light' }) => {
   const { userInfo } = useLoginStore((state) => state)
-
-  const handleOutLogin = async () => {
-    await logoutManually()
-  }
+  const isDark = variant === 'dark'
 
   return (
     <div
-      className={`bg-[#FFFFFF] py-2 pl-2 pr-2 flex items-center gap-2 border-[1px solid #EAECF3] justify-between ${collapsed ? 'flex-col h-20' : 'flex-row h-18'}`}
+      className={`py-2 pl-2 pr-2 flex items-center gap-2 justify-between ${
+        isDark
+          ? 'wizard-sider-user-card bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]'
+          : 'bg-[#FFFFFF] border-[1px solid #EAECF3]'
+      } ${collapsed ? 'flex-col h-20' : 'flex-row h-18'}`}
     >
       <div>
-        {/* 头像 */}
         <div className="flex items-center gap-1">
-          <img src={Avatar} className="w-10 rounded-[50%]" style={{ border: '1px solid #F8F8F8' }} />
+          <img
+            src={Avatar}
+            className="w-10 rounded-[50%]"
+            style={{ border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #F8F8F8' }}
+          />
           {!collapsed && (
             <div>
-              <div className="text-sm font-normal color-[#31343F]">{userInfo.username ?? '未知用户'}</div>
-              <div className="text-xs color-[#4A94F8] font-normal rounded-[8px] flex items-center py-[6px] px-1 bg-[#ECF4FE] justify-center">
+              <div className={`text-sm font-normal ${isDark ? 'text-white' : 'color-[#31343F]'}`}>
+                {userInfo.username ?? '未知用户'}
+              </div>
+              <div
+                className={`text-xs font-normal rounded-[8px] flex items-center py-[6px] px-1 justify-center ${
+                  isDark ? 'text-white bg-[#1E5FD8]' : 'color-[#4A94F8] bg-[#ECF4FE]'
+                }`}
+              >
                 {userInfo.roles?.join('') ?? '未获取到该权限'}
               </div>
             </div>
           )}
         </div>
       </div>
-      <Popover
-        open={open}
-        onOpenChange={(open) => setOpen(open)}
-        content={
-          <div className="flex justify-end gap-2">
-            <Button
-              color="default"
-              style={{
-                fontSize: '12px',
-              }}
-              onClick={() => setOpen(false)}
-            >
-              取消
-            </Button>
-            <Button
-              type="primary"
-              style={{
-                fontSize: '12px',
-              }}
-              onClick={() => {
-                setOpen(false)
-                handleOutLogin()
-              }}
-            >
-              确定
-            </Button>
-          </div>
-        }
-        title={
-          <div>
-            <InfoCircleOutlined color="#faad14" />
-            <span className="ml-1 font-400"> 确定退出登录吗？</span>
-          </div>
-        }
-        trigger="click"
-      >
-        <div className="w-10 cursor-pointer px-2 cursor-pointer">
-          <CloseIcon />
-        </div>
-      </Popover>
     </div>
   )
 }

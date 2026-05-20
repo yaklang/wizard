@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
       {
         name: 'html-transform',
         transformIndexHtml(html) {
-          const title = env.VITE_APP_TITLE || '自动化渗透系统'
+          const title = env.VITE_APP_TITLE || '自动化渗透测试工具'
           let result = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
 
           // Inject IRify favicon when in IRify mode
@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path,
         },
         '/agent': {
-          target: 'http://localhost:8089', // 代理到本地的 8089 端口
+          target: 'http://192.168.3.3:8089', // 代理到本地的 8089 端口
           changeOrigin: true,
           rewrite: (path) => path,
         },

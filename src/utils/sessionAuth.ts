@@ -1,15 +1,28 @@
 import { message } from 'antd'
 import permissionsSliceFn from '@/App/store/powerStore'
 import useLoginStore from '@/App/store/loginStore'
+import { ensureAutoLogin } from '@/utils/autoLogin'
 import showErrorMessage from '@/utils/showErrorMessage'
 
 let sessionExpiredLogoutPromise: Promise<void> | null = null
+let isRecoveringSession = false
 
 const redirectToLogin = () => {
   if (typeof window === 'undefined') return
   if (window.location.hash === '#/login') return
 
   window.location.replace(`${window.location.origin}${window.location.pathname}${window.location.search}#/login`)
+}
+
+const reloadCurrentApp = () => {
+  if (typeof window === 'undefined') return
+
+  if (window.location.hash === '#/login' || window.location.hash.startsWith('#/login?')) {
+    window.location.replace(`${window.location.origin}${window.location.pathname}${window.location.search}#/`)
+    return
+  }
+
+  window.location.reload()
 }
 
 const clearClientSession = async () => {
@@ -31,6 +44,24 @@ const requestServerLogout = async (token = useLoginStore.getState().token) => {
   } catch {}
 }
 
+const recoverSessionByAutoLogin = async () => {
+  if (isRecoveringSession) return
+
+  isRecoveringSession = true
+  try {
+    await clearClientSession()
+    const ok = await ensureAutoLogin()
+    if (ok) {
+      reloadCurrentApp()
+      return
+    }
+    showErrorMessage('自动登录失败')
+    redirectToLogin()
+  } finally {
+    isRecoveringSession = false
+  }
+}
+
 export const logoutManually = async () => {
   const { token } = useLoginStore.getState()
 
@@ -41,11 +72,12 @@ export const logoutManually = async () => {
 }
 
 export const logoutBySessionExpired = async () => {
+  if (isRecoveringSession) return
+
   const { token } = useLoginStore.getState()
 
   if (!token) {
-    await clearClientSession()
-    redirectToLogin()
+    await recoverSessionByAutoLogin()
     return
   }
 
@@ -55,10 +87,8 @@ export const logoutBySessionExpired = async () => {
 
   sessionExpiredLogoutPromise = (async () => {
     message.destroy()
-    showErrorMessage('登录已过期')
-    await clearClientSession()
-    redirectToLogin()
     requestServerLogout(token).catch(() => undefined)
+    await recoverSessionByAutoLogin()
   })().finally(() => {
     sessionExpiredLogoutPromise = null
   })
