@@ -20,6 +20,6 @@ const postLicense = (data: { license: string }): Promise<ResponseData<boolean>> 
 
 // 校验当前账号是否存在登录状态
 const getAuth = (username: string): Promise<ResponseData<{ status: boolean }>> =>
-  axios.get(`/api/auth?username=${encodeURIComponent(username)}`)
+  axios.get(`/api/auth?username=${username}`)
 
 export { getCaptcha, postLogin, getLicense, postLicense, getLoginOut, getAuth }

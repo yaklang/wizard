@@ -1,24 +1,16 @@
-import { Spin } from 'antd'
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ensureAutoLogin } from '@/utils/autoLogin'
+import LegacyLogin from './LegacyLogin'
+import IRifyLogin from './IRifyLogin'
+
+const APP_MODE = import.meta.env.VITE_APP_MODE as string
+
+const loginComponents = {
+  legacy: LegacyLogin,
+  irify: IRifyLogin,
+}
 
 const Login = () => {
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    ensureAutoLogin().then((ok) => {
-      if (ok) {
-        navigate('/', { replace: true })
-      }
-    })
-  }, [navigate])
-
-  return (
-    <div className="flex h-full items-center justify-center">
-      <Spin size="large" tip="正在登录..." />
-    </div>
-  )
+  const LoginComponent = loginComponents[APP_MODE as keyof typeof loginComponents] || LegacyLogin
+  return <LoginComponent />
 }
 
 export default Login

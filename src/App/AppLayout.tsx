@@ -14,8 +14,8 @@ import { useNetworkStatus, usePermissionsSlice } from '@/hooks'
 import { ROUTES } from '@/utils/routeMap'
 
 // import login_logo from '@/assets/compoments/telecommunicationsLogo.svg'
-// import login_logo from '@/assets/compoments/login_logo.png'
-// import header_text from '@/assets/login/header_text.png'
+import login_logo from '@/assets/compoments/login_logo.png'
+import header_text from '@/assets/login/header_text.png'
 import { SiderClose, SiderOpen } from '@/assets/compoments'
 import { UserCard } from './UserCard'
 import { findFullPath, findPathNodes, processMenu } from '@/utils'
@@ -26,7 +26,6 @@ import { McpModal } from '@/utils/McpModel'
 import { shouldBypassLicense } from '@/utils/license'
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute'
 import { AIEngineHeaderControl } from '@/pages/AIAgent/ai-agent/components/AIEngineHeaderControl/AIEngineHeaderControl'
-import './AppLayout.scss'
 // import useLoginStore from './store/loginStore';
 
 const { Header, Content, Sider } = Layout
@@ -183,41 +182,41 @@ const AppLayout = () => {
   ) : (
     <Layout hasSider className="h-full text-[14px]">
       <Sider
-        className="wizard-app-sider overflow-auto h-full left-0 top-0 bottom-0"
-        width={collapsed ? 80 : 252}
+        className="overflow-auto h-full left-0 top-0 bottom-0 "
+        width={collapsed ? 80 : 222} // 显式设置宽度
         collapsible
         collapsed={collapsed}
         trigger={null}
-        theme="dark"
+        theme="light"
       >
         <div
-          className={`wizard-sider-header flex justify-between items-center pl-3 pt-4 pr-2 pb-[10px] ${
-            collapsed ? 'flex-col h-[48px]' : 'flex-row gap-4 h-[70px]'
+          className={`flex justify-between items-center pl-3 pt-4 pr-2 pb-[10px] ${
+            collapsed ? 'flex-col h-[100px]' : 'flex-row gap-4 h-[70px]'
           }`}
+          style={{ borderBottom: '1px solid #E9EBED' }}
         >
           <div className="flex items-center">
-            {/* <img src={login_logo} className="w-10 h-10" />
-            {!collapsed ? <img src={header_text} className="w-[100px]" /> : null} */}
-            {
-              !collapsed ? (
-                <div className="wizard-sider-title font-YouSheBiaoTiHei text-[24px] font-normal text-center whitespace-nowrap">
-                  自动化渗透测试工具
-                </div>
-              ) : null
-              // <img src={login_logo} className="w-10 h-10" />
-            }
+            <img src={login_logo} className="w-10 h-10" />
+            {!collapsed ? <img src={header_text} className="w-[100px]" /> : null}
+            {/* {!collapsed ? (
+              <div className="font-YouSheBiaoTiHei text-[24px] font-normal color-[#31343F] text-center whitespace-nowrap">
+                自动化渗透系统
+              </div>
+            ) : (
+              <img src={login_logo} className="w-10 h-10" />
+            )} */}
           </div>
-          <div className="wizard-sider-trigger flex items-between" onClick={() => setCollapsed((value) => !value)}>
+          <div className="h-10 flex items-center" onClick={() => setCollapsed((value) => !value)}>
             <div className="cursor-pointer">{collapsed ? <SiderOpen /> : <SiderClose />}</div>
           </div>
         </div>
 
         <Menu
-          theme="dark"
+          theme="light"
           mode="inline"
           selectedKeys={[menuSelectedKeys]}
           defaultOpenKeys={[`/${findPathNodes(locations.pathname, routers[0]?.children ?? [])?.[0]?.path ?? ''}`]}
-          className="wizard-sider-menu"
+          className="bg-[#F0F1F3]"
           style={{
             height: collapsed ? 'calc(100vh - 180px)' : 'calc(100vh - 178px)',
             overflow: 'auto',
@@ -225,10 +224,10 @@ const AppLayout = () => {
           items={items}
         />
 
-        <UserCard collapsed={collapsed} variant="dark" />
+        <UserCard collapsed={collapsed} />
 
         {!collapsed && (
-          <div className="wizard-sider-version text-xs font-normal text-center mt-2">版本: 20240808-e01f03cb</div>
+          <div className="text-xs color-[#B4BBCA] font-normal text-center mt-2">版本: 20240808-e01f03cb</div>
         )}
       </Sider>
 
