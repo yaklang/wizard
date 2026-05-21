@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import type { AIStreamChatContentProps } from './type'
 import { Tooltip } from 'antd'
-import { CopyComponents } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import { CopyComponents } from '@/compoments/yakitUI/YakitTag/YakitTag'
 import styles from './AIStreamChatContent.module.scss'
 import classNames from 'classnames'
 import useAINodeLabel from '@/pages/AIAgent/ai-re-act/hooks/useAINodeLabel'

@@ -13,7 +13,7 @@ import type {
   PluginExecuteWebsiteTreeProps,
   VulnerabilitiesRisksTableProps,
 } from './PluginExecuteResultType'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import {
   useControllableValue,
   useCreation,
@@ -33,12 +33,12 @@ import { formatJson } from '@/pages/AIAgent/utils/base'
 import { WebTree } from '@/compoments/WebTree/WebTree'
 import classNames from 'classnames'
 import ReactResizeDetector from 'react-resize-detector'
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
+import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox'
 // import { ExportExcel } from '@/compoments/DataExport/DataExport';
 import type { HoldGRPCStreamProps, StreamResult } from '@/hook/useHoldGRPCStream/useHoldGRPCStreamType'
-import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor'
+import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor'
 import { yakitFailed } from '@/utils/notification'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 import { OutlineChartpieIcon, OutlineLogIcon, OutlineTerminalIcon } from '@/assets/icon/outline'
 // import { LocalList, LocalPluginLog, LocalText } from './LocalPluginLog';
 import { ErrorBoundary } from 'react-error-boundary'

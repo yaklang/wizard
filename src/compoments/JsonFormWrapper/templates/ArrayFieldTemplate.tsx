@@ -1,5 +1,5 @@
 import React from 'react'
-import { YakitButton, type YakitButtonProp } from '../../YakitUI/YakitButton/YakitButton'
+import { YakitButton, type YakitButtonProp } from '../../yakitUI/YakitButton/YakitButton'
 import { PlusIcon, TrashIcon } from '@/assets/newIcon'
 // import {SolidArrownarrowdownIcon, SolidArrownarrowupIcon} from "@/assets/icon/solid"
 

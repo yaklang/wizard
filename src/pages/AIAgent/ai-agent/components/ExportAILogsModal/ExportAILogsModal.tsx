@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useMemoizedFn } from 'ahooks'
-import { YakitModal } from '@/compoments/YakitUI/YakitModal/YakitModal'
-import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox'
+import { YakitModal } from '@/compoments/yakitUI/YakitModal/YakitModal'
+import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox'
 
 interface ExportAILogsModalProps {
   visible: boolean

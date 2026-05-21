@@ -31,11 +31,11 @@ import useAIAgentStore from '../useContext/useStore'
 import type { AIChatIPCSendParams } from '../useContext/ChatIPCContent/ChatIPCContent'
 import { useTypedStream } from './aiChatListItem/StreamingChatContent/hooks/useTypedStream'
 import { AIReferenceNode } from '@/pages/AIAgent/ai-re-act/aiReActChatContents/AIReActChatContents'
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
-import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
-import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm'
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag'
+import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
+import { YakitPopconfirm } from '@/compoments/yakitUI/YakitPopconfirm/YakitPopconfirm'
 
 /** @name AI工具按钮对应图标 */
 const AIToolToIconMap: Record<string, ReactNode> = {

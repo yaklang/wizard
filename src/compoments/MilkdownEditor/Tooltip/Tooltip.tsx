@@ -21,7 +21,7 @@ import { IconBold, IconCode2, IconItalic, IconStrikethrough, IconType, IconUnder
 import styles from './Tooltip.module.scss'
 import React from 'react'
 import { OutlineChevrondownIcon, OutlineChevronupIcon, OutlineLightbulbIcon } from '@/assets/icon/outline'
-import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover'
+import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover'
 import { toggleStrikethroughCommand } from '@milkdown/kit/preset/gfm'
 import classNames from 'classnames'
 import { alterCommand, alterToParagraphCommand } from '../utils/alertPlugin'

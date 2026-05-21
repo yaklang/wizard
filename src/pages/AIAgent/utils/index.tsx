@@ -7,8 +7,8 @@ import {
   IconNotepadFileTypePdf,
   IconNotepadFileTypeUnknown,
 } from './icon/icon'
-import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor'
-import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType'
+import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor'
+import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType'
 import type { ReactNode } from 'react'
 import type { PluginExecuteLogFile } from '../plugins/operator/pluginExecuteResult/PluginExecuteResultType'
 import { modeToPermissions } from './invoker'

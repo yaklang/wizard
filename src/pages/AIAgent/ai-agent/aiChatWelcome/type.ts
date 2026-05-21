@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { HandleStartParams } from '../aiAgentChat/type'
 import type { AIReActChatRefProps } from '@/pages/AIAgent/ai-re-act/aiReActChat/AIReActChatType'
-import type { YakitButtonProp } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import type { YakitButtonProp } from '@/compoments/yakitUI/YakitButton/YakitButton'
 
 export interface AIChatWelcomeProps {
   onTriageSubmit: (data: HandleStartParams) => void

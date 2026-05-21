@@ -3,7 +3,7 @@ import styles from './PluginExecuteExtraParams.module.scss'
 import type { FormInstance } from 'antd'
 import type { YakExtraParamProps, JsonFormSchemaListWrapper } from './LocalPluginExecuteDetailHeardType'
 import { FormContentItemByType } from './LocalPluginExecuteDetailHeard'
-import YakitCollapse from '@/compoments/YakitUI/YakitCollapse/YakitCollapse'
+import YakitCollapse from '@/compoments/yakitUI/YakitCollapse/YakitCollapse'
 import classNames from 'classnames'
 
 const { YakitPanel } = YakitCollapse

@@ -10,7 +10,7 @@ import classNames from 'classnames'
 import styles from './FileTree.module.scss'
 import { getMapFileDetail } from '../FileTreeMap/FileMap'
 import emiter from '@/utils/eventBus/eventBus'
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag'
 
 export const FileTree: React.FC<FileTreeProps> = memo((props) => {
   const { data, onLoadData, onSelect, onExpand, foucsedKey, setFoucsedKey, expandedKeys, setExpandedKeys } = props

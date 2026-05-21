@@ -16,7 +16,7 @@ import {
   useInViewport,
   useMemoizedFn,
 } from 'ahooks'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 import {
   type AIGlobalConfig,
   type AIModelConfig,
@@ -26,8 +26,8 @@ import {
   resetForcedAIModalFlag,
 } from './utils'
 import { Divider, Form, Tooltip } from 'antd'
-import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import {
   OutlineAtomIcon,
   OutlinePencilaltIcon,
@@ -39,7 +39,7 @@ import {
   OutlineCogIcon,
   OutlineEngineIcon,
 } from '@/assets/icon/outline'
-import { showYakitModal } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm'
+import { showYakitModal } from '@/compoments/yakitUI/YakitModal/YakitModalConfirm'
 import {
   AIModelPolicyEnum,
   AIModelPolicyOptions,
@@ -47,7 +47,7 @@ import {
   AIModelTypeInterFileNameEnum,
   AIOnlineModelIconMap,
 } from '../defaultConstant'
-import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm'
+import { YakitPopconfirm } from '@/compoments/yakitUI/YakitPopconfirm/YakitPopconfirm'
 import classNames from 'classnames'
 // import { onOpenLocalFileByPath } from '@/pages/notepadManage/notepadManage/utils';
 import emiter from '@/utils/eventBus/eventBus'
@@ -59,9 +59,9 @@ import {
   getModelTypeByFileName,
 } from './aiModelForm/AIModelForm'
 import { yakitNotify } from '@/utils/notification'
-import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover'
-import { YakitRadioButtons } from '@/compoments/YakitUI/YakitRadioButtons/YakitRadioButtons'
-import { YakitSwitch } from '@/compoments/YakitUI/YakitSwitch/YakitSwitch'
+import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover'
+import { YakitRadioButtons } from '@/compoments/yakitUI/YakitRadioButtons/YakitRadioButtons'
+import { YakitSwitch } from '@/compoments/yakitUI/YakitSwitch/YakitSwitch'
 import type { ThirdPartyApplicationConfig } from '@/compoments/configNetwork/ConfigNetworkPage'
 
 export const setAIModal = (params: {

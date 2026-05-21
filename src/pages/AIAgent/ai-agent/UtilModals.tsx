@@ -2,8 +2,8 @@ import React, { memo, useEffect, useState } from 'react'
 import { Form } from 'antd'
 import { useMemoizedFn } from 'ahooks'
 import type { EditChatNameModalProps } from './aiAgentType'
-import { YakitModal } from '@/compoments/YakitUI/YakitModal/YakitModal'
-import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
+import { YakitModal } from '@/compoments/yakitUI/YakitModal/YakitModal'
+import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
 
 // import classNames from "classnames"
 // import styles from "./AIAgent.module.scss"

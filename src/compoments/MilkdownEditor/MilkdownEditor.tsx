@@ -30,7 +30,7 @@ import { CollabManager } from './CollabManager'
 import emiter from '@/utils/eventBus/eventBus'
 
 import { collabServiceCtx } from '@milkdown/plugin-collab'
-import { showYakitModal } from '../YakitUI/YakitModal/YakitModalConfirm'
+import { showYakitModal } from '../yakitUI/YakitModal/YakitModalConfirm'
 import { tokenOverdue } from '@/services/fetch'
 import { isBoolean } from 'lodash'
 import { notepadSaveStatus } from './WebsocketProvider/constants'

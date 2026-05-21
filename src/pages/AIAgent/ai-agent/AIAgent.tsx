@@ -13,14 +13,14 @@ import cloneDeep from 'lodash/cloneDeep'
 import { AIAgentChat } from './aiAgentChat/AIAgentChat'
 // import { loadRemoteHistory } from './components/aiFileSystemList/store/useHistoryFolder';
 // import { initCustomFolderStore } from './components/aiFileSystemList/store/useCustomFolder';
-import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
+import { YakitHint } from '@/compoments/yakitUI/YakitHint/YakitHint'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 import emiter from '@/utils/eventBus/eventBus'
 import classNames from 'classnames'
 import styles from './AIAgent.module.scss'
 // import { grpcDeleteAIEvent, grpcDeleteAITask } from './grpc';
-import { YakitCheckbox } from '@/compoments/YakitUI/YakitCheckbox/YakitCheckbox'
+import { YakitCheckbox } from '@/compoments/yakitUI/YakitCheckbox/YakitCheckbox'
 import { getSessionAll, getSetting as getSettingData, postSetting } from '@/apis/AiEventApi'
 import type { AIEngineStatus } from '@/apis/AiEngineAdminApi'
 import { getAIEngineStatus } from '@/apis/AiEngineAdminApi'

@@ -1,4 +1,4 @@
-import { YakitDropdownMenu } from '@/compoments/YakitUI/YakitDropdownMenu/YakitDropdownMenu'
+import { YakitDropdownMenu } from '@/compoments/yakitUI/YakitDropdownMenu/YakitDropdownMenu'
 // import type { OpenDialogOptions } from '@/utils/fileSystemDialog';
 // import { handleOpenFileSystemDialog } from '@/utils/fileSystemDialog';
 import type { FC, ReactNode } from 'react'

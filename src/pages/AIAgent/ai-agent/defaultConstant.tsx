@@ -43,7 +43,7 @@ import type { MCPServerType } from './type/aiMCP'
 import { DefaultMemoryList, DefaultPlanHistoryList } from '../ai-re-act/hooks/defaultConstant'
 // import { ColorsAIIcon } from '@/assets/icon/colors'
 import type { AIGlobalConfig, AIModelTypeFileName } from './aiModelList/utils'
-import type { YakitTagColor } from '@/compoments/YakitUI/YakitTag/YakitTagType'
+import type { YakitTagColor } from '@/compoments/yakitUI/YakitTag/YakitTagType'
 import { cloneDeep } from 'lodash'
 
 /** AI-Agent 页面的唯一 id */

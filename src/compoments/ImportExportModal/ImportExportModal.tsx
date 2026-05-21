@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef } from 'react'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
-import { YakitModal, type YakitModalProp } from '@/compoments/YakitUI/YakitModal/YakitModal'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitModal, type YakitModalProp } from '@/compoments/yakitUI/YakitModal/YakitModal'
 import type { LogListInfo } from '@/compoments/YakitUploadModal/YakitUploadModal'
 import { ImportAndExportStatusInfo } from '@/compoments/YakitUploadModal/YakitUploadModal'
 import { yakitNotify } from '@/utils/notification'

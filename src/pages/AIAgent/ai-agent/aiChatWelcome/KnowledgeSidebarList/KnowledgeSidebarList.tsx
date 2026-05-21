@@ -13,14 +13,14 @@ import {
   targetInstallList,
 } from '@/pages/AIAgent/KnowledgeBase/utils'
 import { OutlineLoadingIcon, OutlineSearchIcon } from '@/assets/icon/outline'
-import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty'
+import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty'
 import { OperateKnowledgenBaseItem } from '@/pages/KnowledgeBase/compoment/OperateKnowledgenBaseItem'
 
 import classNames from 'classnames'
 import styles from './knowledgeSidebarList.module.scss'
 import type { KnowledgeBaseItem } from '@/pages/KnowledgeBase/hooks/useKnowledgeBase'
 import { useKnowledgeBase } from '@/pages/KnowledgeBase/hooks/useKnowledgeBase'
-import { YakitCheckableTag } from '@/compoments/YakitUI/YakitTag/YakitCheckableTag'
+import { YakitCheckableTag } from '@/compoments/yakitUI/YakitTag/YakitCheckableTag'
 import { failed, info } from '@/utils/notification'
 import { randomString } from '@/utils/randomUtil'
 import { PluginExecuteDetailDrawer } from '@/pages/KnowledgeBase/compoment/PluginExecuteDetailDrawer'
@@ -31,8 +31,8 @@ import type { AIMentionCommandParams } from '../../components/aiMilkdownInput/ai
 import { KnowledgeBaseFormModal } from '@/pages/KnowledgeBase/compoment/KnowledgeBaseFormModal'
 import { ImportModal } from '@/pages/KnowledgeBase/compoment/ImportModal'
 import { Form } from 'antd'
-import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
-import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
+import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
+import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 
 const { ipcRenderer } = window.require('electron')
 

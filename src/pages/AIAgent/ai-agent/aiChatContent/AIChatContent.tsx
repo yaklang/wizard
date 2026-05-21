@@ -15,19 +15,19 @@ import {
   PluginExecuteHttpFlow,
   VulnerabilitiesRisksTable,
 } from '@/pages/AIAgent/plugins/operator/pluginExecuteResult/PluginExecuteResult'
-import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty'
+import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty'
 // ipc 获取风险与漏洞的总数
 // import { apiQueryRisksTotalByRuntimeIds } from '@/pages/risks/YakitRiskTable/utils';
 import AIReActTaskChat from '@/pages/AIAgent/ai-re-act/aiReActTaskChat/AIReActTaskChat'
 import emiter from '@/utils/eventBus/eventBus'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import { OutlineClouddownloadIcon, OutlineNewspaperIcon, OutlinePlussmIcon } from '@/assets/icon/outline'
 import { SolidChatalt2Icon } from '@/assets/icon/solid'
 // import useAiChatLog from '@/hook/useAiChatLog/useAiChatLog.ts';
-import { YakitResizeBox } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
+import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox'
 import { grpcExportAILogs } from '../grpc'
 import useChatIPCStore from '../useContext/ChatIPCContent/useStore'
-import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag'
 import { onNewChat } from '../historyChat/HistoryChat'
 import { SideSettingButton } from '../aiChatWelcome/AIChatWelcome'
 import { Divider } from 'antd'

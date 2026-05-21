@@ -1,5 +1,5 @@
 import type { LocalModelConfig } from '../type/aiModel'
-import type { YakitSizeType } from '@/compoments/YakitUI/YakitInputNumber/YakitInputNumberType'
+import type { YakitSizeType } from '@/compoments/yakitUI/YakitInputNumber/YakitInputNumberType'
 import type { AIModelConfig, AIModelTypeFileName } from './utils'
 import type { AIModelTypeEnum } from '../defaultConstant'
 export interface SelectOptionsProps {
