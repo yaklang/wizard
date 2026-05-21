@@ -1,15 +1,17 @@
 import { Spin } from 'antd'
 import type { FC, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import useLoginStore from '../store/loginStore'
 import { ensureAutoLogin } from '@/utils/autoLogin'
+import { fetchLicenseGateValue } from '@/utils/license'
 
 interface AuthRouteType {
   children: ReactNode
 }
 
 const AuthRoute: FC<AuthRouteType> = ({ children }) => {
+  const navigate = useNavigate()
   const token = useLoginStore((state) => state.token)
   const [checking, setChecking] = useState(!token)
 
@@ -20,16 +22,27 @@ const AuthRoute: FC<AuthRouteType> = ({ children }) => {
     }
 
     let cancelled = false
-    ensureAutoLogin().finally(() => {
+
+    const run = async () => {
+      const licenseCode = await fetchLicenseGateValue()
+      if (cancelled) return
+      if (licenseCode) {
+        navigate('/license', { replace: true, state: { license: licenseCode } })
+        return
+      }
+
+      await ensureAutoLogin()
       if (!cancelled) {
         setChecking(false)
       }
-    })
+    }
+
+    run()
 
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [navigate, token])
 
   if (checking) {
     return (

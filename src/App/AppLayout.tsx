@@ -23,7 +23,7 @@ import { LeftOutlined } from '@ant-design/icons'
 import { match } from 'ts-pattern'
 import type { UseModalRefType } from '@/compoments/WizardModal/useModal'
 import { McpModal } from '@/utils/McpModel'
-import { shouldBypassLicense } from '@/utils/license'
+import { fetchLicenseGateValue, shouldBypassLicense } from '@/utils/license'
 import { YakitRoute } from '@/pages/AIAgent/enums/yakitRoute'
 import { AIEngineHeaderControl } from '@/pages/AIAgent/ai-agent/components/AIEngineHeaderControl/AIEngineHeaderControl'
 import './AppLayout.scss'
@@ -45,15 +45,9 @@ const AppLayout = () => {
 
   const { permissionsSlice } = usePermissionsSlice()
 
-  const { loading } = useRequest(
-    async () => {
-      return undefined
-      // const { data } = await getLicense();
-      // const { license } = data;
-      // return resolveLicenseGateValue(license);
-    },
-    { manual: bypassLicense },
-  )
+  const { data: licenseCode, loading } = useRequest(fetchLicenseGateValue, {
+    manual: bypassLicense,
+  })
 
   // 路由重定向
   useEffect(() => {
@@ -98,9 +92,11 @@ const AppLayout = () => {
     !status && navigate(ROUTES.NETWORK_ERROR, { replace: true })
   }, [status])
 
-  // useEffect(() => {
-  //     license && navigate(ROUTES.LICENSE, { state: { license } });
-  // }, [license]);
+  useEffect(() => {
+    if (licenseCode) {
+      navigate(ROUTES.LICENSE, { state: { license: licenseCode } })
+    }
+  }, [licenseCode, navigate])
 
   // const timeoutRef = useRef<number | null>(null);
   // const STORAGE_KEY = 'lastActiveTime'; // 存储时间的 key
