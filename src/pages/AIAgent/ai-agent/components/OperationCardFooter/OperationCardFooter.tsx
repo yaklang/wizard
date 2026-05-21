@@ -4,8 +4,8 @@ import { setClipboardText } from '@/utils/clipboard'
 import { useMemoizedFn } from 'ahooks'
 import { AIChatToolDrawerContent } from '../../chatTemplate/AIAgentChatTemplate'
 import { Tooltip } from 'antd'
-import { showYakitDrawer } from '@/compoments/yakitUI/YakitDrawer/YakitDrawer'
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { showYakitDrawer } from '@/compoments/YakitUI/YakitDrawer/YakitDrawer'
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
 
 export interface OperationCardFooterProps {
   copyStr?: string

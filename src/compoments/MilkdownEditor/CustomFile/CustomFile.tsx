@@ -20,13 +20,13 @@ import {
   OutlineUploadIcon,
   OutlineXIcon,
 } from '@/assets/icon/outline'
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
 import numeral from 'numeral'
 import classNames from 'classnames'
 import { TooltipIcon } from '../Tooltip/Tooltip'
 import { useMemoizedFn } from 'ahooks'
 import { SolidXcircleIcon } from '@/assets/icon/solid'
-import { YakitHint } from '@/compoments/yakitUI/YakitHint/YakitHint'
+import { YakitHint } from '@/compoments/YakitUI/YakitHint/YakitHint'
 import React from 'react'
 import { SolidCloudDownloadIcon } from '@/assets/newIcon'
 import type { DownloadUrlToLocal } from '@/hook/useDownloadUrlToLocal/useDownloadUrlToLocal'
@@ -36,7 +36,7 @@ import {
   onOpenLocalFileByPath,
   saveDialogAndGetLocalFileInfo,
 } from '@/pages/notepadManage/notepadManage/utils'
-import type { YakitHintProps } from '@/compoments/yakitUI/YakitHint/YakitHintType'
+import type { YakitHintProps } from '@/compoments/YakitUI/YakitHint/YakitHintType'
 import type { UploadFileTypeProps, UploadOSSStartProps } from '@/hook/useUploadOSS/useUploadOSS'
 import useUploadOSSHooks from '@/hook/useUploadOSS/useUploadOSS'
 import { getHttpFileLinkInfo, getLocalFileLinkInfo } from './utils'
@@ -44,7 +44,7 @@ import { setClipboardText } from '@/utils/clipboard'
 import { getFileNameByUrl } from '../utils/trackDeletePlugin'
 import { httpDeleteNotepadFile } from '@/apiUtils/http'
 import { useStore } from '@/store'
-import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
+import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
 import { LogNodeStatusFileIcon, SolidYakCattleNoBackColorIcon } from '@/assets/icon/colors'
 
 interface CustomFileItem {

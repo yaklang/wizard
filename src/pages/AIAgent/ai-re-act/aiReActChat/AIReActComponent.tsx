@@ -2,7 +2,7 @@ import styles from './AIReActChat.module.scss'
 import { SolidStopIcon } from '@/assets/icon/solid'
 import React from 'react'
 import { OutlineChevrondownIcon, OutlineChevronleftIcon, OutlinePaperclipIcon } from '@/assets/icon/outline'
-import { YakitButton, type YakitButtonProp } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitButton, type YakitButtonProp } from '@/compoments/YakitUI/YakitButton/YakitButton'
 
 export const RoundedStopButton: React.FC<YakitButtonProp> = React.memo((props) => {
   return (

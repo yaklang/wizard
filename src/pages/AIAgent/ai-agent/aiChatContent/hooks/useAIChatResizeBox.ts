@@ -1,4 +1,4 @@
-import type { YakitResizeBoxProps } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox'
+import type { YakitResizeBoxProps } from '@/compoments/YakitUI/YakitResizeBox/YakitResizeBox'
 import { useCreation } from 'ahooks'
 import { useRef, useState } from 'react'
 import type { AITabsEnumType } from '../../aiAgentType'

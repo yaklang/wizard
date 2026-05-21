@@ -1,4 +1,4 @@
-import { YakitEditor } from '@/compoments/yakitUI/YakitEditor/YakitEditor'
+import { YakitEditor } from '@/compoments/YakitUI/YakitEditor/YakitEditor'
 import type { IMonacoEditor } from '@/utils/editors'
 import { useNodeViewContext } from '@prosemirror-adapter/react'
 import { useCreation, useInViewport, useMemoizedFn } from 'ahooks'

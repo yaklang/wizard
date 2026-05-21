@@ -1,4 +1,4 @@
-import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
+import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
 import styles from '../knowledgeSidebarList.module.scss'
 import Dragger from 'antd/lib/upload/Dragger'
 import { failed, success } from '@/utils/notification'

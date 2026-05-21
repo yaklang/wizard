@@ -19,8 +19,8 @@ import { genDefaultPagination } from '@/pages/invoker/schema'
 import { useCreation, useInViewport, useMemoizedFn } from 'ahooks'
 import { getMCPServersById, grpcDeleteMCPServer, grpcGetAllMCPServers, grpcUpdateMCPServer } from './utils'
 
-import { YakitRoundCornerTag } from '@/compoments/yakitUI/YakitRoundCornerTag/YakitRoundCornerTag'
-import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
+import { YakitRoundCornerTag } from '@/compoments/YakitUI/YakitRoundCornerTag/YakitRoundCornerTag'
+import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
 import {
   OutlineDesktopcomputerIcon,
   OutlineDotsverticalIcon,
@@ -34,21 +34,21 @@ import {
   OutlineReplyIcon,
   OutlineTrashIcon,
 } from '@/assets/icon/outline'
-import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
-import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
+import { YakitInput } from '@/compoments/YakitUI/YakitInput/YakitInput'
+import { YakitSpin } from '@/compoments/YakitUI/YakitSpin/YakitSpin'
 import { RollingLoadList } from '@/compoments/RollingLoadList/RollingLoadList'
-import { showYakitModal, YakitModalConfirm } from '@/compoments/yakitUI/YakitModal/YakitModalConfirm'
-import { YakitTag } from '@/compoments/yakitUI/YakitTag/YakitTag'
-import type { YakitMenuItemType } from '@/compoments/yakitUI/YakitMenu/YakitMenu'
+import { showYakitModal, YakitModalConfirm } from '@/compoments/YakitUI/YakitModal/YakitModalConfirm'
+import { YakitTag } from '@/compoments/YakitUI/YakitTag/YakitTag'
+import type { YakitMenuItemType } from '@/compoments/YakitUI/YakitMenu/YakitMenu'
 import classNames from 'classnames'
-import { YakitPopconfirm } from '@/compoments/yakitUI/YakitPopconfirm/YakitPopconfirm'
-import { YakitDropdownMenu } from '@/compoments/yakitUI/YakitDropdownMenu/YakitDropdownMenu'
+import { YakitPopconfirm } from '@/compoments/YakitUI/YakitPopconfirm/YakitPopconfirm'
+import { YakitDropdownMenu } from '@/compoments/YakitUI/YakitDropdownMenu/YakitDropdownMenu'
 import { Tooltip } from 'antd'
 import { AIMCPForm } from './aiMCPForm/AIMCPForm'
 import { omit } from 'lodash'
 import { AIMCPServerTypeEnum } from '../defaultConstant'
-import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty'
-import { YakitPopover } from '@/compoments/yakitUI/YakitPopover/YakitPopover'
+import { YakitEmpty } from '@/compoments/YakitUI/YakitEmpty/YakitEmpty'
+import { YakitPopover } from '@/compoments/YakitUI/YakitPopover/YakitPopover'
 import { SolidToolIcon } from '@/assets/icon/solid'
 import { yakitNotify } from '@/utils/notification'
 
