@@ -53,7 +53,7 @@ const ModifyTaskScript: FC = () => {
     manual: true,
     onSuccess: async () => {
       message.success(state.type === 'add' ? '创建成功' : '编辑成功')
-      navigate('/task/create-task')
+      navigate('/task/new-create-task')
     },
     onError: (err) => {
       console.error(err)
@@ -68,7 +68,6 @@ const ModifyTaskScript: FC = () => {
       manual: true,
       onSuccess: (res: any) => {
         try {
-          // console.log('Threat analysis response:', res);
           const info = res?.data as ThreatAnalysisScriptInformationResponse
           setCliParams(info?.cli_parameter || [])
         } catch (e) {
@@ -83,14 +82,13 @@ const ModifyTaskScript: FC = () => {
 
   const onSubmit = async () => {
     const formValue = await form.validateFields()
+    const presetProtes: string = formValue.prompt_args['preset-protes']
     const transformFormValue = {
       ...formValue,
       script: scriptValue,
       prompt_args: {
         ...formValue.prompt_args,
-        'preset-protes': Array.isArray(formValue?.prompt_args?.['preset-protes'])
-          ? formValue.prompt_args['preset-protes'].join(',')
-          : formValue?.prompt_args?.['preset-protes'],
+        'preset-protes': presetProtes ? presetProtes.split(',') : [],
         'enable-brute': `${formValue?.prompt_args?.['enable-brute']}`,
         'enable-cve-baseline': `${formValue?.prompt_args?.['enable-cve-baseline']}`,
       },
