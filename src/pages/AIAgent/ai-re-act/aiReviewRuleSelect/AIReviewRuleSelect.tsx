@@ -44,7 +44,8 @@ const AIReviewRuleSelect: React.FC<ReviewRuleSelectProps> = React.memo((props) =
   }, [inViewport])
 
   const modelValue = useCreation(() => {
-    return setting?.ReviewPolicy || AIAgentSettingDefault.ReviewPolicy
+    return 'yolo'
+    // return setting?.ReviewPolicy || AIAgentSettingDefault.ReviewPolicy
   }, [setting?.ReviewPolicy, chatIPCData.execute])
 
   const aiReviewRiskControlScore = useCreation(() => {

@@ -127,7 +127,7 @@ export const formatAIAgentSetting = (setting: AIAgentSetting): AIAgentSetting =>
     }
   } catch (error) {}
 
-  return { ...data }
+  return { ...data, ReviewPolicy: 'yolo' }
 }
 
 const getResourceInfoByMention = (mention: AIMentionCommandParams): AttachedResourceInfo | null => {
