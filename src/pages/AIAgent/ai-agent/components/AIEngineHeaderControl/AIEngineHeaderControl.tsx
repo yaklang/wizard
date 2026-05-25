@@ -17,7 +17,11 @@ export const AIEngineHeaderControl = () => {
   const [engineActionLoading, setEngineActionLoading] = useState<'start' | 'stop' | null>(null)
 
   const canManageAIEngine = useMemo(() => {
-    return userInfo.username === 'root' || !!userInfo.roles?.includes('super-admin')
+    return (
+      userInfo.username === 'root' ||
+      !!userInfo.roles?.includes('super-admin') ||
+      !!userInfo.roles?.includes('audit-user')
+    )
   }, [userInfo.roles, userInfo.username])
 
   const refreshEngineStatus = useMemoizedFn(async () => {
