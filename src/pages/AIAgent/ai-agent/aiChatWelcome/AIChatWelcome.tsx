@@ -420,14 +420,14 @@ const AIChatWelcome: React.FC<AIChatWelcomeProps> = React.memo(
           key: 'skills',
           children: <ForgeName ref={forgeNameRef} />,
           extra: [
-            <YakitButton
-              key="import"
-              onClick={() => {
-                forgeNameRef.current?.openImport()
-              }}
-              type="text2"
-              icon={<OutlineImportIcon />}
-            />,
+            // <YakitButton
+            //   key="import"
+            //   onClick={() => {
+            //     forgeNameRef.current?.openImport()
+            //   }}
+            //   type="text2"
+            //   icon={<OutlineImportIcon />}
+            // />,
             <YakitButton
               key="add"
               onClick={() => {
