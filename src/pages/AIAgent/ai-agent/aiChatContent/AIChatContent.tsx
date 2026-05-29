@@ -21,7 +21,7 @@ import { YakitEmpty } from '@/compoments/yakitUI/YakitEmpty/YakitEmpty'
 import AIReActTaskChat from '@/pages/AIAgent/ai-re-act/aiReActTaskChat/AIReActTaskChat'
 import emiter from '@/utils/eventBus/eventBus'
 import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
-import { OutlineClouddownloadIcon, OutlineNewspaperIcon, OutlinePlussmIcon } from '@/assets/icon/outline'
+import { OutlineNewspaperIcon, OutlinePlussmIcon } from '@/assets/icon/outline'
 import { SolidChatalt2Icon } from '@/assets/icon/solid'
 // import useAiChatLog from '@/hook/useAiChatLog/useAiChatLog.ts';
 import { YakitResizeBox } from '@/compoments/yakitUI/YakitResizeBox/YakitResizeBox'
@@ -80,10 +80,10 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
 
     // #region 问题相关逻辑
 
-    const onOpenExportModal = useMemoizedFn((e) => {
-      e.stopPropagation()
-      setExportModalVisible(true)
-    })
+    // const onOpenExportModal = useMemoizedFn((e) => {
+    //   e.stopPropagation()
+    //   setExportModalVisible(true)
+    // })
 
     const onExportCancel = useMemoizedFn(() => {
       setExportModalVisible(false)
@@ -325,12 +325,10 @@ export const AIChatContent: React.FC<AIChatContentProps> = React.memo(
     })
 
     const openLogWindow = useMemoizedFn(() => {
-      // HashRouter 下独立页面路径需要带上 `#/agent-log`
       const base = import.meta.env.BASE_URL || '/'
-      const url = `${window.location.origin}${base}#/agent-log`
-
-      // 独立页面（新标签页/新窗口由浏览器决定）
-      const w = window.open(url, '_blank')
+      const url = new URL(base, window.location.origin)
+      url.hash = '/agent-log'
+      const w = window.open(url.toString(), '_blank')
       if (!w) {
         showErrorMessage('打开日志页面失败，请检查浏览器是否拦截了弹窗')
         return
