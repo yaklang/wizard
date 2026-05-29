@@ -40,6 +40,7 @@ const AppLayout = () => {
 
   const [collapsed, setCollapsed] = useSafeState(false)
   const [headerTitle, setHeaderTitle] = useSafeState<Array<Record<'name' | 'path', string>> | undefined>([])
+  const [headerPathNodes, setHeaderPathNodes] = useSafeState<Array<Record<'name' | 'path', string>>>([])
   const bypassLicense = shouldBypassLicense()
 
   const { permissionsSlice } = usePermissionsSlice()
@@ -71,15 +72,20 @@ const AppLayout = () => {
 
     // 获取 layout Header 面包屑
     const resultPathNodes = findPathNodes(locations.pathname, routesList) ?? []
-    const resultRouteList = match(resultPathNodes?.length)
+    const pathDepth = resultPathNodes.length
+    const resultRouteList = match(pathDepth)
       .with(1, () => {
-        return [resultPathNodes?.[0]]
+        return [resultPathNodes[0]]
       })
       .with(2, () => {
-        return resultPathNodes?.slice(1)
+        return [resultPathNodes[1]]
       })
-
+      .with(3, () => {
+        return [resultPathNodes[2]]
+      })
       .otherwise(() => [])
+
+    setHeaderPathNodes(resultPathNodes)
     setHeaderTitle(resultRouteList)
 
     return routerList
@@ -233,17 +239,28 @@ const AppLayout = () => {
 
       <Layout className="h-full">
         <Header className="bg-white flex items-center px-4 h-[70px]" style={{ borderBottom: '1px solid #EAECF3' }}>
-          {headerTitle?.map((item, index) => {
-            return index !== headerTitle.length - 1 && item ? (
-              <div
-                key={item.path}
-                className="font-normal color-[#b4bbcA] cursor-pointer text-xl hover:[bg-[#4A94F8]"
-                onClick={() => navigate(`/${item.path}`)}
-              >
-                <LeftOutlined className="color-[#31343F] mr-2 text-5" />
-                {item.name}
-              </div>
-            ) : (
+          {headerTitle?.map((item) => {
+            if (!item) return null
+
+            const pathDepth = headerPathNodes.length
+            const isThirdLevelRoute = pathDepth === 3
+            const parentPath = headerPathNodes[pathDepth - 2]?.path
+
+            if (isThirdLevelRoute) {
+              const navigatePath = parentPath
+              return (
+                <div
+                  key={item.path}
+                  className="font-normal color-[#b4bbcA] cursor-pointer text-xl hover:color-[#4A94F8]"
+                  onClick={() => navigatePath && navigate(`/${navigatePath}`)}
+                >
+                  <LeftOutlined className="color-[#31343F] mr-2 text-5" />
+                  {item.name}
+                </div>
+              )
+            }
+
+            return (
               <div
                 className="text-xl font-normal color-[#31343F] cursor-default flex justify-between items-center w-full"
                 key={item.path}

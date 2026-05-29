@@ -285,7 +285,16 @@ const StartUpScriptModal = forwardRef<
 
       const resultData = transformFormData(values)
 
-      pageLoad && (await AddTaskRunAsync(resultData))
+      pageLoad &&
+        (await AddTaskRunAsync({
+          ...resultData,
+          params: {
+            ...resultData.params,
+            'preset-protes': values?.params?.['preset-protes']
+              ? values.params['preset-protes'].split(',').map((it: string) => it.trim())
+              : [],
+          },
+        }))
 
       localRefrech && record && EditTaskRunAsync(resultData)
     } catch (err: any) {

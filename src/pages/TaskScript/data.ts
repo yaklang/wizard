@@ -65,7 +65,7 @@ const targetColorFn = (key: Key) => {
 }
 
 const transformFormData = (values: any): TPostTaskStartRequest => {
-  return {
+  const result = {
     ...values,
     task_id: `[${values?.params?.report_name}]-[${dayjs().format('M月DD日')}]`,
     params: {
@@ -98,6 +98,7 @@ const transformFormData = (values: any): TPostTaskStartRequest => {
     enable_sched: values?.['sched_type'] !== 1 ? true : false,
     timestamp: undefined,
   }
+  return result
 }
 
 // 时间 天数禁用fn
