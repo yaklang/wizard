@@ -106,7 +106,8 @@
             overflow: hidden;
             word-break: break-all;
         }
-        &-model {
+        &-model {     
+            max-width: 50%;
             color: var(--Colors-Use-Neutral-Text-3-Secondary);
             border-radius: 20px;
             background: var(--Colors-Use-Neutral-Bg-Hover);

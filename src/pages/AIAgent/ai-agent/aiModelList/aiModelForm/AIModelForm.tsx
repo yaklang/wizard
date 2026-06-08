@@ -33,7 +33,7 @@ import { YakitSpin } from '@/compoments/yakitUI/YakitSpin/YakitSpin'
 import { AIModelTypeEnum, AIModelTypeInterFileNameEnum } from '../../defaultConstant'
 import { yakitNotify } from '@/utils/notification'
 import emiter from '@/utils/eventBus/eventBus'
-import { cloneDeep } from 'lodash'
+import { cloneDeep, has, isNil } from 'lodash'
 import { YakitInput } from '@/compoments/yakitUI/YakitInput/YakitInput'
 import type { ThirdPartyApplicationConfig } from '@/compoments/configNetwork/ConfigNetworkPage'
 import { showYakitModal } from '@/compoments/yakitUI/YakitModal/YakitModalConfirm'
@@ -100,58 +100,64 @@ export const getModelTypeByFileName = (fileName: string) => {
   return modelType
 }
 
-export const buildAIConfigHealthCheckConfig = (values: any): ThirdPartyApplicationConfig => {
-  const config: ThirdPartyApplicationConfig = {
-    Type: values.Type || '',
-    APIKey: values.api_key || '',
-    Domain: values.domain || '',
-    Proxy: values.proxy || '',
-    NoHttps: !!values.no_https,
-    APIType: values.api_type || '',
+export const getEnableThinkingOpt = (config: ThirdPartyApplicationConfig) => {
+  return has(config, 'EnableThinkingOpt') ? `${config.EnableThinkingOpt === true ? 'open' : 'close'}` : 'no-set'
+}
+
+export const parseEnableThinkingOptValue = (val: unknown): boolean | undefined => {
+  if (isNil(val) || val === 'no-set') return undefined
+  return val === 'open'
+}
+
+export const parseValidStringOption = (val: unknown): string | undefined => {
+  if (isNil(val) || val === 'no-set') return undefined
+  return `${val}`
+}
+
+export const parseValidNumberOption = (val: unknown): number | undefined => {
+  if (isNil(val) || val === '') return undefined
+  return Number(val)
+}
+
+type ModelNumberFieldKey = 'MaxTokens' | 'Temperature' | 'TopP' | 'TopK' | 'FrequencyPenalty'
+
+const numberFields: ModelNumberFieldKey[] = ['MaxTokens', 'Temperature', 'TopP', 'TopK', 'FrequencyPenalty']
+
+export const formValueToAIConfigProvider = (res: Record<string, unknown>): ThirdPartyApplicationConfig => {
+  const data: ThirdPartyApplicationConfig = {
+    Type: `${res.Type ?? ''}`,
+    APIKey: `${res.api_key ?? ''}`,
+    APIType: normalizeAIAPIType(`${res.api_type ?? ''}`),
+    Domain: `${res.domain ?? ''}`,
+    Proxy: `${res.proxy ?? ''}`,
+    NoHttps: !!res.no_https,
     ExtraParams: [],
-    BaseURL: values.base_url || '',
-    Endpoint: values.endpoint || '',
-    EnableEndpoint: !!values.enable_endpoint,
-    Headers: values.Headers || [],
-    /** 下面这些字段ai中没有 */
-    // UserIdentifier: values.user_identifier || "",
-    // UserSecret: values.user_secret || "",
-    // Namespace: values.namespace || "",
-    // WebhookURL: values.webhook_url || "",
+    BaseURL: `${res.base_url ?? ''}`,
+    Endpoint: `${res.endpoint ?? ''}`,
+    EnableEndpoint: !!res.enable_endpoint,
+    Headers: (res.Headers as ThirdPartyApplicationConfig['Headers']) ?? [],
   }
 
-  const builtInFieldSet = new Set([
-    'Type',
-    'api_key',
-    'user_identifier',
-    'user_secret',
-    'namespace',
-    'domain',
-    'proxy',
-    'no_https',
-    'api_type',
-    'base_url',
-    'endpoint',
-    'enable_endpoint',
-    'Headers',
-    'webhook_url',
-    'api_key_id', // 测试不需要传这个给后端
-  ])
+  const enableThinkingOpt = parseEnableThinkingOptValue(res.EnableThinkingOpt)
+  if (enableThinkingOpt !== undefined) data.EnableThinkingOpt = enableThinkingOpt
 
-  Object.entries(values).forEach(([key, value]) => {
-    if (builtInFieldSet.has(key)) return
-    if (value === undefined || value === null || value === '') return
-    config.ExtraParams?.push({
-      Key: key,
-      Value: `${value}`,
-    })
+  const reasoningEffort = parseValidStringOption(res.ReasoningEffort)
+  if (reasoningEffort !== undefined) data.ReasoningEffort = reasoningEffort
+
+  const numberData: Partial<Record<ModelNumberFieldKey, number>> = {}
+  numberFields.forEach((key) => {
+    const val = parseValidNumberOption(res[key])
+    if (val !== undefined) {
+      numberData[key] = val
+    }
   })
+  Object.assign(data, numberData)
 
-  if (!config.ExtraParams?.length) {
-    delete config.ExtraParams
-  }
+  return data
+}
 
-  return config
+export const buildAIConfigHealthCheckConfig = (values: Record<string, unknown>): ThirdPartyApplicationConfig => {
+  return formValueToAIConfigProvider(values)
 }
 
 const buildAIConfigHealthCheckFormValues = (config: ThirdPartyApplicationConfig) => {
@@ -167,6 +173,13 @@ const buildAIConfigHealthCheckFormValues = (config: ThirdPartyApplicationConfig)
     endpoint: config.Endpoint ?? '',
     enable_endpoint: config.EnableEndpoint ?? false,
     Headers: config.Headers ?? [],
+    EnableThinkingOpt: getEnableThinkingOpt(config),
+    MaxTokens: config?.MaxTokens,
+    Temperature: config?.Temperature,
+    TopP: config?.TopP,
+    TopK: config?.TopK,
+    FrequencyPenalty: config?.FrequencyPenalty,
+    ReasoningEffort: config?.ReasoningEffort || 'no-set',
   } as AIThirdPartyApplicationConfig
 }
 
@@ -235,23 +248,7 @@ export const AIModelForm: React.FC<AIModelFormProps> = React.memo((props) => {
       const newItem: AIModelConfig = {
         ProviderId: res.api_key_id,
         Provider: {
-          Type: res.Type,
-          APIKey: res.api_key,
-          APIType: normalizeAIAPIType(res.api_type),
-          Domain: res.domain,
-          Proxy: res.proxy,
-          NoHttps: res.no_https,
-          ExtraParams: [],
-          BaseURL: res.base_url,
-          Endpoint: res.endpoint,
-          EnableEndpoint: res.enable_endpoint,
-          Headers: res.Headers,
-          /** 下面这些字段ai中没有 */
-          // UserIdentifier: "",
-          // UserSecret: "",
-          // Namespace: "",
-          // WebhookURL: "",
-          // Disabled: false
+          ...formValueToAIConfigProvider(res),
         },
         ModelName: res.model,
         ExtraParams: [],
