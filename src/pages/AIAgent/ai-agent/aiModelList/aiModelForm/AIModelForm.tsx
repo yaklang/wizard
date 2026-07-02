@@ -13,7 +13,7 @@ import {
   type AIThirdPartyApplicationConfig,
   NewAIThirdPartyApplicationConfigBase,
 } from '@/compoments/configNetwork/NewThirdPartyApplicationConfig'
-import { YakitButton } from '@/compoments/YakitUI/YakitButton/YakitButton'
+import { YakitButton } from '@/compoments/yakitUI/YakitButton/YakitButton'
 import {
   type AIConfigHealthCheckResponse,
   type AIGlobalConfig,
