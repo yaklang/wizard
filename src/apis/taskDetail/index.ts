@@ -10,6 +10,8 @@ import type {
   TTaskDetail,
   TGetAssetsValueFilterResponse,
   TGetAssetsProtsFilterResponse,
+  TDeleteAssetsPortsBody,
+  TDeleteAssetsHandlerResponse,
 } from './types'
 import type { Palm } from '@/gen/schema'
 
@@ -84,6 +86,10 @@ const getAssertsDataRiskInfo = (params: {
     { params },
   )
 
+/** 删除端口资产：传 `ids` 勾选删除，或 `delete_all: true` 加当前表格筛选条件 */
+const deleteAssetsPorts = (data: TDeleteAssetsPortsBody): Promise<ResponseData<TDeleteAssetsHandlerResponse>> =>
+  axios.delete<never, ResponseData<TDeleteAssetsHandlerResponse>>(`/api/assets/ports`, { data })
+
 const getAssertsDataStateInfo = (params: {
   task_id: string
 }): Promise<ResponseData<Omit<TGetAssertsDataResponse, 'state'> & { state: { open: number } }>> =>
@@ -116,4 +122,5 @@ export {
   getAssertsDataRiskInfo,
   getAssetsValueFilter,
   getAssertsDataStateInfo,
+  deleteAssetsPorts,
 }
