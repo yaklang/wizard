@@ -88,9 +88,7 @@ const ModifyTaskScript: FC = () => {
       script: scriptValue,
       prompt_args: {
         ...formValue.prompt_args,
-        'preset-protes': Array.isArray(formValue?.prompt_args?.['preset-protes'])
-          ? formValue.prompt_args['preset-protes'].join(',')
-          : formValue?.prompt_args?.['preset-protes'],
+        'preset-protes': presetProtesToCheckboxValue(formValue?.prompt_args?.['preset-protes']),
         'enable-brute': `${formValue?.prompt_args?.['enable-brute']}`,
         'enable-cve-baseline': `${formValue?.prompt_args?.['enable-cve-baseline']}`,
       },

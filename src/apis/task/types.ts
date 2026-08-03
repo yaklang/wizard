@@ -197,7 +197,7 @@ interface TPostStorageTaskScriptRequest {
   name?: string
   params: {
     target: string
-    'preset-protes': string
+    'preset-protes': string[]
     ports: string
     'enable-brute': boolean
     'enable-cve-baseline': boolean
